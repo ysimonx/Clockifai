@@ -214,6 +214,14 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get createTask => 'Créer une tâche';
+
+  @override
+  String createTaskIn(String name) {
+    return 'Créer la tâche « $name » dans :';
+  }
+
+  @override
   String get createWorkspace => 'Créer un workspace';
 
   @override
@@ -349,10 +357,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get editRates => 'Modifier les taux';
 
   @override
-  String get editStartTime => 'Modifier l\'heure de début';
+  String get editTag => 'Modifier le tag';
 
   @override
-  String get editTag => 'Modifier le tag';
+  String get editTimer => 'Modifier le chronomètre';
 
   @override
   String get email => 'Email';
@@ -717,6 +725,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get newTask => 'Nouvelle tâche';
 
   @override
+  String newTaskIn(String project) {
+    return 'Nouvelle tâche dans $project';
+  }
+
+  @override
   String get nextWeek => 'Semaine suivante';
 
   @override
@@ -763,6 +776,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get noInvoicesMessage =>
       'Générez une facture à partir du temps facturable d\'un client.';
+
+  @override
+  String get noMatch => 'Aucun résultat';
 
   @override
   String get noMembers => 'Aucun membre';
@@ -1139,6 +1155,30 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tags => 'Tags';
+
+  @override
+  String taskCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tâches',
+      one: '1 tâche',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get taskCreation => 'Création de tâches';
+
+  @override
+  String get taskCreationEveryone => 'Tout le monde';
+
+  @override
+  String get taskCreationHelp =>
+      'Qui peut créer une tâche depuis le sélecteur de projet (chronomètre, saisie).';
+
+  @override
+  String get taskCreationManagers => 'Managers et administrateurs';
 
   @override
   String get tax => 'TVA';

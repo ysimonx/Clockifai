@@ -9,7 +9,7 @@
 |---|---|---|
 | Table | `tasks` : projet, nom, `estimate_seconds`, statut `active` / `done`, soft delete | `0001_core.sql` |
 | Temps passé par tâche | Déjà là : `time_entries.task_id`, donc temps passé et estimation sont comparables | `0001_core.sql` |
-| Droits | Lecture par les membres, écriture par les **managers** seulement (`tasks_write`) | `0003_rls.sql` |
+| Droits | Lecture par les membres ; création par tous si `task_creation = 'everyone'` (défaut), le créateur peut renommer ; le reste aux **managers** | `0003_rls.sql`, `0010_task_creation.sql` |
 | Synchronisation | Flux `workspace_core`, envoyé à tous les membres actifs | `powersync/sync-config.yaml` |
 | UI | Liste sous chaque projet (créer, renommer, terminer, supprimer) | `features/projects/projects_page.dart` |
 | Fidwork | Interventions importées comme tâches (plan 02) | `plans/02-integration-fidwork.md` |
@@ -18,7 +18,7 @@
 
 | Coût | Ajout | Mise en œuvre |
 |---|---|---|
-| **S** | Numéro lisible `CLK-42`, description, personne assignée, priorité, échéance, statuts `todo` / `in_progress` / `done` | Colonnes sur `tasks`. Numéro posé par trigger serveur, comme la numérotation des factures. Ouvrir la création aux membres (RLS). |
+| **S** | Numéro lisible `CLK-42`, description, personne assignée, priorité, échéance, statuts `todo` / `in_progress` / `done` | Colonnes sur `tasks`. Numéro posé par trigger serveur, comme la numérotation des factures. Création par les membres : faite (0010). |
 | **M** | Tableau kanban, liste « mes tickets », commentaires, historique d'activité | Table `task_comments` synchronisée, trigger d'historique, deux écrans Flutter |
 | **L+ (à éviter)** | Pièces jointes hors connexion, notifications, sprints / backlog, workflows personnalisables, épopées et liens entre tickets, recherche avancée façon JQL | Ce qui fait la taille de Jira ; hors du métier d'un outil de temps |
 

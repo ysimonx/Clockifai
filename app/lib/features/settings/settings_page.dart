@@ -276,6 +276,21 @@ class _WorkspaceSettingsState extends State<_WorkspaceSettings> {
         ]),
       ),
       ListTile(
+        title: Text(l.taskCreation),
+        subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l.taskCreationHelp),
+          DropdownButton<String>(
+            value: ws.taskCreation ?? 'everyone',
+            isExpanded: true,
+            items: [
+              DropdownMenuItem(value: 'everyone', child: Text(l.taskCreationEveryone)),
+              DropdownMenuItem(value: 'managers', child: Text(l.taskCreationManagers)),
+            ],
+            onChanged: !e ? null : (v) => _update(WorkspacesCompanion(taskCreation: Value(v))),
+          ),
+        ]),
+      ),
+      ListTile(
         title: Text(l.autoStopTimers),
         subtitle: Text(l.autoStopTimersHelp),
         trailing: DropdownButton<int>(

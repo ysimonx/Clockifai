@@ -37,6 +37,7 @@ const schema = Schema([
     Column.real('default_tax_percent'),
     Column.integer('invoice_due_days'),
     Column.text('time_for_others'),
+    Column.text('task_creation'),
     Column.text('created_by'),
     ..._audit,
     ..._softDelete,

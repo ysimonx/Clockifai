@@ -768,6 +768,17 @@ class $WorkspacesTable extends Workspaces
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _taskCreationMeta = const VerificationMeta(
+    'taskCreation',
+  );
+  @override
+  late final GeneratedColumn<String> taskCreation = GeneratedColumn<String>(
+    'task_creation',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdByMeta = const VerificationMeta(
     'createdBy',
   );
@@ -831,6 +842,7 @@ class $WorkspacesTable extends Workspaces
     defaultTaxPercent,
     invoiceDueDays,
     timeForOthers,
+    taskCreation,
     createdBy,
     createdAt,
     updatedAt,
@@ -976,6 +988,15 @@ class $WorkspacesTable extends Workspaces
         ),
       );
     }
+    if (data.containsKey('task_creation')) {
+      context.handle(
+        _taskCreationMeta,
+        taskCreation.isAcceptableOrUnknown(
+          data['task_creation']!,
+          _taskCreationMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_by')) {
       context.handle(
         _createdByMeta,
@@ -1073,6 +1094,10 @@ class $WorkspacesTable extends Workspaces
         DriftSqlType.string,
         data['${effectivePrefix}time_for_others'],
       ),
+      taskCreation: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}task_creation'],
+      ),
       createdBy: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_by'],
@@ -1117,6 +1142,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
 
   /// 'admins' | 'admins_and_team_managers' (nullable côté client : rempli par la sync).
   final String? timeForOthers;
+
+  /// 'everyone' | 'managers' : qui crée des tâches depuis le sélecteur (nullable côté client : rempli par la sync).
+  final String? taskCreation;
   final String? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -1138,6 +1166,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     required this.defaultTaxPercent,
     required this.invoiceDueDays,
     this.timeForOthers,
+    this.taskCreation,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -1169,6 +1198,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     map['invoice_due_days'] = Variable<int>(invoiceDueDays);
     if (!nullToAbsent || timeForOthers != null) {
       map['time_for_others'] = Variable<String>(timeForOthers);
+    }
+    if (!nullToAbsent || taskCreation != null) {
+      map['task_creation'] = Variable<String>(taskCreation);
     }
     if (!nullToAbsent || createdBy != null) {
       map['created_by'] = Variable<String>(createdBy);
@@ -1211,6 +1243,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       timeForOthers: timeForOthers == null && nullToAbsent
           ? const Value.absent()
           : Value(timeForOthers),
+      taskCreation: taskCreation == null && nullToAbsent
+          ? const Value.absent()
+          : Value(taskCreation),
       createdBy: createdBy == null && nullToAbsent
           ? const Value.absent()
           : Value(createdBy),
@@ -1250,6 +1285,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       defaultTaxPercent: serializer.fromJson<double>(json['defaultTaxPercent']),
       invoiceDueDays: serializer.fromJson<int>(json['invoiceDueDays']),
       timeForOthers: serializer.fromJson<String?>(json['timeForOthers']),
+      taskCreation: serializer.fromJson<String?>(json['taskCreation']),
       createdBy: serializer.fromJson<String?>(json['createdBy']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
@@ -1276,6 +1312,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       'defaultTaxPercent': serializer.toJson<double>(defaultTaxPercent),
       'invoiceDueDays': serializer.toJson<int>(invoiceDueDays),
       'timeForOthers': serializer.toJson<String?>(timeForOthers),
+      'taskCreation': serializer.toJson<String?>(taskCreation),
       'createdBy': serializer.toJson<String?>(createdBy),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
@@ -1300,6 +1337,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     double? defaultTaxPercent,
     int? invoiceDueDays,
     Value<String?> timeForOthers = const Value.absent(),
+    Value<String?> taskCreation = const Value.absent(),
     Value<String?> createdBy = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
@@ -1327,6 +1365,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     timeForOthers: timeForOthers.present
         ? timeForOthers.value
         : this.timeForOthers,
+    taskCreation: taskCreation.present ? taskCreation.value : this.taskCreation,
     createdBy: createdBy.present ? createdBy.value : this.createdBy,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
@@ -1374,6 +1413,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       timeForOthers: data.timeForOthers.present
           ? data.timeForOthers.value
           : this.timeForOthers,
+      taskCreation: data.taskCreation.present
+          ? data.taskCreation.value
+          : this.taskCreation,
       createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -1400,6 +1442,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
           ..write('defaultTaxPercent: $defaultTaxPercent, ')
           ..write('invoiceDueDays: $invoiceDueDays, ')
           ..write('timeForOthers: $timeForOthers, ')
+          ..write('taskCreation: $taskCreation, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1409,7 +1452,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     name,
     currency,
@@ -1426,11 +1469,12 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     defaultTaxPercent,
     invoiceDueDays,
     timeForOthers,
+    taskCreation,
     createdBy,
     createdAt,
     updatedAt,
     deletedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1451,6 +1495,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
           other.defaultTaxPercent == this.defaultTaxPercent &&
           other.invoiceDueDays == this.invoiceDueDays &&
           other.timeForOthers == this.timeForOthers &&
+          other.taskCreation == this.taskCreation &&
           other.createdBy == this.createdBy &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -1474,6 +1519,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
   final Value<double> defaultTaxPercent;
   final Value<int> invoiceDueDays;
   final Value<String?> timeForOthers;
+  final Value<String?> taskCreation;
   final Value<String?> createdBy;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
@@ -1496,6 +1542,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     this.defaultTaxPercent = const Value.absent(),
     this.invoiceDueDays = const Value.absent(),
     this.timeForOthers = const Value.absent(),
+    this.taskCreation = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1519,6 +1566,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     this.defaultTaxPercent = const Value.absent(),
     this.invoiceDueDays = const Value.absent(),
     this.timeForOthers = const Value.absent(),
+    this.taskCreation = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1542,6 +1590,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     Expression<double>? defaultTaxPercent,
     Expression<int>? invoiceDueDays,
     Expression<String>? timeForOthers,
+    Expression<String>? taskCreation,
     Expression<String>? createdBy,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1566,6 +1615,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
       if (defaultTaxPercent != null) 'default_tax_percent': defaultTaxPercent,
       if (invoiceDueDays != null) 'invoice_due_days': invoiceDueDays,
       if (timeForOthers != null) 'time_for_others': timeForOthers,
+      if (taskCreation != null) 'task_creation': taskCreation,
       if (createdBy != null) 'created_by': createdBy,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -1591,6 +1641,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     Value<double>? defaultTaxPercent,
     Value<int>? invoiceDueDays,
     Value<String?>? timeForOthers,
+    Value<String?>? taskCreation,
     Value<String?>? createdBy,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
@@ -1614,6 +1665,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
       defaultTaxPercent: defaultTaxPercent ?? this.defaultTaxPercent,
       invoiceDueDays: invoiceDueDays ?? this.invoiceDueDays,
       timeForOthers: timeForOthers ?? this.timeForOthers,
+      taskCreation: taskCreation ?? this.taskCreation,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1673,6 +1725,9 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     if (timeForOthers.present) {
       map['time_for_others'] = Variable<String>(timeForOthers.value);
     }
+    if (taskCreation.present) {
+      map['task_creation'] = Variable<String>(taskCreation.value);
+    }
     if (createdBy.present) {
       map['created_by'] = Variable<String>(createdBy.value);
     }
@@ -1710,6 +1765,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
           ..write('defaultTaxPercent: $defaultTaxPercent, ')
           ..write('invoiceDueDays: $invoiceDueDays, ')
           ..write('timeForOthers: $timeForOthers, ')
+          ..write('taskCreation: $taskCreation, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -15112,6 +15168,7 @@ typedef $$WorkspacesTableCreateCompanionBuilder = WorkspacesCompanion Function({
   Value<double> defaultTaxPercent,
   Value<int> invoiceDueDays,
   Value<String?> timeForOthers,
+  Value<String?> taskCreation,
   Value<String?> createdBy,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
@@ -15135,6 +15192,7 @@ typedef $$WorkspacesTableUpdateCompanionBuilder = WorkspacesCompanion Function({
   Value<double> defaultTaxPercent,
   Value<int> invoiceDueDays,
   Value<String?> timeForOthers,
+  Value<String?> taskCreation,
   Value<String?> createdBy,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
@@ -15228,6 +15286,11 @@ class $$WorkspacesTableFilterComposer
 
   ColumnFilters<String> get timeForOthers => $composableBuilder(
     column: $table.timeForOthers,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get taskCreation => $composableBuilder(
+    column: $table.taskCreation,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15341,6 +15404,11 @@ class $$WorkspacesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get taskCreation => $composableBuilder(
+    column: $table.taskCreation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdBy => $composableBuilder(
     column: $table.createdBy,
     builder: (column) => ColumnOrderings(column),
@@ -15443,6 +15511,11 @@ class $$WorkspacesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get taskCreation => $composableBuilder(
+    column: $table.taskCreation,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdBy =>
       $composableBuilder(column: $table.createdBy, builder: (column) => column);
 
@@ -15503,6 +15576,7 @@ class $$WorkspacesTableTableManager
                 Value<double> defaultTaxPercent = const Value.absent(),
                 Value<int> invoiceDueDays = const Value.absent(),
                 Value<String?> timeForOthers = const Value.absent(),
+                Value<String?> taskCreation = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -15525,6 +15599,7 @@ class $$WorkspacesTableTableManager
                 defaultTaxPercent: defaultTaxPercent,
                 invoiceDueDays: invoiceDueDays,
                 timeForOthers: timeForOthers,
+                taskCreation: taskCreation,
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -15549,6 +15624,7 @@ class $$WorkspacesTableTableManager
                 Value<double> defaultTaxPercent = const Value.absent(),
                 Value<int> invoiceDueDays = const Value.absent(),
                 Value<String?> timeForOthers = const Value.absent(),
+                Value<String?> taskCreation = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -15571,6 +15647,7 @@ class $$WorkspacesTableTableManager
                 defaultTaxPercent: defaultTaxPercent,
                 invoiceDueDays: invoiceDueDays,
                 timeForOthers: timeForOthers,
+                taskCreation: taskCreation,
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

@@ -211,6 +211,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get createTask => 'Create task';
+
+  @override
+  String createTaskIn(String name) {
+    return 'Create task \"$name\" in:';
+  }
+
+  @override
   String get createWorkspace => 'Create workspace';
 
   @override
@@ -345,10 +353,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editRates => 'Edit rates';
 
   @override
-  String get editStartTime => 'Edit start time';
+  String get editTag => 'Edit tag';
 
   @override
-  String get editTag => 'Edit tag';
+  String get editTimer => 'Edit timer';
 
   @override
   String get email => 'Email';
@@ -711,6 +719,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newTask => 'New task';
 
   @override
+  String newTaskIn(String project) {
+    return 'New task in $project';
+  }
+
+  @override
   String get nextWeek => 'Next week';
 
   @override
@@ -757,6 +770,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noInvoicesMessage =>
       'Generate an invoice from a client\'s billable time.';
+
+  @override
+  String get noMatch => 'No results';
 
   @override
   String get noMembers => 'No members';
@@ -1129,6 +1145,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tags => 'Tags';
+
+  @override
+  String taskCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tasks',
+      one: '1 task',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get taskCreation => 'Task creation';
+
+  @override
+  String get taskCreationEveryone => 'Everyone';
+
+  @override
+  String get taskCreationHelp =>
+      'Who can create a task from the project picker (timer, entries).';
+
+  @override
+  String get taskCreationManagers => 'Managers and admins';
 
   @override
   String get tax => 'Tax';

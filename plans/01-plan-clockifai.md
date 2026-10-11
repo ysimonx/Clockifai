@@ -77,7 +77,7 @@ pour que PowerSync propage les suppressions proprement).
 - `workspace_members` (workspace_id, user_id, role `owner|admin|manager|member`, hourly_rate_cents, cost_rate_cents, kiosk_pin_hash, status `active|inactive`) — unique (workspace_id, user_id)
 - `clients` (name, note, currency_override, archived)
 - `projects` (client_id, name, color, billable_default, hourly_rate_cents, budget_hours/amount, is_public, archived)
-- `tasks` (project_id, name, estimate_seconds, status)
+- `tasks` (project_id, name, estimate_seconds, status, created_by)
 - `tags` (name, color, archived)
 - `time_entries` (user_id, project_id?, task_id?, description, start_at timestamptz, end_at timestamptz NULL = timer en cours, duration_seconds généré, billable, hourly_rate_cents snapshot, locked bool)
   - index partiel unique : **un seul timer en cours par (workspace_id, user_id)** `WHERE end_at IS NULL AND deleted_at IS NULL`
@@ -205,6 +205,7 @@ Chaque lot se termine par un état déployable.
 - Flask exposé sur le port hôte **5050** (5000 est pris par AirPlay sur macOS).
 - `connectivity_plus` retiré : l'état réseau vient de PowerSync (`SyncStatus.connected`).
 - Outils : **fvm** pour Flutter (SDK 3.47.0 épinglé dans `app/.fvmrc`), **uv** pour Python.
+- Tâches créées **à la volée** depuis le sélecteur de projet (chronomètre en cours, saisie, feuille de temps), comme Clockify. Réglage `workspaces.task_creation` : `everyone` (défaut) ou `managers`. Un membre crée une tâche active sans estimation sur un projet actif, puis peut seulement la renommer ; estimation, statut, déplacement et suppression restent aux managers (migration 0010, trigger `tasks_guard`).
 
 ## Plans liés
 

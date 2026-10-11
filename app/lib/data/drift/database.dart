@@ -55,6 +55,8 @@ class Workspaces extends Table {
   IntColumn get invoiceDueDays => integer().clientDefault(() => 30)();
   /// 'admins' | 'admins_and_team_managers' (nullable côté client : rempli par la sync).
   TextColumn get timeForOthers => text().nullable()();
+  /// 'everyone' | 'managers' : qui crée des tâches depuis le sélecteur (nullable côté client : rempli par la sync).
+  TextColumn get taskCreation => text().nullable()();
   TextColumn get createdBy => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();

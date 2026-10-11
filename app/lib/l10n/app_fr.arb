@@ -114,6 +114,15 @@
       }
     }
   },
+  "createTask": "Créer une tâche",
+  "createTaskIn": "Créer la tâche « {name} » dans :",
+  "@createTaskIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "createWorkspace": "Créer un workspace",
   "currency": "Devise",
   "currencyOverride": "Devise spécifique (facultatif)",
@@ -157,8 +166,8 @@
   "editPolicy": "Modifier la politique",
   "editProject": "Modifier le projet",
   "editRates": "Modifier les taux",
-  "editStartTime": "Modifier l'heure de début",
   "editTag": "Modifier le tag",
+  "editTimer": "Modifier le chronomètre",
   "email": "Email",
   "emailRequired": "Saisissez votre adresse email.",
   "emptyIsUnlimited": "Vide = illimité",
@@ -348,6 +357,14 @@
   "newProject": "Nouveau projet",
   "newTag": "Nouveau tag",
   "newTask": "Nouvelle tâche",
+  "newTaskIn": "Nouvelle tâche dans {project}",
+  "@newTaskIn": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
   "nextWeek": "Semaine suivante",
   "noApproval": "Sans validation",
   "noClient": "Sans client",
@@ -363,6 +380,7 @@
   "noHolidays": "Aucun jour férié",
   "noInvoices": "Aucune facture",
   "noInvoicesMessage": "Générez une facture à partir du temps facturable d'un client.",
+  "noMatch": "Aucun résultat",
   "noMembers": "Aucun membre",
   "noPoliciesYet": "Aucun type d'absence n'est encore défini.",
   "noProject": "Sans projet",
@@ -506,6 +524,18 @@
   "tag": "Tag",
   "tagline": "Suivi du temps libre et auto-hébergé",
   "tags": "Tags",
+  "taskCount": "{count, plural, =1{1 tâche} other{{count} tâches}}",
+  "@taskCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskCreation": "Création de tâches",
+  "taskCreationEveryone": "Tout le monde",
+  "taskCreationHelp": "Qui peut créer une tâche depuis le sélecteur de projet (chronomètre, saisie).",
+  "taskCreationManagers": "Managers et administrateurs",
   "tax": "TVA",
   "taxPercent": "TVA",
   "team": "Équipe",

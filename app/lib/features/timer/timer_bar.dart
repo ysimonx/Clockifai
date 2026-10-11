@@ -255,7 +255,7 @@ class _TimerBarState extends State<TimerBar> {
       },
       itemBuilder: (_) => [
         PopupMenuItem(value: 'manual', child: Text(l.addManualEntry)),
-        if (running != null) PopupMenuItem(value: 'edit', child: Text(l.editStartTime)),
+        if (running != null) PopupMenuItem(value: 'edit', child: Text(l.editTimer)),
         if (running != null) PopupMenuItem(value: 'discard', child: Text(l.discardTimer)),
       ],
     );

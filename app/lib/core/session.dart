@@ -65,6 +65,8 @@ class SessionController extends ChangeNotifier {
   String get role => member?.role ?? 'member';
   bool get isManager => const {'owner', 'admin', 'manager'}.contains(role);
   bool get isAdmin => const {'owner', 'admin'}.contains(role);
+  /// Miroir de `can_create_task` (0010) ; la RLS reste juge (projet actif du workspace).
+  bool get canCreateTasks => isManager || (workspace?.taskCreation ?? 'everyone') == 'everyone';
   String get displayName => _profile?.displayName.isNotEmpty == true
       ? _profile!.displayName
       : (_user?.email ?? '');

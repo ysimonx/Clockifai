@@ -470,6 +470,18 @@ abstract class AppLocalizations {
   /// **'Créer le tag « {name} »'**
   String createTagNamed(String name);
 
+  /// No description provided for @createTask.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer une tâche'**
+  String get createTask;
+
+  /// No description provided for @createTaskIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer la tâche « {name} » dans :'**
+  String createTaskIn(String name);
+
   /// No description provided for @createWorkspace.
   ///
   /// In fr, this message translates to:
@@ -728,17 +740,17 @@ abstract class AppLocalizations {
   /// **'Modifier les taux'**
   String get editRates;
 
-  /// No description provided for @editStartTime.
-  ///
-  /// In fr, this message translates to:
-  /// **'Modifier l\'heure de début'**
-  String get editStartTime;
-
   /// No description provided for @editTag.
   ///
   /// In fr, this message translates to:
   /// **'Modifier le tag'**
   String get editTag;
+
+  /// No description provided for @editTimer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier le chronomètre'**
+  String get editTimer;
 
   /// No description provided for @email.
   ///
@@ -1370,6 +1382,12 @@ abstract class AppLocalizations {
   /// **'Nouvelle tâche'**
   String get newTask;
 
+  /// No description provided for @newTaskIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle tâche dans {project}'**
+  String newTaskIn(String project);
+
   /// No description provided for @nextWeek.
   ///
   /// In fr, this message translates to:
@@ -1459,6 +1477,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Générez une facture à partir du temps facturable d\'un client.'**
   String get noInvoicesMessage;
+
+  /// No description provided for @noMatch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun résultat'**
+  String get noMatch;
 
   /// No description provided for @noMembers.
   ///
@@ -2149,6 +2173,36 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Tags'**
   String get tags;
+
+  /// No description provided for @taskCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 tâche} other{{count} tâches}}'**
+  String taskCount(int count);
+
+  /// No description provided for @taskCreation.
+  ///
+  /// In fr, this message translates to:
+  /// **'Création de tâches'**
+  String get taskCreation;
+
+  /// No description provided for @taskCreationEveryone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout le monde'**
+  String get taskCreationEveryone;
+
+  /// No description provided for @taskCreationHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qui peut créer une tâche depuis le sélecteur de projet (chronomètre, saisie).'**
+  String get taskCreationHelp;
+
+  /// No description provided for @taskCreationManagers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Managers et administrateurs'**
+  String get taskCreationManagers;
 
   /// No description provided for @tax.
   ///

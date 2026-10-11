@@ -34,20 +34,45 @@ class _ProjectPickerDialog extends StatefulWidget {
 
 class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
   String _query = '';
+  // Projets dont toutes les tâches sont dépliées ; celui de la tâche courante l'est d'office.
+  late final Set<String> _expanded = {if (widget.taskId != null && widget.projectId != null) widget.projectId!};
+
+  /// Sélectionne la tâche [name] du projet, en la créant si elle n'existe pas encore.
+  Future<void> _pickOrCreateTask(Project p, String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    final existing = context
+        .read<CatalogController>()
+        .tasksOf(p.id)
+        .where((t) => t.name.toLowerCase() == trimmed.toLowerCase())
+        .firstOrNull;
+    final id = existing?.id ?? await catalogRepo.createTask(p.workspaceId, p.id, trimmed);
+    if (mounted) Navigator.pop(context, ProjectPick(p.id, id));
+  }
+
+  Future<void> _promptTask(Project p, String initial) async {
+    final l = context.l10n;
+    final name = await promptText(context, title: l.newTaskIn(p.name), label: l.name, initial: initial);
+    if (name != null && mounted) await _pickOrCreateTask(p, name);
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    final theme = Theme.of(context);
     final catalog = context.watch<CatalogController>();
     final session = context.read<SessionController>();
-    final q = _query.toLowerCase();
-    final projects = catalog.activeProjects.where((p) {
-      if (q.isEmpty) return true;
-      final client = catalog.client(p.clientId)?.name ?? '';
-      return p.name.toLowerCase().contains(q) ||
-          client.toLowerCase().contains(q) ||
-          catalog.tasksOf(p.id).any((t) => t.name.toLowerCase().contains(q));
-    }).toList();
+    final canCreateTasks = session.canCreateTasks;
+    final q = _query.trim().toLowerCase();
+
+    bool nameMatches(Project p) =>
+        q.isEmpty ||
+        p.name.toLowerCase().contains(q) ||
+        (catalog.client(p.clientId)?.name ?? '').toLowerCase().contains(q);
+    List<Task> matchingTasks(Project p) =>
+        q.isEmpty ? const [] : catalog.tasksOf(p.id).where((t) => t.name.toLowerCase().contains(q)).toList();
+
+    final projects = catalog.activeProjects.where((p) => nameMatches(p) || matchingTasks(p).isNotEmpty).toList();
 
     // Regroupement par client (sans client en premier).
     final groups = <String?, List<Project>>{};
@@ -56,6 +81,83 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
     }
     final keys = groups.keys.toList()
       ..sort((a, b) => a == null ? -1 : b == null ? 1 : (catalog.client(a)?.name ?? '').compareTo(catalog.client(b)?.name ?? ''));
+
+    Widget projectTile(Project p) {
+      final tasks = catalog.tasksOf(p.id);
+      final expanded = _expanded.contains(p.id);
+      return ListTile(
+        dense: true,
+        leading: ColorDot(p.color, size: 12),
+        title: Text(p.name, style: TextStyle(color: colorFromHex(p.color), fontWeight: FontWeight.w600)),
+        selected: widget.projectId == p.id && widget.taskId == null,
+        onTap: () => Navigator.pop(context, ProjectPick(p.id, null)),
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (tasks.isNotEmpty)
+            TextButton(
+              style: TextButton.styleFrom(visualDensity: VisualDensity.compact, foregroundColor: theme.colorScheme.outline),
+              onPressed: () => setState(() => expanded ? _expanded.remove(p.id) : _expanded.add(p.id)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(l.taskCount(tasks.length)),
+                Icon(expanded ? Icons.expand_less : Icons.expand_more, size: 18),
+              ]),
+            ),
+          if (canCreateTasks)
+            IconButton(
+              tooltip: l.createTask,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.add, size: 18),
+              // La recherche porte sur une tâche (pas sur ce projet) : on la reprend comme nom.
+              onPressed: () => _promptTask(p, nameMatches(p) ? '' : _query.trim()),
+            ),
+        ]),
+      );
+    }
+
+    Widget taskTile(Project p, Task t) => ListTile(
+          dense: true,
+          contentPadding: const EdgeInsets.only(left: 56, right: 16),
+          title: Text(t.name),
+          selected: widget.taskId == t.id,
+          onTap: () => Navigator.pop(context, ProjectPick(p.id, t.id)),
+        );
+
+    final List<Widget> results;
+    if (projects.isEmpty && q.isNotEmpty) {
+      // Rien ne correspond : on propose de créer la tâche recherchée dans un projet au choix.
+      results = canCreateTasks && catalog.activeProjects.isNotEmpty
+          ? [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Text(l.createTaskIn(_query.trim()), style: theme.textTheme.labelLarge),
+              ),
+              for (final p in catalog.activeProjects)
+                ListTile(
+                  dense: true,
+                  leading: ColorDot(p.color, size: 12),
+                  title: Text(p.name, style: TextStyle(color: colorFromHex(p.color), fontWeight: FontWeight.w600)),
+                  subtitle: p.clientId == null ? null : Text(catalog.client(p.clientId)?.name ?? ''),
+                  trailing: const Icon(Icons.add, size: 18),
+                  onTap: () => _pickOrCreateTask(p, _query),
+                ),
+            ]
+          : [ListTile(title: Text(l.noMatch, style: TextStyle(color: theme.colorScheme.outline)))];
+    } else {
+      results = [
+        for (final key in keys) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Text(
+              (key == null ? l.noClient : catalog.client(key)?.name ?? '').toUpperCase(),
+              style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline),
+            ),
+          ),
+          for (final p in groups[key]!) ...[
+            projectTile(p),
+            for (final t in _expanded.contains(p.id) ? catalog.tasksOf(p.id) : matchingTasks(p)) taskTile(p, t),
+          ],
+        ],
+      ];
+    }
 
     return AlertDialog(
       title: Text(l.selectProject),
@@ -81,32 +183,7 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
                 selected: widget.projectId == null,
                 onTap: () => Navigator.pop(context, const ProjectPick(null, null)),
               ),
-              for (final key in keys) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: Text(
-                    (key == null ? l.noClient : catalog.client(key)?.name ?? '').toUpperCase(),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.outline),
-                  ),
-                ),
-                for (final p in groups[key]!) ...[
-                  ListTile(
-                    dense: true,
-                    leading: ColorDot(p.color, size: 12),
-                    title: Text(p.name, style: TextStyle(color: colorFromHex(p.color), fontWeight: FontWeight.w600)),
-                    selected: widget.projectId == p.id && widget.taskId == null,
-                    onTap: () => Navigator.pop(context, ProjectPick(p.id, null)),
-                  ),
-                  for (final t in catalog.tasksOf(p.id))
-                    ListTile(
-                      dense: true,
-                      contentPadding: const EdgeInsets.only(left: 56, right: 16),
-                      title: Text(t.name),
-                      selected: widget.taskId == t.id,
-                      onTap: () => Navigator.pop(context, ProjectPick(p.id, t.id)),
-                    ),
-                ],
-              ],
+              ...results,
             ]),
           ),
         ]),

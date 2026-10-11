@@ -3,7 +3,8 @@
 GET /api/exports/report?workspace_id=&from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|pdf
     [&user_id=][&project_id=][&client_id=][&billable=true|false]
 
-Un membre n'exporte que ses propres entrées ; manager+ peut exporter toute l'équipe.
+Un membre n'exporte que ses propres entrées ; un chef d'équipe, les siennes et celles de son
+périmètre ; manager+ peut exporter toute l'équipe.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from datetime import date, datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, request
 
-from ..auth import require_user, require_workspace
+from ..auth import managed_user_ids, require_user, require_workspace
 from ..db import fetch_all
 from ..services.exporters import build_pdf, build_xlsx
 
@@ -53,6 +54,9 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
         if filters.get(key):
             sql += f" and te.{key} = %({key})s"
             params[key] = filters[key]
+    if filters.get("user_ids"):
+        sql += " and te.user_id = any(%(user_ids)s::uuid[])"
+        params["user_ids"] = filters["user_ids"]
     if filters.get("client_id"):
         sql += " and p.client_id = %(client_id)s"
         params["client_id"] = filters["client_id"]
@@ -73,9 +77,13 @@ def export_report():
     fmt = request.args.get("format", "csv").lower()
     filters = {k: request.args.get(k) for k in ("user_id", "project_id", "client_id", "billable")}
 
-    # Un simple membre ne voit que ses entrées.
+    # Un membre ne voit que ses entrées ; un chef d'équipe, aussi celles de son périmètre.
     if g.workspace_role not in _MANAGER_ROLES:
-        filters["user_id"] = g.user.id
+        allowed = [g.user.id, *managed_user_ids(g.workspace_id, g.user.id)]
+        if filters["user_id"] and filters["user_id"] not in allowed:
+            abort(403, "user outside your team")
+        if not filters["user_id"]:
+            filters["user_ids"] = allowed
 
     rows = _detailed_rows(g.workspace_id, start, end, filters)
     filename = f"clockifai-{start.isoformat()}_{end.isoformat()}"

@@ -209,6 +209,7 @@ Chaque lot se termine par un état déployable.
 ## Plans liés
 
 - [02-integration-fidwork.md](02-integration-fidwork.md) : saisie des temps des échafaudeurs et calorifugeurs depuis Fidwork.
+- [03-saisie-pour-autrui.md](03-saisie-pour-autrui.md) : chef d'équipe (groupes, périmètre), saisie du temps pour autrui et pointage d'équipe.
 
 ## État d'avancement (11 octobre 2026)
 

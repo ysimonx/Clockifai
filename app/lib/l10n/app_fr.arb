@@ -8,6 +8,7 @@
   "addRow": "Ajouter une ligne",
   "addTags": "Ajouter des tags",
   "addTask": "Ajouter une tâche",
+  "addTimeForOthers": "Ajouter du temps pour d'autres",
   "adminOnlySettings": "Seuls les administrateurs peuvent modifier ces réglages.",
   "allClients": "Tous les clients",
   "allMembers": "Tous les membres",
@@ -34,6 +35,17 @@
   },
   "approvals": "Approbations",
   "approve": "Approuver",
+  "approvedPeriodFor": "Période déjà approuvée pour {name}.",
+  "@approvedPeriodFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "approvers": "Approbateurs",
+  "approversManagers": "Managers",
+  "approversManagersAndTeamManagers": "Managers et chefs d'équipe",
   "archive": "Archiver",
   "archived": "Archivé",
   "autoStopTimers": "Arrêt automatique des chronomètres",
@@ -92,6 +104,7 @@
   "copy": "Copier",
   "costRate": "Coût (par heure)",
   "createAccount": "Créer mon compte",
+  "createEntries": "Créer les entrées",
   "createProject": "Créer un projet",
   "createTagNamed": "Créer le tag « {name} »",
   "@createTagNamed": {
@@ -112,11 +125,14 @@
   "daysShort": "j",
   "deactivate": "Désactiver",
   "decision": "Décision",
+  "defaultHours": "Horaires par défaut",
   "delete": "Supprimer",
   "deleteClient": "Supprimer le client ?",
   "deleteClientMessage": "Les projets de ce client seront conservés, sans client.",
   "deleteEntry": "Supprimer l'entrée ?",
   "deleteEntryMessage": "Cette entrée de temps sera supprimée sur tous vos appareils.",
+  "deleteGroup": "Supprimer le groupe",
+  "deleteGroupMessage": "Les membres restent dans le workspace ; les chefs d'équipe n'encadrent plus ce groupe.",
   "deleteInvoice": "Supprimer la facture ?",
   "deleteInvoiceMessage": "Les entrées de temps redeviennent facturables.",
   "deletePolicy": "Supprimer la politique ?",
@@ -149,6 +165,30 @@
   "endTime": "Fin",
   "endTimeRequired": "Indiquez une heure de fin.",
   "endsNextDay": "Se termine le lendemain.",
+  "enteredBy": "saisi par {name}",
+  "@enteredBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "enteringFor": "Vous saisissez le temps de {name}.",
+  "@enteringFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "entriesCreated": "{count, plural, =1{1 entrée créée} other{{count} entrées créées}}",
+  "@entriesCreated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "entryLocked": "Entrée verrouillée : seule une personne administratrice peut la modifier.",
   "export": "Exporter",
   "exportCsvOffline": "CSV (hors ligne)",
@@ -165,6 +205,9 @@
   "forgotPassword": "Mot de passe oublié",
   "generate": "Générer",
   "groupBy": "Grouper par",
+  "groupMembers": "Membres du groupe",
+  "groupName": "Nom du groupe",
+  "groups": "Groupes",
   "halfDay": "Demi-journée",
   "history": "Historique",
   "holidays": "Jours fériés",
@@ -260,10 +303,35 @@
   "lockEntriesBefore": "Verrouiller les entrées antérieures au",
   "lockEntriesNone": "Aucun verrouillage",
   "magicLinkSent": "Lien de connexion envoyé par email.",
+  "managedByLabel": "Chef d'équipe : {names}",
+  "@managedByLabel": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
   "managersOnly": "Réservé aux managers",
+  "managesLabel": "Encadre : {names}",
+  "@managesLabel": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
   "markDone": "Marquer terminée",
   "member": "Membre",
   "memberAllowances": "Droits par membre",
+  "memberCount": "{count, plural, =0{Aucun membre} =1{1 membre} other{{count} membres}}",
+  "@memberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "members": "Membres",
   "more": "Plus",
   "myRequests": "Mes demandes",
   "name": "Nom",
@@ -271,6 +339,7 @@
   "neverSeen": "Jamais connecté",
   "newAssignment": "Nouvelle affectation",
   "newClient": "Nouveau client",
+  "newGroup": "Nouveau groupe",
   "newInvoice": "Nouvelle facture",
   "newInvoiceHelp": "Une ligne par projet est créée à partir du temps facturable non encore facturé du client sur la période.",
   "newKioskDevice": "Nouvel appareil",
@@ -288,6 +357,8 @@
   "noEntriesInPeriod": "Aucune entrée sur la période",
   "noEntriesYet": "Aucune entrée pour l'instant",
   "noEntriesYetMessage": "Démarrez le chronomètre ci-dessus ou ajoutez du temps manuellement.",
+  "noGroups": "Aucun groupe",
+  "noGroupsMessage": "Regroupez les membres (équipe, chantier, entreprise) pour les confier à un chef d'équipe.",
   "noHistory": "Aucun historique",
   "noHolidays": "Aucun jour férié",
   "noInvoices": "Aucune facture",
@@ -301,6 +372,7 @@
   "noTag": "Sans tag",
   "noTags": "Aucun tag",
   "noTasks": "Aucune tâche",
+  "noTeammateSelected": "Choisissez au moins une personne.",
   "noWorkspace": "Aucun workspace",
   "noWorkspaceMessage": "Votre compte n'appartient à aucun workspace actif. Demandez une invitation à un administrateur.",
   "nonBillable": "Non facturable",
@@ -321,6 +393,14 @@
   "paymentTermDays": "Délai de paiement (jours)",
   "pending": "En attente",
   "pendingChanges": "Modifications en attente d'envoi",
+  "peopleCount": "{count, plural, =0{Personne} =1{1 personne} other{{count} personnes}}",
+  "@peopleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "perHour": "/h",
   "policies": "Politiques d'absence",
   "policy": "Type d'absence",
@@ -341,6 +421,14 @@
   "publicProject": "Projet public",
   "publicProjectHelp": "Visible et utilisable par tous les membres",
   "quantityHours": "Quantité (h)",
+  "readOnlyTimeOf": "Temps de {name} : consultation seulement.",
+  "@readOnlyTimeOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "reject": "Refuser",
   "remaining": "restants",
   "remove": "Retirer",
@@ -375,7 +463,9 @@
   "searchTags": "Rechercher ou créer un tag",
   "sectionManage": "Gestion",
   "sectionTeam": "Équipe",
+  "selectAll": "Tout cocher",
   "selectProject": "Choisir un projet",
+  "selectTeammates": "Choisir les collaborateurs",
   "send": "Envoyer",
   "sendMagicLink": "Recevoir un lien de connexion",
   "setPassword": "Définir le mot de passe",
@@ -419,11 +509,21 @@
   "tax": "TVA",
   "taxPercent": "TVA",
   "team": "Équipe",
+  "teamEntry": "Pointage d'équipe",
+  "teamEntryHelp": "Cochez les présents : une entrée est créée pour chacun, même hors ligne. Touchez les horaires d'une personne pour les ajuster.",
+  "teamManagerOf": "Chef d'équipe de…",
+  "teamManagerOfHelp": "Ce membre verra le temps des personnes choisies et approuvera leurs feuilles de temps. La saisie pour autrui dépend du réglage du workspace.",
   "teamMemberHint": "Seuls les managers voient l'activité de toute l'équipe.",
   "teamRequests": "Demandes de l'équipe",
+  "teammate": "Collaborateur",
+  "teammates": "Collaborateurs",
   "thisMonth": "Ce mois-ci",
   "thisWeek": "Cette semaine",
   "thisYear": "Cette année",
+  "timeForOthers": "Saisie du temps pour autrui",
+  "timeForOthersAdmins": "Administrateurs",
+  "timeForOthersAdminsAndTeamManagers": "Administrateurs et chefs d'équipe",
+  "timeForOthersHelp": "Qui peut saisir et modifier le temps des autres membres.",
   "timeOff": "Absences",
   "timeTracker": "Suivi du temps",
   "timesheet": "Feuille de temps",
@@ -439,6 +539,8 @@
   "unpaid": "Non rémunérée",
   "used": "Pris",
   "user": "Utilisateur",
+  "users": "Utilisateurs",
+  "view": "Consulter",
   "weekOf": "Semaine du {date}",
   "@weekOf": {
     "placeholders": {

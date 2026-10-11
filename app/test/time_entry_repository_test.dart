@@ -1,6 +1,7 @@
 import 'package:clockifai/core/catalog.dart';
 import 'package:clockifai/data/drift/database.dart';
 import 'package:clockifai/data/repositories/catalog_repository.dart';
+import 'package:clockifai/data/repositories/team_repository.dart';
 import 'package:clockifai/data/repositories/time_entry_repository.dart';
 import 'package:clockifai/data/repositories/workspace_repository.dart';
 import 'package:clockifai/features/reports/report_model.dart';
@@ -125,7 +126,7 @@ void main() {
       workspaceId: ws, userId: me, draft: EntryDraft(billable: false),
       start: DateTime.utc(2026, 10, 11, 11), end: DateTime.utc(2026, 10, 11, 11, 30),
     );
-    final catalog = CatalogController(catalogRepo, WorkspaceRepository(db))..bind(ws);
+    final catalog = CatalogController(catalogRepo, WorkspaceRepository(db), TeamRepository(db))..bind(ws);
     await Future<void>.delayed(const Duration(milliseconds: 100));
     final rows = await repo.watchEntries(workspaceId: ws, from: DateTime.utc(2026, 10, 11), to: DateTime.utc(2026, 10, 12)).first;
 

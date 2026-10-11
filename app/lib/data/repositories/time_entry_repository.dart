@@ -34,6 +34,15 @@ class EntryDraft {
   List<String> tagIds;
 }
 
+/// Une personne et ses horaires dans une saisie groupée (pointage d'équipe, « ajouter du temps pour d'autres »).
+class MemberSlot {
+  const MemberSlot({required this.userId, required this.start, required this.end, this.hourlyRateCents});
+  final String userId;
+  final DateTime start;
+  final DateTime end;
+  final int? hourlyRateCents;
+}
+
 /// Toutes les lectures/écritures d'entrées de temps passent par la base locale.
 /// PowerSync se charge d'envoyer les modifications au serveur et de récupérer
 /// celles des autres appareils.
@@ -143,6 +152,7 @@ class TimeEntryRepository {
             startAt: now,
             billable: Value(draft.billable),
             hourlyRateCents: Value(draft.hourlyRateCents),
+            createdBy: Value(userId),
           ));
       await _insertTags(id, workspaceId, userId, draft.tagIds);
     });
@@ -159,32 +169,57 @@ class TimeEntryRepository {
         .write(TimeEntriesCompanion(endAt: Value(safeEnd), durationSeconds: Value(safeEnd.difference(entry.startAt).inSeconds)));
   }
 
-  /// Entrée saisie manuellement (déjà terminée).
+  /// Entrée saisie manuellement (déjà terminée). [createdBy] : auteur de la saisie
+  /// (affichage immédiat de « saisi par » ; le serveur pose la valeur définitive).
   Future<String> createManual({
     required String workspaceId,
     required String userId,
     required EntryDraft draft,
     required DateTime start,
     required DateTime end,
+    String? createdBy,
   }) async {
-    final id = newId();
-    await db.transaction(() async {
-      await db.into(db.timeEntries).insert(TimeEntriesCompanion.insert(
-            id: Value(id),
-            workspaceId: workspaceId,
-            userId: userId,
-            projectId: Value(draft.projectId),
-            taskId: Value(draft.taskId),
-            description: Value(draft.description.trim()),
-            startAt: start.toUtc(),
-            endAt: Value(end.toUtc()),
-            durationSeconds: Value(end.difference(start).inSeconds),
-            billable: Value(draft.billable),
-            hourlyRateCents: Value(draft.hourlyRateCents),
-          ));
-      await _insertTags(id, workspaceId, userId, draft.tagIds);
-    });
-    return id;
+    final ids = await createForMembers(
+      workspaceId: workspaceId,
+      slots: [MemberSlot(userId: userId, start: start, end: end, hourlyRateCents: draft.hourlyRateCents)],
+      draft: draft,
+      createdBy: createdBy,
+    );
+    return ids.single;
+  }
+
+  /// Une entrée terminée par personne (hors ligne compris). Une transaction locale par personne :
+  /// le connecteur envoie chaque transaction à part, un refus du serveur (période approuvée,
+  /// périmètre modifié entre-temps…) n'emporte donc que l'entrée de la personne concernée.
+  Future<List<String>> createForMembers({
+    required String workspaceId,
+    required List<MemberSlot> slots,
+    required EntryDraft draft,
+    String? createdBy,
+  }) async {
+    final ids = <String>[];
+    for (final slot in slots) {
+      final id = newId();
+      ids.add(id);
+      await db.transaction(() async {
+        await db.into(db.timeEntries).insert(TimeEntriesCompanion.insert(
+              id: Value(id),
+              workspaceId: workspaceId,
+              userId: slot.userId,
+              projectId: Value(draft.projectId),
+              taskId: Value(draft.taskId),
+              description: Value(draft.description.trim()),
+              startAt: slot.start.toUtc(),
+              endAt: Value(slot.end.toUtc()),
+              durationSeconds: Value(slot.end.difference(slot.start).inSeconds),
+              billable: Value(draft.billable),
+              hourlyRateCents: Value(slot.hourlyRateCents),
+              createdBy: Value(createdBy ?? slot.userId),
+            ));
+        await _insertTags(id, workspaceId, slot.userId, draft.tagIds);
+      });
+    }
+    return ids;
   }
 
   /// Met à jour les champs d'une entrée (null = inchangé, sauf [clearProject]).
@@ -242,6 +277,7 @@ class TimeEntryRepository {
     required int targetSeconds,
     required bool billable,
     int? hourlyRateCents,
+    String? createdBy,
   }) async {
     final dayStart = DateTime(dayLocal.year, dayLocal.month, dayLocal.day);
     final dayEnd = dayStart.add(const Duration(days: 1));
@@ -276,6 +312,7 @@ class TimeEntryRepository {
               durationSeconds: Value(delta),
               billable: Value(billable),
               hourlyRateCents: Value(hourlyRateCents),
+              createdBy: Value(createdBy ?? userId),
             ));
       } else {
         var toRemove = -delta;

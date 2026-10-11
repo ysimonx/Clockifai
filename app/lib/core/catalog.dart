@@ -4,15 +4,17 @@ import 'package:flutter/foundation.dart';
 
 import '../data/drift/database.dart';
 import '../data/repositories/catalog_repository.dart';
+import '../data/repositories/team_repository.dart';
 import '../data/repositories/workspace_repository.dart';
 
 /// Référentiel du workspace courant, gardé en mémoire et tenu à jour par les flux Drift.
 /// Les écrans résolvent projets / clients / tags / membres par identifiant sans requête.
 class CatalogController extends ChangeNotifier {
-  CatalogController(this.repo, this.workspaces);
+  CatalogController(this.repo, this.workspaces, this.teams);
 
   final CatalogRepository repo;
   final WorkspaceRepository workspaces;
+  final TeamRepository teams;
 
   String? _workspaceId;
   final _subs = <StreamSubscription<dynamic>>[];
@@ -22,6 +24,10 @@ class CatalogController extends ChangeNotifier {
   List<Task> tasks = const [];
   List<Tag> tags = const [];
   List<WorkspaceMember> members = const [];
+  List<UserGroup> groups = const [];
+  List<UserGroupMember> groupMembers = const [];
+  List<TeamManagerAssignment> assignments = const [];
+  List<TeamScopeRow> scope = const [];
 
   Map<String, Project> _projectById = const {};
   Map<String, ClientItem> _clientById = const {};
@@ -43,6 +49,10 @@ class CatalogController extends ChangeNotifier {
     tasks = const [];
     tags = const [];
     members = const [];
+    groups = const [];
+    groupMembers = const [];
+    assignments = const [];
+    scope = const [];
     _reindex();
     if (workspaceId == null) return;
     _subs
@@ -50,7 +60,11 @@ class CatalogController extends ChangeNotifier {
       ..add(repo.watchClients(workspaceId).listen((v) => _set(() => clients = v)))
       ..add(repo.watchTasks(workspaceId).listen((v) => _set(() => tasks = v)))
       ..add(repo.watchTags(workspaceId).listen((v) => _set(() => tags = v)))
-      ..add(workspaces.watchMembers(workspaceId).listen((v) => _set(() => members = v)));
+      ..add(workspaces.watchMembers(workspaceId).listen((v) => _set(() => members = v)))
+      ..add(teams.watchGroups(workspaceId).listen((v) => _set(() => groups = v)))
+      ..add(teams.watchGroupMembers(workspaceId).listen((v) => _set(() => groupMembers = v)))
+      ..add(teams.watchAssignments(workspaceId).listen((v) => _set(() => assignments = v)))
+      ..add(teams.watchScope(workspaceId).listen((v) => _set(() => scope = v)));
   }
 
   void _set(void Function() apply) {
@@ -78,6 +92,22 @@ class CatalogController extends ChangeNotifier {
   List<Tag> get activeTags => tags.where((t) => !t.archived).toList();
   List<Task> tasksOf(String? projectId) =>
       tasks.where((t) => t.projectId == projectId && t.status == 'active').toList();
+
+  /// Membres actifs d'un groupe.
+  List<WorkspaceMember> membersOfGroup(String groupId) => [
+        for (final gm in groupMembers)
+          if (gm.groupId == groupId) ?memberOf(gm.userId),
+      ];
+
+  /// Collaborateurs encadrés par [managerId] (périmètre calculé par le serveur).
+  Set<String> managedBy(String? managerId) =>
+      managerId == null ? const {} : {for (final s in scope) if (s.managerId == managerId) s.userId};
+
+  /// Chefs d'équipe de [userId].
+  List<WorkspaceMember> managersOf(String userId) => [
+        for (final s in scope)
+          if (s.userId == userId) ?memberOf(s.managerId),
+      ];
 
   /// Taux horaire applicable : projet, sinon membre.
   int? rateFor({required String? projectId, required String userId}) =>

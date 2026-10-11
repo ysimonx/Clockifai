@@ -261,6 +261,21 @@ class _WorkspaceSettingsState extends State<_WorkspaceSettings> {
         onChanged: !e ? null : (v) => _update(WorkspacesCompanion(requireDescription: Value(v))),
       ),
       ListTile(
+        title: Text(l.timeForOthers),
+        subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l.timeForOthersHelp),
+          DropdownButton<String>(
+            value: ws.timeForOthers ?? 'admins',
+            isExpanded: true,
+            items: [
+              DropdownMenuItem(value: 'admins', child: Text(l.timeForOthersAdmins)),
+              DropdownMenuItem(value: 'admins_and_team_managers', child: Text(l.timeForOthersAdminsAndTeamManagers)),
+            ],
+            onChanged: !e ? null : (v) => _update(WorkspacesCompanion(timeForOthers: Value(v))),
+          ),
+        ]),
+      ),
+      ListTile(
         title: Text(l.autoStopTimers),
         subtitle: Text(l.autoStopTimersHelp),
         trailing: DropdownButton<int>(

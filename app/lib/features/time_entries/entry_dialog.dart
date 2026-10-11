@@ -7,12 +7,16 @@ import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
+import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 
 /// Création (entry == null) ou modification d'une entrée de temps.
+/// À la création, [initialUserIds] préremplit les collaborateurs (chef d'équipe, manager) :
+/// une entrée est créée par personne.
 Future<void> showEntryDialog(
   BuildContext context, {
   TimeEntry? entry,
@@ -20,6 +24,7 @@ Future<void> showEntryDialog(
   DateTime? initialStart,
   DateTime? initialEnd,
   String? initialProjectId,
+  Set<String>? initialUserIds,
 }) {
   return showDialog<void>(
     context: context,
@@ -29,17 +34,26 @@ Future<void> showEntryDialog(
       initialStart: initialStart,
       initialEnd: initialEnd,
       initialProjectId: initialProjectId,
+      initialUserIds: initialUserIds,
     ),
   );
 }
 
 class _EntryDialog extends StatefulWidget {
-  const _EntryDialog({this.entry, required this.tagIds, this.initialStart, this.initialEnd, this.initialProjectId});
+  const _EntryDialog({
+    this.entry,
+    required this.tagIds,
+    this.initialStart,
+    this.initialEnd,
+    this.initialProjectId,
+    this.initialUserIds,
+  });
   final TimeEntry? entry;
   final List<String> tagIds;
   final DateTime? initialStart;
   final DateTime? initialEnd;
   final String? initialProjectId;
+  final Set<String>? initialUserIds;
 
   @override
   State<_EntryDialog> createState() => _EntryDialogState();
@@ -55,6 +69,7 @@ class _EntryDialogState extends State<_EntryDialog> {
   String? _taskId;
   late List<String> _tagIds;
   late bool _billable;
+  late Set<String> _userIds;
   bool _saving = false;
 
   bool get _isRunning => widget.entry != null && widget.entry!.endAt == null;
@@ -74,6 +89,8 @@ class _EntryDialogState extends State<_EntryDialog> {
     _taskId = e?.taskId;
     _tagIds = List.of(widget.tagIds);
     _billable = e?.billable ?? true;
+    _userIds = {...?widget.initialUserIds};
+    if (_userIds.isEmpty) _userIds.add(context.read<SessionController>().userId!);
     _duration = TextEditingController(text: _end == null ? '' : formatHm(_seconds()));
   }
 
@@ -137,25 +154,46 @@ class _EntryDialogState extends State<_EntryDialog> {
     if (ws.requireDescription && _description.text.trim().isEmpty) return showSnack(context, l.descriptionRequired);
     if (!_isRunning && _endDt == null) return showSnack(context, l.endTimeRequired);
     if (_isRunning && _startDt.isAfter(DateTime.now())) return showSnack(context, l.startInFuture);
-    setState(() => _saving = true);
-    final userId = widget.entry?.userId ?? session.userId!;
-    final rate = catalog.rateFor(projectId: _projectId, userId: userId);
     final e = widget.entry;
+    // Seules les personnes pour qui l'on a le droit de saisir (la RLS refuserait les autres).
+    final rights = TeamRights.read(context);
+    final targets = _userIds.where(rights.canEditTimeOf).toSet();
+    if (e == null && targets.isEmpty) return showSnack(context, l.noTeammateSelected);
+    // Période déjà approuvée pour l'une des personnes : le serveur refuserait, on prévient avant.
     if (e == null) {
-      await entriesRepo.createManual(
+      for (final uid in targets) {
+        if (await modulesRepo.isDayApproved(ws.id, uid, _date)) {
+          if (mounted) showSnack(context, l.approvedPeriodFor(memberName(catalog.memberOf(uid))));
+          return;
+        }
+      }
+      if (!mounted) return;
+    }
+    setState(() => _saving = true);
+    final userId = e?.userId ?? session.userId!;
+    final rate = catalog.rateFor(projectId: _projectId, userId: userId);
+    if (e == null) {
+      await entriesRepo.createForMembers(
         workspaceId: ws.id,
-        userId: userId,
-        start: _startDt,
-        end: _endDt!,
+        slots: [
+          for (final uid in targets)
+            MemberSlot(
+              userId: uid,
+              start: _startDt,
+              end: _endDt!,
+              hourlyRateCents: catalog.rateFor(projectId: _projectId, userId: uid),
+            ),
+        ],
+        createdBy: session.userId,
         draft: EntryDraft(
           description: _description.text,
           projectId: _projectId,
           taskId: _taskId,
           billable: _billable,
           tagIds: _tagIds,
-          hourlyRateCents: rate,
         ),
       );
+      if (mounted && targets.length > 1) showSnack(context, l.entriesCreated(targets.length));
     } else {
       await entriesRepo.update(
         e,
@@ -188,9 +226,15 @@ class _EntryDialogState extends State<_EntryDialog> {
     final locale = context.localeTag;
     final locked = widget.entry?.locked ?? false;
     final session = context.watch<SessionController>();
+    final catalog = context.watch<CatalogController>();
+    final rights = TeamRights.of(context);
     final lockDate = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
     final inLockedPeriod = lockDate != null && _date.isBefore(lockDate) && !session.isAdmin;
-    final readOnly = (locked && !session.isAdmin) || inLockedPeriod;
+    final owner = widget.entry?.userId;
+    final notAllowed = owner != null && !rights.canEditTimeOf(owner);
+    final readOnly = (locked && !session.isAdmin) || inLockedPeriod || notAllowed;
+    final author = widget.entry?.createdBy;
+    final enteredByOther = owner != null && author != null && author != owner;
 
     return AlertDialog(
       title: Text(widget.entry == null ? l.addManualEntry : (_isRunning ? l.runningTimer : l.editEntry)),
@@ -204,9 +248,58 @@ class _EntryDialogState extends State<_EntryDialog> {
                 child: Row(children: [
                   Icon(Icons.lock, size: 16, color: theme.colorScheme.error),
                   const SizedBox(width: 6),
-                  Expanded(child: Text(l.entryLocked, style: TextStyle(color: theme.colorScheme.error))),
+                  Expanded(
+                    child: Text(
+                      notAllowed ? l.readOnlyTimeOf(memberName(catalog.memberOf(owner))) : l.entryLocked,
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
+                  ),
                 ]),
               ),
+            // Entrée de quelqu'un d'autre : à qui elle appartient et qui l'a saisie.
+            if (owner != null && (owner != session.userId || enteredByOther))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(children: [
+                  Icon(Icons.person_outline, size: 16, color: theme.colorScheme.outline),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      [
+                        memberName(catalog.memberOf(owner)),
+                        if (enteredByOther) l.enteredBy(memberName(catalog.memberOf(author))),
+                      ].join(' · '),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ]),
+              ),
+            // Création par un chef d'équipe ou un manager : une entrée par collaborateur choisi.
+            if (widget.entry == null && rights.canEditOthers) ...[
+              OutlinedButton.icon(
+                icon: const Icon(Icons.people_outline, size: 18),
+                label: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      _userIds.isEmpty ? l.selectTeammates : _userIds.map((u) => memberName(catalog.memberOf(u))).join(', '),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                onPressed: () async {
+                  final picked = await showMembersPicker(
+                    context,
+                    title: l.teammates,
+                    members: rights.editableMembers,
+                    selected: _userIds,
+                  );
+                  if (picked != null) setState(() => _userIds = picked);
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
             TextField(
               controller: _description,
               enabled: !readOnly,

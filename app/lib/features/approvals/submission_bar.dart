@@ -10,8 +10,10 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/modules_repository.dart';
 
 /// Bandeau de la feuille de temps : état d'approbation de la période et action de soumission.
+/// Pour la feuille d'un collaborateur ([userId] ≠ soi) : état seul, l'approbation se fait dans Approbations.
 class SubmissionBar extends StatelessWidget {
-  const SubmissionBar({super.key, required this.periodStart, required this.periodEnd, required this.totalSeconds});
+  const SubmissionBar({super.key, this.userId, required this.periodStart, required this.periodEnd, required this.totalSeconds});
+  final String? userId;
   final DateTime periodStart;
   final DateTime periodEnd;
   final int totalSeconds;
@@ -21,8 +23,10 @@ class SubmissionBar extends StatelessWidget {
     final l = context.l10n;
     final theme = Theme.of(context);
     final session = context.watch<SessionController>();
+    final uid = userId ?? session.userId;
+    final mine = uid == session.userId;
     return StreamBuilder<List<TimesheetSubmission>>(
-      stream: modulesRepo.watchSubmissions(session.workspaceId!, userId: session.userId),
+      stream: modulesRepo.watchSubmissions(session.workspaceId!, userId: uid),
       builder: (context, snap) {
         final sub = (snap.data ?? const <TimesheetSubmission>[]).where((s) => s.periodStart == dayKey(periodStart)).firstOrNull;
         final status = sub?.status;
@@ -45,7 +49,7 @@ class SubmissionBar extends StatelessWidget {
                     Text(sub!.decisionNote!, style: theme.textTheme.bodySmall),
                 ]),
               ),
-              if (status == null || status == 'withdrawn' || status == 'rejected')
+              if (mine && (status == null || status == 'withdrawn' || status == 'rejected'))
                 FilledButton.tonalIcon(
                   icon: const Icon(Icons.send),
                   label: Text(l.submitForApproval),
@@ -65,7 +69,7 @@ class SubmissionBar extends StatelessWidget {
                           if (context.mounted) showSnack(context, l.submittedForApproval(formatHm(totalSeconds)));
                         },
                 ),
-              if (status == 'submitted')
+              if (mine && status == 'submitted')
                 TextButton(onPressed: () => modulesRepo.withdrawSubmission(sub!.id), child: Text(l.withdraw)),
             ]),
           ),

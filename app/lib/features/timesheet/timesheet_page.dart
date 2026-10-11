@@ -7,12 +7,15 @@ import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
+import '../../core/widgets/teammates.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../approvals/submission_bar.dart';
 
 /// Feuille de temps hebdomadaire : projets × jours, cellules éditables.
+/// Un chef d'équipe ou un manager choisit la personne affichée (bandeau « Collaborateur »).
 class TimesheetPage extends StatefulWidget {
   const TimesheetPage({super.key});
 
@@ -32,6 +35,7 @@ class _RowKey {
 
 class _TimesheetPageState extends State<TimesheetPage> {
   late DateTime _weekStart;
+  String? _userId; // personne affichée (null = soi)
   final _extraRows = <_RowKey>{};
   bool _init = false;
 
@@ -53,6 +57,9 @@ class _TimesheetPageState extends State<TimesheetPage> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final session = context.watch<SessionController>();
+    final rights = TeamRights.of(context);
+    final userId = TeammateBar.resolve(rights, _userId);
+    final editable = rights.canEditTimeOf(userId);
     final ws = session.workspace!;
     final days = [for (var i = 0; i < 7; i++) DateTime(_weekStart.year, _weekStart.month, _weekStart.day + i)];
     final weekEnd = days.last.add(const Duration(days: 1));
@@ -69,7 +76,7 @@ class _TimesheetPageState extends State<TimesheetPage> {
         IconButton(onPressed: () => _shiftWeek(1), icon: const Icon(Icons.chevron_right), tooltip: l.nextWeek),
       ],
       child: StreamBuilder<List<EntryRow>>(
-        stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: session.userId, from: days.first, to: weekEnd),
+        stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: userId, from: days.first, to: weekEnd),
         builder: (context, snap) {
           final rows = snap.data ?? const <EntryRow>[];
           final cells = <_RowKey, List<int>>{};
@@ -92,9 +99,18 @@ class _TimesheetPageState extends State<TimesheetPage> {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(12),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              SubmissionBar(periodStart: days.first, periodEnd: days.last, totalSeconds: grand),
+              TeammateBar(
+                userId: userId,
+                onChanged: (v) => setState(() {
+                  _userId = v;
+                  _extraRows.clear();
+                }),
+              ),
+              SubmissionBar(userId: userId, periodStart: days.first, periodEnd: days.last, totalSeconds: grand),
               const SizedBox(height: 12),
               Card(
+              // Clé par personne : les cellules repartent de zéro quand on change de collaborateur.
+              key: ValueKey(userId),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: ConstrainedBox(
@@ -103,23 +119,24 @@ class _TimesheetPageState extends State<TimesheetPage> {
                     _headerRow(context, days),
                     const Divider(height: 1),
                     for (final k in keys) ...[
-                      _TimesheetRow(rowKey: k, values: cells[k]!, days: days),
+                      _TimesheetRow(rowKey: k, values: cells[k]!, days: days, userId: userId, readOnly: !editable),
                       const Divider(height: 1),
                     ],
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          icon: const Icon(Icons.add),
-                          label: Text(l.addRow),
-                          onPressed: () async {
-                            final pick = await showProjectPicker(context);
-                            if (pick != null) setState(() => _extraRows.add(_RowKey(pick.projectId)));
-                          },
+                    if (editable)
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            icon: const Icon(Icons.add),
+                            label: Text(l.addRow),
+                            onPressed: () async {
+                              final pick = await showProjectPicker(context);
+                              if (pick != null) setState(() => _extraRows.add(_RowKey(pick.projectId)));
+                            },
+                          ),
                         ),
                       ),
-                    ),
                     const Divider(height: 1),
                     _totalsRow(context, dayTotals, grand),
                   ]),
@@ -170,10 +187,12 @@ class _TimesheetPageState extends State<TimesheetPage> {
 }
 
 class _TimesheetRow extends StatelessWidget {
-  const _TimesheetRow({required this.rowKey, required this.values, required this.days});
+  const _TimesheetRow({required this.rowKey, required this.values, required this.days, required this.userId, required this.readOnly});
   final _RowKey rowKey;
   final List<int> values;
   final List<DateTime> days;
+  final String userId;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -184,17 +203,22 @@ class _TimesheetRow extends StatelessWidget {
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: ProjectLabel(projectId: rowKey.projectId)),
       ),
       for (var i = 0; i < 7; i++)
-        SizedBox(width: 76, child: _Cell(seconds: values[i], projectId: rowKey.projectId, day: days[i])),
+        SizedBox(
+          width: 76,
+          child: _Cell(seconds: values[i], projectId: rowKey.projectId, day: days[i], userId: userId, readOnly: readOnly),
+        ),
       SizedBox(width: 84, child: Text(formatHm(total), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600))),
     ]);
   }
 }
 
 class _Cell extends StatefulWidget {
-  const _Cell({required this.seconds, required this.projectId, required this.day});
+  const _Cell({required this.seconds, required this.projectId, required this.day, required this.userId, required this.readOnly});
   final int seconds;
   final String? projectId;
   final DateTime day;
+  final String userId;
+  final bool readOnly;
 
   @override
   State<_Cell> createState() => _CellState();
@@ -228,6 +252,7 @@ class _CellState extends State<_Cell> {
   }
 
   Future<void> _commit() async {
+    if (widget.readOnly) return;
     final secs = parseDuration(_c.text);
     if (secs == null) {
       showSnack(context, context.l10n.invalidDuration);
@@ -253,14 +278,21 @@ class _CellState extends State<_Cell> {
       _c.text = _fmt(widget.seconds);
       return;
     }
+    if (await modulesRepo.isDayApproved(ws.id, widget.userId, widget.day)) {
+      if (!mounted) return;
+      showSnack(context, context.l10n.approvedPeriodFor(memberName(catalog.memberOf(widget.userId))));
+      _c.text = _fmt(widget.seconds);
+      return;
+    }
     await entriesRepo.setDayTotal(
       workspaceId: ws.id,
-      userId: session.userId!,
+      userId: widget.userId,
       projectId: widget.projectId,
       dayLocal: widget.day,
       targetSeconds: secs,
       billable: project?.billableDefault ?? true,
-      hourlyRateCents: catalog.rateFor(projectId: widget.projectId, userId: session.userId!),
+      hourlyRateCents: catalog.rateFor(projectId: widget.projectId, userId: widget.userId),
+      createdBy: session.userId,
     );
   }
 
@@ -270,6 +302,7 @@ class _CellState extends State<_Cell> {
         child: TextField(
           controller: _c,
           focusNode: _focus,
+          readOnly: widget.readOnly,
           textAlign: TextAlign.center,
           decoration: const InputDecoration(hintText: '–', contentPadding: EdgeInsets.symmetric(vertical: 10)),
           onSubmitted: (_) => _focus.unfocus(),

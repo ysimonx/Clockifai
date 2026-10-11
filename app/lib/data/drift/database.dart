@@ -53,6 +53,8 @@ class Workspaces extends Table {
   TextColumn get invoicePrefix => text().clientDefault(() => 'F')();
   RealColumn get defaultTaxPercent => real().clientDefault(() => 20)();
   IntColumn get invoiceDueDays => integer().clientDefault(() => 30)();
+  /// 'admins' | 'admins_and_team_managers' (nullable côté client : rempli par la sync).
+  TextColumn get timeForOthers => text().nullable()();
   TextColumn get createdBy => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
@@ -167,6 +169,9 @@ class TimeEntries extends Table {
   BoolColumn get billable => boolean().clientDefault(() => true)();
   IntColumn get hourlyRateCents => integer().nullable()();
   BoolColumn get locked => boolean().clientDefault(() => false)();
+  /// Auteur de la saisie (posé par le serveur ; null = la personne elle-même).
+  TextColumn get createdBy => text().nullable()();
+  TextColumn get updatedBy => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
@@ -225,6 +230,8 @@ class TimeOffPolicies extends Table {
   RealColumn get annualAllowance => real().nullable()();
   BoolColumn get paid => boolean().clientDefault(() => true)();
   BoolColumn get requiresApproval => boolean().clientDefault(() => true)();
+  /// 'managers' | 'managers_and_team_managers' (nullable côté client : rempli par la sync).
+  TextColumn get approvers => text().nullable()();
   BoolColumn get archived => boolean().clientDefault(() => false)();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
@@ -353,6 +360,64 @@ class InvoiceItems extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+// ---------------------------------------------------------------------------
+// Chefs d'équipe : groupes d'utilisateurs, affectations, périmètre (team_scope, écrit par le serveur).
+// ---------------------------------------------------------------------------
+
+@DataClassName('UserGroup')
+class UserGroups extends Table {
+  TextColumn get id => text().clientDefault(newId)();
+  TextColumn get workspaceId => text()();
+  TextColumn get name => text()();
+  DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+@DataClassName('UserGroupMember')
+class UserGroupMembers extends Table {
+  TextColumn get id => text().clientDefault(newId)();
+  TextColumn get workspaceId => text()();
+  TextColumn get groupId => text()();
+  TextColumn get userId => text()();
+  DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Un chef d'équipe encadre un utilisateur ([userId]) ou un groupe ([groupId]).
+@DataClassName('TeamManagerAssignment')
+class TeamManagerAssignments extends Table {
+  TextColumn get id => text().clientDefault(newId)();
+  TextColumn get workspaceId => text()();
+  TextColumn get managerId => text()();
+  TextColumn get userId => text().nullable()();
+  TextColumn get groupId => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Périmètre effectif (chef → collaborateur), en lecture seule côté client.
+@DataClassName('TeamScopeRow')
+class TeamScope extends Table {
+  TextColumn get id => text().clientDefault(newId)();
+  TextColumn get workspaceId => text()();
+  TextColumn get managerId => text()();
+  TextColumn get userId => text()();
+  DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('InvoiceEntry')
 class InvoiceEntries extends Table {
   TextColumn get id => text().clientDefault(newId)();
@@ -385,6 +450,10 @@ class InvoiceEntries extends Table {
   Invoices,
   InvoiceItems,
   InvoiceEntries,
+  UserGroups,
+  UserGroupMembers,
+  TeamManagerAssignments,
+  TeamScope,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);

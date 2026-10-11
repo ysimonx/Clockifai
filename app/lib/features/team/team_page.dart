@@ -9,12 +9,16 @@ import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/services_api.dart';
 import '../../core/session.dart';
+import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/pickers.dart';
+import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../settings/settings_page.dart' show roleLabel;
 
-/// Membres du workspace : rôle, taux, activité de la semaine et chronomètre en cours.
+/// Membres du workspace : rôle, taux, activité de la semaine et chronomètre en cours ;
+/// groupes d'utilisateurs et chefs d'équipe (plans/03-saisie-pour-autrui.md).
 class TeamPage extends StatefulWidget {
   const TeamPage({super.key});
 
@@ -28,9 +32,47 @@ class _TeamPageState extends State<TeamPage> {
     final l = context.l10n;
     final session = context.watch<SessionController>();
     final catalog = context.watch<CatalogController>();
+    final rights = TeamRights.of(context);
     final ws = session.workspace!;
     final weekStart = startOfWeek(DateTime.now(), ws.weekStart);
     final members = catalog.members;
+
+    final membersTab = StreamBuilder<List<EntryRow>>(
+      // Base locale : un chef d'équipe n'a reçu que son temps et celui de son périmètre.
+      stream: entriesRepo.watchEntries(
+        workspaceId: ws.id,
+        userId: rights.seesTeam ? null : session.userId,
+        from: weekStart,
+        to: weekStart.add(const Duration(days: 7)),
+        includeRunning: true,
+      ),
+      builder: (context, snap) {
+        final rows = snap.data ?? const <EntryRow>[];
+        final weekByUser = <String, int>{};
+        final runningByUser = <String, EntryRow>{};
+        for (final r in rows) {
+          weekByUser[r.entry.userId] = (weekByUser[r.entry.userId] ?? 0) + r.seconds;
+          if (r.entry.endAt == null) runningByUser[r.entry.userId] = r;
+        }
+        return ListView(padding: const EdgeInsets.all(16), children: [
+          if (!rights.seesTeam)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(l.teamMemberHint, style: Theme.of(context).textTheme.bodySmall),
+            ),
+          for (final m in members)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _MemberCard(
+                member: m,
+                weekSeconds: weekByUser[m.userId] ?? 0,
+                running: runningByUser[m.userId],
+                showActivity: m.userId == session.userId || rights.manages(m.userId),
+              ),
+            ),
+        ]);
+      },
+    );
 
     return PageScaffold(
       title: l.team,
@@ -38,40 +80,15 @@ class _TeamPageState extends State<TeamPage> {
         if (session.isAdmin)
           FilledButton.icon(onPressed: () => _invite(context), icon: const Icon(Icons.person_add_alt), label: Text(l.invite)),
       ],
-      child: StreamBuilder<List<EntryRow>>(
-        stream: entriesRepo.watchEntries(
-          workspaceId: ws.id,
-          userId: session.isManager ? null : session.userId,
-          from: weekStart,
-          to: weekStart.add(const Duration(days: 7)),
-          includeRunning: true,
-        ),
-        builder: (context, snap) {
-          final rows = snap.data ?? const <EntryRow>[];
-          final weekByUser = <String, int>{};
-          final runningByUser = <String, EntryRow>{};
-          for (final r in rows) {
-            weekByUser[r.entry.userId] = (weekByUser[r.entry.userId] ?? 0) + r.seconds;
-            if (r.entry.endAt == null) runningByUser[r.entry.userId] = r;
-          }
-          return ListView(padding: const EdgeInsets.all(16), children: [
-            if (!session.isManager)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(l.teamMemberHint, style: Theme.of(context).textTheme.bodySmall),
-              ),
-            for (final m in members)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _MemberCard(
-                  member: m,
-                  weekSeconds: weekByUser[m.userId] ?? 0,
-                  running: runningByUser[m.userId],
-                  showActivity: session.isManager || m.userId == session.userId,
-                ),
-              ),
-          ]);
-        },
+      child: DefaultTabController(
+        length: 2,
+        child: Column(children: [
+          TabBar(tabs: [
+            Tab(text: l.members),
+            Tab(text: '${l.groups} (${catalog.groups.length})'),
+          ]),
+          Expanded(child: TabBarView(children: [membersTab, const _GroupsTab()])),
+        ]),
       ),
     );
   }
@@ -165,6 +182,14 @@ class _MemberCard extends StatelessWidget {
     final ws = session.workspace!;
     final locale = context.localeTag;
     final run = running;
+    // Ce que le membre encadre : groupes entiers, puis personnes affectées directement.
+    final manages = [
+      for (final a in catalog.assignments.where((a) => a.managerId == member.userId))
+        a.groupId != null
+            ? catalog.groups.where((g) => g.id == a.groupId).firstOrNull?.name
+            : memberName(catalog.memberOf(a.userId!)),
+    ].whereType<String>().toList();
+    final managers = [for (final m in catalog.managersOf(member.userId)) memberName(m)];
 
     return Card(
       child: ListTile(
@@ -199,6 +224,10 @@ class _MemberCard extends StatelessWidget {
           ],
           if (session.isManager && member.hourlyRateCents != null)
             Text('${l.hourlyRate}: ${formatMoney(member.hourlyRateCents! / 100, ws.currency, locale)}${l.perHour}'),
+          if (manages.isNotEmpty)
+            Text(l.managesLabel(manages.join(', ')), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary)),
+          if (managers.isNotEmpty)
+            Text(l.managedByLabel(managers.join(', ')), style: theme.textTheme.bodySmall),
         ]),
         isThreeLine: true,
         trailing: session.isAdmin && member.userId != session.userId ? _AdminMenu(member: member) : null,
@@ -221,6 +250,8 @@ class _AdminMenu extends StatelessWidget {
             await workspaceRepo.updateMember(member.id, WorkspaceMembersCompanion(role: Value(v)));
           case 'rate':
             await _editRates(context);
+          case 'teamManager':
+            await showDialog<void>(context: context, builder: (_) => _TeamManagerDialog(manager: member));
           case 'toggle':
             await workspaceRepo.updateMember(member.id, WorkspaceMembersCompanion(status: Value(member.status == 'active' ? 'inactive' : 'active')));
           case 'remove':
@@ -236,6 +267,7 @@ class _AdminMenu extends StatelessWidget {
           const PopupMenuDivider(),
         ],
         PopupMenuItem(value: 'rate', child: Text(l.editRates)),
+        PopupMenuItem(value: 'teamManager', child: Text(l.teamManagerOf)),
         if (member.role != 'owner') ...[
           PopupMenuItem(value: 'toggle', child: Text(member.status == 'active' ? l.deactivate : l.activate)),
           PopupMenuItem(value: 'remove', child: Text(l.remove)),
@@ -277,5 +309,193 @@ class _AdminMenu extends StatelessWidget {
       member.id,
       WorkspaceMembersCompanion(hourlyRateCents: Value(parse(hourly.text)), costRateCents: Value(parse(cost.text))),
     );
+  }
+}
+
+/// Ce qu'encadre un chef d'équipe : groupes entiers et/ou personnes (admins).
+class _TeamManagerDialog extends StatefulWidget {
+  const _TeamManagerDialog({required this.manager});
+  final WorkspaceMember manager;
+
+  @override
+  State<_TeamManagerDialog> createState() => _TeamManagerDialogState();
+}
+
+class _TeamManagerDialogState extends State<_TeamManagerDialog> {
+  late final Set<String> _users;
+  late final Set<String> _groups;
+
+  @override
+  void initState() {
+    super.initState();
+    final mine = context.read<CatalogController>().assignments.where((a) => a.managerId == widget.manager.userId);
+    _users = {for (final a in mine) ?a.userId};
+    _groups = {for (final a in mine) ?a.groupId};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    final catalog = context.watch<CatalogController>();
+    final others = catalog.members.where((m) => m.userId != widget.manager.userId && m.status == 'active').toList();
+    return AlertDialog(
+      title: Text('${l.teamManagerOf} ${memberName(widget.manager)}'),
+      contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
+      content: SizedBox(
+        width: 420,
+        height: 480,
+        child: ListView(children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+            child: Text(l.teamManagerOfHelp, style: theme.textTheme.bodySmall),
+          ),
+          if (catalog.groups.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+              child: Text(l.groups, style: theme.textTheme.titleSmall),
+            ),
+            for (final g in catalog.groups)
+              CheckboxListTile(
+                dense: true,
+                value: _groups.contains(g.id),
+                secondary: const Icon(Icons.group_work_outlined),
+                title: Text(g.name),
+                subtitle: Text(l.memberCount(catalog.membersOfGroup(g.id).length)),
+                onChanged: (v) => setState(() => v == true ? _groups.add(g.id) : _groups.remove(g.id)),
+              ),
+          ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+            child: Text(l.users, style: theme.textTheme.titleSmall),
+          ),
+          for (final m in others)
+            CheckboxListTile(
+              dense: true,
+              value: _users.contains(m.userId),
+              secondary: CircleAvatar(radius: 14, child: Text(memberName(m)[0].toUpperCase())),
+              title: Text(memberName(m)),
+              onChanged: (v) => setState(() => v == true ? _users.add(m.userId) : _users.remove(m.userId)),
+            ),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
+        FilledButton(
+          onPressed: () async {
+            await teamRepo.setManagerAssignments(
+              workspaceId: widget.manager.workspaceId,
+              managerId: widget.manager.userId,
+              userIds: _users,
+              groupIds: _groups,
+            );
+            if (context.mounted) Navigator.pop(context);
+          },
+          child: Text(l.save),
+        ),
+      ],
+    );
+  }
+}
+
+/// Groupes d'utilisateurs : lecture pour tous, gestion par les admins.
+class _GroupsTab extends StatelessWidget {
+  const _GroupsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    final session = context.watch<SessionController>();
+    final catalog = context.watch<CatalogController>();
+    final groups = catalog.groups;
+    return ListView(padding: const EdgeInsets.all(16), children: [
+      if (session.isAdmin)
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(onPressed: () => _create(context), icon: const Icon(Icons.add), label: Text(l.newGroup)),
+        ),
+      if (groups.isEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 32),
+          child: EmptyState(icon: Icons.group_work_outlined, title: l.noGroups, message: l.noGroupsMessage),
+        ),
+      for (final g in groups)
+        Card(
+          child: ListTile(
+            leading: const CircleAvatar(child: Icon(Icons.group_work_outlined)),
+            title: Text(g.name),
+            subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(l.memberCount(catalog.membersOfGroup(g.id).length)),
+              if (catalog.membersOfGroup(g.id).isNotEmpty)
+                Text(catalog.membersOfGroup(g.id).map(memberName).join(', '), style: theme.textTheme.bodySmall),
+              if (_managersOfGroup(catalog, g.id).isNotEmpty)
+                Text(l.managedByLabel(_managersOfGroup(catalog, g.id).join(', ')),
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary)),
+            ]),
+            isThreeLine: true,
+            onTap: session.isAdmin ? () => _editMembers(context, g) : null,
+            trailing: session.isAdmin
+                ? PopupMenuButton<String>(
+                    onSelected: (v) async {
+                      switch (v) {
+                        case 'members':
+                          await _editMembers(context, g);
+                        case 'rename':
+                          final name = await promptText(context, title: l.groupName, label: l.name, initial: g.name);
+                          if (name != null && name.trim().isNotEmpty) await teamRepo.renameGroup(g.id, name);
+                        case 'delete':
+                          if (await confirm(context, title: l.deleteGroup, message: l.deleteGroupMessage, confirmLabel: l.delete)) {
+                            await teamRepo.deleteGroup(g.id);
+                          }
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'members', child: Text(l.groupMembers)),
+                      PopupMenuItem(value: 'rename', child: Text(l.edit)),
+                      PopupMenuItem(value: 'delete', child: Text(l.delete)),
+                    ],
+                  )
+                : null,
+          ),
+        ),
+    ]);
+  }
+
+  static List<String> _managersOfGroup(CatalogController catalog, String groupId) => [
+        for (final a in catalog.assignments.where((a) => a.groupId == groupId)) memberName(catalog.memberOf(a.managerId)),
+      ];
+
+  Future<void> _create(BuildContext context) async {
+    final l = context.l10n;
+    final session = context.read<SessionController>();
+    final name = await promptText(context, title: l.newGroup, label: l.groupName);
+    if (name == null || name.trim().isEmpty || !context.mounted) return;
+    final group = await teamRepo.createGroup(session.workspaceId!, name);
+    if (!context.mounted) return;
+    final catalog = context.read<CatalogController>();
+    final picked = await showMembersPicker(
+      context,
+      title: l.groupMembers,
+      members: catalog.members.where((m) => m.status == 'active').toList(),
+      selected: const {},
+    );
+    if (picked != null) {
+      await teamRepo.setGroupMembers(workspaceId: session.workspaceId!, groupId: group, userIds: picked);
+    }
+  }
+
+  Future<void> _editMembers(BuildContext context, UserGroup group) async {
+    final l = context.l10n;
+    final catalog = context.read<CatalogController>();
+    final picked = await showMembersPicker(
+      context,
+      title: '${l.groupMembers} · ${group.name}',
+      members: catalog.members.where((m) => m.status == 'active').toList(),
+      selected: {for (final m in catalog.membersOfGroup(group.id)) m.userId},
+    );
+    if (picked != null) {
+      await teamRepo.setGroupMembers(workspaceId: group.workspaceId, groupId: group.id, userIds: picked);
+    }
   }
 }

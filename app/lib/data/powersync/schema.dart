@@ -36,6 +36,7 @@ const schema = Schema([
     Column.text('invoice_prefix'),
     Column.real('default_tax_percent'),
     Column.integer('invoice_due_days'),
+    Column.text('time_for_others'),
     Column.text('created_by'),
     ..._audit,
     ..._softDelete,
@@ -118,6 +119,8 @@ const schema = Schema([
     Column.integer('billable'),
     Column.integer('hourly_rate_cents'),
     Column.integer('locked'),
+    Column.text('created_by'),
+    Column.text('updated_by'),
     ..._audit,
     ..._softDelete,
   ], indexes: [
@@ -155,6 +158,7 @@ const schema = Schema([
     Column.real('annual_allowance'),
     Column.integer('paid'),
     Column.integer('requires_approval'),
+    Column.text('approvers'),
     Column.integer('archived'),
     ..._audit,
     ..._softDelete,
@@ -238,6 +242,32 @@ const schema = Schema([
   ], indexes: [
     Index('invoice_items_invoice', [IndexedColumn('invoice_id')]),
   ], ignoreEmptyUpdates: true),
+  // Chefs d'équipe : groupes, affectations et périmètre calculé par le serveur (team_scope).
+  Table('user_groups', [
+    Column.text('workspace_id'),
+    Column.text('name'),
+    ..._audit,
+    ..._softDelete,
+  ], ignoreEmptyUpdates: true),
+  Table('user_group_members', [
+    Column.text('workspace_id'),
+    Column.text('group_id'),
+    Column.text('user_id'),
+    ..._audit,
+  ]),
+  Table('team_manager_assignments', [
+    Column.text('workspace_id'),
+    Column.text('manager_id'),
+    Column.text('user_id'),
+    Column.text('group_id'),
+    ..._audit,
+  ]),
+  Table('team_scope', [
+    Column.text('workspace_id'),
+    Column.text('manager_id'),
+    Column.text('user_id'),
+    Column.text('created_at'),
+  ]),
   Table('invoice_entries', [
     Column.text('workspace_id'),
     Column.text('invoice_id'),

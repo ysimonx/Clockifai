@@ -7,6 +7,7 @@ import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/modules_repository.dart';
@@ -14,7 +15,7 @@ import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/time_entries_page.dart';
 import 'submission_bar.dart';
 
-/// Validation des feuilles de temps soumises (managers).
+/// Validation des feuilles de temps soumises : managers (tout le workspace), chefs d'équipe (leur périmètre).
 class ApprovalsPage extends StatefulWidget {
   const ApprovalsPage({super.key});
 
@@ -29,7 +30,8 @@ class _ApprovalsPageState extends State<ApprovalsPage> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final session = context.watch<SessionController>();
-    if (!session.isManager) return EmptyState(icon: Icons.lock_outline, title: l.managersOnly);
+    final rights = TeamRights.of(context);
+    if (!rights.seesTeam) return EmptyState(icon: Icons.lock_outline, title: l.managersOnly);
     return PageScaffold(
       title: l.approvals,
       actions: [
@@ -42,7 +44,10 @@ class _ApprovalsPageState extends State<ApprovalsPage> {
       child: StreamBuilder<List<TimesheetSubmission>>(
         stream: modulesRepo.watchSubmissions(session.workspaceId!, status: _history ? null : 'submitted'),
         builder: (context, snap) {
-          final subs = (snap.data ?? const <TimesheetSubmission>[]).where((s) => _history ? s.status != 'submitted' : true).toList();
+          final subs = (snap.data ?? const <TimesheetSubmission>[])
+              .where((s) => rights.canApproveTimesheetOf(s.userId))
+              .where((s) => _history ? s.status != 'submitted' : true)
+              .toList();
           if (subs.isEmpty) {
             return EmptyState(icon: Icons.task_alt, title: _history ? l.noHistory : l.nothingToApprove);
           }

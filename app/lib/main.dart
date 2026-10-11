@@ -58,7 +58,7 @@ class ClockifaiApp extends StatefulWidget {
 
 class _ClockifaiAppState extends State<ClockifaiApp> {
   late final SessionController _session = SessionController(sync: syncService, workspaces: workspaceRepo, prefs: widget.prefs);
-  late final CatalogController _catalog = CatalogController(catalogRepo, workspaceRepo);
+  late final CatalogController _catalog = CatalogController(catalogRepo, workspaceRepo, teamRepo);
   late final LocaleController _locale = LocaleController(widget.prefs);
   late final GoRouter _router = buildRouter(_session);
 

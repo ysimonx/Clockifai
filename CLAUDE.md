@@ -40,13 +40,15 @@ make app-analyze / make app-test
 - Suppressions : **soft delete** (`deleted_at`) pour les tables métier ; les Sync Streams filtrent `deleted_at IS NULL`. `time_entry_tags` est supprimé physiquement.
 - Booléens : `integer` 0/1 côté SQLite, acceptés tels quels par Postgres.
 - Après modification de `powersync/sync-config.yaml` : `docker compose … restart powersync`. Les listes littérales `IN ('a','b')` sont refusées dans les sous-requêtes des streams.
-- Trois flux : `workspace_core` (référentiel, auto), `my_time_entries` (données personnelles, auto), `team_data` (tout le workspace, souscrit par `SessionController` pour les managers).
+- Quatre flux : `workspace_core` (référentiel, auto), `my_time_entries` (données personnelles, auto), `team_data` (tout le workspace, souscrit par `SessionController` pour les managers), `managed_team` (temps, feuilles et absences des collaborateurs d'un chef d'équipe, auto, jointure sur `team_scope` par `(workspace_id, user_id)`).
+- Une colonne non nulle ajoutée à une table existante n'est répliquée qu'au prochain changement de ligne : la migration « touche » les lignes (`update … set col = col`) et la colonne Drift reste nullable.
 - Dates sans heure (`period_start`, `start_date`, `date`…) : texte `yyyy-MM-dd` côté client (`dayKey()` / `parseDay()` dans `modules_repository.dart`).
 - Le worker web PowerSync est **compilé depuis l'app** (`make app-web-assets`), pas téléchargé : le worker publié peut être en décalage de version avec `sqlite_async`.
 
 ### Base de données
 - Migrations **append-only** numérotées dans `supabase/migrations/` ; ne jamais réécrire une migration déjà appliquée, en ajouter une nouvelle. `*.admin.sql` s'exécute en `supabase_admin` (rôles, publication, `auth.users`), le reste en `postgres`. Suivi : `clockifai_meta.schema_migrations`.
 - Toute nouvelle table métier : `workspace_id`, `created_at`, `updated_at` (trigger `set_updated_at`), `deleted_at`, RLS activée avec les helpers `is_member` / `is_manager` / `is_admin`.
+- Chefs d'équipe (migration 0009, `plans/03-saisie-pour-autrui.md`) : ce n'est pas un rôle. Le périmètre est matérialisé dans `team_scope`, recalculé par trigger (`refresh_team_scope`) depuis `team_manager_assignments` et `user_groups`. Droits : `manages()` (lecture), `can_edit_others_time()` (saisie pour autrui selon `workspaces.time_for_others`), `can_decide_time_off()` (selon `time_off_policies.approvers`). `time_entries.created_by` / `updated_by` sont posés par trigger depuis le JWT. Côté app, `TeamRights` (`core/team_rights.dart`) reproduit ces règles pour l'affichage.
 - Les écritures client passent par **upsert** : la politique SELECT doit accepter la nouvelle ligne (cf. migration 0005).
 - Règles métier critiques côté serveur (triggers), pas seulement dans l'app : verrouillage des entrées, chronomètre unique, garde des rôles, approbations, absences, numérotation et totaux de facture.
 - Un trigger qui doit modifier des entrées sans passer la garde pose `set_config('clockifai.bypass_guard', 'on', true)` (voir `timesheet_submissions_apply`).
@@ -64,8 +66,8 @@ make app-analyze / make app-test
 - Les droits affichés suivent `session.isManager` / `isAdmin`, mais la RLS reste la seule vraie barrière.
 
 ## Tests
-- `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètre, verrouillage, upsert du connecteur, exports).
-- `app/test/` : parsing des durées, dépôts (entrées, modules) sur base Drift en mémoire.
+- `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètre, verrouillage, upsert du connecteur, exports, chefs d'équipe).
+- `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, sur base Drift en mémoire.
 - Parcours navigateur (Playwright, hors dépôt) : activer l'arbre d'accessibilité Flutter en cliquant `flt-semantics-placeholder`, puis cliquer un champ et taper au clavier (`fill` ne suffit pas).
 
 ## Ports locaux

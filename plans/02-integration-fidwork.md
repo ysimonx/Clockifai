@@ -36,7 +36,7 @@
 | Phase (montage, démontage, modification, visite, pose, dépose, réception) | **Tag** | permet de remplir séparément « heures montage » et « heures démontage » |
 | Utilisateur avec rôle `échafaudeur` / `calorifugeur` sur un site lié | **Membre** (rôle `member`) | rapprochement par email ; invitation automatique si absent |
 | Coordinateur, chef de chantier, responsable organisation | **Manager** | liste de rôles configurable par lien |
-| Entreprise (`companies`) | Groupe d'utilisateurs (filtre de rapport) | phase 3 de Clockifai (groupes) ; d'ici là, champ `company` sur le membre |
+| Entreprise (`companies`) | Groupe d'utilisateurs (filtre de rapport) | groupes du plan [03-saisie-pour-autrui.md](03-saisie-pour-autrui.md) ; d'ici là, champ `company` sur le membre |
 
 ## 4. Architecture des flux
 
@@ -131,5 +131,5 @@ L'app envoie son jeton Fidwork à `POST /api/integrations/fidwork/session` ; Clo
 1. Le workspace Clockifai appartient-il à l'entreprise d'échafaudage / calorifugeage ou au donneur d'ordre ?
 2. Les compagnons doivent-ils pointer **uniquement** depuis Fidwork (recommandé) ou aussi depuis l'app Clockifai ?
 3. Granularité souhaitée : par intervention (recommandé), ou aussi par phase et par repère ?
-4. Le pointage d'équipe par le chef d'équipe est-il la règle, ou chacun pointe-t-il pour lui-même ?
+4. Le pointage d'équipe par le chef d'équipe est-il la règle, ou chacun pointe-t-il pour lui-même ? (Côté Clockifai, voir [03-saisie-pour-autrui.md](03-saisie-pour-autrui.md).)
 5. Faut-il remplir automatiquement les champs d'heures des formulaires nucléaires, ou seulement les proposer ?

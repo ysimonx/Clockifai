@@ -15,6 +15,7 @@ import 'features/schedule/schedule_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/tags/tags_page.dart';
 import 'features/team/team_page.dart';
+import 'features/team_entry/team_entry_page.dart';
 import 'features/time_off/time_off_page.dart';
 import 'features/time_entries/time_entries_page.dart';
 import 'features/timesheet/timesheet_page.dart';
@@ -46,6 +47,7 @@ GoRouter buildRouter(SessionController session) {
           GoRoute(path: '/calendar', pageBuilder: (_, _) => page(const CalendarPage())),
           GoRoute(path: '/reports', pageBuilder: (_, _) => page(const ReportsPage())),
           GoRoute(path: '/schedule', pageBuilder: (_, _) => page(const SchedulePage())),
+          GoRoute(path: '/team-entry', pageBuilder: (_, _) => page(const TeamEntryPage())),
           GoRoute(path: '/time-off', pageBuilder: (_, _) => page(const TimeOffPage())),
           GoRoute(path: '/approvals', pageBuilder: (_, _) => page(const ApprovalsPage())),
           GoRoute(path: '/invoices', pageBuilder: (_, _) => page(const InvoicesPage())),

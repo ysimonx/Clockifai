@@ -7,12 +7,15 @@ import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/teammates.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/entry_dialog.dart';
 
 /// Vue calendrier (semaine sur grand écran, jour sur mobile) : les entrées sont des blocs
 /// positionnés sur la grille horaire ; un clic sur un créneau vide crée une entrée.
+/// Un chef d'équipe ou un manager choisit la personne affichée (bandeau « Collaborateur »).
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
@@ -23,6 +26,7 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageState extends State<CalendarPage> {
   static const _hourHeight = 56.0;
   DateTime _anchor = DateTime.now();
+  String? _userId; // personne affichée (null = soi)
   final _scroll = ScrollController(initialScrollOffset: 7 * _hourHeight);
 
   @override
@@ -35,6 +39,9 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final session = context.watch<SessionController>();
+    final rights = TeamRights.of(context);
+    final userId = TeammateBar.resolve(rights, _userId);
+    final editable = rights.canEditTimeOf(userId);
     final ws = session.workspace!;
     final wide = MediaQuery.sizeOf(context).width >= 800;
     final first = wide ? startOfWeek(_anchor, ws.weekStart) : startOfDay(_anchor);
@@ -57,10 +64,14 @@ class _CalendarPageState extends State<CalendarPage> {
         IconButton(onPressed: () => setState(() => _anchor = _anchor.add(Duration(days: count))), icon: const Icon(Icons.chevron_right)),
       ],
       child: StreamBuilder<List<EntryRow>>(
-        stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: session.userId, from: days.first, to: end, includeRunning: true),
+        stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: userId, from: days.first, to: end, includeRunning: true),
         builder: (context, snap) {
           final rows = snap.data ?? const <EntryRow>[];
           return Column(children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: TeammateBar(userId: userId, onChanged: (v) => setState(() => _userId = v)),
+            ),
             // En-têtes des jours avec total.
             Row(children: [
               const SizedBox(width: 48),
@@ -104,7 +115,15 @@ class _CalendarPageState extends State<CalendarPage> {
                       ]),
                     ),
                     for (final d in days)
-                      Expanded(child: _DayColumn(day: d, rows: rows.where((r) => _overlaps(r, d)).toList(), hourHeight: _hourHeight)),
+                      Expanded(
+                        child: _DayColumn(
+                          day: d,
+                          rows: rows.where((r) => _overlaps(r, d)).toList(),
+                          hourHeight: _hourHeight,
+                          userId: userId,
+                          editable: editable,
+                        ),
+                      ),
                   ]),
                 ),
               ),
@@ -124,10 +143,12 @@ class _CalendarPageState extends State<CalendarPage> {
 }
 
 class _DayColumn extends StatelessWidget {
-  const _DayColumn({required this.day, required this.rows, required this.hourHeight});
+  const _DayColumn({required this.day, required this.rows, required this.hourHeight, required this.userId, required this.editable});
   final DateTime day;
   final List<EntryRow> rows;
   final double hourHeight;
+  final String userId;
+  final bool editable;
 
   @override
   Widget build(BuildContext context) {
@@ -138,9 +159,10 @@ class _DayColumn extends StatelessWidget {
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapUp: (details) {
+          if (!editable) return;
           final minutes = (details.localPosition.dy / hourHeight * 60).floor();
           final start = day.add(Duration(minutes: (minutes ~/ 15) * 15));
-          showEntryDialog(context, initialStart: start, initialEnd: start.add(const Duration(hours: 1)));
+          showEntryDialog(context, initialStart: start, initialEnd: start.add(const Duration(hours: 1)), initialUserIds: {userId});
         },
         child: Stack(children: [
           for (var h = 0; h < 24; h++)

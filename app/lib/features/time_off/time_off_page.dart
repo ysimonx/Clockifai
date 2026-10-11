@@ -8,6 +8,7 @@ import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/modules_repository.dart';
@@ -29,6 +30,7 @@ class TimeOffPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final session = context.watch<SessionController>();
+    final rights = TeamRights.of(context);
     final ws = session.workspaceId!;
     return PageScaffold(
       title: l.timeOff,
@@ -40,14 +42,21 @@ class TimeOffPage extends StatelessWidget {
         builder: (context, polSnap) {
           final policies = polSnap.data ?? const <TimeOffPolicy>[];
           return StreamBuilder<List<TimeOffRequest>>(
-            stream: modulesRepo.watchRequests(ws, userId: session.isManager ? null : session.userId),
+            stream: modulesRepo.watchRequests(ws, userId: rights.seesTeam ? null : session.userId),
             builder: (context, reqSnap) {
-              final requests = reqSnap.data ?? const <TimeOffRequest>[];
+              // Manager : tout le workspace ; chef d'équipe : son périmètre.
+              final requests = (reqSnap.data ?? const <TimeOffRequest>[])
+                  .where((r) => r.userId == session.userId || rights.manages(r.userId))
+                  .toList();
               final mine = requests.where((r) => r.userId == session.userId).toList();
-              final pending = requests.where((r) => r.status == 'pending' && r.userId != session.userId).toList();
+              final policyOf = {for (final p in policies) p.id: p};
+              final pending = requests
+                  .where((r) => r.status == 'pending' && r.userId != session.userId)
+                  .where((r) => rights.canDecideTimeOff(r.userId, policyOf[r.policyId]))
+                  .toList();
               return ListView(padding: const EdgeInsets.all(16), children: [
                 _Balances(policies: policies, mine: mine),
-                if (session.isManager) ...[
+                if (rights.seesTeam) ...[
                   const SizedBox(height: 20),
                   _SectionTitle(l.toApprove),
                   if (pending.isEmpty)
@@ -61,10 +70,10 @@ class TimeOffPage extends StatelessWidget {
                   Text(l.noRequests, style: TextStyle(color: Theme.of(context).colorScheme.outline))
                 else
                   for (final r in mine) _RequestTile(request: r, policies: policies, managerView: false),
-                if (session.isManager) ...[
+                if (rights.seesTeam) ...[
                   const SizedBox(height: 20),
                   _SectionTitle(l.teamRequests),
-                  for (final r in requests.where((r) => r.userId != session.userId && r.status != 'pending').take(50))
+                  for (final r in requests.where((r) => r.userId != session.userId && !pending.contains(r)).take(50))
                     _RequestTile(request: r, policies: policies, managerView: true),
                 ],
                 if (session.isAdmin) ...[
@@ -284,7 +293,8 @@ class _RequestTile extends StatelessWidget {
           if (r.decisionNote?.isNotEmpty ?? false) Text('${l.decision} : ${r.decisionNote}', style: theme.textTheme.bodySmall),
         ]),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (managerView && r.status == 'pending') ...[
+          // Approbation selon la politique : managers, ou aussi chefs d'équipe pour leur périmètre.
+          if (managerView && r.status == 'pending' && TeamRights.of(context).canDecideTimeOff(r.userId, policy)) ...[
             IconButton(
               tooltip: l.reject,
               icon: Icon(Icons.close, color: theme.colorScheme.error),
@@ -330,7 +340,9 @@ class _PoliciesAdmin extends StatelessWidget {
               title: Text(p.name, style: p.archived ? TextStyle(color: Theme.of(context).colorScheme.outline) : null),
               subtitle: Text([
                 p.annualAllowance == null ? l.unlimited : '${p.annualAllowance} ${p.unit == 'hours' ? 'h' : l.daysShort} / ${l.year}',
-                p.requiresApproval ? l.requiresApproval : l.noApproval,
+                p.requiresApproval
+                    ? (p.approvers == 'managers_and_team_managers' ? '${l.requiresApproval} (${l.approversManagersAndTeamManagers})' : l.requiresApproval)
+                    : l.noApproval,
                 if (!p.paid) l.unpaid,
               ].join(' · ')),
               trailing: PopupMenuButton<String>(
@@ -367,6 +379,7 @@ class _PoliciesAdmin extends StatelessWidget {
     var unit = p?.unit ?? 'days';
     var paid = p?.paid ?? true;
     var approval = p?.requiresApproval ?? true;
+    var approvers = p?.approvers ?? 'managers';
     var color = p?.color ?? '#10B981';
     final ok = await showDialog<bool>(
       context: context,
@@ -389,6 +402,17 @@ class _PoliciesAdmin extends StatelessWidget {
                   ),
                 ]),
                 SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(l.requiresApproval), value: approval, onChanged: (v) => setState(() => approval = v)),
+                if (approval)
+                  DropdownButtonFormField<String>(
+                    initialValue: approvers,
+                    isExpanded: true,
+                    decoration: InputDecoration(labelText: l.approvers),
+                    items: [
+                      DropdownMenuItem(value: 'managers', child: Text(l.approversManagers)),
+                      DropdownMenuItem(value: 'managers_and_team_managers', child: Text(l.approversManagersAndTeamManagers)),
+                    ],
+                    onChanged: (v) => setState(() => approvers = v!),
+                  ),
                 SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(l.paid), value: paid, onChanged: (v) => setState(() => paid = v)),
                 const SizedBox(height: 8),
                 ColorPalettePicker(value: color, onChanged: (c) => setState(() => color = c)),
@@ -410,6 +434,7 @@ class _PoliciesAdmin extends StatelessWidget {
       annualAllowance: Value(double.tryParse(allowance.text.replaceAll(',', '.'))),
       paid: Value(paid),
       requiresApproval: Value(approval),
+      approvers: Value(approvers),
       color: Value(color),
     );
     await modulesRepo.savePolicy(ws, p == null ? data.copyWith(workspaceId: Value(ws)) : data, id: p?.id);

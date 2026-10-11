@@ -13,7 +13,7 @@ from functools import wraps
 import jwt
 from flask import abort, current_app, g, request
 
-from .db import fetch_one
+from .db import fetch_all, fetch_one
 
 _MANAGER_ROLES = ("owner", "admin", "manager")
 _ADMIN_ROLES = ("owner", "admin")
@@ -63,6 +63,15 @@ def workspace_role(workspace_id: str, user_id: str) -> str | None:
         {"wid": workspace_id, "uid": user_id},
     )
     return row["role"] if row else None
+
+
+def managed_user_ids(workspace_id: str, user_id: str) -> list[str]:
+    """Collaborateurs encadrés par un chef d'équipe (périmètre calculé par la base, cf. team_scope)."""
+    rows = fetch_all(
+        "select user_id::text as user_id from public.team_scope where workspace_id = %(wid)s and manager_id = %(uid)s",
+        {"wid": workspace_id, "uid": user_id},
+    )
+    return [r["user_id"] for r in rows]
 
 
 def require_workspace(min_role: str = "member"):

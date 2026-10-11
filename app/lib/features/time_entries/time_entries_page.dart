@@ -6,7 +6,9 @@ import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/teammates.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import 'entry_dialog.dart';
 
@@ -164,6 +166,8 @@ class EntryTile extends StatelessWidget {
     final wide = MediaQuery.sizeOf(context).width >= 700;
     final times = '${timeLabel(context, e.startAt)} – ${e.endAt == null ? '…' : timeLabel(context, e.endAt!)}';
     final isMine = e.userId == session.userId;
+    final canEdit = TeamRights.of(context).canEditTimeOf(e.userId);
+    final author = e.createdBy;
 
     final description = Text(
       e.description.isEmpty ? l.noDescription : e.description,
@@ -175,6 +179,9 @@ class EntryTile extends StatelessWidget {
       if (showUser) Text(catalog.memberOf(e.userId)?.displayName ?? '?', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
       ProjectLabel(projectId: e.projectId, taskId: e.taskId, dense: true),
       TagChips(row.tagIds),
+      if (author != null && author != e.userId)
+        Text(l.enteredBy(memberName(catalog.memberOf(author))),
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline, fontStyle: FontStyle.italic)),
     ]);
 
     final trailing = Row(mainAxisSize: MainAxisSize.min, children: [
@@ -217,6 +224,7 @@ class EntryTile extends StatelessWidget {
                 userId: e.userId,
                 start: e.startAt,
                 end: e.endAt ?? DateTime.now(),
+                createdBy: session.userId,
                 draft: EntryDraft(
                   description: e.description,
                   projectId: e.projectId,
@@ -233,9 +241,11 @@ class EntryTile extends StatelessWidget {
           }
         },
         itemBuilder: (_) => [
-          PopupMenuItem(value: 'edit', child: Text(l.edit)),
-          PopupMenuItem(value: 'duplicate', child: Text(l.duplicate)),
-          PopupMenuItem(value: 'delete', child: Text(l.delete)),
+          PopupMenuItem(value: 'edit', child: Text(canEdit ? l.edit : l.view)),
+          if (canEdit) ...[
+            PopupMenuItem(value: 'duplicate', child: Text(l.duplicate)),
+            PopupMenuItem(value: 'delete', child: Text(l.delete)),
+          ],
         ],
       ),
     ]);

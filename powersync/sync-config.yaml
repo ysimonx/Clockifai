@@ -46,6 +46,15 @@ streams:
       - SELECT * FROM holidays
         WHERE deleted_at IS NULL
           AND workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM user_groups
+        WHERE deleted_at IS NULL
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM user_group_members
+        WHERE workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM team_manager_assignments
+        WHERE workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM team_scope
+        WHERE workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
 
   # Mes données personnelles (tous workspaces) : temps, tags, feuilles soumises, absences, planning
   my_time_entries:
@@ -58,6 +67,28 @@ streams:
       - SELECT * FROM time_off_requests WHERE deleted_at IS NULL AND user_id = auth.user_id()
       - SELECT * FROM time_off_allowances WHERE deleted_at IS NULL AND user_id = auth.user_id()
       - SELECT * FROM schedule_assignments WHERE deleted_at IS NULL AND user_id = auth.user_id()
+
+  # Données des collaborateurs encadrés par un chef d'équipe (team_scope, recalculé côté serveur).
+  # Jointure sur (workspace_id, user_id) : rien ne fuit d'un autre workspace du collaborateur.
+  managed_team:
+    auto_subscribe: true
+    priority: 3
+    queries:
+      - SELECT time_entries.* FROM time_entries
+          JOIN team_scope ON team_scope.workspace_id = time_entries.workspace_id AND team_scope.user_id = time_entries.user_id
+        WHERE team_scope.manager_id = auth.user_id() AND time_entries.deleted_at IS NULL
+      - SELECT time_entry_tags.* FROM time_entry_tags
+          JOIN team_scope ON team_scope.workspace_id = time_entry_tags.workspace_id AND team_scope.user_id = time_entry_tags.user_id
+        WHERE team_scope.manager_id = auth.user_id()
+      - SELECT timesheet_submissions.* FROM timesheet_submissions
+          JOIN team_scope ON team_scope.workspace_id = timesheet_submissions.workspace_id AND team_scope.user_id = timesheet_submissions.user_id
+        WHERE team_scope.manager_id = auth.user_id() AND timesheet_submissions.deleted_at IS NULL
+      - SELECT time_off_requests.* FROM time_off_requests
+          JOIN team_scope ON team_scope.workspace_id = time_off_requests.workspace_id AND team_scope.user_id = time_off_requests.user_id
+        WHERE team_scope.manager_id = auth.user_id() AND time_off_requests.deleted_at IS NULL
+      - SELECT time_off_allowances.* FROM time_off_allowances
+          JOIN team_scope ON team_scope.workspace_id = time_off_allowances.workspace_id AND team_scope.user_id = time_off_allowances.user_id
+        WHERE team_scope.manager_id = auth.user_id() AND time_off_allowances.deleted_at IS NULL
 
   # Données de toute l'équipe d'un workspace : souscription à la demande (écrans équipe, rapports,
   # approbations, absences, planning, factures), réservée aux rôles owner/admin/manager.

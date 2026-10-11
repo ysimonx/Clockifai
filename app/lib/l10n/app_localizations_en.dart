@@ -34,6 +34,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addTask => 'Add task';
 
   @override
+  String get addTimeForOthers => 'Add time for others';
+
+  @override
   String get adminOnlySettings => 'Only admins can change these settings.';
 
   @override
@@ -72,6 +75,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get approve => 'Approve';
+
+  @override
+  String approvedPeriodFor(String name) {
+    return 'Period already approved for $name.';
+  }
+
+  @override
+  String get approvers => 'Approvers';
+
+  @override
+  String get approversManagers => 'Managers';
+
+  @override
+  String get approversManagersAndTeamManagers => 'Managers and team managers';
 
   @override
   String get archive => 'Archive';
@@ -183,6 +200,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createAccount => 'Create account';
 
   @override
+  String get createEntries => 'Create entries';
+
+  @override
   String get createProject => 'Create project';
 
   @override
@@ -224,6 +244,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get decision => 'Decision';
 
   @override
+  String get defaultHours => 'Default hours';
+
+  @override
   String get delete => 'Delete';
 
   @override
@@ -239,6 +262,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteEntryMessage =>
       'This time entry will be deleted on all your devices.';
+
+  @override
+  String get deleteGroup => 'Delete group';
+
+  @override
+  String get deleteGroupMessage =>
+      'Members stay in the workspace; team managers no longer manage this group.';
 
   @override
   String get deleteInvoice => 'Delete invoice?';
@@ -339,6 +369,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get endsNextDay => 'Ends the next day.';
 
   @override
+  String enteredBy(String name) {
+    return 'entered by $name';
+  }
+
+  @override
+  String enteringFor(String name) {
+    return 'You are entering time for $name.';
+  }
+
+  @override
+  String entriesCreated(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries created',
+      one: '1 entry created',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get entryLocked => 'Locked entry: only an admin can change it.';
 
   @override
@@ -366,6 +417,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupBy => 'Group by';
+
+  @override
+  String get groupMembers => 'Group members';
+
+  @override
+  String get groupName => 'Group name';
+
+  @override
+  String get groups => 'Groups';
 
   @override
   String get halfDay => 'Half day';
@@ -565,7 +625,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get magicLinkSent => 'Sign-in link sent by email.';
 
   @override
+  String managedByLabel(String names) {
+    return 'Team manager: $names';
+  }
+
+  @override
   String get managersOnly => 'Managers only';
+
+  @override
+  String managesLabel(String names) {
+    return 'Manages: $names';
+  }
 
   @override
   String get markDone => 'Mark as done';
@@ -575,6 +645,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get memberAllowances => 'Allowances per member';
+
+  @override
+  String memberCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+      zero: 'No members',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get members => 'Members';
 
   @override
   String get more => 'More';
@@ -596,6 +681,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newClient => 'New client';
+
+  @override
+  String get newGroup => 'New group';
 
   @override
   String get newInvoice => 'New invoice';
@@ -651,6 +739,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Start the timer above or add time manually.';
 
   @override
+  String get noGroups => 'No groups yet';
+
+  @override
+  String get noGroupsMessage =>
+      'Group members (team, site, company) to assign them to a team manager.';
+
+  @override
   String get noHistory => 'No history';
 
   @override
@@ -689,6 +784,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noTasks => 'No tasks';
+
+  @override
+  String get noTeammateSelected => 'Select at least one person.';
 
   @override
   String get noWorkspace => 'No workspace';
@@ -755,6 +853,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingChanges => 'Changes waiting to upload';
 
   @override
+  String peopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people',
+      one: '1 person',
+      zero: 'Nobody',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get perHour => '/h';
 
   @override
@@ -801,6 +911,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get quantityHours => 'Quantity (h)';
+
+  @override
+  String readOnlyTimeOf(String name) {
+    return '$name\'s time: view only.';
+  }
 
   @override
   String get reject => 'Reject';
@@ -906,7 +1021,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sectionTeam => 'Team';
 
   @override
+  String get selectAll => 'Select all';
+
+  @override
   String get selectProject => 'Select project';
+
+  @override
+  String get selectTeammates => 'Select teammates';
 
   @override
   String get send => 'Send';
@@ -1019,11 +1140,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get team => 'Team';
 
   @override
+  String get teamEntry => 'Team entry';
+
+  @override
+  String get teamEntryHelp =>
+      'Tick who was there: one entry is created for each person, even offline. Tap someone\'s hours to adjust them.';
+
+  @override
+  String get teamManagerOf => 'Team manager of…';
+
+  @override
+  String get teamManagerOfHelp =>
+      'This member will see the selected people\'s time and approve their timesheets. Entering time for them depends on the workspace setting.';
+
+  @override
   String get teamMemberHint =>
       'Only managers can see the whole team\'s activity.';
 
   @override
   String get teamRequests => 'Team requests';
+
+  @override
+  String get teammate => 'Teammate';
+
+  @override
+  String get teammates => 'Teammates';
 
   @override
   String get thisMonth => 'This month';
@@ -1033,6 +1174,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get thisYear => 'This year';
+
+  @override
+  String get timeForOthers => 'Time entry for others';
+
+  @override
+  String get timeForOthersAdmins => 'Admins';
+
+  @override
+  String get timeForOthersAdminsAndTeamManagers => 'Admins and team managers';
+
+  @override
+  String get timeForOthersHelp => 'Who can add and edit other members\' time.';
 
   @override
   String get timeOff => 'Time off';
@@ -1078,6 +1231,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get user => 'User';
+
+  @override
+  String get users => 'Users';
+
+  @override
+  String get view => 'View';
 
   @override
   String weekOf(String date) {

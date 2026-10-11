@@ -757,6 +757,17 @@ class $WorkspacesTable extends Workspaces
     requiredDuringInsert: false,
     clientDefault: () => 30,
   );
+  static const VerificationMeta _timeForOthersMeta = const VerificationMeta(
+    'timeForOthers',
+  );
+  @override
+  late final GeneratedColumn<String> timeForOthers = GeneratedColumn<String>(
+    'time_for_others',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdByMeta = const VerificationMeta(
     'createdBy',
   );
@@ -819,6 +830,7 @@ class $WorkspacesTable extends Workspaces
     invoicePrefix,
     defaultTaxPercent,
     invoiceDueDays,
+    timeForOthers,
     createdBy,
     createdAt,
     updatedAt,
@@ -955,6 +967,15 @@ class $WorkspacesTable extends Workspaces
         ),
       );
     }
+    if (data.containsKey('time_for_others')) {
+      context.handle(
+        _timeForOthersMeta,
+        timeForOthers.isAcceptableOrUnknown(
+          data['time_for_others']!,
+          _timeForOthersMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_by')) {
       context.handle(
         _createdByMeta,
@@ -1048,6 +1069,10 @@ class $WorkspacesTable extends Workspaces
         DriftSqlType.int,
         data['${effectivePrefix}invoice_due_days'],
       )!,
+      timeForOthers: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}time_for_others'],
+      ),
       createdBy: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_by'],
@@ -1089,6 +1114,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
   final String invoicePrefix;
   final double defaultTaxPercent;
   final int invoiceDueDays;
+
+  /// 'admins' | 'admins_and_team_managers' (nullable côté client : rempli par la sync).
+  final String? timeForOthers;
   final String? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -1109,6 +1137,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     required this.invoicePrefix,
     required this.defaultTaxPercent,
     required this.invoiceDueDays,
+    this.timeForOthers,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -1138,6 +1167,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     map['invoice_prefix'] = Variable<String>(invoicePrefix);
     map['default_tax_percent'] = Variable<double>(defaultTaxPercent);
     map['invoice_due_days'] = Variable<int>(invoiceDueDays);
+    if (!nullToAbsent || timeForOthers != null) {
+      map['time_for_others'] = Variable<String>(timeForOthers);
+    }
     if (!nullToAbsent || createdBy != null) {
       map['created_by'] = Variable<String>(createdBy);
     }
@@ -1176,6 +1208,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       invoicePrefix: Value(invoicePrefix),
       defaultTaxPercent: Value(defaultTaxPercent),
       invoiceDueDays: Value(invoiceDueDays),
+      timeForOthers: timeForOthers == null && nullToAbsent
+          ? const Value.absent()
+          : Value(timeForOthers),
       createdBy: createdBy == null && nullToAbsent
           ? const Value.absent()
           : Value(createdBy),
@@ -1214,6 +1249,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       invoicePrefix: serializer.fromJson<String>(json['invoicePrefix']),
       defaultTaxPercent: serializer.fromJson<double>(json['defaultTaxPercent']),
       invoiceDueDays: serializer.fromJson<int>(json['invoiceDueDays']),
+      timeForOthers: serializer.fromJson<String?>(json['timeForOthers']),
       createdBy: serializer.fromJson<String?>(json['createdBy']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
@@ -1239,6 +1275,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       'invoicePrefix': serializer.toJson<String>(invoicePrefix),
       'defaultTaxPercent': serializer.toJson<double>(defaultTaxPercent),
       'invoiceDueDays': serializer.toJson<int>(invoiceDueDays),
+      'timeForOthers': serializer.toJson<String?>(timeForOthers),
       'createdBy': serializer.toJson<String?>(createdBy),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
@@ -1262,6 +1299,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     String? invoicePrefix,
     double? defaultTaxPercent,
     int? invoiceDueDays,
+    Value<String?> timeForOthers = const Value.absent(),
     Value<String?> createdBy = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
@@ -1286,6 +1324,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     invoicePrefix: invoicePrefix ?? this.invoicePrefix,
     defaultTaxPercent: defaultTaxPercent ?? this.defaultTaxPercent,
     invoiceDueDays: invoiceDueDays ?? this.invoiceDueDays,
+    timeForOthers: timeForOthers.present
+        ? timeForOthers.value
+        : this.timeForOthers,
     createdBy: createdBy.present ? createdBy.value : this.createdBy,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
@@ -1330,6 +1371,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       invoiceDueDays: data.invoiceDueDays.present
           ? data.invoiceDueDays.value
           : this.invoiceDueDays,
+      timeForOthers: data.timeForOthers.present
+          ? data.timeForOthers.value
+          : this.timeForOthers,
       createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -1355,6 +1399,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
           ..write('invoicePrefix: $invoicePrefix, ')
           ..write('defaultTaxPercent: $defaultTaxPercent, ')
           ..write('invoiceDueDays: $invoiceDueDays, ')
+          ..write('timeForOthers: $timeForOthers, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1380,6 +1425,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     invoicePrefix,
     defaultTaxPercent,
     invoiceDueDays,
+    timeForOthers,
     createdBy,
     createdAt,
     updatedAt,
@@ -1404,6 +1450,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
           other.invoicePrefix == this.invoicePrefix &&
           other.defaultTaxPercent == this.defaultTaxPercent &&
           other.invoiceDueDays == this.invoiceDueDays &&
+          other.timeForOthers == this.timeForOthers &&
           other.createdBy == this.createdBy &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -1426,6 +1473,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
   final Value<String> invoicePrefix;
   final Value<double> defaultTaxPercent;
   final Value<int> invoiceDueDays;
+  final Value<String?> timeForOthers;
   final Value<String?> createdBy;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
@@ -1447,6 +1495,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     this.invoicePrefix = const Value.absent(),
     this.defaultTaxPercent = const Value.absent(),
     this.invoiceDueDays = const Value.absent(),
+    this.timeForOthers = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1469,6 +1518,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     this.invoicePrefix = const Value.absent(),
     this.defaultTaxPercent = const Value.absent(),
     this.invoiceDueDays = const Value.absent(),
+    this.timeForOthers = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1491,6 +1541,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     Expression<String>? invoicePrefix,
     Expression<double>? defaultTaxPercent,
     Expression<int>? invoiceDueDays,
+    Expression<String>? timeForOthers,
     Expression<String>? createdBy,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1514,6 +1565,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
       if (invoicePrefix != null) 'invoice_prefix': invoicePrefix,
       if (defaultTaxPercent != null) 'default_tax_percent': defaultTaxPercent,
       if (invoiceDueDays != null) 'invoice_due_days': invoiceDueDays,
+      if (timeForOthers != null) 'time_for_others': timeForOthers,
       if (createdBy != null) 'created_by': createdBy,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -1538,6 +1590,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     Value<String>? invoicePrefix,
     Value<double>? defaultTaxPercent,
     Value<int>? invoiceDueDays,
+    Value<String?>? timeForOthers,
     Value<String?>? createdBy,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
@@ -1560,6 +1613,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
       invoicePrefix: invoicePrefix ?? this.invoicePrefix,
       defaultTaxPercent: defaultTaxPercent ?? this.defaultTaxPercent,
       invoiceDueDays: invoiceDueDays ?? this.invoiceDueDays,
+      timeForOthers: timeForOthers ?? this.timeForOthers,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1616,6 +1670,9 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     if (invoiceDueDays.present) {
       map['invoice_due_days'] = Variable<int>(invoiceDueDays.value);
     }
+    if (timeForOthers.present) {
+      map['time_for_others'] = Variable<String>(timeForOthers.value);
+    }
     if (createdBy.present) {
       map['created_by'] = Variable<String>(createdBy.value);
     }
@@ -1652,6 +1709,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
           ..write('invoicePrefix: $invoicePrefix, ')
           ..write('defaultTaxPercent: $defaultTaxPercent, ')
           ..write('invoiceDueDays: $invoiceDueDays, ')
+          ..write('timeForOthers: $timeForOthers, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -5198,6 +5256,28 @@ class $TimeEntriesTable extends TimeEntries
     ),
     clientDefault: () => false,
   );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedByMeta = const VerificationMeta(
+    'updatedBy',
+  );
+  @override
+  late final GeneratedColumn<String> updatedBy = GeneratedColumn<String>(
+    'updated_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -5246,6 +5326,8 @@ class $TimeEntriesTable extends TimeEntries
     billable,
     hourlyRateCents,
     locked,
+    createdBy,
+    updatedBy,
     createdAt,
     updatedAt,
     deletedAt,
@@ -5349,6 +5431,18 @@ class $TimeEntriesTable extends TimeEntries
         locked.isAcceptableOrUnknown(data['locked']!, _lockedMeta),
       );
     }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    }
+    if (data.containsKey('updated_by')) {
+      context.handle(
+        _updatedByMeta,
+        updatedBy.isAcceptableOrUnknown(data['updated_by']!, _updatedByMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -5424,6 +5518,14 @@ class $TimeEntriesTable extends TimeEntries
         DriftSqlType.bool,
         data['${effectivePrefix}locked'],
       )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      ),
+      updatedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -5458,6 +5560,10 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
   final bool billable;
   final int? hourlyRateCents;
   final bool locked;
+
+  /// Auteur de la saisie (posé par le serveur ; null = la personne elle-même).
+  final String? createdBy;
+  final String? updatedBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
@@ -5474,6 +5580,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     required this.billable,
     this.hourlyRateCents,
     required this.locked,
+    this.createdBy,
+    this.updatedBy,
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
@@ -5503,6 +5611,12 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       map['hourly_rate_cents'] = Variable<int>(hourlyRateCents);
     }
     map['locked'] = Variable<bool>(locked);
+    if (!nullToAbsent || createdBy != null) {
+      map['created_by'] = Variable<String>(createdBy);
+    }
+    if (!nullToAbsent || updatedBy != null) {
+      map['updated_by'] = Variable<String>(updatedBy);
+    }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
     }
@@ -5539,6 +5653,12 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           ? const Value.absent()
           : Value(hourlyRateCents),
       locked: Value(locked),
+      createdBy: createdBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdBy),
+      updatedBy: updatedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedBy),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -5569,6 +5689,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       billable: serializer.fromJson<bool>(json['billable']),
       hourlyRateCents: serializer.fromJson<int?>(json['hourlyRateCents']),
       locked: serializer.fromJson<bool>(json['locked']),
+      createdBy: serializer.fromJson<String?>(json['createdBy']),
+      updatedBy: serializer.fromJson<String?>(json['updatedBy']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
@@ -5590,6 +5712,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       'billable': serializer.toJson<bool>(billable),
       'hourlyRateCents': serializer.toJson<int?>(hourlyRateCents),
       'locked': serializer.toJson<bool>(locked),
+      'createdBy': serializer.toJson<String?>(createdBy),
+      'updatedBy': serializer.toJson<String?>(updatedBy),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
@@ -5609,6 +5733,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     bool? billable,
     Value<int?> hourlyRateCents = const Value.absent(),
     bool? locked,
+    Value<String?> createdBy = const Value.absent(),
+    Value<String?> updatedBy = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
     Value<DateTime?> deletedAt = const Value.absent(),
@@ -5629,6 +5755,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
         ? hourlyRateCents.value
         : this.hourlyRateCents,
     locked: locked ?? this.locked,
+    createdBy: createdBy.present ? createdBy.value : this.createdBy,
+    updatedBy: updatedBy.present ? updatedBy.value : this.updatedBy,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
@@ -5655,6 +5783,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           ? data.hourlyRateCents.value
           : this.hourlyRateCents,
       locked: data.locked.present ? data.locked.value : this.locked,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      updatedBy: data.updatedBy.present ? data.updatedBy.value : this.updatedBy,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
@@ -5676,6 +5806,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           ..write('billable: $billable, ')
           ..write('hourlyRateCents: $hourlyRateCents, ')
           ..write('locked: $locked, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('updatedBy: $updatedBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt')
@@ -5697,6 +5829,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     billable,
     hourlyRateCents,
     locked,
+    createdBy,
+    updatedBy,
     createdAt,
     updatedAt,
     deletedAt,
@@ -5717,6 +5851,8 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           other.billable == this.billable &&
           other.hourlyRateCents == this.hourlyRateCents &&
           other.locked == this.locked &&
+          other.createdBy == this.createdBy &&
+          other.updatedBy == this.updatedBy &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt);
@@ -5735,6 +5871,8 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
   final Value<bool> billable;
   final Value<int?> hourlyRateCents;
   final Value<bool> locked;
+  final Value<String?> createdBy;
+  final Value<String?> updatedBy;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> deletedAt;
@@ -5752,6 +5890,8 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     this.billable = const Value.absent(),
     this.hourlyRateCents = const Value.absent(),
     this.locked = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.updatedBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -5770,6 +5910,8 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     this.billable = const Value.absent(),
     this.hourlyRateCents = const Value.absent(),
     this.locked = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.updatedBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -5790,6 +5932,8 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     Expression<bool>? billable,
     Expression<int>? hourlyRateCents,
     Expression<bool>? locked,
+    Expression<String>? createdBy,
+    Expression<String>? updatedBy,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
@@ -5808,6 +5952,8 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
       if (billable != null) 'billable': billable,
       if (hourlyRateCents != null) 'hourly_rate_cents': hourlyRateCents,
       if (locked != null) 'locked': locked,
+      if (createdBy != null) 'created_by': createdBy,
+      if (updatedBy != null) 'updated_by': updatedBy,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
@@ -5828,6 +5974,8 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     Value<bool>? billable,
     Value<int?>? hourlyRateCents,
     Value<bool>? locked,
+    Value<String?>? createdBy,
+    Value<String?>? updatedBy,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
     Value<DateTime?>? deletedAt,
@@ -5846,6 +5994,8 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
       billable: billable ?? this.billable,
       hourlyRateCents: hourlyRateCents ?? this.hourlyRateCents,
       locked: locked ?? this.locked,
+      createdBy: createdBy ?? this.createdBy,
+      updatedBy: updatedBy ?? this.updatedBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -5892,6 +6042,12 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     if (locked.present) {
       map['locked'] = Variable<bool>(locked.value);
     }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (updatedBy.present) {
+      map['updated_by'] = Variable<String>(updatedBy.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -5922,6 +6078,8 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
           ..write('billable: $billable, ')
           ..write('hourlyRateCents: $hourlyRateCents, ')
           ..write('locked: $locked, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('updatedBy: $updatedBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
@@ -7316,6 +7474,17 @@ class $TimeOffPoliciesTable extends TimeOffPolicies
     ),
     clientDefault: () => true,
   );
+  static const VerificationMeta _approversMeta = const VerificationMeta(
+    'approvers',
+  );
+  @override
+  late final GeneratedColumn<String> approvers = GeneratedColumn<String>(
+    'approvers',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _archivedMeta = const VerificationMeta(
     'archived',
   );
@@ -7375,6 +7544,7 @@ class $TimeOffPoliciesTable extends TimeOffPolicies
     annualAllowance,
     paid,
     requiresApproval,
+    approvers,
     archived,
     createdAt,
     updatedAt,
@@ -7450,6 +7620,12 @@ class $TimeOffPoliciesTable extends TimeOffPolicies
         ),
       );
     }
+    if (data.containsKey('approvers')) {
+      context.handle(
+        _approversMeta,
+        approvers.isAcceptableOrUnknown(data['approvers']!, _approversMeta),
+      );
+    }
     if (data.containsKey('archived')) {
       context.handle(
         _archivedMeta,
@@ -7515,6 +7691,10 @@ class $TimeOffPoliciesTable extends TimeOffPolicies
         DriftSqlType.bool,
         data['${effectivePrefix}requires_approval'],
       )!,
+      approvers: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}approvers'],
+      ),
       archived: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}archived'],
@@ -7549,6 +7729,9 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
   final double? annualAllowance;
   final bool paid;
   final bool requiresApproval;
+
+  /// 'managers' | 'managers_and_team_managers' (nullable côté client : rempli par la sync).
+  final String? approvers;
   final bool archived;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -7562,6 +7745,7 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
     this.annualAllowance,
     required this.paid,
     required this.requiresApproval,
+    this.approvers,
     required this.archived,
     this.createdAt,
     this.updatedAt,
@@ -7580,6 +7764,9 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
     }
     map['paid'] = Variable<bool>(paid);
     map['requires_approval'] = Variable<bool>(requiresApproval);
+    if (!nullToAbsent || approvers != null) {
+      map['approvers'] = Variable<String>(approvers);
+    }
     map['archived'] = Variable<bool>(archived);
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
@@ -7605,6 +7792,9 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
           : Value(annualAllowance),
       paid: Value(paid),
       requiresApproval: Value(requiresApproval),
+      approvers: approvers == null && nullToAbsent
+          ? const Value.absent()
+          : Value(approvers),
       archived: Value(archived),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
@@ -7632,6 +7822,7 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
       annualAllowance: serializer.fromJson<double?>(json['annualAllowance']),
       paid: serializer.fromJson<bool>(json['paid']),
       requiresApproval: serializer.fromJson<bool>(json['requiresApproval']),
+      approvers: serializer.fromJson<String?>(json['approvers']),
       archived: serializer.fromJson<bool>(json['archived']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
@@ -7650,6 +7841,7 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
       'annualAllowance': serializer.toJson<double?>(annualAllowance),
       'paid': serializer.toJson<bool>(paid),
       'requiresApproval': serializer.toJson<bool>(requiresApproval),
+      'approvers': serializer.toJson<String?>(approvers),
       'archived': serializer.toJson<bool>(archived),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
@@ -7666,6 +7858,7 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
     Value<double?> annualAllowance = const Value.absent(),
     bool? paid,
     bool? requiresApproval,
+    Value<String?> approvers = const Value.absent(),
     bool? archived,
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
@@ -7681,6 +7874,7 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
         : this.annualAllowance,
     paid: paid ?? this.paid,
     requiresApproval: requiresApproval ?? this.requiresApproval,
+    approvers: approvers.present ? approvers.value : this.approvers,
     archived: archived ?? this.archived,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
@@ -7702,6 +7896,7 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
       requiresApproval: data.requiresApproval.present
           ? data.requiresApproval.value
           : this.requiresApproval,
+      approvers: data.approvers.present ? data.approvers.value : this.approvers,
       archived: data.archived.present ? data.archived.value : this.archived,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -7720,6 +7915,7 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
           ..write('annualAllowance: $annualAllowance, ')
           ..write('paid: $paid, ')
           ..write('requiresApproval: $requiresApproval, ')
+          ..write('approvers: $approvers, ')
           ..write('archived: $archived, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -7738,6 +7934,7 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
     annualAllowance,
     paid,
     requiresApproval,
+    approvers,
     archived,
     createdAt,
     updatedAt,
@@ -7755,6 +7952,7 @@ class TimeOffPolicy extends DataClass implements Insertable<TimeOffPolicy> {
           other.annualAllowance == this.annualAllowance &&
           other.paid == this.paid &&
           other.requiresApproval == this.requiresApproval &&
+          other.approvers == this.approvers &&
           other.archived == this.archived &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -7770,6 +7968,7 @@ class TimeOffPoliciesCompanion extends UpdateCompanion<TimeOffPolicy> {
   final Value<double?> annualAllowance;
   final Value<bool> paid;
   final Value<bool> requiresApproval;
+  final Value<String?> approvers;
   final Value<bool> archived;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
@@ -7784,6 +7983,7 @@ class TimeOffPoliciesCompanion extends UpdateCompanion<TimeOffPolicy> {
     this.annualAllowance = const Value.absent(),
     this.paid = const Value.absent(),
     this.requiresApproval = const Value.absent(),
+    this.approvers = const Value.absent(),
     this.archived = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -7799,6 +7999,7 @@ class TimeOffPoliciesCompanion extends UpdateCompanion<TimeOffPolicy> {
     this.annualAllowance = const Value.absent(),
     this.paid = const Value.absent(),
     this.requiresApproval = const Value.absent(),
+    this.approvers = const Value.absent(),
     this.archived = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -7815,6 +8016,7 @@ class TimeOffPoliciesCompanion extends UpdateCompanion<TimeOffPolicy> {
     Expression<double>? annualAllowance,
     Expression<bool>? paid,
     Expression<bool>? requiresApproval,
+    Expression<String>? approvers,
     Expression<bool>? archived,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -7830,6 +8032,7 @@ class TimeOffPoliciesCompanion extends UpdateCompanion<TimeOffPolicy> {
       if (annualAllowance != null) 'annual_allowance': annualAllowance,
       if (paid != null) 'paid': paid,
       if (requiresApproval != null) 'requires_approval': requiresApproval,
+      if (approvers != null) 'approvers': approvers,
       if (archived != null) 'archived': archived,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -7847,6 +8050,7 @@ class TimeOffPoliciesCompanion extends UpdateCompanion<TimeOffPolicy> {
     Value<double?>? annualAllowance,
     Value<bool>? paid,
     Value<bool>? requiresApproval,
+    Value<String?>? approvers,
     Value<bool>? archived,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
@@ -7862,6 +8066,7 @@ class TimeOffPoliciesCompanion extends UpdateCompanion<TimeOffPolicy> {
       annualAllowance: annualAllowance ?? this.annualAllowance,
       paid: paid ?? this.paid,
       requiresApproval: requiresApproval ?? this.requiresApproval,
+      approvers: approvers ?? this.approvers,
       archived: archived ?? this.archived,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -7897,6 +8102,9 @@ class TimeOffPoliciesCompanion extends UpdateCompanion<TimeOffPolicy> {
     if (requiresApproval.present) {
       map['requires_approval'] = Variable<bool>(requiresApproval.value);
     }
+    if (approvers.present) {
+      map['approvers'] = Variable<String>(approvers.value);
+    }
     if (archived.present) {
       map['archived'] = Variable<bool>(archived.value);
     }
@@ -7926,6 +8134,7 @@ class TimeOffPoliciesCompanion extends UpdateCompanion<TimeOffPolicy> {
           ..write('annualAllowance: $annualAllowance, ')
           ..write('paid: $paid, ')
           ..write('requiresApproval: $requiresApproval, ')
+          ..write('approvers: $approvers, ')
           ..write('archived: $archived, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -12866,6 +13075,1675 @@ class InvoiceEntriesCompanion extends UpdateCompanion<InvoiceEntry> {
   }
 }
 
+class $UserGroupsTable extends UserGroups
+    with TableInfo<$UserGroupsTable, UserGroup> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserGroupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: newId,
+  );
+  static const VerificationMeta _workspaceIdMeta = const VerificationMeta(
+    'workspaceId',
+  );
+  @override
+  late final GeneratedColumn<String> workspaceId = GeneratedColumn<String>(
+    'workspace_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: nowUtc,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    workspaceId,
+    name,
+    createdAt,
+    updatedAt,
+    deletedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_groups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UserGroup> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('workspace_id')) {
+      context.handle(
+        _workspaceIdMeta,
+        workspaceId.isAcceptableOrUnknown(
+          data['workspace_id']!,
+          _workspaceIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_workspaceIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserGroup map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserGroup(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      workspaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workspace_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $UserGroupsTable createAlias(String alias) {
+    return $UserGroupsTable(attachedDatabase, alias);
+  }
+}
+
+class UserGroup extends DataClass implements Insertable<UserGroup> {
+  final String id;
+  final String workspaceId;
+  final String name;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final DateTime? deletedAt;
+  const UserGroup({
+    required this.id,
+    required this.workspaceId,
+    required this.name,
+    this.createdAt,
+    this.updatedAt,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['workspace_id'] = Variable<String>(workspaceId);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  UserGroupsCompanion toCompanion(bool nullToAbsent) {
+    return UserGroupsCompanion(
+      id: Value(id),
+      workspaceId: Value(workspaceId),
+      name: Value(name),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory UserGroup.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserGroup(
+      id: serializer.fromJson<String>(json['id']),
+      workspaceId: serializer.fromJson<String>(json['workspaceId']),
+      name: serializer.fromJson<String>(json['name']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'workspaceId': serializer.toJson<String>(workspaceId),
+      'name': serializer.toJson<String>(name),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  UserGroup copyWith({
+    String? id,
+    String? workspaceId,
+    String? name,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> updatedAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => UserGroup(
+    id: id ?? this.id,
+    workspaceId: workspaceId ?? this.workspaceId,
+    name: name ?? this.name,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  UserGroup copyWithCompanion(UserGroupsCompanion data) {
+    return UserGroup(
+      id: data.id.present ? data.id.value : this.id,
+      workspaceId: data.workspaceId.present
+          ? data.workspaceId.value
+          : this.workspaceId,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserGroup(')
+          ..write('id: $id, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, workspaceId, name, createdAt, updatedAt, deletedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserGroup &&
+          other.id == this.id &&
+          other.workspaceId == this.workspaceId &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt);
+}
+
+class UserGroupsCompanion extends UpdateCompanion<UserGroup> {
+  final Value<String> id;
+  final Value<String> workspaceId;
+  final Value<String> name;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<int> rowid;
+  const UserGroupsCompanion({
+    this.id = const Value.absent(),
+    this.workspaceId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UserGroupsCompanion.insert({
+    this.id = const Value.absent(),
+    required String workspaceId,
+    required String name,
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : workspaceId = Value(workspaceId),
+       name = Value(name);
+  static Insertable<UserGroup> custom({
+    Expression<String>? id,
+    Expression<String>? workspaceId,
+    Expression<String>? name,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (workspaceId != null) 'workspace_id': workspaceId,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UserGroupsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? workspaceId,
+    Value<String>? name,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<int>? rowid,
+  }) {
+    return UserGroupsCompanion(
+      id: id ?? this.id,
+      workspaceId: workspaceId ?? this.workspaceId,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (workspaceId.present) {
+      map['workspace_id'] = Variable<String>(workspaceId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserGroupsCompanion(')
+          ..write('id: $id, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $UserGroupMembersTable extends UserGroupMembers
+    with TableInfo<$UserGroupMembersTable, UserGroupMember> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserGroupMembersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: newId,
+  );
+  static const VerificationMeta _workspaceIdMeta = const VerificationMeta(
+    'workspaceId',
+  );
+  @override
+  late final GeneratedColumn<String> workspaceId = GeneratedColumn<String>(
+    'workspace_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: nowUtc,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    workspaceId,
+    groupId,
+    userId,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_group_members';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UserGroupMember> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('workspace_id')) {
+      context.handle(
+        _workspaceIdMeta,
+        workspaceId.isAcceptableOrUnknown(
+          data['workspace_id']!,
+          _workspaceIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_workspaceIdMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserGroupMember map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserGroupMember(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      workspaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workspace_id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      ),
+    );
+  }
+
+  @override
+  $UserGroupMembersTable createAlias(String alias) {
+    return $UserGroupMembersTable(attachedDatabase, alias);
+  }
+}
+
+class UserGroupMember extends DataClass implements Insertable<UserGroupMember> {
+  final String id;
+  final String workspaceId;
+  final String groupId;
+  final String userId;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  const UserGroupMember({
+    required this.id,
+    required this.workspaceId,
+    required this.groupId,
+    required this.userId,
+    this.createdAt,
+    this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['workspace_id'] = Variable<String>(workspaceId);
+    map['group_id'] = Variable<String>(groupId);
+    map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    return map;
+  }
+
+  UserGroupMembersCompanion toCompanion(bool nullToAbsent) {
+    return UserGroupMembersCompanion(
+      id: Value(id),
+      workspaceId: Value(workspaceId),
+      groupId: Value(groupId),
+      userId: Value(userId),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+    );
+  }
+
+  factory UserGroupMember.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserGroupMember(
+      id: serializer.fromJson<String>(json['id']),
+      workspaceId: serializer.fromJson<String>(json['workspaceId']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'workspaceId': serializer.toJson<String>(workspaceId),
+      'groupId': serializer.toJson<String>(groupId),
+      'userId': serializer.toJson<String>(userId),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+    };
+  }
+
+  UserGroupMember copyWith({
+    String? id,
+    String? workspaceId,
+    String? groupId,
+    String? userId,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> updatedAt = const Value.absent(),
+  }) => UserGroupMember(
+    id: id ?? this.id,
+    workspaceId: workspaceId ?? this.workspaceId,
+    groupId: groupId ?? this.groupId,
+    userId: userId ?? this.userId,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+  );
+  UserGroupMember copyWithCompanion(UserGroupMembersCompanion data) {
+    return UserGroupMember(
+      id: data.id.present ? data.id.value : this.id,
+      workspaceId: data.workspaceId.present
+          ? data.workspaceId.value
+          : this.workspaceId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserGroupMember(')
+          ..write('id: $id, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('userId: $userId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, workspaceId, groupId, userId, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserGroupMember &&
+          other.id == this.id &&
+          other.workspaceId == this.workspaceId &&
+          other.groupId == this.groupId &&
+          other.userId == this.userId &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class UserGroupMembersCompanion extends UpdateCompanion<UserGroupMember> {
+  final Value<String> id;
+  final Value<String> workspaceId;
+  final Value<String> groupId;
+  final Value<String> userId;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> rowid;
+  const UserGroupMembersCompanion({
+    this.id = const Value.absent(),
+    this.workspaceId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UserGroupMembersCompanion.insert({
+    this.id = const Value.absent(),
+    required String workspaceId,
+    required String groupId,
+    required String userId,
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : workspaceId = Value(workspaceId),
+       groupId = Value(groupId),
+       userId = Value(userId);
+  static Insertable<UserGroupMember> custom({
+    Expression<String>? id,
+    Expression<String>? workspaceId,
+    Expression<String>? groupId,
+    Expression<String>? userId,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (workspaceId != null) 'workspace_id': workspaceId,
+      if (groupId != null) 'group_id': groupId,
+      if (userId != null) 'user_id': userId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UserGroupMembersCompanion copyWith({
+    Value<String>? id,
+    Value<String>? workspaceId,
+    Value<String>? groupId,
+    Value<String>? userId,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return UserGroupMembersCompanion(
+      id: id ?? this.id,
+      workspaceId: workspaceId ?? this.workspaceId,
+      groupId: groupId ?? this.groupId,
+      userId: userId ?? this.userId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (workspaceId.present) {
+      map['workspace_id'] = Variable<String>(workspaceId.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserGroupMembersCompanion(')
+          ..write('id: $id, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('userId: $userId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TeamManagerAssignmentsTable extends TeamManagerAssignments
+    with TableInfo<$TeamManagerAssignmentsTable, TeamManagerAssignment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TeamManagerAssignmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: newId,
+  );
+  static const VerificationMeta _workspaceIdMeta = const VerificationMeta(
+    'workspaceId',
+  );
+  @override
+  late final GeneratedColumn<String> workspaceId = GeneratedColumn<String>(
+    'workspace_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _managerIdMeta = const VerificationMeta(
+    'managerId',
+  );
+  @override
+  late final GeneratedColumn<String> managerId = GeneratedColumn<String>(
+    'manager_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: nowUtc,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    workspaceId,
+    managerId,
+    userId,
+    groupId,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'team_manager_assignments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TeamManagerAssignment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('workspace_id')) {
+      context.handle(
+        _workspaceIdMeta,
+        workspaceId.isAcceptableOrUnknown(
+          data['workspace_id']!,
+          _workspaceIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_workspaceIdMeta);
+    }
+    if (data.containsKey('manager_id')) {
+      context.handle(
+        _managerIdMeta,
+        managerId.isAcceptableOrUnknown(data['manager_id']!, _managerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_managerIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TeamManagerAssignment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TeamManagerAssignment(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      workspaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workspace_id'],
+      )!,
+      managerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}manager_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      ),
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      ),
+    );
+  }
+
+  @override
+  $TeamManagerAssignmentsTable createAlias(String alias) {
+    return $TeamManagerAssignmentsTable(attachedDatabase, alias);
+  }
+}
+
+class TeamManagerAssignment extends DataClass
+    implements Insertable<TeamManagerAssignment> {
+  final String id;
+  final String workspaceId;
+  final String managerId;
+  final String? userId;
+  final String? groupId;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  const TeamManagerAssignment({
+    required this.id,
+    required this.workspaceId,
+    required this.managerId,
+    this.userId,
+    this.groupId,
+    this.createdAt,
+    this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['workspace_id'] = Variable<String>(workspaceId);
+    map['manager_id'] = Variable<String>(managerId);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<String>(userId);
+    }
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    return map;
+  }
+
+  TeamManagerAssignmentsCompanion toCompanion(bool nullToAbsent) {
+    return TeamManagerAssignmentsCompanion(
+      id: Value(id),
+      workspaceId: Value(workspaceId),
+      managerId: Value(managerId),
+      userId: userId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userId),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+    );
+  }
+
+  factory TeamManagerAssignment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TeamManagerAssignment(
+      id: serializer.fromJson<String>(json['id']),
+      workspaceId: serializer.fromJson<String>(json['workspaceId']),
+      managerId: serializer.fromJson<String>(json['managerId']),
+      userId: serializer.fromJson<String?>(json['userId']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'workspaceId': serializer.toJson<String>(workspaceId),
+      'managerId': serializer.toJson<String>(managerId),
+      'userId': serializer.toJson<String?>(userId),
+      'groupId': serializer.toJson<String?>(groupId),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+    };
+  }
+
+  TeamManagerAssignment copyWith({
+    String? id,
+    String? workspaceId,
+    String? managerId,
+    Value<String?> userId = const Value.absent(),
+    Value<String?> groupId = const Value.absent(),
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> updatedAt = const Value.absent(),
+  }) => TeamManagerAssignment(
+    id: id ?? this.id,
+    workspaceId: workspaceId ?? this.workspaceId,
+    managerId: managerId ?? this.managerId,
+    userId: userId.present ? userId.value : this.userId,
+    groupId: groupId.present ? groupId.value : this.groupId,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+  );
+  TeamManagerAssignment copyWithCompanion(
+    TeamManagerAssignmentsCompanion data,
+  ) {
+    return TeamManagerAssignment(
+      id: data.id.present ? data.id.value : this.id,
+      workspaceId: data.workspaceId.present
+          ? data.workspaceId.value
+          : this.workspaceId,
+      managerId: data.managerId.present ? data.managerId.value : this.managerId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TeamManagerAssignment(')
+          ..write('id: $id, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('managerId: $managerId, ')
+          ..write('userId: $userId, ')
+          ..write('groupId: $groupId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    workspaceId,
+    managerId,
+    userId,
+    groupId,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TeamManagerAssignment &&
+          other.id == this.id &&
+          other.workspaceId == this.workspaceId &&
+          other.managerId == this.managerId &&
+          other.userId == this.userId &&
+          other.groupId == this.groupId &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TeamManagerAssignmentsCompanion
+    extends UpdateCompanion<TeamManagerAssignment> {
+  final Value<String> id;
+  final Value<String> workspaceId;
+  final Value<String> managerId;
+  final Value<String?> userId;
+  final Value<String?> groupId;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> rowid;
+  const TeamManagerAssignmentsCompanion({
+    this.id = const Value.absent(),
+    this.workspaceId = const Value.absent(),
+    this.managerId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TeamManagerAssignmentsCompanion.insert({
+    this.id = const Value.absent(),
+    required String workspaceId,
+    required String managerId,
+    this.userId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : workspaceId = Value(workspaceId),
+       managerId = Value(managerId);
+  static Insertable<TeamManagerAssignment> custom({
+    Expression<String>? id,
+    Expression<String>? workspaceId,
+    Expression<String>? managerId,
+    Expression<String>? userId,
+    Expression<String>? groupId,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (workspaceId != null) 'workspace_id': workspaceId,
+      if (managerId != null) 'manager_id': managerId,
+      if (userId != null) 'user_id': userId,
+      if (groupId != null) 'group_id': groupId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TeamManagerAssignmentsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? workspaceId,
+    Value<String>? managerId,
+    Value<String?>? userId,
+    Value<String?>? groupId,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return TeamManagerAssignmentsCompanion(
+      id: id ?? this.id,
+      workspaceId: workspaceId ?? this.workspaceId,
+      managerId: managerId ?? this.managerId,
+      userId: userId ?? this.userId,
+      groupId: groupId ?? this.groupId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (workspaceId.present) {
+      map['workspace_id'] = Variable<String>(workspaceId.value);
+    }
+    if (managerId.present) {
+      map['manager_id'] = Variable<String>(managerId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TeamManagerAssignmentsCompanion(')
+          ..write('id: $id, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('managerId: $managerId, ')
+          ..write('userId: $userId, ')
+          ..write('groupId: $groupId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TeamScopeTable extends TeamScope
+    with TableInfo<$TeamScopeTable, TeamScopeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TeamScopeTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: newId,
+  );
+  static const VerificationMeta _workspaceIdMeta = const VerificationMeta(
+    'workspaceId',
+  );
+  @override
+  late final GeneratedColumn<String> workspaceId = GeneratedColumn<String>(
+    'workspace_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _managerIdMeta = const VerificationMeta(
+    'managerId',
+  );
+  @override
+  late final GeneratedColumn<String> managerId = GeneratedColumn<String>(
+    'manager_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: nowUtc,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    workspaceId,
+    managerId,
+    userId,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'team_scope';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TeamScopeRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('workspace_id')) {
+      context.handle(
+        _workspaceIdMeta,
+        workspaceId.isAcceptableOrUnknown(
+          data['workspace_id']!,
+          _workspaceIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_workspaceIdMeta);
+    }
+    if (data.containsKey('manager_id')) {
+      context.handle(
+        _managerIdMeta,
+        managerId.isAcceptableOrUnknown(data['manager_id']!, _managerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_managerIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TeamScopeRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TeamScopeRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      workspaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workspace_id'],
+      )!,
+      managerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}manager_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+    );
+  }
+
+  @override
+  $TeamScopeTable createAlias(String alias) {
+    return $TeamScopeTable(attachedDatabase, alias);
+  }
+}
+
+class TeamScopeRow extends DataClass implements Insertable<TeamScopeRow> {
+  final String id;
+  final String workspaceId;
+  final String managerId;
+  final String userId;
+  final DateTime? createdAt;
+  const TeamScopeRow({
+    required this.id,
+    required this.workspaceId,
+    required this.managerId,
+    required this.userId,
+    this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['workspace_id'] = Variable<String>(workspaceId);
+    map['manager_id'] = Variable<String>(managerId);
+    map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    return map;
+  }
+
+  TeamScopeCompanion toCompanion(bool nullToAbsent) {
+    return TeamScopeCompanion(
+      id: Value(id),
+      workspaceId: Value(workspaceId),
+      managerId: Value(managerId),
+      userId: Value(userId),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+    );
+  }
+
+  factory TeamScopeRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TeamScopeRow(
+      id: serializer.fromJson<String>(json['id']),
+      workspaceId: serializer.fromJson<String>(json['workspaceId']),
+      managerId: serializer.fromJson<String>(json['managerId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'workspaceId': serializer.toJson<String>(workspaceId),
+      'managerId': serializer.toJson<String>(managerId),
+      'userId': serializer.toJson<String>(userId),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+    };
+  }
+
+  TeamScopeRow copyWith({
+    String? id,
+    String? workspaceId,
+    String? managerId,
+    String? userId,
+    Value<DateTime?> createdAt = const Value.absent(),
+  }) => TeamScopeRow(
+    id: id ?? this.id,
+    workspaceId: workspaceId ?? this.workspaceId,
+    managerId: managerId ?? this.managerId,
+    userId: userId ?? this.userId,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+  );
+  TeamScopeRow copyWithCompanion(TeamScopeCompanion data) {
+    return TeamScopeRow(
+      id: data.id.present ? data.id.value : this.id,
+      workspaceId: data.workspaceId.present
+          ? data.workspaceId.value
+          : this.workspaceId,
+      managerId: data.managerId.present ? data.managerId.value : this.managerId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TeamScopeRow(')
+          ..write('id: $id, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('managerId: $managerId, ')
+          ..write('userId: $userId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, workspaceId, managerId, userId, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TeamScopeRow &&
+          other.id == this.id &&
+          other.workspaceId == this.workspaceId &&
+          other.managerId == this.managerId &&
+          other.userId == this.userId &&
+          other.createdAt == this.createdAt);
+}
+
+class TeamScopeCompanion extends UpdateCompanion<TeamScopeRow> {
+  final Value<String> id;
+  final Value<String> workspaceId;
+  final Value<String> managerId;
+  final Value<String> userId;
+  final Value<DateTime?> createdAt;
+  final Value<int> rowid;
+  const TeamScopeCompanion({
+    this.id = const Value.absent(),
+    this.workspaceId = const Value.absent(),
+    this.managerId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TeamScopeCompanion.insert({
+    this.id = const Value.absent(),
+    required String workspaceId,
+    required String managerId,
+    required String userId,
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : workspaceId = Value(workspaceId),
+       managerId = Value(managerId),
+       userId = Value(userId);
+  static Insertable<TeamScopeRow> custom({
+    Expression<String>? id,
+    Expression<String>? workspaceId,
+    Expression<String>? managerId,
+    Expression<String>? userId,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (workspaceId != null) 'workspace_id': workspaceId,
+      if (managerId != null) 'manager_id': managerId,
+      if (userId != null) 'user_id': userId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TeamScopeCompanion copyWith({
+    Value<String>? id,
+    Value<String>? workspaceId,
+    Value<String>? managerId,
+    Value<String>? userId,
+    Value<DateTime?>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return TeamScopeCompanion(
+      id: id ?? this.id,
+      workspaceId: workspaceId ?? this.workspaceId,
+      managerId: managerId ?? this.managerId,
+      userId: userId ?? this.userId,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (workspaceId.present) {
+      map['workspace_id'] = Variable<String>(workspaceId.value);
+    }
+    if (managerId.present) {
+      map['manager_id'] = Variable<String>(managerId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TeamScopeCompanion(')
+          ..write('id: $id, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('managerId: $managerId, ')
+          ..write('userId: $userId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -12896,6 +14774,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $InvoicesTable invoices = $InvoicesTable(this);
   late final $InvoiceItemsTable invoiceItems = $InvoiceItemsTable(this);
   late final $InvoiceEntriesTable invoiceEntries = $InvoiceEntriesTable(this);
+  late final $UserGroupsTable userGroups = $UserGroupsTable(this);
+  late final $UserGroupMembersTable userGroupMembers = $UserGroupMembersTable(
+    this,
+  );
+  late final $TeamManagerAssignmentsTable teamManagerAssignments =
+      $TeamManagerAssignmentsTable(this);
+  late final $TeamScopeTable teamScope = $TeamScopeTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -12919,6 +14804,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     invoices,
     invoiceItems,
     invoiceEntries,
+    userGroups,
+    userGroupMembers,
+    teamManagerAssignments,
+    teamScope,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -13222,6 +15111,7 @@ typedef $$WorkspacesTableCreateCompanionBuilder = WorkspacesCompanion Function({
   Value<String> invoicePrefix,
   Value<double> defaultTaxPercent,
   Value<int> invoiceDueDays,
+  Value<String?> timeForOthers,
   Value<String?> createdBy,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
@@ -13244,6 +15134,7 @@ typedef $$WorkspacesTableUpdateCompanionBuilder = WorkspacesCompanion Function({
   Value<String> invoicePrefix,
   Value<double> defaultTaxPercent,
   Value<int> invoiceDueDays,
+  Value<String?> timeForOthers,
   Value<String?> createdBy,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
@@ -13332,6 +15223,11 @@ class $$WorkspacesTableFilterComposer
 
   ColumnFilters<int> get invoiceDueDays => $composableBuilder(
     column: $table.invoiceDueDays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get timeForOthers => $composableBuilder(
+    column: $table.timeForOthers,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13440,6 +15336,11 @@ class $$WorkspacesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get timeForOthers => $composableBuilder(
+    column: $table.timeForOthers,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdBy => $composableBuilder(
     column: $table.createdBy,
     builder: (column) => ColumnOrderings(column),
@@ -13537,6 +15438,11 @@ class $$WorkspacesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get timeForOthers => $composableBuilder(
+    column: $table.timeForOthers,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdBy =>
       $composableBuilder(column: $table.createdBy, builder: (column) => column);
 
@@ -13596,6 +15502,7 @@ class $$WorkspacesTableTableManager
                 Value<String> invoicePrefix = const Value.absent(),
                 Value<double> defaultTaxPercent = const Value.absent(),
                 Value<int> invoiceDueDays = const Value.absent(),
+                Value<String?> timeForOthers = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -13617,6 +15524,7 @@ class $$WorkspacesTableTableManager
                 invoicePrefix: invoicePrefix,
                 defaultTaxPercent: defaultTaxPercent,
                 invoiceDueDays: invoiceDueDays,
+                timeForOthers: timeForOthers,
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -13640,6 +15548,7 @@ class $$WorkspacesTableTableManager
                 Value<String> invoicePrefix = const Value.absent(),
                 Value<double> defaultTaxPercent = const Value.absent(),
                 Value<int> invoiceDueDays = const Value.absent(),
+                Value<String?> timeForOthers = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -13661,6 +15570,7 @@ class $$WorkspacesTableTableManager
                 invoicePrefix: invoicePrefix,
                 defaultTaxPercent: defaultTaxPercent,
                 invoiceDueDays: invoiceDueDays,
+                timeForOthers: timeForOthers,
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -15346,6 +17256,8 @@ typedef $$TimeEntriesTableCreateCompanionBuilder =
       Value<bool> billable,
       Value<int?> hourlyRateCents,
       Value<bool> locked,
+      Value<String?> createdBy,
+      Value<String?> updatedBy,
       Value<DateTime?> createdAt,
       Value<DateTime?> updatedAt,
       Value<DateTime?> deletedAt,
@@ -15365,6 +17277,8 @@ typedef $$TimeEntriesTableUpdateCompanionBuilder =
       Value<bool> billable,
       Value<int?> hourlyRateCents,
       Value<bool> locked,
+      Value<String?> createdBy,
+      Value<String?> updatedBy,
       Value<DateTime?> createdAt,
       Value<DateTime?> updatedAt,
       Value<DateTime?> deletedAt,
@@ -15437,6 +17351,16 @@ class $$TimeEntriesTableFilterComposer
 
   ColumnFilters<bool> get locked => $composableBuilder(
     column: $table.locked,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15525,6 +17449,16 @@ class $$TimeEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -15594,6 +17528,12 @@ class $$TimeEntriesTableAnnotationComposer
   GeneratedColumn<bool> get locked =>
       $composableBuilder(column: $table.locked, builder: (column) => column);
 
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedBy =>
+      $composableBuilder(column: $table.updatedBy, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -15647,6 +17587,8 @@ class $$TimeEntriesTableTableManager
                 Value<bool> billable = const Value.absent(),
                 Value<int?> hourlyRateCents = const Value.absent(),
                 Value<bool> locked = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String?> updatedBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -15664,6 +17606,8 @@ class $$TimeEntriesTableTableManager
                 billable: billable,
                 hourlyRateCents: hourlyRateCents,
                 locked: locked,
+                createdBy: createdBy,
+                updatedBy: updatedBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -15683,6 +17627,8 @@ class $$TimeEntriesTableTableManager
                 Value<bool> billable = const Value.absent(),
                 Value<int?> hourlyRateCents = const Value.absent(),
                 Value<bool> locked = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String?> updatedBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -15700,6 +17646,8 @@ class $$TimeEntriesTableTableManager
                 billable: billable,
                 hourlyRateCents: hourlyRateCents,
                 locked: locked,
+                createdBy: createdBy,
+                updatedBy: updatedBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -16403,6 +18351,7 @@ typedef $$TimeOffPoliciesTableCreateCompanionBuilder =
       Value<double?> annualAllowance,
       Value<bool> paid,
       Value<bool> requiresApproval,
+      Value<String?> approvers,
       Value<bool> archived,
       Value<DateTime?> createdAt,
       Value<DateTime?> updatedAt,
@@ -16419,6 +18368,7 @@ typedef $$TimeOffPoliciesTableUpdateCompanionBuilder =
       Value<double?> annualAllowance,
       Value<bool> paid,
       Value<bool> requiresApproval,
+      Value<String?> approvers,
       Value<bool> archived,
       Value<DateTime?> createdAt,
       Value<DateTime?> updatedAt,
@@ -16472,6 +18422,11 @@ class $$TimeOffPoliciesTableFilterComposer
 
   ColumnFilters<bool> get requiresApproval => $composableBuilder(
     column: $table.requiresApproval,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get approvers => $composableBuilder(
+    column: $table.approvers,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16545,6 +18500,11 @@ class $$TimeOffPoliciesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get approvers => $composableBuilder(
+    column: $table.approvers,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get archived => $composableBuilder(
     column: $table.archived,
     builder: (column) => ColumnOrderings(column),
@@ -16605,6 +18565,9 @@ class $$TimeOffPoliciesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get approvers =>
+      $composableBuilder(column: $table.approvers, builder: (column) => column);
+
   GeneratedColumn<bool> get archived =>
       $composableBuilder(column: $table.archived, builder: (column) => column);
 
@@ -16659,6 +18622,7 @@ class $$TimeOffPoliciesTableTableManager
                 Value<double?> annualAllowance = const Value.absent(),
                 Value<bool> paid = const Value.absent(),
                 Value<bool> requiresApproval = const Value.absent(),
+                Value<String?> approvers = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -16673,6 +18637,7 @@ class $$TimeOffPoliciesTableTableManager
                 annualAllowance: annualAllowance,
                 paid: paid,
                 requiresApproval: requiresApproval,
+                approvers: approvers,
                 archived: archived,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -16689,6 +18654,7 @@ class $$TimeOffPoliciesTableTableManager
                 Value<double?> annualAllowance = const Value.absent(),
                 Value<bool> paid = const Value.absent(),
                 Value<bool> requiresApproval = const Value.absent(),
+                Value<String?> approvers = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -16703,6 +18669,7 @@ class $$TimeOffPoliciesTableTableManager
                 annualAllowance: annualAllowance,
                 paid: paid,
                 requiresApproval: requiresApproval,
+                approvers: approvers,
                 archived: archived,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -19179,6 +21146,947 @@ typedef $$InvoiceEntriesTableProcessedTableManager =
       InvoiceEntry,
       PrefetchHooks Function()
     >;
+typedef $$UserGroupsTableCreateCompanionBuilder = UserGroupsCompanion Function({
+  Value<String> id,
+  required String workspaceId,
+  required String name,
+  Value<DateTime?> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<int> rowid,
+});
+typedef $$UserGroupsTableUpdateCompanionBuilder = UserGroupsCompanion Function({
+  Value<String> id,
+  Value<String> workspaceId,
+  Value<String> name,
+  Value<DateTime?> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<int> rowid,
+});
+
+class $$UserGroupsTableFilterComposer
+    extends Composer<_$AppDatabase, $UserGroupsTable> {
+  $$UserGroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UserGroupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserGroupsTable> {
+  $$UserGroupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UserGroupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserGroupsTable> {
+  $$UserGroupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+}
+
+class $$UserGroupsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UserGroupsTable,
+          UserGroup,
+          $$UserGroupsTableFilterComposer,
+          $$UserGroupsTableOrderingComposer,
+          $$UserGroupsTableAnnotationComposer,
+          $$UserGroupsTableCreateCompanionBuilder,
+          $$UserGroupsTableUpdateCompanionBuilder,
+          (
+            UserGroup,
+            BaseReferences<_$AppDatabase, $UserGroupsTable, UserGroup>,
+          ),
+          UserGroup,
+          PrefetchHooks Function()
+        > {
+  $$UserGroupsTableTableManager(_$AppDatabase db, $UserGroupsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserGroupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserGroupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserGroupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> workspaceId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UserGroupsCompanion(
+                id: id,
+                workspaceId: workspaceId,
+                name: name,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                required String workspaceId,
+                required String name,
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UserGroupsCompanion.insert(
+                id: id,
+                workspaceId: workspaceId,
+                name: name,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$UserGroupsTable, UserGroup>(table),
+                  BaseReferences<_$AppDatabase, $UserGroupsTable, UserGroup>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UserGroupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UserGroupsTable,
+      UserGroup,
+      $$UserGroupsTableFilterComposer,
+      $$UserGroupsTableOrderingComposer,
+      $$UserGroupsTableAnnotationComposer,
+      $$UserGroupsTableCreateCompanionBuilder,
+      $$UserGroupsTableUpdateCompanionBuilder,
+      (UserGroup, BaseReferences<_$AppDatabase, $UserGroupsTable, UserGroup>),
+      UserGroup,
+      PrefetchHooks Function()
+    >;
+typedef $$UserGroupMembersTableCreateCompanionBuilder =
+    UserGroupMembersCompanion Function({
+      Value<String> id,
+      required String workspaceId,
+      required String groupId,
+      required String userId,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> updatedAt,
+      Value<int> rowid,
+    });
+typedef $$UserGroupMembersTableUpdateCompanionBuilder =
+    UserGroupMembersCompanion Function({
+      Value<String> id,
+      Value<String> workspaceId,
+      Value<String> groupId,
+      Value<String> userId,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$UserGroupMembersTableFilterComposer
+    extends Composer<_$AppDatabase, $UserGroupMembersTable> {
+  $$UserGroupMembersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UserGroupMembersTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserGroupMembersTable> {
+  $$UserGroupMembersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UserGroupMembersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserGroupMembersTable> {
+  $$UserGroupMembersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$UserGroupMembersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UserGroupMembersTable,
+          UserGroupMember,
+          $$UserGroupMembersTableFilterComposer,
+          $$UserGroupMembersTableOrderingComposer,
+          $$UserGroupMembersTableAnnotationComposer,
+          $$UserGroupMembersTableCreateCompanionBuilder,
+          $$UserGroupMembersTableUpdateCompanionBuilder,
+          (
+            UserGroupMember,
+            BaseReferences<
+              _$AppDatabase,
+              $UserGroupMembersTable,
+              UserGroupMember
+            >,
+          ),
+          UserGroupMember,
+          PrefetchHooks Function()
+        > {
+  $$UserGroupMembersTableTableManager(
+    _$AppDatabase db,
+    $UserGroupMembersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserGroupMembersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserGroupMembersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserGroupMembersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> workspaceId = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UserGroupMembersCompanion(
+                id: id,
+                workspaceId: workspaceId,
+                groupId: groupId,
+                userId: userId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                required String workspaceId,
+                required String groupId,
+                required String userId,
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UserGroupMembersCompanion.insert(
+                id: id,
+                workspaceId: workspaceId,
+                groupId: groupId,
+                userId: userId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$UserGroupMembersTable, UserGroupMember>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $UserGroupMembersTable,
+                    UserGroupMember
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UserGroupMembersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UserGroupMembersTable,
+      UserGroupMember,
+      $$UserGroupMembersTableFilterComposer,
+      $$UserGroupMembersTableOrderingComposer,
+      $$UserGroupMembersTableAnnotationComposer,
+      $$UserGroupMembersTableCreateCompanionBuilder,
+      $$UserGroupMembersTableUpdateCompanionBuilder,
+      (
+        UserGroupMember,
+        BaseReferences<_$AppDatabase, $UserGroupMembersTable, UserGroupMember>,
+      ),
+      UserGroupMember,
+      PrefetchHooks Function()
+    >;
+typedef $$TeamManagerAssignmentsTableCreateCompanionBuilder =
+    TeamManagerAssignmentsCompanion Function({
+      Value<String> id,
+      required String workspaceId,
+      required String managerId,
+      Value<String?> userId,
+      Value<String?> groupId,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> updatedAt,
+      Value<int> rowid,
+    });
+typedef $$TeamManagerAssignmentsTableUpdateCompanionBuilder =
+    TeamManagerAssignmentsCompanion Function({
+      Value<String> id,
+      Value<String> workspaceId,
+      Value<String> managerId,
+      Value<String?> userId,
+      Value<String?> groupId,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$TeamManagerAssignmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $TeamManagerAssignmentsTable> {
+  $$TeamManagerAssignmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get managerId => $composableBuilder(
+    column: $table.managerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TeamManagerAssignmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TeamManagerAssignmentsTable> {
+  $$TeamManagerAssignmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get managerId => $composableBuilder(
+    column: $table.managerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TeamManagerAssignmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TeamManagerAssignmentsTable> {
+  $$TeamManagerAssignmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get managerId =>
+      $composableBuilder(column: $table.managerId, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TeamManagerAssignmentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TeamManagerAssignmentsTable,
+          TeamManagerAssignment,
+          $$TeamManagerAssignmentsTableFilterComposer,
+          $$TeamManagerAssignmentsTableOrderingComposer,
+          $$TeamManagerAssignmentsTableAnnotationComposer,
+          $$TeamManagerAssignmentsTableCreateCompanionBuilder,
+          $$TeamManagerAssignmentsTableUpdateCompanionBuilder,
+          (
+            TeamManagerAssignment,
+            BaseReferences<
+              _$AppDatabase,
+              $TeamManagerAssignmentsTable,
+              TeamManagerAssignment
+            >,
+          ),
+          TeamManagerAssignment,
+          PrefetchHooks Function()
+        > {
+  $$TeamManagerAssignmentsTableTableManager(
+    _$AppDatabase db,
+    $TeamManagerAssignmentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TeamManagerAssignmentsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$TeamManagerAssignmentsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$TeamManagerAssignmentsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> workspaceId = const Value.absent(),
+                Value<String> managerId = const Value.absent(),
+                Value<String?> userId = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TeamManagerAssignmentsCompanion(
+                id: id,
+                workspaceId: workspaceId,
+                managerId: managerId,
+                userId: userId,
+                groupId: groupId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                required String workspaceId,
+                required String managerId,
+                Value<String?> userId = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TeamManagerAssignmentsCompanion.insert(
+                id: id,
+                workspaceId: workspaceId,
+                managerId: managerId,
+                userId: userId,
+                groupId: groupId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $TeamManagerAssignmentsTable,
+                    TeamManagerAssignment
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $TeamManagerAssignmentsTable,
+                    TeamManagerAssignment
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TeamManagerAssignmentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TeamManagerAssignmentsTable,
+      TeamManagerAssignment,
+      $$TeamManagerAssignmentsTableFilterComposer,
+      $$TeamManagerAssignmentsTableOrderingComposer,
+      $$TeamManagerAssignmentsTableAnnotationComposer,
+      $$TeamManagerAssignmentsTableCreateCompanionBuilder,
+      $$TeamManagerAssignmentsTableUpdateCompanionBuilder,
+      (
+        TeamManagerAssignment,
+        BaseReferences<
+          _$AppDatabase,
+          $TeamManagerAssignmentsTable,
+          TeamManagerAssignment
+        >,
+      ),
+      TeamManagerAssignment,
+      PrefetchHooks Function()
+    >;
+typedef $$TeamScopeTableCreateCompanionBuilder = TeamScopeCompanion Function({
+  Value<String> id,
+  required String workspaceId,
+  required String managerId,
+  required String userId,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
+});
+typedef $$TeamScopeTableUpdateCompanionBuilder = TeamScopeCompanion Function({
+  Value<String> id,
+  Value<String> workspaceId,
+  Value<String> managerId,
+  Value<String> userId,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
+});
+
+class $$TeamScopeTableFilterComposer
+    extends Composer<_$AppDatabase, $TeamScopeTable> {
+  $$TeamScopeTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get managerId => $composableBuilder(
+    column: $table.managerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TeamScopeTableOrderingComposer
+    extends Composer<_$AppDatabase, $TeamScopeTable> {
+  $$TeamScopeTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get managerId => $composableBuilder(
+    column: $table.managerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TeamScopeTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TeamScopeTable> {
+  $$TeamScopeTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get managerId =>
+      $composableBuilder(column: $table.managerId, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$TeamScopeTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TeamScopeTable,
+          TeamScopeRow,
+          $$TeamScopeTableFilterComposer,
+          $$TeamScopeTableOrderingComposer,
+          $$TeamScopeTableAnnotationComposer,
+          $$TeamScopeTableCreateCompanionBuilder,
+          $$TeamScopeTableUpdateCompanionBuilder,
+          (
+            TeamScopeRow,
+            BaseReferences<_$AppDatabase, $TeamScopeTable, TeamScopeRow>,
+          ),
+          TeamScopeRow,
+          PrefetchHooks Function()
+        > {
+  $$TeamScopeTableTableManager(_$AppDatabase db, $TeamScopeTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TeamScopeTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TeamScopeTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TeamScopeTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> workspaceId = const Value.absent(),
+                Value<String> managerId = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TeamScopeCompanion(
+                id: id,
+                workspaceId: workspaceId,
+                managerId: managerId,
+                userId: userId,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                required String workspaceId,
+                required String managerId,
+                required String userId,
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TeamScopeCompanion.insert(
+                id: id,
+                workspaceId: workspaceId,
+                managerId: managerId,
+                userId: userId,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TeamScopeTable, TeamScopeRow>(table),
+                  BaseReferences<_$AppDatabase, $TeamScopeTable, TeamScopeRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TeamScopeTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TeamScopeTable,
+      TeamScopeRow,
+      $$TeamScopeTableFilterComposer,
+      $$TeamScopeTableOrderingComposer,
+      $$TeamScopeTableAnnotationComposer,
+      $$TeamScopeTableCreateCompanionBuilder,
+      $$TeamScopeTableUpdateCompanionBuilder,
+      (
+        TeamScopeRow,
+        BaseReferences<_$AppDatabase, $TeamScopeTable, TeamScopeRow>,
+      ),
+      TeamScopeRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -19218,4 +22126,15 @@ class $AppDatabaseManager {
       $$InvoiceItemsTableTableManager(_db, _db.invoiceItems);
   $$InvoiceEntriesTableTableManager get invoiceEntries =>
       $$InvoiceEntriesTableTableManager(_db, _db.invoiceEntries);
+  $$UserGroupsTableTableManager get userGroups =>
+      $$UserGroupsTableTableManager(_db, _db.userGroups);
+  $$UserGroupMembersTableTableManager get userGroupMembers =>
+      $$UserGroupMembersTableTableManager(_db, _db.userGroupMembers);
+  $$TeamManagerAssignmentsTableTableManager get teamManagerAssignments =>
+      $$TeamManagerAssignmentsTableTableManager(
+        _db,
+        _db.teamManagerAssignments,
+      );
+  $$TeamScopeTableTableManager get teamScope =>
+      $$TeamScopeTableTableManager(_db, _db.teamScope);
 }

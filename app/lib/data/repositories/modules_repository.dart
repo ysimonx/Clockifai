@@ -56,6 +56,22 @@ class ModulesRepository {
     }
   }
 
+  /// Vrai si la journée [dayLocal] de [userId] appartient à une période déjà approuvée
+  /// (le serveur refuserait toute saisie : on prévient avant, y compris hors ligne).
+  Future<bool> isDayApproved(String workspaceId, String userId, DateTime dayLocal) async {
+    final key = dayKey(dayLocal);
+    final rows = await (db.select(db.timesheetSubmissions)
+          ..where((t) =>
+              t.workspaceId.equals(workspaceId) &
+              t.userId.equals(userId) &
+              t.status.equals('approved') &
+              t.deletedAt.isNull() &
+              t.periodStart.isSmallerOrEqualValue(key) &
+              t.periodEnd.isBiggerOrEqualValue(key)))
+        .get();
+    return rows.isNotEmpty;
+  }
+
   Future<void> withdrawSubmission(String id) => (db.update(db.timesheetSubmissions)..where((t) => t.id.equals(id)))
       .write(const TimesheetSubmissionsCompanion(status: Value('withdrawn')));
 

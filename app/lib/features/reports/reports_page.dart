@@ -14,8 +14,11 @@ import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/services_api.dart';
 import '../../core/session.dart';
+import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/teammates.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import '../time_entries/entry_dialog.dart';
 import '../time_entries/time_entries_page.dart';
 import 'report_model.dart';
 
@@ -95,12 +98,22 @@ class _ReportsPageState extends State<ReportsPage> {
     final catalog = context.watch<CatalogController>();
     final ws = session.workspace!;
     final range = _range(ws.weekStart);
-    final userFilter = session.isManager ? _userId : session.userId;
+    // Managers : tout le workspace ; chef d'équipe : son périmètre ; membre : soi.
+    final rights = TeamRights.of(context);
+    final userFilter = rights.seesTeam ? _userId : session.userId;
     final locale = context.localeTag;
 
     return PageScaffold(
       title: l.reports,
       actions: [
+        if (rights.canEditOthers)
+          IconButton(
+            tooltip: l.addTimeForOthers,
+            icon: const Icon(Icons.group_add_outlined),
+            onPressed: () => showEntryDialog(context, initialUserIds: {
+              _userId != null && rights.canEditTimeOf(_userId!) ? _userId! : session.userId!,
+            }),
+          ),
         PopupMenuButton<String>(
           tooltip: l.export,
           icon: const Icon(Icons.download),
@@ -116,7 +129,9 @@ class _ReportsPageState extends State<ReportsPage> {
       child: StreamBuilder<List<EntryRow>>(
         stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: userFilter, from: range.start, to: range.end),
         builder: (context, snap) {
-          final rows = _filter(snap.data ?? const [], catalog);
+          final rows = _filter(snap.data ?? const [], catalog)
+              .where((r) => r.entry.userId == session.userId || rights.manages(r.entry.userId))
+              .toList();
           final calc = ReportCalculator(catalog: catalog, roundingMinutes: ws.roundingMinutes, applyRounding: _applyRounding);
           final totals = calc.totals(rows);
           final groups = calc.group(
@@ -162,7 +177,7 @@ class _ReportsPageState extends State<ReportsPage> {
                 child: Column(children: [
                   for (var i = 0; i < rows.length; i++) ...[
                     if (i > 0) const Divider(height: 1),
-                    EntryTile(row: rows[i], showUser: session.isManager),
+                    EntryTile(row: rows[i], showUser: rights.seesTeam),
                   ],
                 ]),
               )
@@ -201,6 +216,7 @@ class _ReportsPageState extends State<ReportsPage> {
     final l = context.l10n;
     final locale = context.localeTag;
     final fmt = DateFormat.yMMMd(locale);
+    final rights = TeamRights.of(context);
     return Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
       DropdownButton<RangePreset>(
         value: _preset,
@@ -220,13 +236,14 @@ class _ReportsPageState extends State<ReportsPage> {
         },
       ),
       Text('${fmt.format(range.start)} – ${fmt.format(range.end.subtract(const Duration(days: 1)))}', style: Theme.of(context).textTheme.bodySmall),
-      if (session.isManager)
+      if (rights.seesTeam)
         DropdownButton<String?>(
-          value: _userId,
+          // La personne choisie peut sortir du périmètre entre-temps : on retombe sur « tous ».
+          value: rights.visibleMembers.any((m) => m.userId == _userId) ? _userId : null,
           hint: Text(l.allMembers),
           items: [
             DropdownMenuItem(value: null, child: Text(l.allMembers)),
-            for (final m in catalog.members) DropdownMenuItem(value: m.userId, child: Text(m.displayName.isEmpty ? (m.email ?? '?') : m.displayName)),
+            for (final m in rights.visibleMembers) DropdownMenuItem(value: m.userId, child: Text(memberName(m))),
           ],
           onChanged: (v) => setState(() => _userId = v),
         ),
@@ -273,10 +290,11 @@ class _ReportsPageState extends State<ReportsPage> {
     final name = 'clockifai-$from-$to';
     try {
       if (fmt == 'csv-local') {
+        final rights = TeamRights.read(context);
         final rows = _filter(
           await entriesRepo.watchEntries(workspaceId: session.workspaceId!, userId: userId, from: range.start, to: range.end).first,
           catalog,
-        );
+        ).where((r) => r.entry.userId == session.userId || rights.manages(r.entry.userId)).toList();
         final csv = StringBuffer('﻿User;Client;Project;Task;Description;Start;End;Hours;Billable\n');
         String q(String s) => '"${s.replaceAll('"', '""')}"';
         for (final r in rows) {

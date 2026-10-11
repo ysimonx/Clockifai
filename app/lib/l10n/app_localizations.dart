@@ -146,6 +146,12 @@ abstract class AppLocalizations {
   /// **'Ajouter une tâche'**
   String get addTask;
 
+  /// No description provided for @addTimeForOthers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter du temps pour d\'autres'**
+  String get addTimeForOthers;
+
   /// No description provided for @adminOnlySettings.
   ///
   /// In fr, this message translates to:
@@ -217,6 +223,30 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Approuver'**
   String get approve;
+
+  /// No description provided for @approvedPeriodFor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Période déjà approuvée pour {name}.'**
+  String approvedPeriodFor(String name);
+
+  /// No description provided for @approvers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Approbateurs'**
+  String get approvers;
+
+  /// No description provided for @approversManagers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Managers'**
+  String get approversManagers;
+
+  /// No description provided for @approversManagersAndTeamManagers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Managers et chefs d\'équipe'**
+  String get approversManagersAndTeamManagers;
 
   /// No description provided for @archive.
   ///
@@ -422,6 +452,12 @@ abstract class AppLocalizations {
   /// **'Créer mon compte'**
   String get createAccount;
 
+  /// No description provided for @createEntries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer les entrées'**
+  String get createEntries;
+
   /// No description provided for @createProject.
   ///
   /// In fr, this message translates to:
@@ -500,6 +536,12 @@ abstract class AppLocalizations {
   /// **'Décision'**
   String get decision;
 
+  /// No description provided for @defaultHours.
+  ///
+  /// In fr, this message translates to:
+  /// **'Horaires par défaut'**
+  String get defaultHours;
+
   /// No description provided for @delete.
   ///
   /// In fr, this message translates to:
@@ -529,6 +571,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Cette entrée de temps sera supprimée sur tous vos appareils.'**
   String get deleteEntryMessage;
+
+  /// No description provided for @deleteGroup.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer le groupe'**
+  String get deleteGroup;
+
+  /// No description provided for @deleteGroupMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les membres restent dans le workspace ; les chefs d\'équipe n\'encadrent plus ce groupe.'**
+  String get deleteGroupMessage;
 
   /// No description provided for @deleteInvoice.
   ///
@@ -722,6 +776,24 @@ abstract class AppLocalizations {
   /// **'Se termine le lendemain.'**
   String get endsNextDay;
 
+  /// No description provided for @enteredBy.
+  ///
+  /// In fr, this message translates to:
+  /// **'saisi par {name}'**
+  String enteredBy(String name);
+
+  /// No description provided for @enteringFor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous saisissez le temps de {name}.'**
+  String enteringFor(String name);
+
+  /// No description provided for @entriesCreated.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 entrée créée} other{{count} entrées créées}}'**
+  String entriesCreated(int count);
+
   /// No description provided for @entryLocked.
   ///
   /// In fr, this message translates to:
@@ -775,6 +847,24 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Grouper par'**
   String get groupBy;
+
+  /// No description provided for @groupMembers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Membres du groupe'**
+  String get groupMembers;
+
+  /// No description provided for @groupName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom du groupe'**
+  String get groupName;
+
+  /// No description provided for @groups.
+  ///
+  /// In fr, this message translates to:
+  /// **'Groupes'**
+  String get groups;
 
   /// No description provided for @halfDay.
   ///
@@ -1136,11 +1226,23 @@ abstract class AppLocalizations {
   /// **'Lien de connexion envoyé par email.'**
   String get magicLinkSent;
 
+  /// No description provided for @managedByLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chef d\'équipe : {names}'**
+  String managedByLabel(String names);
+
   /// No description provided for @managersOnly.
   ///
   /// In fr, this message translates to:
   /// **'Réservé aux managers'**
   String get managersOnly;
+
+  /// No description provided for @managesLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Encadre : {names}'**
+  String managesLabel(String names);
 
   /// No description provided for @markDone.
   ///
@@ -1159,6 +1261,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Droits par membre'**
   String get memberAllowances;
+
+  /// No description provided for @memberCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Aucun membre} =1{1 membre} other{{count} membres}}'**
+  String memberCount(int count);
+
+  /// No description provided for @members.
+  ///
+  /// In fr, this message translates to:
+  /// **'Membres'**
+  String get members;
 
   /// No description provided for @more.
   ///
@@ -1201,6 +1315,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Nouveau client'**
   String get newClient;
+
+  /// No description provided for @newGroup.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau groupe'**
+  String get newGroup;
 
   /// No description provided for @newInvoice.
   ///
@@ -1304,6 +1424,18 @@ abstract class AppLocalizations {
   /// **'Démarrez le chronomètre ci-dessus ou ajoutez du temps manuellement.'**
   String get noEntriesYetMessage;
 
+  /// No description provided for @noGroups.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun groupe'**
+  String get noGroups;
+
+  /// No description provided for @noGroupsMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Regroupez les membres (équipe, chantier, entreprise) pour les confier à un chef d\'équipe.'**
+  String get noGroupsMessage;
+
   /// No description provided for @noHistory.
   ///
   /// In fr, this message translates to:
@@ -1381,6 +1513,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucune tâche'**
   String get noTasks;
+
+  /// No description provided for @noTeammateSelected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez au moins une personne.'**
+  String get noTeammateSelected;
 
   /// No description provided for @noWorkspace.
   ///
@@ -1502,6 +1640,12 @@ abstract class AppLocalizations {
   /// **'Modifications en attente d\'envoi'**
   String get pendingChanges;
 
+  /// No description provided for @peopleCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Personne} =1{1 personne} other{{count} personnes}}'**
+  String peopleCount(int count);
+
   /// No description provided for @perHour.
   ///
   /// In fr, this message translates to:
@@ -1579,6 +1723,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Quantité (h)'**
   String get quantityHours;
+
+  /// No description provided for @readOnlyTimeOf.
+  ///
+  /// In fr, this message translates to:
+  /// **'Temps de {name} : consultation seulement.'**
+  String readOnlyTimeOf(String name);
 
   /// No description provided for @reject.
   ///
@@ -1784,11 +1934,23 @@ abstract class AppLocalizations {
   /// **'Équipe'**
   String get sectionTeam;
 
+  /// No description provided for @selectAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout cocher'**
+  String get selectAll;
+
   /// No description provided for @selectProject.
   ///
   /// In fr, this message translates to:
   /// **'Choisir un projet'**
   String get selectProject;
+
+  /// No description provided for @selectTeammates.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir les collaborateurs'**
+  String get selectTeammates;
 
   /// No description provided for @send.
   ///
@@ -2006,6 +2168,30 @@ abstract class AppLocalizations {
   /// **'Équipe'**
   String get team;
 
+  /// No description provided for @teamEntry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pointage d\'équipe'**
+  String get teamEntry;
+
+  /// No description provided for @teamEntryHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cochez les présents : une entrée est créée pour chacun, même hors ligne. Touchez les horaires d\'une personne pour les ajuster.'**
+  String get teamEntryHelp;
+
+  /// No description provided for @teamManagerOf.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chef d\'équipe de…'**
+  String get teamManagerOf;
+
+  /// No description provided for @teamManagerOfHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce membre verra le temps des personnes choisies et approuvera leurs feuilles de temps. La saisie pour autrui dépend du réglage du workspace.'**
+  String get teamManagerOfHelp;
+
   /// No description provided for @teamMemberHint.
   ///
   /// In fr, this message translates to:
@@ -2017,6 +2203,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Demandes de l\'équipe'**
   String get teamRequests;
+
+  /// No description provided for @teammate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collaborateur'**
+  String get teammate;
+
+  /// No description provided for @teammates.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collaborateurs'**
+  String get teammates;
 
   /// No description provided for @thisMonth.
   ///
@@ -2035,6 +2233,30 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Cette année'**
   String get thisYear;
+
+  /// No description provided for @timeForOthers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisie du temps pour autrui'**
+  String get timeForOthers;
+
+  /// No description provided for @timeForOthersAdmins.
+  ///
+  /// In fr, this message translates to:
+  /// **'Administrateurs'**
+  String get timeForOthersAdmins;
+
+  /// No description provided for @timeForOthersAdminsAndTeamManagers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Administrateurs et chefs d\'équipe'**
+  String get timeForOthersAdminsAndTeamManagers;
+
+  /// No description provided for @timeForOthersHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qui peut saisir et modifier le temps des autres membres.'**
+  String get timeForOthersHelp;
 
   /// No description provided for @timeOff.
   ///
@@ -2125,6 +2347,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Utilisateur'**
   String get user;
+
+  /// No description provided for @users.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utilisateurs'**
+  String get users;
+
+  /// No description provided for @view.
+  ///
+  /// In fr, this message translates to:
+  /// **'Consulter'**
+  String get view;
 
   /// No description provided for @weekOf.
   ///

@@ -9,16 +9,19 @@ import '../../features/timer/timer_bar.dart';
 import '../di.dart';
 import '../l10n.dart';
 import '../session.dart';
+import '../team_rights.dart';
 import 'common.dart';
 import 'sync_indicator.dart';
 
 class _Dest {
-  const _Dest(this.path, this.icon, this.selectedIcon, this.label, {this.managerOnly = false, this.section});
+  const _Dest(this.path, this.icon, this.selectedIcon, this.label, {this.managerOnly = false, this.visibleIf, this.section});
   final String path;
   final IconData icon;
   final IconData selectedIcon;
   final String Function(AppLocalizations) label;
   final bool managerOnly;
+  /// Condition d'affichage liée à l'équipe (chef d'équipe, saisie pour autrui) ; prime sur [managerOnly].
+  final bool Function(TeamRights)? visibleIf;
   /// Titre de section affiché avant cette entrée dans le menu latéral.
   final String Function(AppLocalizations)? section;
 }
@@ -29,8 +32,9 @@ final _allDestinations = <_Dest>[
   _Dest('/calendar', Icons.calendar_month_outlined, Icons.calendar_month, (l) => l.calendar),
   _Dest('/reports', Icons.bar_chart_outlined, Icons.bar_chart, (l) => l.reports),
   _Dest('/schedule', Icons.view_timeline_outlined, Icons.view_timeline, (l) => l.schedule, section: (l) => l.sectionTeam),
+  _Dest('/team-entry', Icons.group_add_outlined, Icons.group_add, (l) => l.teamEntry, visibleIf: _canEditOthers),
   _Dest('/time-off', Icons.beach_access_outlined, Icons.beach_access, (l) => l.timeOff),
-  _Dest('/approvals', Icons.fact_check_outlined, Icons.fact_check, (l) => l.approvals, managerOnly: true),
+  _Dest('/approvals', Icons.fact_check_outlined, Icons.fact_check, (l) => l.approvals, visibleIf: _seesTeam),
   _Dest('/invoices', Icons.receipt_long_outlined, Icons.receipt_long, (l) => l.invoices, managerOnly: true),
   _Dest('/team', Icons.groups_outlined, Icons.groups, (l) => l.team),
   _Dest('/projects', Icons.folder_outlined, Icons.folder, (l) => l.projects, section: (l) => l.sectionManage),
@@ -38,6 +42,9 @@ final _allDestinations = <_Dest>[
   _Dest('/tags', Icons.sell_outlined, Icons.sell, (l) => l.tags),
   _Dest('/settings', Icons.settings_outlined, Icons.settings, (l) => l.settings),
 ];
+
+bool _canEditOthers(TeamRights r) => r.canEditOthers;
+bool _seesTeam(TeamRights r) => r.seesTeam;
 
 /// Nombre de destinations affichées dans la barre du bas sur mobile (le reste dans « Plus »).
 const _mobileMain = 4;
@@ -123,7 +130,10 @@ class _AppShellState extends State<AppShell> {
       ),
     );
 
-    final destinations = _allDestinations.where((d) => !d.managerOnly || session.isManager).toList();
+    final rights = TeamRights.of(context);
+    final destinations = _allDestinations
+        .where((d) => d.visibleIf?.call(rights) ?? (!d.managerOnly || session.isManager))
+        .toList();
     if (wide) {
       final index = _indexIn(destinations);
       return Scaffold(

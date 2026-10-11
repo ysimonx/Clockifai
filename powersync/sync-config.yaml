@@ -1,0 +1,118 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-sync-rules@latest/schema/sync_rules.json
+#
+# Sync Streams Clockifai : ce que chaque utilisateur connecté reçoit dans sa base locale.
+# Principe : tout est scoppé par les workspaces dont l'utilisateur est membre actif.
+# Les lignes soft-deleted (deleted_at non nul) sortent du flux → supprimées localement.
+#
+# ⚠ Le service doit être redémarré après modification : docker compose restart powersync
+
+config:
+  edition: 3
+
+streams:
+
+  # Mon profil
+  my_profile:
+    auto_subscribe: true
+    priority: 0
+    query: SELECT * FROM profiles WHERE id = auth.user_id()
+
+  # Référentiel de chaque workspace dont je suis membre
+  workspace_core:
+    auto_subscribe: true
+    priority: 1
+    queries:
+      - SELECT * FROM workspaces
+        WHERE deleted_at IS NULL
+          AND id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM workspace_members
+        WHERE deleted_at IS NULL
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM clients
+        WHERE deleted_at IS NULL
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM projects
+        WHERE deleted_at IS NULL
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM tasks
+        WHERE deleted_at IS NULL
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM tags
+        WHERE deleted_at IS NULL
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM time_off_policies
+        WHERE deleted_at IS NULL
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+      - SELECT * FROM holidays
+        WHERE deleted_at IS NULL
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL)
+
+  # Mes données personnelles (tous workspaces) : temps, tags, feuilles soumises, absences, planning
+  my_time_entries:
+    auto_subscribe: true
+    priority: 2
+    queries:
+      - SELECT * FROM time_entries WHERE deleted_at IS NULL AND user_id = auth.user_id()
+      - SELECT * FROM time_entry_tags WHERE user_id = auth.user_id()
+      - SELECT * FROM timesheet_submissions WHERE deleted_at IS NULL AND user_id = auth.user_id()
+      - SELECT * FROM time_off_requests WHERE deleted_at IS NULL AND user_id = auth.user_id()
+      - SELECT * FROM time_off_allowances WHERE deleted_at IS NULL AND user_id = auth.user_id()
+      - SELECT * FROM schedule_assignments WHERE deleted_at IS NULL AND user_id = auth.user_id()
+
+  # Données de toute l'équipe d'un workspace : souscription à la demande (écrans équipe, rapports,
+  # approbations, absences, planning, factures), réservée aux rôles owner/admin/manager.
+  team_data:
+    priority: 3
+    queries:
+      - SELECT * FROM time_entries
+        WHERE deleted_at IS NULL
+          AND workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')
+      - SELECT * FROM time_entry_tags
+        WHERE workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')
+      - SELECT * FROM timesheet_submissions
+        WHERE deleted_at IS NULL
+          AND workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')
+      - SELECT * FROM time_off_requests
+        WHERE deleted_at IS NULL
+          AND workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')
+      - SELECT * FROM time_off_allowances
+        WHERE deleted_at IS NULL
+          AND workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')
+      - SELECT * FROM schedule_assignments
+        WHERE deleted_at IS NULL
+          AND workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')
+      - SELECT * FROM invoices
+        WHERE deleted_at IS NULL
+          AND workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')
+      - SELECT * FROM invoice_items
+        WHERE deleted_at IS NULL
+          AND workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')
+      - SELECT * FROM invoice_entries
+        WHERE workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')

@@ -1,0 +1,47 @@
+"""Configuration par variables d'environnement (voir deploy/.env.example)."""
+
+import os
+
+
+def _bool(name: str, default: bool) -> bool:
+    return os.environ.get(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
+
+
+class Config:
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
+    LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+    # Postgres (rôle postgres : contourne la RLS → contrôle d'accès explicite dans auth.py)
+    DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+    # Supabase
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "http://kong:8000")
+    SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
+    SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    # JWKS (clés asymétriques ES256) : utilisé si SUPABASE_JWT_SECRET est vide
+    SUPABASE_JWKS_URL = os.environ.get("SUPABASE_JWKS_URL", f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json")
+
+    # Emails (même SMTP que GoTrue)
+    SMTP_HOST = os.environ.get("SMTP_HOST", "")
+    SMTP_PORT = int(os.environ.get("SMTP_PORT", "587") or 587)
+    SMTP_USER = os.environ.get("SMTP_USER", "")
+    SMTP_PASS = os.environ.get("SMTP_PASS", "")
+    SMTP_SENDER = os.environ.get("SMTP_SENDER", "clockifai@example.com")
+    APP_PUBLIC_URL = os.environ.get("APP_PUBLIC_URL", "http://localhost:3000")
+
+    # Origines autorisées (CORS) pour l'app web servie sur un autre port en développement
+    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:3000")
+
+    # Jobs planifiés
+    JOBS_ENABLED = _bool("JOBS_ENABLED", True)
+    JOB_AUTOSTOP_INTERVAL_MIN = int(os.environ.get("JOB_AUTOSTOP_INTERVAL_MIN", "5"))
+    JOB_PURGE_DELETED_AFTER_DAYS = int(os.environ.get("JOB_PURGE_DELETED_AFTER_DAYS", "30"))
+
+    TESTING = False
+
+
+class TestConfig(Config):
+    TESTING = True
+    JOBS_ENABLED = False
+    DATABASE_URL = os.environ.get("TEST_DATABASE_URL", "")
+    SUPABASE_JWT_SECRET = "test-secret-test-secret-test-secret-123"

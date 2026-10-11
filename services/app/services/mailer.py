@@ -1,0 +1,46 @@
+"""Envoi d'emails via le SMTP partagé avec GoTrue. Sans SMTP configuré : journalise et renvoie False."""
+
+from __future__ import annotations
+
+import logging
+import smtplib
+import ssl
+from email.message import EmailMessage
+
+from flask import current_app
+
+log = logging.getLogger(__name__)
+
+_PLACEHOLDER_HOSTS = {"", "supabase-mail", "localhost"}
+
+
+def send_mail(to: str, subject: str, text: str) -> bool:
+    cfg = current_app.config
+    host = cfg.get("SMTP_HOST", "")
+    if host in _PLACEHOLDER_HOSTS:
+        log.info("SMTP non configuré : email non envoyé à %s (%s)", to, subject)
+        return False
+    msg = EmailMessage()
+    msg["From"] = cfg["SMTP_SENDER"]
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg.set_content(text)
+    port = cfg["SMTP_PORT"]
+    try:
+        if port == 465:
+            with smtplib.SMTP_SSL(host, port, context=ssl.create_default_context(), timeout=20) as s:
+                if cfg["SMTP_USER"]:
+                    s.login(cfg["SMTP_USER"], cfg["SMTP_PASS"])
+                s.send_message(msg)
+        else:
+            with smtplib.SMTP(host, port, timeout=20) as s:
+                s.ehlo()
+                if s.has_extn("starttls"):
+                    s.starttls(context=ssl.create_default_context())
+                if cfg["SMTP_USER"]:
+                    s.login(cfg["SMTP_USER"], cfg["SMTP_PASS"])
+                s.send_message(msg)
+        return True
+    except Exception:
+        log.exception("échec d'envoi d'email à %s", to)
+        return False

@@ -1,0 +1,44 @@
+import 'package:clockifai/core/format.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('parseDuration', () {
+    test('formats acceptés', () {
+      expect(parseDuration('1:30'), 5400);
+      expect(parseDuration('1,5'), 5400);
+      expect(parseDuration('1.5'), 5400);
+      expect(parseDuration('90m'), 5400);
+      expect(parseDuration('90min'), 5400);
+      expect(parseDuration('2h'), 7200);
+      expect(parseDuration('1h30'), 5400);
+      expect(parseDuration(' 0:05 '), 300);
+      expect(parseDuration(''), 0);
+    });
+
+    test('saisie invalide', () {
+      expect(parseDuration('abc'), isNull);
+      expect(parseDuration('1:3a'), isNull);
+      expect(parseDuration('-2'), isNull);
+    });
+  });
+
+  test('formatClock / formatHm', () {
+    expect(formatClock(0), '0:00:00');
+    expect(formatClock(3725), '1:02:05');
+    expect(formatClock(-5), '0:00:00');
+    expect(formatHm(27000), '7:30');
+  });
+
+  group('startOfWeek', () {
+    // Samedi 11 octobre 2026
+    final saturday = DateTime(2026, 10, 11, 15, 30);
+    test('semaine ISO (lundi)', () => expect(startOfWeek(saturday, 1), DateTime(2026, 10, 5)));
+    test('semaine commençant le dimanche', () => expect(startOfWeek(saturday, 7), DateTime(2026, 10, 11)));
+    test('le jour même est le début de semaine', () => expect(startOfWeek(DateTime(2026, 10, 5, 8), 1), DateTime(2026, 10, 5)));
+  });
+
+  test('colorFromHex', () {
+    expect(colorFromHex('#FF0000').toARGB32(), 0xFFFF0000);
+    expect(colorFromHex('nope').toARGB32(), 0xFF3B82F6);
+  });
+}

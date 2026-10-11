@@ -1,0 +1,436 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:file_saver/file_saver.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/catalog.dart';
+import '../../core/di.dart';
+import '../../core/format.dart';
+import '../../core/l10n.dart';
+import '../../core/services_api.dart';
+import '../../core/session.dart';
+import '../../core/widgets/common.dart';
+import '../../data/repositories/time_entry_repository.dart';
+import '../time_entries/time_entries_page.dart';
+import 'report_model.dart';
+
+class ReportsPage extends StatefulWidget {
+  const ReportsPage({super.key});
+
+  @override
+  State<ReportsPage> createState() => _ReportsPageState();
+}
+
+class _ReportsPageState extends State<ReportsPage> {
+  RangePreset _preset = RangePreset.thisWeek;
+  DateTimeRange? _custom;
+  GroupBy _groupBy = GroupBy.project;
+  String? _userId; // null = toute l'équipe (managers) ; membres : forcé à soi
+  String? _projectId;
+  String? _clientId;
+  bool? _billable;
+  bool _applyRounding = false;
+  bool _detailed = false;
+  DateTimeRange _range(int weekStart) {
+    final now = DateTime.now();
+    final ws = startOfWeek(now, weekStart);
+    switch (_preset) {
+      case RangePreset.thisWeek:
+        return DateTimeRange(start: ws, end: ws.add(const Duration(days: 7)));
+      case RangePreset.lastWeek:
+        return DateTimeRange(start: ws.subtract(const Duration(days: 7)), end: ws);
+      case RangePreset.thisMonth:
+        return DateTimeRange(start: DateTime(now.year, now.month), end: DateTime(now.year, now.month + 1));
+      case RangePreset.lastMonth:
+        return DateTimeRange(start: DateTime(now.year, now.month - 1), end: DateTime(now.year, now.month));
+      case RangePreset.thisYear:
+        return DateTimeRange(start: DateTime(now.year), end: DateTime(now.year + 1));
+      case RangePreset.custom:
+        final c = _custom ?? DateTimeRange(start: ws, end: ws.add(const Duration(days: 6)));
+        return DateTimeRange(start: startOfDay(c.start), end: startOfDay(c.end).add(const Duration(days: 1)));
+    }
+  }
+
+  String _presetLabel(RangePreset p) {
+    final l = context.l10n;
+    return switch (p) {
+      RangePreset.thisWeek => l.thisWeek,
+      RangePreset.lastWeek => l.lastWeek,
+      RangePreset.thisMonth => l.thisMonth,
+      RangePreset.lastMonth => l.lastMonth,
+      RangePreset.thisYear => l.thisYear,
+      RangePreset.custom => l.customRange,
+    };
+  }
+
+  String _groupLabel(GroupBy g) {
+    final l = context.l10n;
+    return switch (g) {
+      GroupBy.project => l.project,
+      GroupBy.client => l.client,
+      GroupBy.user => l.user,
+      GroupBy.tag => l.tag,
+      GroupBy.day => l.day,
+      GroupBy.description => l.description,
+    };
+  }
+
+  List<EntryRow> _filter(List<EntryRow> rows, CatalogController catalog) => rows.where((r) {
+        final e = r.entry;
+        if (_projectId != null && e.projectId != _projectId) return false;
+        if (_clientId != null && catalog.project(e.projectId)?.clientId != _clientId) return false;
+        if (_billable != null && e.billable != _billable) return false;
+        return true;
+      }).toList();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final session = context.watch<SessionController>();
+    final catalog = context.watch<CatalogController>();
+    final ws = session.workspace!;
+    final range = _range(ws.weekStart);
+    final userFilter = session.isManager ? _userId : session.userId;
+    final locale = context.localeTag;
+
+    return PageScaffold(
+      title: l.reports,
+      actions: [
+        PopupMenuButton<String>(
+          tooltip: l.export,
+          icon: const Icon(Icons.download),
+          onSelected: (fmt) => _export(fmt, range, userFilter),
+          itemBuilder: (_) => [
+            PopupMenuItem(value: 'csv-local', child: Text(l.exportCsvOffline)),
+            const PopupMenuItem(value: 'csv', child: Text('CSV')),
+            const PopupMenuItem(value: 'xlsx', child: Text('Excel (.xlsx)')),
+            const PopupMenuItem(value: 'pdf', child: Text('PDF')),
+          ],
+        ),
+      ],
+      child: StreamBuilder<List<EntryRow>>(
+        stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: userFilter, from: range.start, to: range.end),
+        builder: (context, snap) {
+          final rows = _filter(snap.data ?? const [], catalog);
+          final calc = ReportCalculator(catalog: catalog, roundingMinutes: ws.roundingMinutes, applyRounding: _applyRounding);
+          final totals = calc.totals(rows);
+          final groups = calc.group(
+            rows,
+            _groupBy,
+            noProject: l.noProject,
+            noClient: l.noClient,
+            noTag: l.noTag,
+            noDescription: l.noDescription,
+            dayLabel: (d) => DateFormat.MMMEd(locale).format(d),
+          );
+          return ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 24), children: [
+            _filters(context, session, catalog, range),
+            const SizedBox(height: 12),
+            Wrap(spacing: 12, runSpacing: 12, children: [
+              _StatCard(label: l.totalTime, value: formatHm(totals.total)),
+              _StatCard(label: l.billableTime, value: formatHm(totals.billable)),
+              _StatCard(label: l.amount, value: formatMoney(totals.amount, ws.currency, locale)),
+            ]),
+            const SizedBox(height: 16),
+            if (rows.isNotEmpty) _DailyChart(rows: rows, range: range, calc: calc),
+            const SizedBox(height: 16),
+            Row(children: [
+              SegmentedButton<bool>(
+                segments: [ButtonSegment(value: false, label: Text(l.summary)), ButtonSegment(value: true, label: Text(l.detailed))],
+                selected: {_detailed},
+                onSelectionChanged: (s) => setState(() => _detailed = s.first),
+              ),
+              const Spacer(),
+              if (!_detailed)
+                DropdownButton<GroupBy>(
+                  value: _groupBy,
+                  underline: const SizedBox.shrink(),
+                  items: [for (final g in GroupBy.values) DropdownMenuItem(value: g, child: Text('${l.groupBy} ${_groupLabel(g).toLowerCase()}'))],
+                  onChanged: (g) => setState(() => _groupBy = g!),
+                ),
+            ]),
+            const SizedBox(height: 8),
+            if (rows.isEmpty)
+              EmptyState(icon: Icons.bar_chart, title: l.noDataForPeriod)
+            else if (_detailed)
+              Card(
+                child: Column(children: [
+                  for (var i = 0; i < rows.length; i++) ...[
+                    if (i > 0) const Divider(height: 1),
+                    EntryTile(row: rows[i], showUser: session.isManager),
+                  ],
+                ]),
+              )
+            else
+              Card(
+                child: Column(children: [
+                  for (final g in groups)
+                    ListTile(
+                      leading: g.color == null ? null : ColorDot(g.color!, size: 12),
+                      title: Text(g.label),
+                      subtitle: LinearProgressIndicator(
+                        value: totals.total == 0 ? 0 : g.seconds / totals.total,
+                        color: g.color == null ? null : colorFromHex(g.color!),
+                      ),
+                      trailing: SizedBox(
+                        width: 180,
+                        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                          if (g.amount > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(formatMoney(g.amount, ws.currency, locale), style: Theme.of(context).textTheme.bodySmall),
+                            ),
+                          Text(formatHm(g.seconds), style: const TextStyle(fontWeight: FontWeight.w600)),
+                        ]),
+                      ),
+                    ),
+                ]),
+              ),
+          ]);
+        },
+      ),
+    );
+  }
+
+  Widget _filters(BuildContext context, SessionController session, CatalogController catalog, DateTimeRange range) {
+    final l = context.l10n;
+    final locale = context.localeTag;
+    final fmt = DateFormat.yMMMd(locale);
+    return Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+      DropdownButton<RangePreset>(
+        value: _preset,
+        items: [for (final p in RangePreset.values) DropdownMenuItem(value: p, child: Text(_presetLabel(p)))],
+        onChanged: (p) async {
+          if (p == RangePreset.custom) {
+            final r = await showDateRangePicker(
+              context: context,
+              firstDate: DateTime(2000),
+              lastDate: DateTime.now().add(const Duration(days: 365)),
+              initialDateRange: _custom,
+            );
+            if (r == null) return;
+            setState(() => _custom = r);
+          }
+          setState(() => _preset = p!);
+        },
+      ),
+      Text('${fmt.format(range.start)} – ${fmt.format(range.end.subtract(const Duration(days: 1)))}', style: Theme.of(context).textTheme.bodySmall),
+      if (session.isManager)
+        DropdownButton<String?>(
+          value: _userId,
+          hint: Text(l.allMembers),
+          items: [
+            DropdownMenuItem(value: null, child: Text(l.allMembers)),
+            for (final m in catalog.members) DropdownMenuItem(value: m.userId, child: Text(m.displayName.isEmpty ? (m.email ?? '?') : m.displayName)),
+          ],
+          onChanged: (v) => setState(() => _userId = v),
+        ),
+      DropdownButton<String?>(
+        value: _clientId,
+        items: [
+          DropdownMenuItem(value: null, child: Text(l.allClients)),
+          for (final c in catalog.clients) DropdownMenuItem(value: c.id, child: Text(c.name)),
+        ],
+        onChanged: (v) => setState(() => _clientId = v),
+      ),
+      DropdownButton<String?>(
+        value: _projectId,
+        items: [
+          DropdownMenuItem(value: null, child: Text(l.allProjects)),
+          for (final p in catalog.projects) DropdownMenuItem(value: p.id, child: Text(p.name)),
+        ],
+        onChanged: (v) => setState(() => _projectId = v),
+      ),
+      DropdownButton<bool?>(
+        value: _billable,
+        items: [
+          DropdownMenuItem(value: null, child: Text(l.billableAndNot)),
+          DropdownMenuItem(value: true, child: Text(l.billable)),
+          DropdownMenuItem(value: false, child: Text(l.nonBillable)),
+        ],
+        onChanged: (v) => setState(() => _billable = v),
+      ),
+      if (session.workspace!.roundingMinutes > 0)
+        FilterChip(
+          label: Text(l.applyRounding(session.workspace!.roundingMinutes)),
+          selected: _applyRounding,
+          onSelected: (v) => setState(() => _applyRounding = v),
+        ),
+    ]);
+  }
+
+  Future<void> _export(String fmt, DateTimeRange range, String? userId) async {
+    final l = context.l10n;
+    final session = context.read<SessionController>();
+    final catalog = context.read<CatalogController>();
+    final from = DateFormat('yyyy-MM-dd').format(range.start);
+    final to = DateFormat('yyyy-MM-dd').format(range.end.subtract(const Duration(days: 1)));
+    final name = 'clockifai-$from-$to';
+    try {
+      if (fmt == 'csv-local') {
+        final rows = _filter(
+          await entriesRepo.watchEntries(workspaceId: session.workspaceId!, userId: userId, from: range.start, to: range.end).first,
+          catalog,
+        );
+        final csv = StringBuffer('﻿User;Client;Project;Task;Description;Start;End;Hours;Billable\n');
+        String q(String s) => '"${s.replaceAll('"', '""')}"';
+        for (final r in rows) {
+          final e = r.entry;
+          csv.writeln([
+            q(catalog.memberOf(e.userId)?.displayName ?? ''),
+            q(catalog.clientOfProject(e.projectId)?.name ?? ''),
+            q(catalog.project(e.projectId)?.name ?? ''),
+            q(catalog.task(e.taskId)?.name ?? ''),
+            q(e.description),
+            e.startAt.toLocal().toIso8601String(),
+            e.endAt?.toLocal().toIso8601String() ?? '',
+            (r.seconds / 3600).toStringAsFixed(2),
+            e.billable ? '1' : '0',
+          ].join(';'));
+        }
+        await FileSaver.instance.saveFile(name: name, bytes: Uint8List.fromList(utf8.encode(csv.toString())), fileExtension: 'csv', mimeType: MimeType.csv);
+      } else {
+        final bytes = await ServicesApi.download('/api/exports/report', {
+          'workspace_id': session.workspaceId!,
+          'from': from,
+          'to': to,
+          'format': fmt,
+          'user_id': ?userId,
+          'project_id': ?_projectId,
+          'client_id': ?_clientId,
+          if (_billable != null) 'billable': '$_billable',
+        });
+        final mime = switch (fmt) { 'xlsx' => MimeType.microsoftExcel, 'pdf' => MimeType.pdf, _ => MimeType.csv };
+        await FileSaver.instance.saveFile(name: name, bytes: bytes, fileExtension: fmt, mimeType: mime);
+      }
+      if (mounted) showSnack(context, l.exportDone);
+    } catch (e) {
+      if (mounted) showSnack(context, l.exportFailed('$e'));
+    }
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 200,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+            const SizedBox(height: 4),
+            Text(value, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Histogramme des heures par jour (ou par mois au-delà de 62 jours).
+class _DailyChart extends StatelessWidget {
+  const _DailyChart({required this.rows, required this.range, required this.calc});
+  final List<EntryRow> rows;
+  final DateTimeRange range;
+  final ReportCalculator calc;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final locale = context.localeTag;
+    final days = range.end.difference(range.start).inDays;
+    final monthly = days > 62;
+    final buckets = <DateTime>[];
+    if (monthly) {
+      for (var d = DateTime(range.start.year, range.start.month); d.isBefore(range.end); d = DateTime(d.year, d.month + 1)) {
+        buckets.add(d);
+      }
+    } else {
+      for (var i = 0; i < days; i++) {
+        buckets.add(DateTime(range.start.year, range.start.month, range.start.day + i));
+      }
+    }
+    final values = List<double>.filled(buckets.length, 0);
+    for (final r in rows) {
+      final d = r.entry.startAt.toLocal();
+      final idx = monthly
+          ? buckets.indexWhere((b) => b.year == d.year && b.month == d.month)
+          : buckets.indexWhere((b) => sameDay(b, d));
+      if (idx >= 0) values[idx] += calc.secondsOf(r) / 3600;
+    }
+    final maxY = values.fold<double>(0, (a, b) => a > b ? a : b);
+    // Graduations lisibles : quarts d'heure sous 1 h, sinon heures entières.
+    final interval = maxY <= 1 ? 0.25 : (maxY / 4).ceilToDouble();
+    final top = maxY == 0 ? 1.0 : ((maxY / interval).ceil() + 1) * interval;
+    final labelEvery = (buckets.length / 12).ceil().clamp(1, 1000);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 20, 16, 8),
+        child: SizedBox(
+          height: 220,
+          child: BarChart(BarChartData(
+            maxY: top,
+            gridData: FlGridData(drawVerticalLine: false, horizontalInterval: interval, getDrawingHorizontalLine: (_) => FlLine(color: theme.colorScheme.outlineVariant, strokeWidth: 0.5)),
+            borderData: FlBorderData(show: false),
+            barTouchData: BarTouchData(
+              touchTooltipData: BarTouchTooltipData(
+                getTooltipItem: (group, _, rod, _) => BarTooltipItem(
+                  '${monthly ? DateFormat.yMMM(locale).format(buckets[group.x]) : DateFormat.MMMEd(locale).format(buckets[group.x])}\n${formatHm((rod.toY * 3600).round())}',
+                  TextStyle(color: theme.colorScheme.onInverseSurface),
+                ),
+              ),
+            ),
+            titlesData: FlTitlesData(
+              topTitles: const AxisTitles(),
+              rightTitles: const AxisTitles(),
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 40,
+                  interval: interval,
+                  getTitlesWidget: (v, meta) => v == meta.max ? const SizedBox.shrink() : Text(formatHm((v * 3600).round()), style: theme.textTheme.labelSmall),
+                ),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 24,
+                  getTitlesWidget: (v, meta) {
+                    final i = v.toInt();
+                    if (i % labelEvery != 0 || i >= buckets.length) return const SizedBox.shrink();
+                    final d = buckets[i];
+                    return Text(monthly ? DateFormat.MMM(locale).format(d) : (days <= 7 ? DateFormat.E(locale).format(d) : DateFormat.d(locale).format(d)), style: theme.textTheme.labelSmall);
+                  },
+                ),
+              ),
+            ),
+            barGroups: [
+              for (var i = 0; i < values.length; i++)
+                BarChartGroupData(x: i, barRods: [
+                  BarChartRodData(
+                    toY: values[i],
+                    width: buckets.length > 20 ? 8 : 18,
+                    color: theme.colorScheme.primary,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                  ),
+                ]),
+            ],
+          )),
+        ),
+      ),
+    );
+  }
+}

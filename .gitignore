@@ -1,0 +1,45 @@
+# Secrets / local env
+deploy/.env
+deploy/.env.*
+!deploy/.env.example
+*.pem
+*.key
+
+# Supabase runtime data (volumes are mounted from here)
+supabase/docker/volumes/db/data/
+supabase/docker/volumes/storage/
+supabase/docker/.env
+
+# PowerSync
+powersync/*.local.yaml
+
+# Python
+services/.venv/
+services/**/__pycache__/
+services/.pytest_cache/
+services/*.egg-info/
+
+# Flutter / Dart
+app/.dart_tool/
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.fvm/
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/ephemeral/
+app/android/.gradle/
+app/android/local.properties
+app/web/sqlite3.wasm
+app/web/powersync_db.worker.js
+app/web/powersync_sync.worker.js
+app/*.iml
+
+# Backups
+deploy/backups/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+app/config/*.json

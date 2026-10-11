@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # Les dates sont stockées en texte ISO-8601 : c'est le format que PowerSync
+          # transmet depuis Postgres (timestamptz) et attend en retour.
+          store_date_time_values_as_text: true

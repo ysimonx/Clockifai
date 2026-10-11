@@ -1,0 +1,468 @@
+{
+  "@@locale": "fr",
+  "account": "Compte",
+  "activate": "Réactiver",
+  "addHoliday": "Ajouter un jour férié",
+  "addLine": "Ajouter une ligne",
+  "addManualEntry": "Ajouter une entrée",
+  "addRow": "Ajouter une ligne",
+  "addTags": "Ajouter des tags",
+  "addTask": "Ajouter une tâche",
+  "adminOnlySettings": "Seuls les administrateurs peuvent modifier ces réglages.",
+  "allClients": "Tous les clients",
+  "allMembers": "Tous les membres",
+  "allProjects": "Tous les projets",
+  "allowance": "Droit annuel",
+  "allowanceOverrideHelp": "Laisser vide pour appliquer le droit de la politique ({value}).",
+  "@allowanceOverrideHelp": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "amount": "Montant",
+  "annualAllowance": "Droit annuel",
+  "apply": "Appliquer",
+  "applyRounding": "Arrondi {minutes} min",
+  "@applyRounding": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "approvals": "Approbations",
+  "approve": "Approuver",
+  "archive": "Archiver",
+  "archived": "Archivé",
+  "autoStopTimers": "Arrêt automatique des chronomètres",
+  "autoStopTimersHelp": "Arrête les chronomètres oubliés après cette durée",
+  "balancesFor": "Mes soldes {year}",
+  "@balancesFor": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "billable": "Facturable",
+  "billableAndNot": "Facturable ou non",
+  "billableByDefault": "Facturable par défaut",
+  "billableRate": "Taux facturable (par heure)",
+  "billableTime": "Temps facturable",
+  "billing": "Facturation",
+  "billingAddress": "Adresse de facturation",
+  "billingEmail": "Email de facturation",
+  "budgetHours": "Budget",
+  "budgetUsed": "{percent} % du budget de {hours} h",
+  "@budgetUsed": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "calendar": "Calendrier",
+  "cancel": "Annuler",
+  "cancelRequest": "Annuler la demande",
+  "changeRejected": "Modification refusée par le serveur : {message}",
+  "@changeRejected": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "changeRejectedPermission": "Modification refusée : droits insuffisants ou période verrouillée. Elle a été annulée.",
+  "checkYourEmail": "Vérifiez votre boîte mail pour confirmer votre compte.",
+  "client": "Client",
+  "clients": "Clients",
+  "close": "Fermer",
+  "color": "Couleur",
+  "companyDetails": "Coordonnées (adresse, SIRET, TVA…)",
+  "companyDetailsHint": "Affichées en en-tête des factures",
+  "companyName": "Raison sociale",
+  "confirm": "Confirmer",
+  "connection": "Connexion",
+  "continueEntry": "Continuer",
+  "copy": "Copier",
+  "costRate": "Coût (par heure)",
+  "createAccount": "Créer mon compte",
+  "createProject": "Créer un projet",
+  "createTagNamed": "Créer le tag « {name} »",
+  "@createTagNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "createWorkspace": "Créer un workspace",
+  "currency": "Devise",
+  "currencyOverride": "Devise spécifique (facultatif)",
+  "customRange": "Période personnalisée",
+  "date": "Date",
+  "day": "Jour",
+  "days": "Jours",
+  "daysRequested": "Nombre de jours",
+  "daysShort": "j",
+  "deactivate": "Désactiver",
+  "decision": "Décision",
+  "delete": "Supprimer",
+  "deleteClient": "Supprimer le client ?",
+  "deleteClientMessage": "Les projets de ce client seront conservés, sans client.",
+  "deleteEntry": "Supprimer l'entrée ?",
+  "deleteEntryMessage": "Cette entrée de temps sera supprimée sur tous vos appareils.",
+  "deleteInvoice": "Supprimer la facture ?",
+  "deleteInvoiceMessage": "Les entrées de temps redeviennent facturables.",
+  "deletePolicy": "Supprimer la politique ?",
+  "deleteProject": "Supprimer le projet ?",
+  "deleteProjectMessage": "Les entrées existantes restent, mais ne seront plus rattachées à un projet visible.",
+  "deleteTag": "Supprimer le tag ?",
+  "description": "Description",
+  "descriptionRequired": "Une description est obligatoire dans ce workspace.",
+  "detailed": "Détaillé",
+  "discardTimer": "Abandonner le chronomètre",
+  "discardTimerMessage": "Le temps en cours ne sera pas enregistré.",
+  "discount": "Remise",
+  "discountPercent": "Remise",
+  "draftNumberPending": "Brouillon",
+  "due": "échéance",
+  "duplicate": "Dupliquer",
+  "duration": "Durée",
+  "edit": "Modifier",
+  "editAssignment": "Modifier l'affectation",
+  "editClient": "Modifier le client",
+  "editEntry": "Modifier l'entrée",
+  "editPolicy": "Modifier la politique",
+  "editProject": "Modifier le projet",
+  "editRates": "Modifier les taux",
+  "editStartTime": "Modifier l'heure de début",
+  "editTag": "Modifier le tag",
+  "email": "Email",
+  "emailRequired": "Saisissez votre adresse email.",
+  "emptyIsUnlimited": "Vide = illimité",
+  "endTime": "Fin",
+  "endTimeRequired": "Indiquez une heure de fin.",
+  "endsNextDay": "Se termine le lendemain.",
+  "entryLocked": "Entrée verrouillée : seule une personne administratrice peut la modifier.",
+  "export": "Exporter",
+  "exportCsvOffline": "CSV (hors ligne)",
+  "exportDone": "Export téléchargé.",
+  "exportFailed": "Échec de l'export : {error}",
+  "@exportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "firstSync": "Première synchronisation en cours…",
+  "forgotPassword": "Mot de passe oublié",
+  "generate": "Générer",
+  "groupBy": "Grouper par",
+  "halfDay": "Demi-journée",
+  "history": "Historique",
+  "holidays": "Jours fériés",
+  "hourlyRate": "Taux horaire",
+  "hours": "Heures",
+  "hoursPerDay": "Heures par jour",
+  "hoursRequested": "Nombre d'heures",
+  "invalidDuration": "Durée invalide (exemples : 1:30, 1,5, 90m).",
+  "invalidHours": "Nombre d'heures invalide (entre 0 et 24).",
+  "invitationFailed": "Invitation impossible : {error}",
+  "@invitationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "invitationSent": "Invitation envoyée.",
+  "invite": "Inviter",
+  "inviteHelp": "Si la personne a déjà un compte, elle est ajoutée immédiatement. Sinon, un lien d'invitation est créé.",
+  "inviteLinkMessage": "Aucun serveur d'email n'est configuré. Transmettez ce lien à la personne invitée :",
+  "inviteLinkTitle": "Lien d'invitation",
+  "inviteMember": "Inviter un membre",
+  "invoice": "Facture",
+  "invoiceDraft": "Brouillon",
+  "invoiceNote": "Mentions / conditions",
+  "invoiceNoteHint": "Conditions de paiement, IBAN… (Entrée pour enregistrer)",
+  "invoicePaid": "Payée",
+  "invoicePrefix": "Préfixe des numéros",
+  "invoiceSent": "Envoyée",
+  "invoiceVoid": "Annulée",
+  "invoices": "Factures",
+  "kiosk": "Kiosque",
+  "kioskClockInAs": "Arrivée de {name}",
+  "@kioskClockInAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kioskClockOutAs": "Départ de {name}",
+  "@kioskClockOutAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kioskClockedIn": "Pointage d'arrivée enregistré.",
+  "kioskClockedOut": "Pointage de départ enregistré.",
+  "kioskDevices": "Appareils kiosque",
+  "kioskDevicesHelp": "Tablettes partagées où l'équipe pointe avec un code PIN",
+  "kioskExit": "Quitter le mode kiosque",
+  "kioskGoodbye": "Au revoir {name} !",
+  "@kioskGoodbye": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kioskHello": "Bonjour {name} !",
+  "@kioskHello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kioskMode": "Mode kiosque (tablette partagée)",
+  "kioskNoPin": "Cette personne n'a pas encore défini son code PIN (Paramètres > Code PIN kiosque).",
+  "kioskPin": "Code PIN kiosque",
+  "kioskPinHelp": "Pour pointer sur une tablette partagée",
+  "kioskPinInvalid": "Le PIN doit contenir 4 à 8 chiffres.",
+  "kioskPinLabel": "Nouveau PIN (4 à 8 chiffres)",
+  "kioskPinSaved": "Code PIN enregistré.",
+  "kioskReset": "Désassocier cet appareil",
+  "kioskResetMessage": "Le jeton sera oublié sur cet appareil.",
+  "kioskSetupHelp": "Collez le jeton d'appareil créé par un administrateur dans Paramètres > Appareils kiosque.",
+  "kioskTapYourName": "Touchez votre nom pour pointer",
+  "kioskToken": "Jeton d'appareil",
+  "kioskTokenInvalid": "Jeton invalide ou révoqué.",
+  "kioskTokenOnce": "Copiez ce jeton maintenant : il ne sera plus affiché. Saisissez-le sur la tablette en mode kiosque.",
+  "kioskTooManyAttempts": "Trop d'essais. Réessayez dans quelques minutes.",
+  "kioskWrongPin": "Code PIN incorrect.",
+  "language": "Langue",
+  "lastMonth": "Mois dernier",
+  "lastSeen": "Dernière activité",
+  "lastSync": "Dernière synchronisation",
+  "lastWeek": "Semaine dernière",
+  "loadMore": "Afficher plus",
+  "lockEntriesBefore": "Verrouiller les entrées antérieures au",
+  "lockEntriesNone": "Aucun verrouillage",
+  "magicLinkSent": "Lien de connexion envoyé par email.",
+  "managersOnly": "Réservé aux managers",
+  "markDone": "Marquer terminée",
+  "member": "Membre",
+  "memberAllowances": "Droits par membre",
+  "more": "Plus",
+  "myRequests": "Mes demandes",
+  "name": "Nom",
+  "never": "Jamais",
+  "neverSeen": "Jamais connecté",
+  "newAssignment": "Nouvelle affectation",
+  "newClient": "Nouveau client",
+  "newInvoice": "Nouvelle facture",
+  "newInvoiceHelp": "Une ligne par projet est créée à partir du temps facturable non encore facturé du client sur la période.",
+  "newKioskDevice": "Nouvel appareil",
+  "newPassword": "Nouveau mot de passe (8 caractères min.)",
+  "newPolicy": "Nouvelle politique",
+  "newProject": "Nouveau projet",
+  "newTag": "Nouveau tag",
+  "newTask": "Nouvelle tâche",
+  "nextWeek": "Semaine suivante",
+  "noApproval": "Sans validation",
+  "noClient": "Sans client",
+  "noClients": "Aucun client",
+  "noDataForPeriod": "Aucune donnée sur cette période",
+  "noDescription": "(sans description)",
+  "noEntriesInPeriod": "Aucune entrée sur la période",
+  "noEntriesYet": "Aucune entrée pour l'instant",
+  "noEntriesYetMessage": "Démarrez le chronomètre ci-dessus ou ajoutez du temps manuellement.",
+  "noHistory": "Aucun historique",
+  "noHolidays": "Aucun jour férié",
+  "noInvoices": "Aucune facture",
+  "noInvoicesMessage": "Générez une facture à partir du temps facturable d'un client.",
+  "noMembers": "Aucun membre",
+  "noPoliciesYet": "Aucun type d'absence n'est encore défini.",
+  "noProject": "Sans projet",
+  "noProjects": "Aucun projet",
+  "noProjectsMessage": "Créez un projet pour classer votre temps.",
+  "noRequests": "Aucune demande",
+  "noTag": "Sans tag",
+  "noTags": "Aucun tag",
+  "noTasks": "Aucune tâche",
+  "noWorkspace": "Aucun workspace",
+  "noWorkspaceMessage": "Votre compte n'appartient à aucun workspace actif. Demandez une invitation à un administrateur.",
+  "nonBillable": "Non facturable",
+  "none": "Aucun",
+  "notConfigured": "Application non configurée : lancez `make app-config` puis relancez avec --dart-define-from-file.",
+  "note": "Note",
+  "noteOptional": "Commentaire (facultatif)",
+  "nothingToApprove": "Rien à valider",
+  "nothingToInvoice": "Aucun temps facturable non facturé pour ce client sur la période.",
+  "offline": "Hors ligne",
+  "offlineExplanation": "Vos saisies sont enregistrées sur l'appareil et envoyées automatiquement dès que la connexion revient.",
+  "online": "En ligne",
+  "onlineOnly": "Action impossible hors ligne.",
+  "paid": "Rémunérée",
+  "password": "Mot de passe",
+  "passwordTooShort": "Le mot de passe doit faire au moins 8 caractères.",
+  "passwordUpdated": "Mot de passe mis à jour.",
+  "paymentTermDays": "Délai de paiement (jours)",
+  "pending": "En attente",
+  "pendingChanges": "Modifications en attente d'envoi",
+  "perHour": "/h",
+  "policies": "Politiques d'absence",
+  "policy": "Type d'absence",
+  "policyExample": "Congés payés, RTT, Maladie…",
+  "previousWeek": "Semaine précédente",
+  "profile": "Profil",
+  "project": "Projet",
+  "projectCount": "{count, plural, =0{aucun projet} =1{1 projet} other{{count} projets}}",
+  "@projectCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectRequired": "Un projet est obligatoire dans ce workspace.",
+  "projects": "Projets",
+  "publicProject": "Projet public",
+  "publicProjectHelp": "Visible et utilisable par tous les membres",
+  "quantityHours": "Quantité (h)",
+  "reject": "Refuser",
+  "remaining": "restants",
+  "remove": "Retirer",
+  "removeMember": "Retirer ce membre ?",
+  "removeMemberMessage": "La personne perd l'accès au workspace. Ses entrées passées sont conservées.",
+  "rename": "Renommer",
+  "reopen": "Rouvrir",
+  "reports": "Rapports",
+  "requestSent": "Demande envoyée.",
+  "requestTimeOff": "Demander une absence",
+  "requireDescription": "Description obligatoire",
+  "requireProject": "Projet obligatoire",
+  "requiresApproval": "Validation requise",
+  "requiresApprovalHint": "Un manager doit valider cette demande.",
+  "resetEmailSent": "Email de réinitialisation envoyé.",
+  "restore": "Restaurer",
+  "retry": "Réessayer",
+  "revoke": "Révoquer",
+  "role": "Rôle",
+  "roleAdmin": "Administrateur",
+  "roleManager": "Manager",
+  "roleMember": "Membre",
+  "roleOwner": "Propriétaire",
+  "rounding": "Arrondi des durées",
+  "roundingHelp": "Appliqué dans les rapports si demandé",
+  "runningTimer": "Chronomètre en cours",
+  "save": "Enregistrer",
+  "saved": "Enregistré.",
+  "schedule": "Planning",
+  "search": "Rechercher",
+  "searchProjectOrTask": "Rechercher un projet, une tâche, un client",
+  "searchTags": "Rechercher ou créer un tag",
+  "sectionManage": "Gestion",
+  "sectionTeam": "Équipe",
+  "selectProject": "Choisir un projet",
+  "send": "Envoyer",
+  "sendMagicLink": "Recevoir un lien de connexion",
+  "setPassword": "Définir le mot de passe",
+  "setPasswordHelp": "Utile après une invitation ou un lien magique",
+  "settings": "Paramètres",
+  "showArchived": "Archivés",
+  "signIn": "Connexion",
+  "signOut": "Se déconnecter",
+  "signOutHelp": "Les données locales de cet appareil seront effacées.",
+  "signUp": "Inscription",
+  "start": "Démarrer",
+  "startInFuture": "L'heure de début ne peut pas être dans le futur.",
+  "startTime": "Début",
+  "statusApproved": "Approuvée",
+  "statusCancelled": "Annulée",
+  "statusNotSubmitted": "Semaine non soumise",
+  "statusPending": "En attente",
+  "statusRejected": "Refusée",
+  "statusSubmitted": "En attente d'approbation",
+  "statusWithdrawn": "Retirée",
+  "stop": "Arrêter",
+  "submitForApproval": "Soumettre pour approbation",
+  "submittedForApproval": "Semaine soumise ({total}).",
+  "@submittedForApproval": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "subtotal": "Sous-total HT",
+  "summary": "Résumé",
+  "switchWorkspace": "Changer de workspace",
+  "syncStatus": "Synchronisation",
+  "synced": "Synchronisé",
+  "syncing": "Synchronisation…",
+  "systemLanguage": "Langue du système",
+  "tag": "Tag",
+  "tagline": "Suivi du temps libre et auto-hébergé",
+  "tags": "Tags",
+  "tax": "TVA",
+  "taxPercent": "TVA",
+  "team": "Équipe",
+  "teamMemberHint": "Seuls les managers voient l'activité de toute l'équipe.",
+  "teamRequests": "Demandes de l'équipe",
+  "thisMonth": "Ce mois-ci",
+  "thisWeek": "Cette semaine",
+  "thisYear": "Cette année",
+  "timeOff": "Absences",
+  "timeTracker": "Suivi du temps",
+  "timesheet": "Feuille de temps",
+  "toApprove": "À valider",
+  "today": "Aujourd'hui",
+  "total": "Total",
+  "totalInclTax": "Total TTC",
+  "totalTime": "Temps total",
+  "tracked": "Suivi",
+  "unitPrice": "Prix unitaire HT",
+  "unlimited": "Illimité",
+  "unlock": "Déverrouiller",
+  "unpaid": "Non rémunérée",
+  "used": "Pris",
+  "user": "Utilisateur",
+  "weekOf": "Semaine du {date}",
+  "@weekOf": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "weekStartsOn": "La semaine commence le",
+  "weekTotal": "Total semaine",
+  "weeksCount": "{count, plural, =1{1 semaine} other{{count} semaines}}",
+  "@weeksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "whatAreYouWorkingOn": "Sur quoi travaillez-vous ?",
+  "withdraw": "Retirer",
+  "workspaceCreated": "Workspace créé. Il apparaîtra après synchronisation.",
+  "workspaceSettings": "Réglages du workspace",
+  "workspaces": "Workspaces",
+  "year": "an",
+  "yesterday": "Hier",
+  "yourName": "Votre nom"
+}

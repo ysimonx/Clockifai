@@ -1,0 +1,181 @@
+# Clockifai — backend complet en conteneurs Docker.
+#
+#   cp .env.example .env && ./gen-env.sh      # génère les secrets
+#   docker compose up -d                       # dev : Supabase + PowerSync + Flask + migrations
+#   docker compose --profile prod up -d        # prod : + Caddy (HTTPS) + sauvegardes
+#
+# La stack Supabase officielle (épinglée dans ../supabase/docker) est incluse telle
+# quelle ; ce fichier n'ajoute que les services propres à Clockifai.
+# Requiert Docker Compose >= 2.24 (syntaxe `include`).
+
+name: clockifai
+
+include:
+  - path: ../supabase/docker/docker-compose.yml
+    project_directory: ../supabase/docker
+    env_file: .env
+
+services:
+
+  # --------------------------------------------------------------------------
+  # Migrations SQL (schéma, triggers, RLS, publication PowerSync).
+  # Conteneur one-shot : rejoue ../supabase/migrations/*.sql dans l'ordre,
+  # en mémorisant ce qui a été appliqué dans clockifai_meta.schema_migrations.
+  # --------------------------------------------------------------------------
+  migrate:
+    container_name: clockifai-migrate
+    image: postgres:17-alpine
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: ${POSTGRES_HOST}
+      PGPORT: ${POSTGRES_PORT}
+      PGDATABASE: ${POSTGRES_DB}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGOPTIONS: -c client_min_messages=warning
+      POWERSYNC_DB_PASSWORD: ${POWERSYNC_DB_PASSWORD}
+      POWERSYNC_STORAGE_PASSWORD: ${POWERSYNC_STORAGE_PASSWORD}
+    volumes:
+      - ../supabase/migrations:/migrations:ro
+      - ./migrate.sh:/migrate.sh:ro
+    entrypoint: ["/bin/sh", "/migrate.sh"]
+
+  # --------------------------------------------------------------------------
+  # PowerSync Open Edition : moteur de synchronisation offline-first.
+  # Réplication logique depuis Postgres (publication `powersync`),
+  # stockage des buckets dans une base Postgres dédiée (pas de MongoDB).
+  # --------------------------------------------------------------------------
+  powersync:
+    container_name: clockifai-powersync
+    image: journeyapps/powersync-service:${POWERSYNC_VERSION:-1.26.1}
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["start", "-r", "unified"]
+    environment:
+      POWERSYNC_CONFIG_PATH: /config/service.yaml
+      # ~80 % de la RAM que l'on accepte de donner au service
+      NODE_OPTIONS: --max-old-space-size=${POWERSYNC_MAX_MEMORY_MB:-1000}
+      PS_PORT: ${POWERSYNC_PORT:-8080}
+      PS_DATA_SOURCE_URI: postgresql://powersync_role:${POWERSYNC_DB_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      PS_STORAGE_URI: postgresql://powersync_storage:${POWERSYNC_STORAGE_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/powersync_storage
+      PS_SUPABASE_JWT_SECRET: ${JWT_SECRET}
+      PS_ADMIN_TOKEN: ${POWERSYNC_ADMIN_TOKEN}
+    volumes:
+      - ../powersync:/config:ro
+    ports:
+      - "${POWERSYNC_PORT:-8080}:${POWERSYNC_PORT:-8080}"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:${POWERSYNC_PORT:-8080}/probes/liveness').then(r => { if (r.status !== 200) throw new Error(r.status) })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # --------------------------------------------------------------------------
+  # Flask « services » : exports PDF/Excel/CSV, factures, jobs planifiés, kiosque.
+  # --------------------------------------------------------------------------
+  services:
+    container_name: clockifai-services
+    build:
+      context: ../services
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      kong:
+        condition: service_healthy
+    environment:
+      FLASK_ENV: ${FLASK_ENV:-production}
+      SECRET_KEY: ${SERVICES_SECRET_KEY}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_JWT_SECRET: ${JWT_SECRET}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_SENDER: ${SMTP_ADMIN_EMAIL}
+      APP_PUBLIC_URL: ${SITE_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      JOBS_ENABLED: ${JOBS_ENABLED:-true}
+    ports:
+      - "${SERVICES_PORT:-5050}:5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # --------------------------------------------------------------------------
+  # Caddy (profil prod) : HTTPS automatique, sert le build Flutter web,
+  # proxifie /api vers Flask, et expose Supabase (Kong) et PowerSync.
+  # --------------------------------------------------------------------------
+  web:
+    container_name: clockifai-web
+    image: caddy:2-alpine
+    restart: unless-stopped
+    profiles: ["prod"]
+    depends_on:
+      kong:
+        condition: service_healthy
+      powersync:
+        condition: service_started
+      services:
+        condition: service_started
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      SUPABASE_DOMAIN: ${SUPABASE_DOMAIN}
+      SYNC_DOMAIN: ${SYNC_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+      DASHBOARD_USERNAME: ${DASHBOARD_USERNAME}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD}
+    command:
+      - /bin/sh
+      - -c
+      - |
+        export DASHBOARD_PASSWORD_HASH=$$(caddy hash-password --plaintext "$$DASHBOARD_PASSWORD") && \
+        caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../app/build/web:/srv/web:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  # --------------------------------------------------------------------------
+  # Sauvegarde quotidienne de Postgres (profil prod) : pg_dump compressé,
+  # rétention BACKUP_KEEP_DAYS, dans ./backups (à copier hors du serveur).
+  # --------------------------------------------------------------------------
+  backup:
+    container_name: clockifai-backup
+    image: postgres:17-alpine
+    restart: unless-stopped
+    profiles: ["prod"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: ${POSTGRES_HOST}
+      PGPORT: ${POSTGRES_PORT}
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: supabase_admin
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      BACKUP_HOUR: ${BACKUP_HOUR:-03}
+    volumes:
+      - ./backups:/backups
+      - ./backup.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "/backup.sh", "loop"]
+
+volumes:
+  caddy-data:
+  caddy-config:

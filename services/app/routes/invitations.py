@@ -1,0 +1,108 @@
+"""Invitations dans un workspace (admin+).
+
+POST /api/invitations  {"workspace_id", "email", "role"?: "member"|"manager"|"admin", "display_name"?}
+
+* Compte existant : ajout direct au workspace (ou réactivation).
+* Nouveau compte : lien d'invitation généré par l'API admin GoTrue (`generate_link`),
+  envoyé par email si un SMTP est configuré, et toujours renvoyé à l'admin pour qu'il
+  puisse le transmettre lui-même (installations sans SMTP).
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import urllib.error
+import urllib.request
+
+from flask import Blueprint, abort, current_app, g, jsonify, request
+
+from ..auth import require_user, require_workspace
+from ..db import connection
+from ..services.mailer import send_mail
+
+log = logging.getLogger(__name__)
+bp = Blueprint("invitations", __name__)
+
+_ROLES = ("member", "manager", "admin")
+
+
+def _gotrue_admin(path: str, body: dict) -> dict:
+    cfg = current_app.config
+    key = cfg["SUPABASE_SERVICE_ROLE_KEY"]
+    req = urllib.request.Request(
+        f"{cfg['SUPABASE_URL']}/auth/v1/{path}",
+        data=json.dumps(body).encode(),
+        method="POST",
+        headers={"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read() or b"{}")
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode(errors="replace")
+        log.error("GoTrue %s → %s %s", path, e.code, detail)
+        abort(502, f"auth service error: {detail}")
+
+
+@bp.post("")
+@require_user
+@require_workspace("admin")
+def invite():
+    body = request.get_json(silent=True) or {}
+    email = (body.get("email") or "").strip().lower()
+    role = body.get("role") or "member"
+    if "@" not in email:
+        abort(400, "valid email required")
+    if role not in _ROLES:
+        abort(400, f"role must be one of {_ROLES}")
+    display_name = (body.get("display_name") or email.split("@")[0]).strip()
+
+    with connection() as conn:
+        ws = conn.execute("select name from public.workspaces where id = %s", (g.workspace_id,)).fetchone()
+        user = conn.execute("select id from auth.users where lower(email) = %s", (email,)).fetchone()
+
+    link = None
+    created = False
+    if user is None:
+        res = _gotrue_admin("admin/generate_link", {
+            "type": "invite",
+            "email": email,
+            "data": {"display_name": display_name},
+            "redirect_to": current_app.config["APP_PUBLIC_URL"],
+        })
+        user_id = res.get("id") or (res.get("user") or {}).get("id")
+        link = res.get("action_link") or (res.get("properties") or {}).get("action_link")
+        if not user_id:
+            abort(502, "auth service did not return a user id")
+        created = True
+    else:
+        user_id = str(user["id"])
+
+    with connection() as conn:
+        prof = conn.execute("select display_name, email from public.profiles where id = %s", (user_id,)).fetchone()
+        conn.execute(
+            """
+            insert into public.workspace_members (workspace_id, user_id, role, display_name, email)
+            values (%(wid)s, %(uid)s, %(role)s, %(name)s, %(email)s)
+            on conflict (workspace_id, user_id) do update
+               set status = 'active', deleted_at = null,
+                   role = case when workspace_members.role = 'owner' then 'owner' else excluded.role end
+            """,
+            {"wid": g.workspace_id, "uid": user_id, "role": role,
+             "name": (prof or {}).get("display_name") or display_name, "email": email},
+        )
+        conn.commit()
+
+    ws_name = ws["name"] if ws else "Clockifai"
+    app_url = current_app.config["APP_PUBLIC_URL"]
+    if created:
+        subject = f"Invitation à rejoindre « {ws_name} » sur Clockifai"
+        text = (f"Bonjour,\n\nVous êtes invité(e) à rejoindre l'espace « {ws_name} » sur Clockifai.\n"
+                f"Activez votre compte avec ce lien :\n{link}\n\nPuis définissez votre mot de passe dans les paramètres.\n")
+    else:
+        subject = f"Vous avez été ajouté(e) à « {ws_name} » sur Clockifai"
+        text = f"Bonjour,\n\nVous avez maintenant accès à l'espace « {ws_name} » : {app_url}\n"
+    emailed = send_mail(email, subject, text)
+
+    return jsonify(user_id=user_id, created=created, emailed=emailed, invite_link=link), 201

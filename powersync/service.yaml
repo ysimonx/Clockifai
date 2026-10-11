@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-schema@latest/json-schema/powersync-config.json
+#
+# Configuration du service PowerSync (Open Edition, auto-hébergé).
+# Les variables PS_* sont injectées par deploy/docker-compose.yml depuis deploy/.env.
+
+telemetry:
+  disable_telemetry_sharing: true
+
+# Source : le Postgres de Supabase, en réplication logique (publication `powersync`,
+# rôle `powersync_role` créés par supabase/migrations/0000_bootstrap.admin.sql).
+replication:
+  connections:
+    - type: postgresql
+      uri: !env PS_DATA_SOURCE_URI
+      sslmode: disable # trafic interne au réseau Docker
+
+# Stockage des buckets de sync : base Postgres dédiée `powersync_storage`
+# sur la même instance (évite MongoDB).
+storage:
+  type: postgresql
+  uri: !env PS_STORAGE_URI
+  sslmode: disable
+
+port: !env PS_PORT::number
+
+sync_config:
+  path: sync-config.yaml
+  exit_on_error: true
+
+# Authentification des clients : le JWT Supabase (HS256, secret partagé) est accepté tel quel.
+# Si vous passez Supabase en clés asymétriques (ES256), remplacez supabase_jwt_secret par :
+#   jwks_uri: http://kong:8000/auth/v1/.well-known/jwks.json
+client_auth:
+  supabase: true
+  supabase_jwt_secret: !env PS_SUPABASE_JWT_SECRET
+  audience: ["authenticated"]
+
+# API d'administration (diagnostics) protégée par jeton.
+api:
+  tokens:
+    - !env PS_ADMIN_TOKEN
+
+healthcheck:
+  probes:
+    use_filesystem: false
+    use_http: true
+
+system:
+  logging:
+    level: info
+    format: text

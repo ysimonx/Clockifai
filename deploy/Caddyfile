@@ -1,0 +1,51 @@
+# Caddy — profil prod. Trois noms DNS pointent vers ce serveur :
+#   APP_DOMAIN      → application web Flutter + /api (Flask)
+#   SUPABASE_DOMAIN → passerelle Supabase (Kong : auth, rest, realtime, storage, studio)
+#   SYNC_DOMAIN     → PowerSync
+# Les certificats Let's Encrypt sont obtenus automatiquement (ports 80/443 ouverts).
+# Hébergement à la maison sans ouvrir de ports : voir docs/deploy.md (Cloudflare Tunnel / Tailscale).
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy services:5000
+	}
+
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
+		header Cache-Control "no-cache"
+		@assets path *.js *.wasm *.css *.png *.woff2 *.json
+		header @assets Cache-Control "public, max-age=604800"
+	}
+}
+
+{$SUPABASE_DOMAIN} {
+	# Même découpage que le Caddyfile officiel de Supabase :
+	# les API passent par Kong, tout le reste est le Studio protégé par mot de passe.
+	@supabase_api path /auth/v1/* /rest/v1/* /graphql/v1 /realtime/v1/* /storage/v1/* /functions/v1/* /mcp /sso/*
+
+	handle @supabase_api {
+		reverse_proxy kong:8000
+	}
+
+	handle {
+		basic_auth {
+			# DASHBOARD_PASSWORD_HASH est calculé au démarrage du conteneur (voir docker-compose.yml)
+			{$DASHBOARD_USERNAME} {$DASHBOARD_PASSWORD_HASH}
+		}
+		reverse_proxy studio:3000
+	}
+
+	header -server
+}
+
+{$SYNC_DOMAIN} {
+	reverse_proxy powersync:8080
+}

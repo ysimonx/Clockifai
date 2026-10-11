@@ -1,0 +1,31 @@
+[project]
+name = "clockifai-services"
+version = "0.1.0"
+description = "Clockifai — services Flask : exports, factures, jobs planifiés, kiosque"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.1",
+    "gunicorn>=23.0",
+    "psycopg[binary,pool]>=3.2",
+    "pyjwt>=2.10",
+    "apscheduler>=3.11,<4",
+    "openpyxl>=3.1",
+    "weasyprint>=65",
+    "jinja2>=3.1",
+    "python-dateutil>=2.9",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.12",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

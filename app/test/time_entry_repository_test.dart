@@ -1,0 +1,146 @@
+import 'package:clockifai/core/catalog.dart';
+import 'package:clockifai/data/drift/database.dart';
+import 'package:clockifai/data/repositories/catalog_repository.dart';
+import 'package:clockifai/data/repositories/time_entry_repository.dart';
+import 'package:clockifai/data/repositories/workspace_repository.dart';
+import 'package:clockifai/features/reports/report_model.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull, GroupBy;
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+/// Base de test : en production PowerSync crée les tables ; ici Drift les crée en mémoire.
+class TestDb extends AppDatabase {
+  TestDb() : super(NativeDatabase.memory());
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(onCreate: (m) => m.createAll());
+}
+
+const ws = 'ws-1';
+const me = 'user-1';
+
+void main() {
+  late TestDb db;
+  late TimeEntryRepository repo;
+
+  setUp(() {
+    db = TestDb();
+    repo = TimeEntryRepository(db);
+  });
+  tearDown(() => db.close());
+
+  test('un seul chronomètre : démarrer arrête le précédent', () async {
+    final first = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'A'), at: DateTime.utc(2026, 10, 11, 8));
+    final second = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'B'), at: DateTime.utc(2026, 10, 11, 9));
+    final running = await repo.watchRunning(ws, me).first;
+    expect(running!.id, second);
+    final a = await (db.select(db.timeEntries)..where((t) => t.id.equals(first))).getSingle();
+    expect(a.endAt, DateTime.utc(2026, 10, 11, 9));
+    expect(a.durationSeconds, 3600);
+  });
+
+  test('arrêt avec horloge en retard : fin jamais avant le début', () async {
+    final id = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(), at: DateTime.utc(2026, 10, 11, 10));
+    await repo.stop(id, at: DateTime.utc(2026, 10, 11, 9, 59));
+    final e = await (db.select(db.timeEntries)..where((t) => t.id.equals(id))).getSingle();
+    expect(e.endAt, e.startAt);
+  });
+
+  test('filtre de période indépendant du format texte des dates (serveur vs client)', () async {
+    // Ligne au format renvoyé par le serveur (espace, microsecondes, Z)...
+    await db.customStatement(
+      "INSERT INTO time_entries (id, workspace_id, user_id, description, start_at, end_at, billable, locked) "
+      "VALUES ('srv', '$ws', '$me', 'serveur', '2026-10-11 15:00:00.123456Z', '2026-10-11 16:00:00Z', 1, 0)",
+    );
+    // ...et une ligne écrite par l'app (format ISO de Dart).
+    await repo.createManual(
+      workspaceId: ws,
+      userId: me,
+      draft: EntryDraft(description: 'client'),
+      start: DateTime.utc(2026, 10, 11, 9),
+      end: DateTime.utc(2026, 10, 11, 10),
+    );
+    final rows = await repo
+        .watchEntries(workspaceId: ws, userId: me, from: DateTime.utc(2026, 10, 11), to: DateTime.utc(2026, 10, 12))
+        .first;
+    expect(rows.map((r) => r.entry.description), ['serveur', 'client']); // tri décroissant correct
+    final none = await repo
+        .watchEntries(workspaceId: ws, userId: me, from: DateTime.utc(2026, 10, 11, 16), to: DateTime.utc(2026, 10, 12))
+        .first;
+    expect(none, isEmpty);
+  });
+
+  test('tags : ajout, remplacement, lecture groupée', () async {
+    final id = await repo.createManual(
+      workspaceId: ws,
+      userId: me,
+      draft: EntryDraft(tagIds: ['t1', 't2']),
+      start: DateTime.utc(2026, 10, 11, 9),
+      end: DateTime.utc(2026, 10, 11, 10),
+    );
+    expect((await repo.tagIdsOf(id)).toSet(), {'t1', 't2'});
+    final entry = await (db.select(db.timeEntries)..where((t) => t.id.equals(id))).getSingle();
+    await repo.update(entry, tagIds: ['t2', 't3']);
+    expect((await repo.tagIdsOf(id)).toSet(), {'t2', 't3'});
+    final rows = await repo.watchEntries(workspaceId: ws, from: DateTime.utc(2026, 10, 11), to: DateTime.utc(2026, 10, 12)).first;
+    expect(rows.single.tagIds.toSet(), {'t2', 't3'});
+  });
+
+  test('suppression logique : disparaît des listes', () async {
+    final id = await repo.createManual(
+      workspaceId: ws, userId: me, draft: EntryDraft(),
+      start: DateTime.utc(2026, 10, 11, 9), end: DateTime.utc(2026, 10, 11, 10),
+    );
+    await repo.delete(id);
+    final rows = await repo.watchEntries(workspaceId: ws, from: DateTime.utc(2026, 10, 11), to: DateTime.utc(2026, 10, 12)).first;
+    expect(rows, isEmpty);
+    final raw = await (db.select(db.timeEntries)..where((t) => t.id.equals(id))).getSingle();
+    expect(raw.deletedAt, isNotNull);
+  });
+
+  test('feuille de temps : ajouter puis réduire le total d\'une cellule', () async {
+    final day = DateTime(2026, 10, 7);
+    await repo.setDayTotal(workspaceId: ws, userId: me, projectId: 'p1', dayLocal: day, targetSeconds: 2 * 3600, billable: true);
+    await repo.setDayTotal(workspaceId: ws, userId: me, projectId: 'p1', dayLocal: day, targetSeconds: 3 * 3600, billable: true);
+    Future<int> total() async {
+      final rows = await repo.watchEntries(workspaceId: ws, userId: me, from: day, to: day.add(const Duration(days: 1))).first;
+      return rows.where((r) => r.entry.projectId == 'p1').fold<int>(0, (s, r) => s + r.seconds);
+    }
+
+    expect(await total(), 3 * 3600);
+    await repo.setDayTotal(workspaceId: ws, userId: me, projectId: 'p1', dayLocal: day, targetSeconds: 30 * 60, billable: true);
+    expect(await total(), 30 * 60);
+    await repo.setDayTotal(workspaceId: ws, userId: me, projectId: 'p1', dayLocal: day, targetSeconds: 0, billable: true);
+    expect(await total(), 0);
+  });
+
+  test('rapport : regroupement, montants et arrondi', () async {
+    final catalogRepo = CatalogRepository(db);
+    final p1 = await catalogRepo.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'Site web', hourlyRateCents: const Value(5000)));
+    await repo.createManual(
+      workspaceId: ws, userId: me, draft: EntryDraft(projectId: p1, hourlyRateCents: 5000),
+      start: DateTime.utc(2026, 10, 11, 9), end: DateTime.utc(2026, 10, 11, 10, 7),
+    );
+    await repo.createManual(
+      workspaceId: ws, userId: me, draft: EntryDraft(billable: false),
+      start: DateTime.utc(2026, 10, 11, 11), end: DateTime.utc(2026, 10, 11, 11, 30),
+    );
+    final catalog = CatalogController(catalogRepo, WorkspaceRepository(db))..bind(ws);
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    final rows = await repo.watchEntries(workspaceId: ws, from: DateTime.utc(2026, 10, 11), to: DateTime.utc(2026, 10, 12)).first;
+
+    final exact = ReportCalculator(catalog: catalog, roundingMinutes: 15, applyRounding: false);
+    final t = exact.totals(rows);
+    expect(t.total, 67 * 60 + 30 * 60);
+    expect(t.billable, 67 * 60);
+    expect(t.amount, closeTo(67 / 60 * 50, 0.001));
+
+    final rounded = ReportCalculator(catalog: catalog, roundingMinutes: 15, applyRounding: true);
+    expect(rounded.totals(rows).total, 60 * 60 + 30 * 60); // 67 min → 60, 30 → 30
+
+    final groups = exact.group(rows, GroupBy.project,
+        noProject: '—', noClient: '—', noTag: '—', noDescription: '—', dayLabel: (d) => '$d');
+    expect(groups.map((g) => g.label), ['Site web', '—']);
+    catalog.dispose();
+  });
+}

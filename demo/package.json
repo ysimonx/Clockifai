@@ -1,0 +1,14 @@
+{
+  "name": "clockifai-demo",
+  "private": true,
+  "type": "module",
+  "description": "Tournage automatique de la vidéo de démonstration de Clockifai (Playwright + ffmpeg).",
+  "scripts": {
+    "prepare-data": "sh prepare-demo.sh",
+    "record": "node record-demo.mjs"
+  },
+  "dependencies": {
+    "ffmpeg-static": "5.2.0",
+    "playwright": "1.55.0"
+  }
+}

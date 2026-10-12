@@ -73,6 +73,12 @@ Mode kiosque : un admin crée un appareil dans Paramètres > Appareils kiosque, 
 ouvre `/kiosk` (lien « Mode kiosque » sur l'écran de connexion) et colle le jeton.
 Chaque membre définit son code PIN dans Paramètres.
 
+## Vidéos de démonstration
+
+Cinq vidéos sans voix, avec bandeaux explicatifs, une par rôle : membre, chef d'équipe, manager,
+propriétaire du workspace, administrateur de l'installation. Elles se tournent automatiquement
+sur la pile locale : voir [demo/README.md](demo/README.md).
+
 ## Tests
 
 ```bash
@@ -115,6 +121,7 @@ Restauration décrite en tête de [deploy/backup.sh](deploy/backup.sh).
 | [supabase/docker/](supabase/docker/) | Pile Supabase officielle épinglée (v1.26.08) |
 | [powersync/](powersync/) | Configuration du service et des Sync Streams |
 | [deploy/](deploy/) | Compose, Caddyfile, génération des secrets, sauvegardes |
+| [demo/](demo/) | Tournage automatique des vidéos de démonstration (un scénario par rôle) |
 | [plans/](plans/) | Plan du projet (avec état d'avancement) et plan d'interfaçage avec Fidwork |
 
 ## Licence

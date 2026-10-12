@@ -115,7 +115,9 @@ class _TimesheetPageState extends State<TimesheetPage> {
                 scrollDirection: Axis.horizontal,
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(minWidth: 860),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  // Largeur naturelle de la grille : dans un défilement horizontal, une colonne
+                  // « stretch » recevrait une largeur infinie (bouton « Ajouter une ligne » invisible).
+                  child: IntrinsicWidth(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     _headerRow(context, days),
                     const Divider(height: 1),
                     for (final k in keys) ...[
@@ -139,7 +141,7 @@ class _TimesheetPageState extends State<TimesheetPage> {
                       ),
                     const Divider(height: 1),
                     _totalsRow(context, dayTotals, grand),
-                  ]),
+                  ])),
                 ),
               ),
             ),

@@ -71,7 +71,13 @@ make app-analyze / make app-test
 - Parcours navigateur (Playwright, hors dépôt) : activer l'arbre d'accessibilité Flutter en cliquant `flt-semantics-placeholder`, puis cliquer un champ et taper au clavier (`fill` ne suffit pas).
 
 ## Ports locaux
-Kong/Supabase 8000, PowerSync 8080, Flask 5050 (5000 est pris par AirPlay sur macOS), Postgres via Supavisor 5432, app web 3000.
+Kong/Supabase 8000, PowerSync 8080, Flask 5050 (5000 est pris par AirPlay sur macOS), Postgres via Supavisor 5432, app web 3000 (`flutter run`), build de démo 3100.
+
+## Vidéos de démonstration
+`demo/` (Node, Playwright, ffmpeg embarqué) : `node record.mjs [n]`, données recréées par `prepare-demo.sh`
+(comptes `*@demo.clockifai.fr`). Après une évolution d'interface, rejouer `DEMO_FAST=1 node record.mjs n`
+(répétition sans vidéo, captures `demo/out/echec-*.png`) et ajuster le scénario dans `demo/videos/`.
+Les éléments Flutter sont repérés par leur étiquette d'accessibilité ou leur texte propre (`find()` dans `demo/lib/helpers.mjs`).
 
 ## Interfaçage Fidwork
 Plan dans `plans/02-integration-fidwork.md` : Fidwork pousse son référentiel (sites, interventions, compagnons) et les pointages `work_start` / `work_stop` via son outbox `partner_calls` ; Clockifai renvoie les heures par intervention.

@@ -1,0 +1,36 @@
+# Reverse proxy partagé d'un serveur qui héberge plusieurs applications Docker.
+# Indépendant de Clockifai : à copier hors du dépôt (ex. ~/edge) et à lancer une seule fois.
+#
+#   docker network create edge
+#   cp -r deploy/edge ~/edge && cd ~/edge && docker compose up -d
+#
+# Seul conteneur à publier 80/443. Chaque application rejoint le réseau externe « edge »
+# et ajoute un fichier dans sites/ (voir sites/clockifai.caddy), puis :
+#   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+
+name: edge
+
+services:
+  caddy:
+    container_name: edge-caddy
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites:/etc/caddy/sites:ro
+      - data:/data
+      - config:/config
+    networks:
+      - edge
+
+networks:
+  edge:
+    external: true
+
+volumes:
+  data:
+  config:

@@ -1,0 +1,30 @@
+# Clockifai derrière un reverse proxy partagé (plusieurs applications sur le même serveur).
+#
+#   docker network create edge                                          # une fois par serveur
+#   cp deploy/docker-compose.edge.yml deploy/docker-compose.override.yml  # pris en compte par le Makefile
+#
+# Le proxy partagé (deploy/edge/, installé hors du dépôt) détient les ports 80/443 et les
+# certificats ; il transmet APP_DOMAIN, SUPABASE_DOMAIN et SYNC_DOMAIN à clockifai-web en HTTP
+# sur le réseau Docker « edge ». Aucun port n'est publié sur l'hôte : pas de conflit avec
+# d'autres piles (Postgres 5432, Kong 8000, PowerSync 8080…), et rien d'exposé sur le LAN.
+
+services:
+  kong:
+    ports: !reset []
+  supavisor:
+    ports: !reset []
+  powersync:
+    ports: !reset []
+  services:
+    ports: !reset []
+  web:
+    ports: !reset []
+    environment:
+      SITE_SCHEME: http
+    networks:
+      - default
+      - edge
+
+networks:
+  edge:
+    external: true

@@ -1,0 +1,15 @@
+# Contexte du build web (Dockerfile) : seuls lib/, web/, tool/ et les fichiers pubspec/l10n/build servent.
+.dart_tool/
+.fvm/
+build/
+config/
+android/
+ios/
+macos/
+linux/
+windows/
+test/
+web/sqlite3.wasm
+web/powersync_db.worker.js
+web/powersync_sync.worker.js
+*.iml

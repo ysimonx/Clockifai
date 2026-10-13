@@ -1,0 +1,6 @@
+# Clockifai : les trois noms vont au Caddy de la pile (clockifai-web, HTTP), qui route lui-même
+# selon l'hôte (app → web + /api, supabase → Kong/Studio, sync → PowerSync).
+# Adapter les noms à APP_DOMAIN / SUPABASE_DOMAIN / SYNC_DOMAIN de deploy/.env.
+app.example.com, supabase.example.com, sync.example.com {
+	reverse_proxy clockifai-web:80
+}

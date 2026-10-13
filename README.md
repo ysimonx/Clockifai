@@ -95,18 +95,19 @@ Le même `docker compose` sert partout ; seul le fichier `deploy/.env` change.
 1. Un serveur Linux (x86_64 ou arm64) avec **4 vCPU / 8 Go de RAM** minimum et Docker.
 2. Trois noms DNS vers ce serveur : `APP_DOMAIN`, `SUPABASE_DOMAIN`, `SYNC_DOMAIN`.
 3. Dans `deploy/.env` : ces domaines, `SITE_URL`, `SUPABASE_PUBLIC_URL`, `API_EXTERNAL_URL`, `POWERSYNC_PUBLIC_URL`, le SMTP, et `ENABLE_EMAIL_AUTOCONFIRM=false`.
-4. Construire l'app web avec la config de production, puis démarrer :
+4. Démarrer : l'image du service `web` compile elle-même l'app Flutter avec ces URLs (pas de SDK Flutter sur le serveur).
 
 ```bash
 make env                              # sur le serveur, puis éditer deploy/.env
-make app-build-web DEFINES=--dart-define-from-file=config/prod.json
-make prod-up                          # + Caddy (HTTPS Let's Encrypt) + sauvegardes
+make prod-up                          # + build web + Caddy (HTTPS Let's Encrypt) + sauvegardes
+make deploy HOST=user@serveur         # depuis le poste de dev : copie le dépôt (sans .env) et relance
 ```
 
 | Hébergement | Particularités |
 |---|---|
 | VPS OVH / Scaleway | Ouvrir 80/443, enregistrements DNS A vers l'IP |
 | Chez soi | Redirection 80/443 sur la box + DynDNS (OVH DynHost), ou Cloudflare Tunnel / Tailscale pour ne rien exposer |
+| Serveur partagé avec d'autres applications | Reverse proxy commun ([deploy/edge/](deploy/edge/)) et `deploy/docker-compose.edge.yml` copié en `deploy/docker-compose.override.yml` : aucun port publié par la pile. Voir [plans/05-hebergement-maison.md](plans/05-hebergement-maison.md) |
 
 Sauvegardes : `deploy/backups/` (rétention 14 jours), à copier hors du serveur.
 Restauration décrite en tête de [deploy/backup.sh](deploy/backup.sh).

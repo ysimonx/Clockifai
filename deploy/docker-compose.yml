@@ -115,10 +115,18 @@ services:
   # --------------------------------------------------------------------------
   # Caddy (profil prod) : HTTPS automatique, sert le build Flutter web,
   # proxifie /api vers Flask, et expose Supabase (Kong) et PowerSync.
+  # L'image compile l'app Flutter (../app/Dockerfile) avec les URLs publiques.
+  # Derrière un reverse proxy partagé : voir docker-compose.edge.yml.
   # --------------------------------------------------------------------------
   web:
     container_name: clockifai-web
-    image: caddy:2-alpine
+    build:
+      context: ../app
+      args:
+        SUPABASE_URL: ${SUPABASE_PUBLIC_URL}
+        SUPABASE_ANON_KEY: ${ANON_KEY}
+        POWERSYNC_URL: ${POWERSYNC_PUBLIC_URL}
+    image: clockifai-web
     restart: unless-stopped
     profiles: ["prod"]
     depends_on:
@@ -132,6 +140,7 @@ services:
       APP_DOMAIN: ${APP_DOMAIN}
       SUPABASE_DOMAIN: ${SUPABASE_DOMAIN}
       SYNC_DOMAIN: ${SYNC_DOMAIN}
+      SITE_SCHEME: ${SITE_SCHEME:-https}
       ACME_EMAIL: ${ACME_EMAIL}
       DASHBOARD_USERNAME: ${DASHBOARD_USERNAME}
       DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD}
@@ -147,7 +156,6 @@ services:
       - "443:443/udp"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ../app/build/web:/srv/web:ro
       - caddy-data:/data
       - caddy-config:/config
 

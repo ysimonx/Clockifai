@@ -1,6 +1,8 @@
 # Clockifai — raccourcis. Backend 100 % Docker ; Flutter via fvm ; Python via uv.
 .DEFAULT_GOAL := help
-COMPOSE := docker compose -f deploy/docker-compose.yml --env-file deploy/.env
+# deploy/docker-compose.override.yml (non versionné) : réglages propres au serveur,
+# ex. copie de docker-compose.edge.yml derrière un reverse proxy partagé.
+COMPOSE := docker compose -f deploy/docker-compose.yml $(if $(wildcard deploy/docker-compose.override.yml),-f deploy/docker-compose.override.yml) --env-file deploy/.env
 
 help: ## Liste des commandes
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -12,7 +14,7 @@ env: ## Génère deploy/.env avec des secrets aléatoires
 up: ## Démarre Supabase + PowerSync + Flask + migrations (dev)
 	$(COMPOSE) up -d
 
-prod-up: ## Démarre tout + Caddy HTTPS + sauvegardes (profil prod)
+prod-up: ## Démarre tout + Caddy HTTPS + sauvegardes (profil prod, compile l'app web)
 	$(COMPOSE) --profile prod up -d --build
 
 down: ## Arrête les conteneurs (les données restent dans les volumes)
@@ -41,6 +43,13 @@ reset: ## DÉTRUIT les données locales (volumes Postgres/stockage) et redémarr
 	$(COMPOSE) --profile prod down -v
 	rm -rf supabase/docker/volumes/db/data supabase/docker/volumes/storage
 	$(COMPOSE) up -d
+
+DEPLOY_DIR ?= Clockifai
+deploy: ## Copie le dépôt (sans .env ni données) sur un serveur et relance la prod : make deploy HOST=user@ip
+	@test -n "$(HOST)" || (echo "Usage : make deploy HOST=user@ip [DEPLOY_DIR=Clockifai]" && exit 1)
+	git ls-files -co --exclude-standard | while read -r f; do [ -e "$$f" ] && echo "$$f"; done \
+	  | rsync -az --files-from=- . $(HOST):$(DEPLOY_DIR)/
+	ssh $(HOST) 'cd $(DEPLOY_DIR) && make prod-up'
 
 # ---------------------------------------------------------------- services (Flask, uv)
 services-sync: ## Installe l'env Python (uv)
@@ -79,7 +88,7 @@ app-gen: ## Régénère le code Drift / l10n
 app-web: ## Lance l'app web (Chrome) sur le backend local
 	cd app && fvm flutter run -d chrome --web-port 3000 $(DEFINES)
 
-app-build-web: ## Build web de production (servi par Caddy)
+app-build-web: ## Build web local (en prod, l'image du service web le compile elle-même)
 	cd app && fvm flutter build web --release $(DEFINES)
 
 app-test: ## Tests Flutter

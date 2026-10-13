@@ -30,6 +30,11 @@ make app-web              # fvm flutter run -d chrome --web-port 3000
 make app-analyze / make app-test
 ```
 
+Production (`plans/05-hebergement-maison.md`) : `make prod-up` construit aussi l'app web (`app/Dockerfile`, SDK Flutter
+dans l'image) ; `make deploy HOST=ysimonx@192.168.0.84` copie le dépôt sur le serveur (rsync, sans `.env`) et relance.
+Sur un serveur partagé, `deploy/docker-compose.override.yml` (copie de `docker-compose.edge.yml`) retire tous les ports
+publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `deploy/edge/`).
+
 ## Règles d'architecture
 
 ### Données et synchronisation

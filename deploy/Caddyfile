@@ -2,14 +2,19 @@
 #   APP_DOMAIN      → application web Flutter + /api (Flask)
 #   SUPABASE_DOMAIN → passerelle Supabase (Kong : auth, rest, realtime, storage, studio)
 #   SYNC_DOMAIN     → PowerSync
-# Les certificats Let's Encrypt sont obtenus automatiquement (ports 80/443 ouverts).
-# Hébergement à la maison sans ouvrir de ports : voir docs/deploy.md (Cloudflare Tunnel / Tailscale).
+# SITE_SCHEME=https (défaut) : Caddy obtient lui-même les certificats Let's Encrypt (ports 80/443 ouverts).
+# SITE_SCHEME=http : derrière un reverse proxy partagé qui fait le TLS (docker-compose.edge.yml,
+# deploy/edge/). Hébergement à la maison derrière une box : plans/05-hebergement-maison.md.
 
 {
 	email {$ACME_EMAIL}
+	servers {
+		# Garde l'IP du client transmise par un proxy frontal (X-Forwarded-For)
+		trusted_proxies static private_ranges
+	}
 }
 
-{$APP_DOMAIN} {
+{$SITE_SCHEME:https}://{$APP_DOMAIN} {
 	encode zstd gzip
 
 	handle /api/* {
@@ -26,7 +31,7 @@
 	}
 }
 
-{$SUPABASE_DOMAIN} {
+{$SITE_SCHEME:https}://{$SUPABASE_DOMAIN} {
 	# Même découpage que le Caddyfile officiel de Supabase :
 	# les API passent par Kong, tout le reste est le Studio protégé par mot de passe.
 	@supabase_api path /auth/v1/* /rest/v1/* /graphql/v1 /realtime/v1/* /storage/v1/* /functions/v1/* /mcp /sso/*
@@ -46,6 +51,6 @@
 	header -server
 }
 
-{$SYNC_DOMAIN} {
+{$SITE_SCHEME:https}://{$SYNC_DOMAIN} {
 	reverse_proxy powersync:8080
 }

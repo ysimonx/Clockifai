@@ -2,6 +2,7 @@
 deploy/.env
 deploy/.env.*
 !deploy/.env.example
+deploy/docker-compose.override.yml
 *.pem
 *.key
 

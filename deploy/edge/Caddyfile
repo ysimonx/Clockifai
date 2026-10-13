@@ -1,0 +1,9 @@
+# Proxy frontal : TLS automatique (Let's Encrypt) pour tous les sites de sites/*.caddy.
+# Prérequis par nom de domaine : enregistrement DNS vers l'IP publique, ports 80 et 443
+# redirigés jusqu'à ce serveur.
+{
+	# Facultatif : adresse de contact pour Let's Encrypt
+	# email vous@exemple.fr
+}
+
+import sites/*.caddy

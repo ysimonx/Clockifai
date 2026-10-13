@@ -43,20 +43,20 @@ make prod-up
 cd ~/edge && docker compose up -d
 ```
 
-## Reste à faire hors serveur
+## Réseau et DNS (fait le 2026-10-13, certificats Let's Encrypt obtenus)
 
-1. **Zone DNS `kysoe.com` chez OVH** (Web Cloud → Noms de domaine → kysoe.com → Zone DNS → Ajouter une entrée) :
-   `clockifai` en A vers l'IPv4 publique de la Freebox, et `*.clockifai` en CNAME vers `clockifai.kysoe.com.`
-   (ou en A vers la même IP).
-2. Contrôle : `dig +short sync.clockifai.kysoe.com` doit renvoyer l'IP publique.
-3. **Freebox Pro** (Freebox OS → Paramètres → Mode avancé) : bail DHCP fixe pour le routeur Wi-Fi, puis redirection
-   des ports TCP 80 et 443 (et UDP 443 pour HTTP/3) vers l'IP WAN du routeur, ou DMZ vers cette IP. Vérifier que
-   l'accès distant à Freebox OS n'utilise pas 80/443.
-4. **Routeur Wi-Fi** : réservation DHCP 192.168.0.84 pour le PC, redirection TCP 80/443 (+ UDP 443) vers 192.168.0.84.
-5. Dès que le DNS et les ports sont en place, le proxy obtient les certificats seul ; ses tentatives s'espaçant après
-   des échecs, `docker restart edge-caddy` déclenche un nouvel essai immédiat.
-   Depuis le LAN, si `clockifai.kysoe.com` ne répond pas (pas de NAT loopback à travers le double NAT), surcharger le DNS
-   local vers 192.168.0.84.
+- **Réseau de la Freebox** : `192.168.10.0/24`, Freebox en `192.168.10.254` ; le TP-Link (WAN) y est en `192.168.10.100`.
+- **Freebox Pro** (Freebox OS → pare-feu, flux Internet (WAN) → Réseau local (LAN), règle par défaut « Bloquer ») :
+  deux règles « Autoriser », TCP, *Port de destination sur la Freebox* 80 (resp. 443), redirection vers
+  `192.168.10.100`, *Port de la redirection* 80 (resp. 443). **Laisser vide le « Port source d'origine »** : c'est le
+  port aléatoire du client ; le remplir avec 80/443 bloque tout (symptôme : délai dépassé vu d'Internet).
+- **TP-Link** (NAT Forwarding → Serveurs virtuels) : TCP 80 et 443 vers `192.168.0.84`. À fixer : bail DHCP du TP-Link
+  sur la Freebox (`98:03:8e:99:5e:a5` → `192.168.10.100`) et réservation du PC sur le TP-Link (`fc:aa:14:06:12:52`).
+- **DNS OVH** (zone `kysoe.com`) : `clockifai` A → IPv4 publique de la Freebox, `*.clockifai` CNAME → `clockifai.kysoe.com.`
+- Diagnostic par maillon : depuis le réseau Freebox, `curl -H 'Host: clockifai.kysoe.com' http://192.168.10.100/` teste
+  le TP-Link seul ; check-host.net teste l'IP publique depuis l'étranger. Depuis le LAN, l'IP publique ne répond pas
+  (pas de NAT loopback) : c'est attendu, et sans incidence vu de l'extérieur.
+- Après des échecs ACME (DNS absent), Caddy espace ses essais : `docker restart edge-caddy` relance immédiatement.
 
 ## Exploitation
 
@@ -69,9 +69,9 @@ cd ~/edge && docker compose up -d
 
 ## Points ouverts
 
-- **Inscriptions** : `DISABLE_SIGNUP=false` et `ENABLE_EMAIL_AUTOCONFIRM=true` (pas de SMTP) : n'importe qui peut créer
-  un compte. Une fois le compte administrateur créé, passer `DISABLE_SIGNUP=true` (les invitations passent par l'API
-  d'administration GoTrue), ou configurer un SMTP et `ENABLE_EMAIL_AUTOCONFIRM=false`.
+- **Inscriptions fermées** (2026-10-13, après création du compte propriétaire) : `DISABLE_SIGNUP=true`, puis
+  `up -d auth`. Les invitations restent possibles : dans GoTrue v2.189.0, seul `POST /signup` teste `DisableSignup`
+  (`internal/api/signup.go`), pas `admin/generate_link` ni `verify`. `ENABLE_EMAIL_AUTOCONFIRM=true` faute de SMTP.
 - **SMTP** : sans lui, pas d'email de récupération de mot de passe ; les invitations renvoient le lien à l'admin.
 - **Studio** exposé sur Internet (protégé par mot de passe) : le restreindre au LAN si inutile à distance.
 - Applications mobiles : construire avec `SUPABASE_URL=https://supabase.clockifai.kysoe.com`,

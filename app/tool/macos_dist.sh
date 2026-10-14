@@ -30,6 +30,11 @@ xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Rel
   exit 1
 }
 
+# Les bundles de ressources des paquets SPM (PrivacyInfo.xcprivacy seul, sans exécutable) héritent du
+# CODE_SIGN_IDENTITY passé ci-dessus et sont signés « Apple Development » ; l'export ne les re-signe pas, d'où le
+# refus d'App Store Connect (ITMS-90284). Sans signature propre, comme après flutter build, celle de l'app les scelle.
+rm -rf "$ARCHIVE"/Products/Applications/Clockifai.app/Contents/Resources/*.bundle/Contents/_CodeSignature
+
 export_options() {
   mkdir -p "$OUT"
   cat > "$OUT/ExportOptions.plist" <<PLIST

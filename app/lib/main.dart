@@ -17,6 +17,7 @@ import 'core/l10n.dart';
 import 'core/locale_controller.dart';
 import 'core/session.dart';
 import 'core/theme.dart';
+import 'features/timer/menu_bar.dart';
 import 'router.dart';
 
 Future<void> main() async {
@@ -103,6 +104,8 @@ class _ClockifaiAppState extends State<ClockifaiApp> {
             GlobalCupertinoLocalizations.delegate,
           ],
           routerConfig: _router,
+          // macOS : icône du chronomètre dans la barre de menus (sans effet ailleurs).
+          builder: (context, child) => MacMenuBar(child: child!),
         ),
       ),
     );

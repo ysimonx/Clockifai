@@ -94,6 +94,28 @@ class TimeEntryRepository {
         .map((rows) => rows.map(_toEntryRow).toList());
   }
 
+  /// Dernières entrées terminées de l'utilisateur, une par couple description / projet / tâche
+  /// (la plus récente) : ce qu'on relance d'un clic (« Continuer »).
+  Stream<List<EntryRow>> watchRecent(String workspaceId, String userId, {int limit = 5}) {
+    return db
+        .customSelect(
+          'SELECT te.*, (SELECT group_concat(tet.tag_id) FROM time_entry_tags tet '
+          'WHERE tet.time_entry_id = te.id) AS tag_ids '
+          'FROM time_entries te WHERE te.workspace_id = ?1 AND te.user_id = ?2 AND te.deleted_at IS NULL '
+          'AND te.end_at IS NOT NULL ORDER BY unixepoch(te.start_at) DESC LIMIT 100',
+          variables: [Variable<String>(workspaceId), Variable<String>(userId)],
+          readsFrom: {db.timeEntries, db.timeEntryTags},
+        )
+        .watch()
+        .map((rows) {
+      final seen = <String>{};
+      return [
+        for (final row in rows.map(_toEntryRow))
+          if (seen.add('${row.entry.description}\u0000${row.entry.projectId}\u0000${row.entry.taskId}')) row,
+      ].take(limit).toList();
+    });
+  }
+
   EntryRow _toEntryRow(QueryRow row) {
     final entry = db.timeEntries.map(row.data);
     final raw = row.data['tag_ids'] as String?;

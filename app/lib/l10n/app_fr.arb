@@ -199,6 +199,8 @@
     }
   },
   "entryLocked": "Entrée verrouillée : seule une personne administratrice peut la modifier.",
+  "environmentLocal": "Version locale",
+  "environmentProduction": "Production",
   "export": "Exporter",
   "exportCsvOffline": "CSV (hors ligne)",
   "exportDone": "Export téléchargé.",
@@ -341,6 +343,10 @@
     }
   },
   "members": "Membres",
+  "menuBarOpenApp": "Ouvrir Clockifai",
+  "menuBarQuit": "Quitter Clockifai",
+  "menuBarRecent": "Récemment",
+  "menuBarSignIn": "Connectez-vous dans la fenêtre Clockifai pour suivre votre temps.",
   "more": "Plus",
   "myRequests": "Mes demandes",
   "name": "Nom",

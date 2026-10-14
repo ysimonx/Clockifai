@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show appBuildName;
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -151,9 +152,44 @@ class _LoginPageState extends State<LoginPage> {
                 label: Text(l.kioskMode),
                 onPressed: () => context.go('/kiosk'),
               ),
+              const SizedBox(height: 8),
+              const EnvironmentBadge(),
             ]),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Version lancée : serveur local (développement) ou production, et numéro de version (`pubspec.yaml`).
+class EnvironmentBadge extends StatelessWidget {
+  const EnvironmentBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final local = AppConfig.isLocal;
+    final foreground = local ? scheme.onTertiaryContainer : scheme.outline;
+    final label = [
+      local ? l.environmentLocal : l.environmentProduction,
+      AppConfig.serverLabel,
+      if (appBuildName != null) 'v$appBuildName',
+    ].join(' · ');
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: local ? scheme.tertiaryContainer : null,
+          border: Border.all(color: local ? scheme.tertiary : scheme.outlineVariant),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(local ? Icons.computer : Icons.cloud_outlined, size: 16, color: foreground),
+          const SizedBox(width: 6),
+          Flexible(child: Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: foreground))),
+        ]),
       ),
     );
   }

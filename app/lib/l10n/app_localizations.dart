@@ -812,6 +812,18 @@ abstract class AppLocalizations {
   /// **'Entrée verrouillée : seule une personne administratrice peut la modifier.'**
   String get entryLocked;
 
+  /// No description provided for @environmentLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Version locale'**
+  String get environmentLocal;
+
+  /// No description provided for @environmentProduction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Production'**
+  String get environmentProduction;
+
   /// No description provided for @export.
   ///
   /// In fr, this message translates to:
@@ -1285,6 +1297,30 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Membres'**
   String get members;
+
+  /// No description provided for @menuBarOpenApp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir Clockifai'**
+  String get menuBarOpenApp;
+
+  /// No description provided for @menuBarQuit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter Clockifai'**
+  String get menuBarQuit;
+
+  /// No description provided for @menuBarRecent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récemment'**
+  String get menuBarRecent;
+
+  /// No description provided for @menuBarSignIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connectez-vous dans la fenêtre Clockifai pour suivre votre temps.'**
+  String get menuBarSignIn;
 
   /// No description provided for @more.
   ///

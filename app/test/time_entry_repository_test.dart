@@ -115,6 +115,28 @@ void main() {
     expect(await total(), 0);
   });
 
+  test('entrées récentes : une par description / projet, chronomètre et supprimées exclus', () async {
+    Future<String> entry(String description, int hour, {String? projectId}) => repo.createManual(
+          workspaceId: ws, userId: me, draft: EntryDraft(description: description, projectId: projectId),
+          start: DateTime.utc(2026, 10, 11, hour), end: DateTime.utc(2026, 10, 11, hour, 30),
+        );
+    await entry('Rédaction', 8);
+    await entry('Rédaction', 9, projectId: 'p1');
+    final latest = await entry('Rédaction', 10);
+    final deleted = await entry('Supprimée', 11);
+    await repo.delete(deleted);
+    await repo.createManual(
+      workspaceId: ws, userId: 'user-2', draft: EntryDraft(description: 'Collègue'),
+      start: DateTime.utc(2026, 10, 11, 12), end: DateTime.utc(2026, 10, 11, 13),
+    );
+    await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'En cours'), at: DateTime.utc(2026, 10, 11, 14));
+
+    final recent = await repo.watchRecent(ws, me).first;
+    expect(recent.map((r) => (r.entry.description, r.entry.projectId)), [('Rédaction', null), ('Rédaction', 'p1')]);
+    expect(recent.first.entry.id, latest);
+    expect(await repo.watchRecent(ws, me, limit: 1).first, hasLength(1));
+  });
+
   test('rapport : regroupement, montants et arrondi', () async {
     final catalogRepo = CatalogRepository(db);
     final p1 = await catalogRepo.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'Site web', hourlyRateCents: const Value(5000)));

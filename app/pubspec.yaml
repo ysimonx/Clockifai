@@ -1,5 +1,5 @@
 name: clockifai
-description: "Clockifai — suivi du temps libre et auto-hébergé (web, iOS, Android)."
+description: "Clockifai — suivi du temps libre et auto-hébergé (web, iOS, Android, macOS)."
 publish_to: "none"
 version: 0.1.0+1
 

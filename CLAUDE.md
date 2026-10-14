@@ -6,7 +6,7 @@ Guide pour Claude Code dans le dépôt Clockifai (clone libre et auto-hébergé 
 
 | Dossier | Stack | Rôle |
 |---|---|---|
-| `app/` | Flutter 3.47 (fvm), Drift sur PowerSync, Provider + ChangeNotifier, GetIt, go_router, l10n ARB FR/EN | App unique web / iOS / Android, offline-first |
+| `app/` | Flutter 3.47 (fvm), Drift sur PowerSync, Provider + ChangeNotifier, GetIt, go_router, l10n ARB FR/EN | App unique web / iOS / Android / macOS, offline-first |
 | `services/` | Python 3.12, Flask, psycopg 3, APScheduler, openpyxl, WeasyPrint (uv) | Exports, jobs planifiés, futurs endpoints (invitations, kiosque, intégrations) |
 | `supabase/migrations/` | SQL Postgres 17 | Schéma, triggers, RLS, publication PowerSync |
 | `supabase/docker/` | Copie épinglée du `docker/` officiel Supabase v1.26.08 | **Ne pas modifier** (sauf montée de version) |
@@ -27,6 +27,9 @@ make app-config           # app/config/local.json depuis deploy/.env
 make app-get              # fvm flutter pub get + powersync:setup_web + build_runner
 make app-gen              # fvm dart run build_runner build (Drift, après modif des tables)
 make app-web              # fvm flutter run -d chrome --web-port 3000
+make app-macos            # « Clockifai Dev » (macOS, pile locale)
+make app-config-prod HOST=ysimonx@192.168.0.84 && make app-build-macos && make app-install-macos  # « Clockifai » (prod)
+make app-dist-macos       # « Clockifai » signée Developer ID + notarisée (zip), via le compte ajouté dans Xcode
 make app-analyze / make app-test
 ```
 
@@ -69,10 +72,19 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - État : `SessionController` (utilisateur, workspace courant, rôle, statut de sync) et `CatalogController` (référentiel en mémoire) fournis par Provider ; dépôts et `SyncService` via GetIt (`core/di.dart`).
 - Tous les textes passent par l'ARB (`lib/l10n/app_fr.arb` = modèle, `app_en.arb`) ; `context.l10n`.
 - Les droits affichés suivent `session.isManager` / `isAdmin`, mais la RLS reste la seule vraie barrière.
+- Libellés : ajouter les clés directement dans les deux ARB (`tool/gen_arb.py` est en retard et en supprimerait).
+
+### macOS (`plans/06-macos-barre-de-menus.md`)
+- Icône dans la barre de menus : panneau natif SwiftUI (`macos/Runner/MenuBar*.swift`) sans accès aux données ;
+  `MacMenuBar` (`features/timer/menu_bar.dart`, monté dans `MaterialApp.builder`) lui envoie l'état par le canal
+  `clockifai/menu_bar` et exécute ses commandes (`start`, `stop`, `setDescription`, `setProject`, `continue`) sur la base locale.
+- Fermer la fenêtre ne quitte pas l'app (le moteur Flutter et la sync continuent) ; le Dock ou le panneau la rouvrent.
+- Debug = « Clockifai Dev » (`fr.clockifai.clockifai.dev`, pile locale), Release = « Clockifai » (`fr.clockifai.clockifai`,
+  `app/config/prod.json`) : deux bacs à sable, donc bases locales et sessions séparées. Swift Package Manager, pas de CocoaPods.
 
 ## Tests
 - `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètre, verrouillage, upsert du connecteur, exports, chefs d'équipe).
-- `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, sur base Drift en mémoire.
+- `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, pont de la barre de menus macOS (canal simulé), sur base Drift en mémoire.
 - Parcours navigateur (Playwright, hors dépôt) : activer l'arbre d'accessibilité Flutter en cliquant `flt-semantics-placeholder`, puis cliquer un champ et taper au clavier (`fill` ne suffit pas).
 
 ## Ports locaux

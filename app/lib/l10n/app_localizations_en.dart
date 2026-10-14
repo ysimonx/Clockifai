@@ -401,6 +401,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get entryLocked => 'Locked entry: only an admin can change it.';
 
   @override
+  String get environmentLocal => 'Local version';
+
+  @override
+  String get environmentProduction => 'Production';
+
+  @override
   String get export => 'Export';
 
   @override
@@ -668,6 +674,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get members => 'Members';
+
+  @override
+  String get menuBarOpenApp => 'Open Clockifai';
+
+  @override
+  String get menuBarQuit => 'Quit Clockifai';
+
+  @override
+  String get menuBarRecent => 'Recent';
+
+  @override
+  String get menuBarSignIn =>
+      'Sign in from the Clockifai window to track your time.';
 
   @override
   String get more => 'More';

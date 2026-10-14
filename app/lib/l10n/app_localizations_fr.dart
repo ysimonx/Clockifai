@@ -406,6 +406,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Entrée verrouillée : seule une personne administratrice peut la modifier.';
 
   @override
+  String get environmentLocal => 'Version locale';
+
+  @override
+  String get environmentProduction => 'Production';
+
+  @override
   String get export => 'Exporter';
 
   @override
@@ -674,6 +680,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get members => 'Membres';
+
+  @override
+  String get menuBarOpenApp => 'Ouvrir Clockifai';
+
+  @override
+  String get menuBarQuit => 'Quitter Clockifai';
+
+  @override
+  String get menuBarRecent => 'Récemment';
+
+  @override
+  String get menuBarSignIn =>
+      'Connectez-vous dans la fenêtre Clockifai pour suivre votre temps.';
 
   @override
   String get more => 'Plus';

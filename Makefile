@@ -71,7 +71,18 @@ services-run: ## Flask en local (hors Docker), pointe sur le Postgres du compose
 DEFINES ?= --dart-define-from-file=config/local.json
 
 app-config: ## Génère app/config/local.json (URLs + clé anon) depuis deploy/.env
+	@mkdir -p app/config
 	sh deploy/app-config.sh > app/config/local.json && cat app/config/local.json
+
+app-config-prod: ## Génère app/config/prod.json depuis le .env du serveur : make app-config-prod HOST=user@ip
+	@test -n "$(HOST)" || (echo "Usage : make app-config-prod HOST=user@ip [DEPLOY_DIR=Clockifai]" && exit 1)
+	@mkdir -p app/config
+	@# Seules les valeurs publiques quittent le serveur (la clé anon est déjà dans le bundle web).
+	@tmp=$$(mktemp) && trap 'rm -f "$$tmp" "$$tmp.json"' EXIT && \
+	  ssh $(HOST) "grep -E '^(ANON_KEY|SUPABASE_PUBLIC_URL|POWERSYNC_PUBLIC_URL|APP_DOMAIN)=' $(DEPLOY_DIR)/deploy/.env" > "$$tmp" && \
+	  ENV_FILE="$$tmp" SERVICES_URL="https://$$(grep '^APP_DOMAIN=' "$$tmp" | cut -d= -f2-)" \
+	  sh deploy/app-config.sh > "$$tmp.json" && mv "$$tmp.json" app/config/prod.json
+	cat app/config/prod.json
 
 app-get: ## pub get + assets web PowerSync + génération Drift
 	cd app && fvm flutter pub get && fvm dart run build_runner build
@@ -87,6 +98,23 @@ app-gen: ## Régénère le code Drift / l10n
 
 app-web: ## Lance l'app web (Chrome) sur le backend local
 	cd app && fvm flutter run -d chrome --web-port 3000 $(DEFINES)
+
+app-macos: ## Lance « Clockifai Dev » sur macOS (pile locale, icône dans la barre de menus)
+	cd app && fvm flutter run -d macos $(DEFINES)
+
+app-build-macos: ## Construit « Clockifai » pour macOS, branchée sur la prod (app/config/prod.json)
+	@test -f app/config/prod.json || (echo "app/config/prod.json manquant : make app-config-prod HOST=user@ip" && exit 1)
+	cd app && fvm flutter build macos --release --dart-define-from-file=config/prod.json
+	@echo "→ app/build/macos/Build/Products/Release/Clockifai.app (make app-install-macos pour l'installer)"
+
+APPLE_TEAM ?= 9SGKL7VUD3
+app-dist-macos: ## « Clockifai » signée Developer ID et notarisée : zip pour d'autres Mac (compte ajouté dans Xcode)
+	APPLE_TEAM=$(APPLE_TEAM) sh app/tool/macos_dist.sh
+
+app-install-macos: ## Copie « Clockifai » (prod) dans /Applications
+	@test -d app/build/macos/Build/Products/Release/Clockifai.app || (echo "Lancer d'abord make app-build-macos" && exit 1)
+	rm -rf /Applications/Clockifai.app
+	ditto app/build/macos/Build/Products/Release/Clockifai.app /Applications/Clockifai.app
 
 app-build-web: ## Build web local (en prod, l'image du service web le compile elle-même)
 	cd app && fvm flutter build web --release $(DEFINES)

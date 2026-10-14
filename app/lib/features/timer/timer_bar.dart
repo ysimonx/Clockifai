@@ -13,6 +13,7 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/entry_dialog.dart';
 import 'timer_notifications.dart';
+import 'timer_rules.dart';
 
 /// Barre « Sur quoi travaillez-vous ? » : démarre / arrête le chronomètre.
 /// Le chronomètre est une entrée sans fin en base locale : il survit au redémarrage
@@ -82,9 +83,8 @@ class _TimerBarState extends State<TimerBar> {
     final session = context.read<SessionController>();
     final catalog = context.read<CatalogController>();
     final ws = session.workspace!;
-    final l = context.l10n;
-    if (ws.requireProject && _projectId == null) return showSnack(context, l.projectRequired);
-    if (ws.requireDescription && _description.text.trim().isEmpty) return showSnack(context, l.descriptionRequired);
+    final blocked = timerRuleViolation(context.l10n, ws, description: _description.text, projectId: _projectId);
+    if (blocked != null) return showSnack(context, blocked);
     await entriesRepo.start(
       workspaceId: ws.id,
       userId: session.userId!,
@@ -108,9 +108,8 @@ class _TimerBarState extends State<TimerBar> {
     final running = _running;
     if (running == null) return;
     final ws = context.read<SessionController>().workspace!;
-    final l = context.l10n;
-    if (ws.requireProject && running.projectId == null) return showSnack(context, l.projectRequired);
-    if (ws.requireDescription && _description.text.trim().isEmpty) return showSnack(context, l.descriptionRequired);
+    final blocked = timerRuleViolation(context.l10n, ws, description: _description.text, projectId: running.projectId);
+    if (blocked != null) return showSnack(context, blocked);
     _debounce?.cancel();
     if (_description.text.trim() != running.description) {
       await entriesRepo.update(running, description: _description.text);

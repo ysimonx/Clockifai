@@ -1,7 +1,7 @@
 # Clockifai
 
 Suivi du temps **libre, gratuit et auto-hébergé**, inspiré de Clockify.
-Une seule application Flutter pour le **web, iOS et Android**, utilisable **hors connexion**,
+Une seule application Flutter pour le **web, iOS, Android et macOS**, utilisable **hors connexion**,
 et un backend entièrement en **conteneurs Docker** que l'on installe où l'on veut :
 VPS OVH, Scaleway, ou une machine chez soi.
 
@@ -9,7 +9,7 @@ VPS OVH, Scaleway, ou une machine chez soi.
 
 | Domaine | Contenu |
 |---|---|
-| Saisie du temps | Chronomètre (survit au redémarrage, continue sur un autre appareil), saisie manuelle, « continuer », dupliquer, tags, facturable |
+| Saisie du temps | Chronomètre (survit au redémarrage, continue sur un autre appareil), saisie manuelle, « continuer », dupliquer, tags, facturable ; sur macOS, icône dans la barre de menus pour démarrer / arrêter sans ouvrir la fenêtre |
 | Feuille de temps | Grille hebdomadaire projets × jours, saisie en `1:30`, `1,5`, `90m` |
 | Référentiel | Clients, projets (couleur, taux horaire, budget, public/privé), tâches, tags, archivage |
 | Équipe | Workspaces multiples, rôles owner / admin / manager / membre, taux par membre |
@@ -29,7 +29,7 @@ L'avancement détaillé par lot est suivi dans [plans/01-plan-clockifai.md](plan
 ## Architecture
 
 ```
- Flutter (web / iOS / Android)
+ Flutter (web / iOS / Android / macOS)
    ├─ base locale SQLite (PowerSync + Drift) ── lectures/écritures instantanées, hors ligne
    ├─ PowerSync ──────── flux de synchronisation (Sync Streams) ──┐
    └─ Supabase (auth, envoi des modifications via PostgREST) ─────┤
@@ -65,6 +65,11 @@ make app-web      # lance l'app dans Chrome sur http://localhost:3000
 Mobile : `cd app && fvm flutter run` sur un simulateur iOS ou un émulateur Android.
 Sur l'émulateur Android, `localhost` désigne l'émulateur : générez la config avec
 `SUPABASE_URL=http://10.0.2.2:8000 POWERSYNC_URL=http://10.0.2.2:8080 SERVICES_URL=http://10.0.2.2:5050 make app-config`.
+
+macOS : `make app-macos` lance « Clockifai Dev » sur la pile locale. La version de production
+(« Clockifai », branchée sur le serveur) : `make app-config-prod HOST=user@ip`, `make app-build-macos`,
+`make app-install-macos` ; pour d'autres Mac, `make app-dist-macos` produit un zip signé Developer ID et notarisé
+par Apple. Les deux cohabitent ; voir [plans/06-macos-barre-de-menus.md](plans/06-macos-barre-de-menus.md).
 
 En développement les comptes sont confirmés sans email (`ENABLE_EMAIL_AUTOCONFIRM=true`).
 Pour essayer avec des données : créez un compte dans l'app, puis `make seed EMAIL=votre@email`.

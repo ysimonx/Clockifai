@@ -11,8 +11,8 @@ PRODUCT_NAME = Clockifai
 // Deux applications distinctes, installables côte à côte (bac à sable, base locale et session séparés) :
 //   Debug           « Clockifai Dev », branchée sur la pile locale (make app-macos)
 //   Release/Profile « Clockifai », production clockifai.kysoe.com (make app-build-macos)
-PRODUCT_BUNDLE_IDENTIFIER = fr.clockifai.clockifai
-PRODUCT_BUNDLE_IDENTIFIER[config=Debug] = fr.clockifai.clockifai.dev
+PRODUCT_BUNDLE_IDENTIFIER = com.kysoe.clockifai
+PRODUCT_BUNDLE_IDENTIFIER[config=Debug] = com.kysoe.clockifai.dev
 
 // Nom affiché (menus, Dock, panneau de la barre de menus).
 APP_DISPLAY_NAME = Clockifai

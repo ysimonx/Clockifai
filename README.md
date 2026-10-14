@@ -62,14 +62,15 @@ make app-web      # lance l'app dans Chrome sur http://localhost:3000
 | PowerSync | http://localhost:8080 |
 | Services Flask | http://localhost:5050/api/health |
 
-Mobile : `cd app && fvm flutter run` sur un simulateur iOS ou un émulateur Android.
-Sur l'émulateur Android, `localhost` désigne l'émulateur : générez la config avec
-`SUPABASE_URL=http://10.0.2.2:8000 POWERSYNC_URL=http://10.0.2.2:8080 SERVICES_URL=http://10.0.2.2:5050 make app-config`.
+iPhone et Android : `make app-ios` (simulateur) et `make app-android` (émulateur ou téléphone branché) lancent
+« Clockifai Dev » sur la pile locale, avec la même config que le web (`adb reverse` relie `localhost` de l'appareil
+Android à celui du Mac) ; `make app-dist-ios` envoie la version de production vers TestFlight,
+`make app-dist-android` produit l'app bundle Google Play ([plans/07-ios-android.md](plans/07-ios-android.md)).
 
 macOS : `make app-macos` lance « Clockifai Dev » sur la pile locale. La version de production
 (« Clockifai », branchée sur le serveur) : `make app-config-prod HOST=user@ip`, `make app-build-macos`,
 `make app-install-macos` ; pour d'autres Mac, `make app-dist-macos` produit un zip signé Developer ID et notarisé
-par Apple. Les deux cohabitent ; voir [plans/06-macos-barre-de-menus.md](plans/06-macos-barre-de-menus.md).
+par Apple, et `make app-dist-macos-testflight` l'envoie sur TestFlight (comme l'iPhone). Les deux cohabitent ; voir [plans/06-macos-barre-de-menus.md](plans/06-macos-barre-de-menus.md).
 
 En développement les comptes sont confirmés sans email (`ENABLE_EMAIL_AUTOCONFIRM=true`).
 Pour essayer avec des données : créez un compte dans l'app, puis `make seed EMAIL=votre@email`.

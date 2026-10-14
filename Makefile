@@ -5,7 +5,7 @@
 COMPOSE := docker compose -f deploy/docker-compose.yml $(if $(wildcard deploy/docker-compose.override.yml),-f deploy/docker-compose.override.yml) --env-file deploy/.env
 
 help: ## Liste des commandes
-	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
 # ---------------------------------------------------------------- backend
 env: ## Génère deploy/.env avec des secrets aléatoires
@@ -109,7 +109,39 @@ app-build-macos: ## Construit « Clockifai » pour macOS, branchée sur la prod 
 
 APPLE_TEAM ?= 9SGKL7VUD3
 app-dist-macos: ## « Clockifai » signée Developer ID et notarisée : zip pour d'autres Mac (compte ajouté dans Xcode)
-	APPLE_TEAM=$(APPLE_TEAM) sh app/tool/macos_dist.sh
+	APPLE_TEAM=$(APPLE_TEAM) sh app/tool/macos_dist.sh notarize
+
+app-dist-macos-testflight: ## « Clockifai » pour Mac : envoi à App Store Connect puis TestFlight (compte ajouté dans Xcode)
+	APPLE_TEAM=$(APPLE_TEAM) sh app/tool/macos_dist.sh testflight
+
+# iOS et Android : Debug = « Clockifai Dev » (pile locale), Release = « Clockifai » (prod). plans/07-ios-android.md
+IOS_SIMULATOR ?= iPhone 18 Pro
+app-ios: ## Lance « Clockifai Dev » sur le simulateur iOS (IOS_SIMULATOR=…), pile locale
+	xcrun simctl boot "$(IOS_SIMULATOR)" 2>/dev/null || true
+	open -a Simulator 2>/dev/null || open -a DeviceHub 2>/dev/null || true   # Xcode 27 : DeviceHub
+	cd app && fvm flutter run -d "$(IOS_SIMULATOR)" $(DEFINES)
+
+app-dist-ios: ## « Clockifai » pour iPhone : envoi à App Store Connect puis TestFlight (compte ajouté dans Xcode)
+	APPLE_TEAM=$(APPLE_TEAM) sh app/tool/ios_dist.sh
+
+ANDROID_HOME ?= $(HOME)/Library/Android/sdk
+ADB := $(ANDROID_HOME)/platform-tools/adb
+ANDROID_AVD ?= $(shell $(ANDROID_HOME)/emulator/emulator -list-avds 2>/dev/null | grep -v '|' | head -1)
+app-android-emulator: ## Démarre l'émulateur Android (ANDROID_AVD=…)
+	$(ANDROID_HOME)/emulator/emulator -avd $(ANDROID_AVD) >/dev/null 2>&1 &
+	$(ADB) wait-for-device
+
+app-android: ## Lance « Clockifai Dev » sur Android (émulateur ou téléphone branché), pile locale via adb reverse
+	@$(ADB) get-state >/dev/null 2>&1 || (echo "Aucun appareil : make app-android-emulator, ou branchez un téléphone" && exit 1)
+	@# localhost:8000/8080/5050 de l'appareil = ceux du Mac : la même config locale que le web et macOS.
+	for p in 8000 8080 5050; do $(ADB) reverse tcp:$$p tcp:$$p; done
+	cd app && fvm flutter run -d $$($(ADB) get-serialno) $(DEFINES)
+
+app-android-keystore: ## Crée la clé d'envoi Google Play (une fois, hors dépôt ; à sauvegarder)
+	sh app/tool/android_keystore.sh
+
+app-dist-android: ## « Clockifai » pour Google Play : app bundle (.aab) de production signé
+	sh app/tool/android_dist.sh
 
 app-install-macos: ## Copie « Clockifai » (prod) dans /Applications
 	@test -d app/build/macos/Build/Products/Release/Clockifai.app || (echo "Lancer d'abord make app-build-macos" && exit 1)

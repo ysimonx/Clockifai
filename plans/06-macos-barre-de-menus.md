@@ -8,7 +8,7 @@ qui permet de démarrer le chronomètre sans ouvrir l'application, ou d'ouvrir l
 ## Décisions
 
 1. **Cible macOS de l'app Flutter existante** (`app/macos`, `flutter create --platforms=macos`, identifiant
-   `fr.clockifai.clockifai` comme iOS). Même code, même base locale PowerSync, même sync. macOS 12 minimum.
+   `com.kysoe.clockifai` comme iOS). Même code, même base locale PowerSync, même sync. macOS 12 minimum.
    Flutter 3.47 intègre les plugins par Swift Package Manager : pas de CocoaPods.
 2. **Panneau natif SwiftUI**, pas une deuxième fenêtre Flutter : le multi-fenêtre Flutter est encore expérimental et
    un second moteur ouvrirait une seconde connexion PowerSync. `NSStatusItem` + `NSPopover`
@@ -31,8 +31,8 @@ qui permet de démarrer le chronomètre sans ouvrir l'application, ou d'ouvrir l
 
    | Build | Nom | Identifiant | Backend |
    |---|---|---|---|
-   | Debug (`make app-macos`) | Clockifai Dev | `fr.clockifai.clockifai.dev` | pile locale (`app/config/local.json`) |
-   | Release (`make app-build-macos`) | Clockifai | `fr.clockifai.clockifai` | clockifai.kysoe.com (`app/config/prod.json`) |
+   | Debug (`make app-macos`) | Clockifai Dev | `com.kysoe.clockifai.dev` | pile locale (`app/config/local.json`) |
+   | Release (`make app-build-macos`) | Clockifai | `com.kysoe.clockifai` | clockifai.kysoe.com (`app/config/prod.json`) |
 
    Identifiants distincts = bacs à sable distincts : base locale et session ne se mélangent jamais.
    `make app-config-prod HOST=ysimonx@192.168.0.84` lit sur le serveur les seules valeurs publiques
@@ -44,8 +44,12 @@ qui permet de démarrer le chronomètre sans ouvrir l'application, ou d'ouvrir l
    `-exportNotarizedApp` (ticket agrafé) et zip `app/build/macos/Clockifai-<version>.zip`. Tout passe par le compte
    ajouté dans Xcode (`-allowProvisioningUpdates` crée les certificats) : ni mot de passe ni clé d'API dans le dépôt.
    Les builds locaux (`make app-macos`, `make app-build-macos`) restent en signature locale, sans dépendre du compte.
-   Pas de TestFlight : il ne concerne que les apps publiées par l'App Store. Hors App Store, Developer ID +
-   notarisation suffisent (premier zip notarisé le 2026-10-14, accepté par Gatekeeper après téléchargement).
+   Hors App Store, Developer ID + notarisation suffisent (premier zip notarisé le 2026-10-14, accepté par Gatekeeper
+   après téléchargement).
+9. **TestFlight pour Mac** (`make app-dist-macos-testflight`, même script en mode `testflight`) : même archive, export
+   `app-store-connect` envoyé à App Store Connect, dans la fiche « clockifai » partagée avec iOS (même identifiant
+   `com.kysoe.clockifai`, plateforme macOS ajoutée à la fiche). Installation et mises à jour par l'app TestFlight sur
+   Mac. Bac à sable, catégorie (`LSApplicationCategoryType`) et `ITSAppUsesNonExemptEncryption = NO` déjà en place.
 
 ## Utilisation
 

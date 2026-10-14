@@ -1,4 +1,4 @@
-package fr.clockifai.clockifai
+package com.kysoe.clockifai
 
 import io.flutter.embedding.android.FlutterActivity
 

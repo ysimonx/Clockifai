@@ -30,6 +30,10 @@ make app-web              # fvm flutter run -d chrome --web-port 3000
 make app-macos            # « Clockifai Dev » (macOS, pile locale)
 make app-config-prod HOST=ysimonx@192.168.0.84 && make app-build-macos && make app-install-macos  # « Clockifai » (prod)
 make app-dist-macos       # « Clockifai » signée Developer ID + notarisée (zip), via le compte ajouté dans Xcode
+make app-dist-macos-testflight   # « Clockifai » pour Mac → App Store Connect / TestFlight
+make app-ios / make app-android-emulator && make app-android   # « Clockifai Dev » sur simulateur / émulateur
+make app-dist-ios         # « Clockifai » → App Store Connect / TestFlight (compte Xcode)
+make app-android-keystore && make app-dist-android            # clé d'envoi (une fois) puis .aab Google Play
 make app-analyze / make app-test
 ```
 
@@ -79,8 +83,14 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
   `MacMenuBar` (`features/timer/menu_bar.dart`, monté dans `MaterialApp.builder`) lui envoie l'état par le canal
   `clockifai/menu_bar` et exécute ses commandes (`start`, `stop`, `setDescription`, `setProject`, `continue`) sur la base locale.
 - Fermer la fenêtre ne quitte pas l'app (le moteur Flutter et la sync continuent) ; le Dock ou le panneau la rouvrent.
-- Debug = « Clockifai Dev » (`fr.clockifai.clockifai.dev`, pile locale), Release = « Clockifai » (`fr.clockifai.clockifai`,
+- Debug = « Clockifai Dev » (`com.kysoe.clockifai.dev`, pile locale), Release = « Clockifai » (`com.kysoe.clockifai`,
   `app/config/prod.json`) : deux bacs à sable, donc bases locales et sessions séparées. Swift Package Manager, pas de CocoaPods.
+
+### iOS et Android (`plans/07-ios-android.md`)
+- Même séparation : Debug = « Clockifai Dev » (`….dev`), Release = « Clockifai ». iOS : `APP_DISPLAY_NAME` et identifiant
+  par configuration dans `project.pbxproj` ; Android : `applicationIdSuffix` et `resValue app_name` dans `build.gradle.kts`.
+- Android joint la pile locale par `adb reverse` (8000 / 8080 / 5050) : même `config/local.json` partout.
+- Clé d'envoi Google Play hors dépôt (`~/.config/clockifai/android/`) ; numéro de build = minutes depuis le 2026-01-01.
 
 ## Tests
 - `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètre, verrouillage, upsert du connecteur, exports, chefs d'équipe).

@@ -1,13 +1,30 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Clé d'envoi Google Play, hors du dépôt (make app-android-keystore, à sauvegarder) :
+// ~/.config/clockifai/android/key.properties (storeFile, storePassword, keyAlias, keyPassword).
+val uploadKey = Properties().apply {
+    val path = System.getenv("CLOCKIFAI_ANDROID_KEY_PROPERTIES")
+        ?: "${System.getProperty("user.home")}/.config/clockifai/android/key.properties"
+    val file = File(path)
+    if (file.exists()) FileInputStream(file).use { load(it) }
+}
+
 android {
-    namespace = "fr.clockifai.clockifai"
+    namespace = "com.kysoe.clockifai"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
+
+    // Nom de l'app par type de build (resValue app_name) : « Clockifai » ou « Clockifai Dev ».
+    buildFeatures {
+        resValues = true
+    }
 
     compileOptions {
         // Requis par flutter_local_notifications (API java.time sur anciens Android)
@@ -18,7 +35,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "fr.clockifai.clockifai"
+        applicationId = "com.kysoe.clockifai"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -29,13 +46,30 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        resValue("string", "app_name", "Clockifai")
+    }
+
+    signingConfigs {
+        if (!uploadKey.isEmpty) {
+            create("upload") {
+                storeFile = file(uploadKey.getProperty("storeFile"))
+                storePassword = uploadKey.getProperty("storePassword")
+                keyAlias = uploadKey.getProperty("keyAlias")
+                keyPassword = uploadKey.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
+        debug {
+            // « Clockifai Dev » : pile locale, installable à côté de la version du Play Store.
+            applicationIdSuffix = ".dev"
+            resValue("string", "app_name", "Clockifai Dev")
+        }
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Sans clé d'envoi (autre poste), signature de debug : `flutter run --release` fonctionne quand même ;
+            // make app-dist-android exige la clé.
+            signingConfig = signingConfigs.findByName("upload") ?: signingConfigs.getByName("debug")
         }
     }
 }

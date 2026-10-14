@@ -1,19 +1,24 @@
 #!/bin/sh
-# « Clockifai » pour macOS signée Developer ID et notarisée par Apple : un zip à installer sur n'importe quel Mac.
-#   make app-dist-macos                 (APPLE_TEAM=XXXXXXXXXX pour une autre équipe)
-# S'appuie sur le compte développeur ajouté dans Xcode (Réglages > Comptes) : aucun mot de passe ici.
-# Avec -allowProvisioningUpdates, Xcode crée au besoin les certificats (Apple Development, Developer ID).
+# « Clockifai » pour macOS, version de production, distribuée de deux façons :
+#   make app-dist-macos              notarize   : signée Developer ID et notarisée, zip à installer sur n'importe quel Mac
+#   make app-dist-macos-testflight   testflight : envoyée à App Store Connect, installée par TestFlight sur Mac
+# (APPLE_TEAM=…, BUILD_NUMBER=… pour forcer.) S'appuie sur le compte développeur ajouté dans Xcode
+# (Réglages > Comptes) : aucun mot de passe ici. Avec -allowProvisioningUpdates, Xcode crée au besoin les
+# certificats et profils. Numéro de build croissant (exigé par TestFlight) : minutes depuis le 2026-01-01 UTC.
 set -eu
 cd "$(dirname "$0")/.."
+MODE=${1:-notarize}
 TEAM=${APPLE_TEAM:?"APPLE_TEAM manquant (identifiant d'équipe Apple)"}
 ARCHIVE=build/macos/Clockifai.xcarchive
 OUT=build/macos/dist
 VERSION=$(sed -n 's/^version: *\([^+]*\).*/\1/p' pubspec.yaml)
+BUILD=${BUILD_NUMBER:-$(( ($(date +%s) - 1767225600) / 60 ))}
 
+case "$MODE" in notarize|testflight) ;; *) echo "Mode inconnu : $MODE (notarize ou testflight)" >&2; exit 1 ;; esac
 [ -f config/prod.json ] || { echo "config/prod.json manquant : make app-config-prod HOST=user@ip" >&2; exit 1; }
 
-echo "[dist] compilation Flutter (prod)"
-fvm flutter build macos --release --dart-define-from-file=config/prod.json
+echo "[dist] compilation Flutter (prod) $VERSION ($BUILD)"
+fvm flutter build macos --release --dart-define-from-file=config/prod.json --build-number="$BUILD"
 
 echo "[dist] archive Xcode (équipe $TEAM, runtime renforcé exigé par la notarisation)"
 rm -rf "$ARCHIVE" "$OUT"
@@ -25,20 +30,38 @@ xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Rel
   exit 1
 }
 
-echo "[dist] signature Developer ID et envoi au service de notarisation d'Apple"
-mkdir -p "$OUT"
-cat > "$OUT/ExportOptions.plist" <<PLIST
+export_options() {
+  mkdir -p "$OUT"
+  cat > "$OUT/ExportOptions.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>method</key><string>developer-id</string>
+  <key>method</key><string>$1</string>
   <key>destination</key><string>upload</string>
   <key>signingStyle</key><string>automatic</string>
-  <key>teamID</key><string>$TEAM</string>
+  <key>teamID</key><string>$TEAM</string>$2
 </dict>
 </plist>
 PLIST
+}
+
+if [ "$MODE" = testflight ]; then
+  echo "[dist] signature Mac App Store et envoi à App Store Connect"
+  export_options app-store-connect '
+  <key>manageAppVersionAndBuildNumber</key><false/>'
+  xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportPath "$OUT" \
+    -exportOptionsPlist "$OUT/ExportOptions.plist" -allowProvisioningUpdates || {
+    echo "Envoi refusé. Si App Store Connect ne trouve pas d'app macOS : ajoutez la plateforme macOS à la fiche" >&2
+    echo "« clockifai » (com.kysoe.clockifai) dans App Store Connect, puis relancez." >&2
+    exit 1
+  }
+  echo "[dist] envoyé : $VERSION ($BUILD) apparaîtra dans TestFlight pour Mac après traitement par Apple (5 à 30 min)."
+  exit 0
+fi
+
+echo "[dist] signature Developer ID et envoi au service de notarisation d'Apple"
+export_options developer-id ''
 xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportPath "$OUT" \
   -exportOptionsPlist "$OUT/ExportOptions.plist" -allowProvisioningUpdates
 

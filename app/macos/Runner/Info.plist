@@ -22,6 +22,9 @@
 	<!-- HTTPS seulement, chiffrement standard : dispense de déclaration d'export (TestFlight / App Store). -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- Démarre sans icône dans le Dock : elle apparaît avec la fenêtre (MainFlutterWindow.present). -->
+	<key>LSUIElement</key>
+	<true/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
 	<key>CFBundleDevelopmentRegion</key>

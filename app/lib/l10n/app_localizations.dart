@@ -1226,6 +1226,24 @@ abstract class AppLocalizations {
   /// **'Semaine dernière'**
   String get lastWeek;
 
+  /// No description provided for @launchAtLogin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Démarrer à l\'ouverture de session'**
+  String get launchAtLogin;
+
+  /// No description provided for @launchAtLoginApproval.
+  ///
+  /// In fr, this message translates to:
+  /// **'À autoriser dans Réglages Système > Général > Ouverture.'**
+  String get launchAtLoginApproval;
+
+  /// No description provided for @launchAtLoginHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clockifai s\'ouvre dans la barre de menus, sans fenêtre.'**
+  String get launchAtLoginHelp;
+
   /// No description provided for @loadMore.
   ///
   /// In fr, this message translates to:
@@ -1657,6 +1675,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Action impossible hors ligne.'**
   String get onlineOnly;
+
+  /// No description provided for @openSystemSettings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir les Réglages'**
+  String get openSystemSettings;
 
   /// No description provided for @paid.
   ///

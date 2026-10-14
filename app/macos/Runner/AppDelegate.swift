@@ -8,12 +8,9 @@ class AppDelegate: FlutterAppDelegate {
     return false
   }
 
-  // Clic sur l'icône du Dock : rouvre la fenêtre fermée.
+  // App relancée (Finder, Spotlight, Dock) alors qu'elle tourne déjà : rouvre la fenêtre fermée.
   override func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-    if !flag, let window = mainFlutterWindow {
-      if window.isMiniaturized { window.deminiaturize(nil) }
-      window.makeKeyAndOrderFront(nil)
-    }
+    if !flag { (mainFlutterWindow as? MainFlutterWindow)?.present() }
     return true
   }
 

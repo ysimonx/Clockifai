@@ -627,6 +627,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lastWeek => 'Last week';
 
   @override
+  String get launchAtLogin => 'Start at login';
+
+  @override
+  String get launchAtLoginApproval =>
+      'Allow it in System Settings > General > Login Items.';
+
+  @override
+  String get launchAtLoginHelp =>
+      'Clockifai opens in the menu bar, without a window.';
+
+  @override
   String get loadMore => 'Load more';
 
   @override
@@ -865,6 +876,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onlineOnly => 'Not available offline.';
+
+  @override
+  String get openSystemSettings => 'Open Settings';
 
   @override
   String get paid => 'Paid';

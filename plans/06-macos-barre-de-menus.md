@@ -50,6 +50,12 @@ qui permet de démarrer le chronomètre sans ouvrir l'application, ou d'ouvrir l
    `app-store-connect` envoyé à App Store Connect, dans la fiche « clockifai » partagée avec iOS (même identifiant
    `com.kysoe.clockifai`, plateforme macOS ajoutée à la fiche). Installation et mises à jour par l'app TestFlight sur
    Mac. Bac à sable, catégorie (`LSApplicationCategoryType`) et `ITSAppUsesNonExemptEncryption = NO` déjà en place.
+10. **Démarrage à l'ouverture de session** (`LaunchAtLogin.swift`, `SMAppService.mainApp`, macOS 13+) : réglage dans
+    Paramètres (`LaunchAtLoginTile`, Mac seulement) et dans le clic droit sur l'icône ; l'état est celui du système
+    (Réglages Système > Général > Ouverture), relu à chaque affichage. Lancée ainsi (événement d'ouverture
+    `keyAELaunchedAsLogInItem`, lu pendant `didFinishLaunchingNotification`), l'app n'ouvre que l'icône de la barre de
+    menus. **L'icône du Dock suit la fenêtre** : `LSUIElement` + fenêtre invisible au lancement, puis
+    `MainFlutterWindow.present()` (politique `.regular`) à l'ouverture et `.accessory` à la fermeture.
 
 ## Utilisation
 
@@ -72,8 +78,7 @@ make app-dist-macos                                   # production signée + not
 
 ## Pistes
 
-- Lancement à l'ouverture de session (`SMAppService`, macOS 13+), raccourci clavier global.
-- Masquer l'icône du Dock quand la fenêtre est fermée (`NSApp.setActivationPolicy(.accessory)`).
+- Raccourci clavier global.
 - Mises à jour automatiques : Sparkle (usage courant hors App Store), ou Mac App Store + TestFlight
   (revue Apple, certificat Apple Distribution ; le bac à sable est déjà en place).
 - Menus de l'app (Edit, View, Window…) en anglais : localiser `MainMenu.xib` en français.

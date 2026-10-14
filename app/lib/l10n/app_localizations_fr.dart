@@ -633,6 +633,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get lastWeek => 'Semaine dernière';
 
   @override
+  String get launchAtLogin => 'Démarrer à l\'ouverture de session';
+
+  @override
+  String get launchAtLoginApproval =>
+      'À autoriser dans Réglages Système > Général > Ouverture.';
+
+  @override
+  String get launchAtLoginHelp =>
+      'Clockifai s\'ouvre dans la barre de menus, sans fenêtre.';
+
+  @override
   String get loadMore => 'Afficher plus';
 
   @override
@@ -871,6 +882,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onlineOnly => 'Action impossible hors ligne.';
+
+  @override
+  String get openSystemSettings => 'Ouvrir les Réglages';
 
   @override
   String get paid => 'Rémunérée';

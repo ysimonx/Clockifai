@@ -15,10 +15,10 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
   private let popover = NSPopover()
   private let channel: FlutterMethodChannel
   private let model = MenuBarModel()
-  private weak var window: NSWindow?
+  private weak var window: MainFlutterWindow?
   private var ticker: Timer?
 
-  init(messenger: FlutterBinaryMessenger, window: NSWindow) {
+  init(messenger: FlutterBinaryMessenger, window: MainFlutterWindow) {
     channel = FlutterMethodChannel(name: "clockifai/menu_bar", binaryMessenger: messenger)
     self.window = window
     super.init()
@@ -77,6 +77,12 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     let open = NSMenuItem(title: model.label("openApp"), action: #selector(openFromMenu), keyEquivalent: "")
     open.target = self
     menu.addItem(open)
+    if LaunchAtLogin.isAvailable {
+      let login = NSMenuItem(title: model.label("launchAtLogin"), action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
+      login.target = self
+      login.state = LaunchAtLogin.status == "enabled" ? .on : .off
+      menu.addItem(login)
+    }
     menu.addItem(.separator())
     menu.addItem(NSMenuItem(title: model.label("quit"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
     // Menu attaché le temps d'un clic : le clic gauche garde le panneau.
@@ -89,6 +95,12 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     showMainWindow()
   }
 
+  @objc private func toggleLaunchAtLogin() {
+    LaunchAtLogin.setEnabled(LaunchAtLogin.status != "enabled")
+    // Le système peut exiger une autorisation : on ouvre directement le bon panneau des Réglages.
+    if LaunchAtLogin.status == "requiresApproval" { LaunchAtLogin.openSystemSettings() }
+  }
+
   func popoverDidClose(_ notification: Notification) {
     // Une description modifiée sans valider (Entrée) est enregistrée à la fermeture.
     model.commitDescription()
@@ -98,9 +110,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
   /// Fenêtre principale au premier plan (rouverte si elle a été fermée).
   func showMainWindow() {
     popover.performClose(nil)
-    Self.activateApp()
-    if window?.isMiniaturized == true { window?.deminiaturize(nil) }
-    window?.makeKeyAndOrderFront(nil)
+    window?.present()
   }
 
   private static func activateApp() {

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase, UserAttributes;
 
 import '../../core/di.dart';
+import '../../core/launch_at_login.dart';
 import '../../core/l10n.dart';
 import '../../core/locale_controller.dart';
 import '../../core/services_api.dart';
@@ -63,6 +64,7 @@ class SettingsPage extends StatelessWidget {
             onTap: () => _setPin(context, session.workspaceId!),
           ),
           const _LanguageTile(),
+          if (LaunchAtLogin.supported) const LaunchAtLoginTile(),
         ]),
         const SizedBox(height: 16),
         _Section(title: l.workspaces, children: [
@@ -182,6 +184,59 @@ class _LanguageTile extends StatelessWidget {
         ],
         onChanged: (v) => ctrl.set(v == null || v == 'system' ? null : Locale(v)),
       ),
+    );
+  }
+}
+
+/// Démarrage à l'ouverture de session (macOS) : l'app s'ouvre dans la barre de menus, sans fenêtre.
+/// Relu au retour dans l'app : le réglage peut aussi changer dans Réglages Système ou par le menu de l'icône.
+class LaunchAtLoginTile extends StatefulWidget {
+  const LaunchAtLoginTile({super.key});
+
+  @override
+  State<LaunchAtLoginTile> createState() => _LaunchAtLoginTileState();
+}
+
+class _LaunchAtLoginTileState extends State<LaunchAtLoginTile> {
+  LaunchAtLoginStatus? _status;
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _refresh);
+    _refresh();
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async => _show(await LaunchAtLogin.status());
+
+  void _show(LaunchAtLoginStatus status) {
+    if (mounted) setState(() => _status = status);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final status = _status;
+    if (status == null || status == LaunchAtLoginStatus.unavailable) return const SizedBox.shrink();
+    final approval = status == LaunchAtLoginStatus.requiresApproval;
+    return SwitchListTile(
+      secondary: const Icon(Icons.power_settings_new),
+      title: Text(l.launchAtLogin),
+      subtitle: approval
+          ? Row(children: [
+              Flexible(child: Text(l.launchAtLoginApproval)),
+              TextButton(onPressed: LaunchAtLogin.openSystemSettings, child: Text(l.openSystemSettings)),
+            ])
+          : Text(l.launchAtLoginHelp),
+      value: status != LaunchAtLoginStatus.disabled,
+      onChanged: (on) async => _show(await LaunchAtLogin.setEnabled(on)),
     );
   }
 }

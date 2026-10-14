@@ -145,6 +145,7 @@ class _MacMenuBarState extends State<MacMenuBar> {
         'signIn': l.menuBarSignIn,
         'firstSync': l.firstSync,
         'noWorkspace': l.noWorkspace,
+        'launchAtLogin': l.launchAtLogin,
       },
     };
     // L'état de sync et le référentiel notifient souvent sans rien changer pour le panneau.

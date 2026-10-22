@@ -1,4 +1,4 @@
-# Suivi du temps : Claude et moi (hooks, activité éditeur, connecteur MCP) — plan
+# Suivi du temps : Claude et moi (hooks, extension VSCode, connecteur MCP) — plan
 
 > Objectif : mesurer, projet par projet, **deux temps distincts** :
 > - le **temps de Claude**, pendant que les agents Claude Code travaillent, y compris quand on a quitté la fenêtre ;
@@ -14,7 +14,7 @@
 |---|---|---|
 | Façon de travailler visée | Plusieurs fenêtres VSCode, un agent Claude Code par projet ; on lance un prompt, puis on relit, on teste ou on passe à un autre projet | — |
 | Hooks Claude Code | Disent exactement quand un agent travaille, mais rien de ce que je fais entre deux prompts | §2 |
-| Activité dans l'éditeur (modèle WakaTime) | Dit quand je travaille dans un projet, mais rien du travail de l'agent fenêtre quittée. **Les deux sources sont complémentaires** | — |
+| Activité dans VSCode | Dit quelle fenêtre, donc quel projet, a mon attention, mais rien du travail de l'agent fenêtre quittée. **Les deux sources sont complémentaires** | §2 |
 | Origine d'une entrée | Aucune colonne `source` ; le plan 02 prévoit `source` (`app`, `kiosk`, `fidwork`) et `external_id` | `0001_core.sql`, `02-integration-fidwork.md` §5 |
 | Chronomètres simultanés | `workspaces.max_running_timers` (1 par défaut, 0 = illimité) | `0011_parallel_timers.sql`, `05-chronometres-paralleles.md` |
 | App macOS | Barre de menus native, lancée à l'ouverture de session, **en bac à sable** (`app-sandbox`, `network.client`) | `06-macos-barre-de-menus.md`, `app/macos/Runner/` |
@@ -42,15 +42,20 @@
 - **À vérifier** : la doc ne confirme pas explicitement que les hooks se déclenchent dans l'extension VSCode
   (son panneau Hooks les liste). Premier test du lot 1.
 
-**WakaTime** (formats à confirmer au lot 2 sur `wakatime-cli` et le serveur compatible Wakapi) :
-- Les extensions officielles (VSCode, JetBrains, terminal, navigateurs…) passent toutes par `wakatime-cli`.
-- `wakatime-cli` lit `api_url` et `api_key` dans `~/.wakatime.cfg`. Il envoie
-  `POST {api_url}/users/current/heartbeats.bulk` avec `Authorization: Basic base64(api_key)`.
-- Les heartbeats partent toutes les ~2 minutes pendant l'activité, et à chaque changement de fichier. Ils
-  contiennent `time`, `project` (par défaut le nom du dossier racine git), `branch`, `entity` (le fichier),
-  `category`, `language`, `is_write` et l'éditeur (dans `User-Agent`).
-- L'extension VSCode affiche le total du jour via `GET {api_url}/users/current/statusbar/today`.
-- `wakatime-cli` exige une clé au **format UUID**.
+**API des extensions VSCode** (vérifié dans `vscode.d.ts`, octobre 2026) :
+- `window.state.focused` : la fenêtre a le focus.
+- `window.state.active` : « la fenêtre a reçu une interaction récemment ». La valeur change dès qu'il y a une
+  activité, ou après un court moment d'inactivité, d'une durée non documentée.
+- `window.onDidChangeWindowState` signale les changements de ces deux valeurs.
+- Chaque fenêtre VSCode a son propre hôte d'extensions : une instance de l'extension par fenêtre, qui connaît
+  ses dossiers ouverts (`workspace.workspaceFolders`).
+- Signaux d'activité :
+  - `window.onDidChangeTextEditorSelection` ;
+  - `workspace.onDidChangeTextDocument` et `workspace.onDidSaveTextDocument` ;
+  - `window.onDidStartTerminalShellExecution` (commandes lancées dans le terminal intégré).
+- `ExtensionContext.secrets` (`SecretStorage`) conserve le jeton dans le trousseau du système.
+- L'extension WakaTime ne réagit qu'aux modifications de fichiers et passe par `wakatime-cli` et un fichier
+  `~/.wakatime.cfg` global. Elle ne voit pas le temps de lecture : d'où une extension maison (D4).
 
 **macOS** : la durée d'inactivité du poste (clavier, souris) est lisible sans autorisation
 (`CGEventSource.secondsSinceLastEventType`). Son fonctionnement en bac à sable est à vérifier.
@@ -82,26 +87,27 @@ Pour un projet et une période, on affiche **mon temps**, **le temps de Claude**
 
 **D4. Signaux de mon activité**, dans l'ordre des lots :
 1. **Prompts** (hook `UserPromptSubmit`) : écrire un prompt, c'est travailler.
-2. **Éditeurs** : heartbeats WakaTime (D6), reçus par une API compatible. Aucune extension à écrire : il suffit
-   de pointer `~/.wakatime.cfg` vers Clockifai. Cela couvre VSCode, JetBrains, le terminal, etc.
+2. **Extension VSCode Clockifai** (§6.2) : elle signale quelle fenêtre a le focus et une interaction
+   récente, donc quel projet a mon attention, **y compris quand je relis la réponse de Claude** sans toucher
+   à un fichier. S'y ajoutent les modifications de fichiers et les commandes du terminal intégré.
 3. **Présence au poste** (app macOS, lot 4) : l'app signale chaque minute si le poste est actif. Elle ne voit
    pas le projet, mais elle **coupe** un intervalle quand on a quitté le poste, au lieu de compter jusqu'à
    15 minutes d'absence.
 
-Lire la réponse de Claude dans son panneau ne produit aucun signal. C'est le délai de 15 minutes (D8) qui
-la couvre, jusqu'à l'action suivante.
+Hors périmètre : les autres éditeurs (JetBrains…) et le terminal hors VSCode. Pour Claude Code lancé dans un
+terminal, seuls les prompts comptent, avec le délai de 15 minutes (D8).
 
 **D5. Jetons d'API personnels**, sur le modèle des appareils kiosque :
-- le jeton est un **UUID v4**, pour être accepté par `wakatime-cli` ;
+- le jeton est `clk_` suivi de 32 caractères hexadécimaux. Le préfixe permet de le repérer s'il fuit dans un dépôt ;
 - affiché une seule fois, haché en SHA-256, rattaché à **un utilisateur et un workspace**, révocable, avec `last_used_at` ;
-- un jeton par machine, utilisé à la fois par les hooks, `wakatime-cli` et le MCP ;
+- un jeton par machine, utilisé à la fois par les hooks, l'extension VSCode et le MCP ;
 - stockés dans `clockifai_private` et gérés par Flask.
 
 **D6. Événements bruts côté serveur, jamais répliqués.** Ils vont dans `clockifai_private.activity_events`,
 hors API et hors PowerSync, et sont purgés après 30 jours. Les données sont réduites au départ :
 - **Hooks** : liste blanche dans le script. Jamais `tool_input`, `tool_response` ni `transcript_path`.
-- **Heartbeats** : on garde `time`, `project`, `branch`, `category`, `language`, l'éditeur et la machine.
-  On ne garde pas `entity` (le chemin du fichier).
+- **Extension VSCode** : dépôt, branche, type de signal, état de la fenêtre, éditeur (VSCode, Cursor…) et
+  machine. Jamais le chemin ni le contenu des fichiers, ni les commandes du terminal.
 
 **D7. Règles de la piste Claude** (calculées à la réception des événements) :
 1. Un `UserPromptSubmit` ouvre une ligne `agent_time` pour la session. Si la ligne précédente de la session
@@ -114,21 +120,26 @@ hors API et hors PowerSync, et sont purgés après 30 jours. Les données sont r
    heures de Claude. `max_running_timers` ne s'applique pas ici : il concerne mes chronomètres.
 
 **D8. Règles de la piste humaine** (fonction pure, testable sans base, appelée par un job) :
-1. Mes événements (prompts, heartbeats) sont regroupés en intervalles : un écart de moins de
-   `HUMAN_TIMEOUT` (15 min, comme WakaTime) ne coupe pas. Un intervalle va de son premier événement au
-   dernier, plus 2 minutes (le rythme des heartbeats).
-2. **Une seule attention** : chaque instant va au projet de mon **dernier** événement. Mes suggestions ne se
-   chevauchent jamais, quel que soit `max_running_timers`. Cette règle ne dépend que du passé : l'attribution
-   d'un instant écoulé ne change plus.
-3. **Présence** (lot 4) : une période où le poste est inactif plus de `IDLE_CUT` (5 min) coupe l'intervalle.
-4. Les plages déjà acceptées ou ignorées sont exclues.
-5. **Recalcul différentiel** des suggestions en attente. Chaque suggestion a une clé stable,
+1. **Fenêtre VSCode attentive** : l'extension envoie `focus_start` quand la fenêtre devient
+   `focused && active`, un signe de vie toutes les 60 s tant qu'elle le reste, et `focus_end` dès qu'elle ne
+   l'est plus. Ces signaux donnent des intervalles mesurés directement, sans délai. Sans signe de vie depuis
+   2 minutes (VSCode fermé, veille), l'intervalle s'arrête au dernier signal.
+2. **Autres signaux** (prompts sans extension, modifications et terminal hors focus) : ils sont regroupés en
+   intervalles. Un écart de moins de `HUMAN_TIMEOUT` (15 min) ne coupe pas, et un intervalle va de son premier
+   événement au dernier, plus 2 minutes.
+3. **Une seule attention** : chaque instant va au projet de mon **dernier** événement. Comme une seule fenêtre
+   a le focus à la fois, les intervalles du point 1 ne se chevauchent pas. Mes suggestions ne se chevauchent
+   jamais, quel que soit `max_running_timers`. Cette règle ne dépend que du passé : l'attribution d'un instant
+   écoulé ne change plus.
+4. **Présence** (lot 4) : une période où le poste est inactif plus de `IDLE_CUT` (5 min) coupe l'intervalle.
+5. Les plages déjà acceptées ou ignorées sont exclues.
+6. **Recalcul différentiel** des suggestions en attente. Chaque suggestion a une clé stable,
    `uuid5(user, projet, début)`. Celles qui disparaissent du calcul sont supprimées logiquement, les autres
    mises à jour. C'est le même principe que `team_scope` (plan 03, D3).
 
 **D9. Rattachement au projet, commun aux deux pistes.** La clé principale est le **nom du dépôt**, c'est-à-dire
-le nom du dossier racine git. C'est ce que `wakatime-cli` envoie comme `project`, et le script de hook le
-calcule de la même façon.
+le nom du dossier racine git. Le script de hook et l'extension VSCode le calculent de la même façon. Un
+dossier hors git est identifié par son nom.
 - Table `activity_rules` : un nom de dépôt ou un préfixe de chemin (`cwd`) mène à un projet, et
   optionnellement à une tâche. Le chemin, plus précis, prime.
 - Une ligne sans règle affiche le nom du dépôt ; choisir son projet propose « toujours rattacher ce dépôt »,
@@ -161,10 +172,10 @@ transport MCP en HTTP.
 | Table | Colonnes | Sync |
 |---|---|---|
 | `clockifai_private.api_tokens` | `id`, `workspace_id`, `user_id`, `name`, `token_hash` (unique), `last_used_at`, `created_at`, `revoked_at` | non |
-| `clockifai_private.activity_events` | `id` (clé d'idempotence : `event_id` du hook, ou hash du heartbeat), `workspace_id`, `user_id`, `token_id`, `actor` (`agent`, `human`), `kind` (`prompt`, `agent_tool`, `agent_stop`, `session_start`, `session_end`, `editor`, `presence`), `occurred_at`, `received_at`, `session_id`, `repo`, `cwd`, `git_remote`, `git_branch`, `editor`, `machine`, `category`, `active` (présence), `excerpt` ; index `(user_id, occurred_at)` | non |
+| `clockifai_private.activity_events` | `id` (clé d'idempotence : `event_id` généré par le hook ou l'extension), `workspace_id`, `user_id`, `token_id`, `actor` (`agent`, `human`), `kind` (`prompt`, `agent_tool`, `agent_stop`, `session_start`, `session_end`, `focus_start`, `focus_alive`, `focus_end`, `edit`, `terminal`, `presence`), `occurred_at`, `received_at`, `session_id` (hook) ou `window_id` (extension), `repo`, `cwd`, `git_remote`, `git_branch`, `editor`, `machine`, `active` (présence), `excerpt` ; index `(user_id, occurred_at)` | non |
 | `public.activity_rules` | `workspace_id`, `user_id`, `match_kind` (`repo`, `path_prefix`), `pattern`, `project_id`, `task_id`, + colonnes standard | `my_time_entries` |
 | `public.agent_time` | `workspace_id`, `user_id` (la personne qui pilote l'agent), `session_id`, `project_id`, `task_id`, `description`, `start_at`, `end_at` (nul = en cours), `last_event_at`, `prompt_count`, `repo`, `git_branch`, `cwd`, + colonnes standard | `my_time_entries`, puis `team_data` et `managed_team` |
-| `public.time_suggestions` | `workspace_id`, `user_id`, `project_id`, `task_id`, `description`, `start_at`, `end_at`, `repo`, `git_branch`, `signals` (jsonb : nombre de prompts et de heartbeats, éditeurs), `status` (`pending`, `accepted`, `dismissed`), `time_entry_id`, + colonnes standard | `my_time_entries` |
+| `public.time_suggestions` | `workspace_id`, `user_id`, `project_id`, `task_id`, `description`, `start_at`, `end_at`, `repo`, `git_branch`, `signals` (jsonb : minutes de focus, nombre de prompts et de modifications, éditeurs), `status` (`pending`, `accepted`, `dismissed`), `time_entry_id`, + colonnes standard | `my_time_entries` |
 | `public.time_entries` | `+ source text not null default 'app'`. C'est la même colonne que dans le plan 02 : le premier lot livré la crée, avec la valeur `activity` parmi les valeurs admises | existante |
 
 RLS :
@@ -185,23 +196,26 @@ RLS :
 
 - `POST /api/tokens` `{workspace_id, name}` → `{id, token}`, `GET /api/tokens?workspace_id=…` et
   `DELETE /api/tokens/<id>` (JWT utilisateur, `require_workspace`). Ces routes calquent `kiosk/devices`.
-- Décorateur `require_api_token` : accepte `Authorization: Bearer <uuid>` (hooks, MCP) et `Basic` (wakatime-cli)
+- Décorateur `require_api_token` : accepte `Authorization: Bearer clk_…` (hooks, extension, MCP)
   → `g.user`, `g.workspace_id`. Il contrôle que l'utilisateur est toujours membre actif du workspace et met à
   jour `last_used_at`.
-- `POST /api/activity/events` (hooks) : lot d'événements (≤ 200), insertion `on conflict (id) do nothing`.
-  **Dans la même transaction**, il applique D7 sur `agent_time` (ouvrir, rouvrir, fermer), puis répond 202.
-  Les événements datés de plus de 5 minutes dans le futur ou de plus de 7 jours sont rejetés.
-- **Compatibilité WakaTime**, sous `/api/compat/wakatime/v1` :
-  - `users/current/heartbeats` et `heartbeats.bulk` : conversion en événements `editor` ;
-  - `users/current/statusbar/today` : renvoie mon temps du jour, et celui de Claude dans les catégories.
-- `GET /api/activity/today` : mon temps, celui de Claude et la durée calendaire, par projet. Il sert à la
-  ligne d'état et au MCP.
+- `POST /api/activity/events` (hooks et extension) : lot d'événements (≤ 200), insertion
+  `on conflict (id) do nothing`. **Dans la même transaction**, il applique D7 sur `agent_time` (ouvrir,
+  rouvrir, fermer), puis répond 202. Les événements datés de plus de 5 minutes dans le futur ou de plus de
+  7 jours sont rejetés.
+- `GET /api/activity/today` : mon temps, celui de Claude et la durée calendaire, par projet, avec les agents
+  en cours. Il sert à la barre d'état de l'extension et au MCP.
+- `GET /api/activity/projects` : projets et tâches du workspace, pour le choix du projet dans l'extension.
+- `POST /api/activity/rules` `{repo or path_prefix, project_id, task_id?}` : crée une règle de rattachement
+  depuis l'extension (D9).
 - Jobs :
   - `close_stale_agent_time` toutes les minutes (D7.3) ;
   - `aggregate_human_activity` toutes les 5 minutes (D8) ;
   - `purge_activity_events` chaque nuit (30 jours).
 
-## 6. Plugin Claude Code — `integrations/claude-code/`
+## 6. Clients : plugin Claude Code et extension VSCode
+
+### 6.1 Plugin Claude Code — `integrations/claude-code/`
 
 ```
 .claude-plugin/marketplace.json        (racine du dépôt → plugin ./integrations/claude-code)
@@ -229,9 +243,30 @@ Les commandes :
 - `/clockifai:decrire` : Claude résume en une ligne le travail de la session et appelle `describe_current_work`.
 - `/clockifai:valider` : liste mes suggestions en attente et les accepte ou les ignore après confirmation.
 
-L'activité dans l'éditeur ne passe pas par le plugin. Il suffit d'installer l'extension WakaTime et de
-renseigner `~/.wakatime.cfg` (`api_url = <url>/api/compat/wakatime/v1`, `api_key = <jeton>`). L'écran des
-jetons donne ces lignes toutes prêtes.
+### 6.2 Extension VSCode — `integrations/vscode/`
+
+- TypeScript, compilée avec `esbuild`. Elle fonctionne aussi dans Cursor, Windsurf et VSCodium.
+- **Connexion** :
+  - réglage `clockifai.url` ;
+  - jeton dans `SecretStorage`, saisi par la commande « Clockifai : se connecter », qui vérifie le jeton par `GET /api/activity/today`.
+- **Clé du dépôt** : même calcul que le hook (racine git, nom du dossier), via l'extension `vscode.git` ou
+  `git rev-parse`. En multi-racine, le dossier de l'éditeur actif prime.
+- **Signaux** (D8) :
+  - `focus_start` / `focus_alive` (60 s) / `focus_end` selon `window.state.focused && window.state.active` ;
+  - `edit` (au plus un par minute) ;
+  - `terminal` (début d'une commande dans le terminal intégré, sans la commande elle-même).
+- **Plusieurs fenêtres** : chaque fenêtre a son instance avec un `window_id` aléatoire. Seule la fenêtre qui a
+  le focus envoie des signaux `focus_*`, ce qui respecte la règle « une seule attention ».
+- **Envoi** par lots toutes les 60 s et à la perte du focus. En cas d'échec, une file locale dans
+  `globalStorageUri` est renvoyée au lot suivant.
+- **Barre d'état** :
+  - `◷ 3h10 · Claude 5h40 · 2 agents` (via `GET /api/activity/today`, rafraîchi toutes les 60 s) ;
+  - un clic ouvre un menu : projet de ce dossier, rattacher à un autre projet, ouvrir Clockifai.
+- **Commandes** :
+  - se connecter, se déconnecter ;
+  - rattacher ce dossier à un projet : QuickPick sur `GET /api/activity/projects`, puis `POST /api/activity/rules` ;
+  - ouvrir Clockifai.
+- **Diffusion** : un `.vsix` joint aux releases du dépôt d'abord, puis Open VSX et VS Marketplace.
 
 ## 7. Serveur MCP — service `mcp` dans `deploy/`
 
@@ -253,7 +288,7 @@ jetons donne ces lignes toutes prêtes.
 ## 8. Application Flutter
 
 - **Réglages → Intégrations** :
-  - créer un jeton (nom), affiché une seule fois avec deux blocs à copier : l'installation du plugin Claude Code et les lignes de `~/.wakatime.cfg` ;
+  - créer un jeton (nom), affiché une seule fois avec deux blocs à copier : l'installation du plugin Claude Code et celle de l'extension VSCode (jeton à coller dans « Clockifai : se connecter ») ;
   - lister et révoquer les jetons (via Flask).
 - **Page des entrées du jour** :
   - un bandeau « Claude travaille : clockifai (12 min), fidwork (3 min) » quand des lignes `agent_time` sont ouvertes ;
@@ -279,15 +314,15 @@ jetons donne ces lignes toutes prêtes.
     - session plantée ;
     - événements en retard ou en double ;
   - D8 :
-    - regroupement à 15 min ;
-    - une seule attention entre deux projets ;
+    - intervalles de focus : début, signes de vie, fin, fin implicite après 2 minutes sans signe de vie ;
+    - regroupement à 15 min des autres signaux ;
+    - une seule attention entre deux fenêtres et deux projets ;
     - coupure par la présence ;
     - plages acceptées exclues ;
     - recalcul différentiel ;
-  - rattachement par dépôt et par chemin ;
-  - conversion des heartbeats WakaTime.
+  - rattachement par dépôt et par chemin.
 - `services/tests/integration/` :
-  - jetons : création, révocation, jeton d'un ancien membre refusé, Basic et Bearer ;
+  - jetons : création, révocation, jeton d'un ancien membre refusé ;
   - envoi d'événements idempotent, `agent_time` ouvert puis fermé ;
   - le job crée et met à jour les suggestions ;
   - RLS : pas d'accès aux lignes d'autrui, pas d'insertion client ;
@@ -297,14 +332,19 @@ jetons donne ces lignes toutes prêtes.
   - stdout vide ;
   - `tool_input` jamais envoyé ;
   - file locale remplie quand le serveur est coupé, puis vidée.
-- Bout à bout : `wakatime-cli` réel, pointé sur la pile locale, envoie des heartbeats acceptés.
+- Extension (`@vscode/test-electron`) :
+  - changement d'état de fenêtre simulé → `focus_start` puis `focus_end` ;
+  - aucun chemin de fichier dans les événements ;
+  - file locale remplie quand le serveur est coupé, puis vidée.
+- Bout à bout, contre la pile locale : deux fenêtres VSCode sur deux dépôts, on alterne. Les signaux `focus_*`
+  ne viennent que de la fenêtre active, et les suggestions ne se chevauchent pas.
 
 ## 10. Lots
 
 | Lot | Contenu | Taille |
 |---|---|---|
 | 1 Temps de Claude | Migration (jetons, événements, `agent_time`, règles), Flask (jetons, `events`, D7), plugin minimal (hooks seuls), écrans des jetons et du temps de Claude, bandeau « Claude travaille » ; vérifier les hooks dans l'extension VSCode | M |
-| 2 Mon temps | API compatible WakaTime, prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions, `source` sur les entrées | L |
+| 2 Mon temps | Extension VSCode (signaux, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions, `source` sur les entrées | L |
 | 3 MCP | Service `mcp`, outils, `.mcp.json` et commandes du plugin | M |
 | 4 Rapports et confort | Colonne Claude dans les rapports, calendrier, barre de menus macOS, signal de présence, extraits de prompt | M |
 | 5 Connecteur claude.ai | OAuth (selon Supabase Auth auto-hébergé), publication du connecteur | M, conditionnel |
@@ -313,8 +353,8 @@ jetons donne ces lignes toutes prêtes.
 
 - **Horloge client** : `occurred_at` est fourni par le poste et `received_at` est conservé ; on rejette les écarts aberrants (§5).
 - **Confidentialité** : les événements bruts ne sont visibles de personne dans l'app. Les suggestions sont personnelles. Le temps de Claude est visible des managers comme les entrées.
-- **Un seul serveur WakaTime par poste** : `~/.wakatime.cfg` n'a qu'un `api_url`. Garder aussi un compte WakaTime demanderait un relais côté Clockifai (renvoi des heartbeats), hors périmètre.
-- **Fichiers hors dépôt** : un heartbeat sans projet n'est rattaché à rien et ne produit pas de suggestion.
+- **Délai de `window.state.active`** : la durée avant de passer inactif n'est pas documentée. Il faut la mesurer au lot 2. Si elle est trop courte pour une lecture, prolonger le focus de quelques minutes après `focus_end`, tant que la fenêtre garde le focus.
+- **Fenêtre sans dossier** : elle n'est rattachée à rien et ne produit pas de suggestion.
 - **Sous-agents en arrière-plan** : ils continuent après `Stop`. Si leurs `PostToolUse` arrivent, la ligne `agent_time` reste ouverte (D7.2). À vérifier en conditions réelles.
 - **Attente d'une autorisation** : l'événement `Notification` n'est pas traité en v1. Ce temps compte pour Claude jusqu'à `IDLE_TIMEOUT`.
 - **Plusieurs workspaces** : un jeton est lié à un seul workspace. Les dépôts de l'autre workspace ont besoin d'un autre jeton ou d'un réglage de dossier, qui reste à concevoir.

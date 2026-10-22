@@ -12,12 +12,15 @@ import '../../core/widgets/pickers.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/entry_dialog.dart';
+import 'running_timer_row.dart';
 import 'timer_notifications.dart';
 import 'timer_rules.dart';
 
 /// Barre « Sur quoi travaillez-vous ? » : démarre / arrête le chronomètre.
 /// Le chronomètre est une entrée sans fin en base locale : il survit au redémarrage
 /// de l'app, fonctionne hors ligne et apparaît sur les autres appareils après sync.
+/// Si le workspace autorise plusieurs chronomètres simultanés, la barre reste un
+/// formulaire de démarrage et chaque chronomètre en cours a sa ligne en dessous.
 class TimerBar extends StatefulWidget {
   const TimerBar({super.key});
 
@@ -28,8 +31,12 @@ class TimerBar extends StatefulWidget {
 class _TimerBarState extends State<TimerBar> {
   final _description = TextEditingController();
   final _focus = FocusNode();
-  StreamSubscription<TimeEntry?>? _sub;
+  StreamSubscription<List<TimeEntry>>? _sub;
   String? _boundKey;
+  List<TimeEntry> _runningAll = const [];
+  bool _parallel = false;
+  bool _expanded = false;
+  // Chronomètre affiché dans la barre (null en mode simultané).
   TimeEntry? _running;
   List<String> _runningTags = const [];
   Timer? _debounce;
@@ -44,14 +51,21 @@ class _TimerBarState extends State<TimerBar> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final session = context.watch<SessionController>();
+    final parallel = session.runningTimersLimit != 1;
+    if (parallel != _parallel) {
+      _parallel = parallel;
+      if (_boundKey != null) Future.microtask(() => _onRunning(_runningAll));
+    }
     final key = '${session.workspaceId}:${session.userId}';
     if (key == _boundKey || session.workspaceId == null || session.userId == null) return;
     _boundKey = key;
     _sub?.cancel();
-    _sub = entriesRepo.watchRunning(session.workspaceId!, session.userId!).listen(_onRunning);
+    _sub = entriesRepo.watchRunningAll(session.workspaceId!, session.userId!).listen(_onRunning);
   }
 
-  Future<void> _onRunning(TimeEntry? entry) async {
+  Future<void> _onRunning(List<TimeEntry> all) async {
+    _runningAll = all;
+    final entry = _parallel ? null : all.firstOrNull;
     final changed = entry?.id != _running?.id;
     _running = entry;
     if (entry != null) {
@@ -63,10 +77,16 @@ class _TimerBarState extends State<TimerBar> {
     if (!mounted) return;
     setState(() {});
     final catalog = context.read<CatalogController>();
+    final l = context.l10n;
+    final latest = all.firstOrNull;
+    final subtitle = [
+      ?catalog.project(latest?.projectId)?.name,
+      if (all.length > 1) l.otherRunningTimers(all.length - 1),
+    ].join(' · ');
     await TimerNotifications.instance.show(
-      entry,
-      title: entry == null ? null : (entry.description.isNotEmpty ? entry.description : context.l10n.noDescription),
-      subtitle: entry == null ? null : catalog.project(entry.projectId)?.name,
+      latest,
+      title: latest == null ? null : (latest.description.isNotEmpty ? latest.description : l.noDescription),
+      subtitle: subtitle.isEmpty ? null : subtitle,
     );
   }
 
@@ -83,8 +103,11 @@ class _TimerBarState extends State<TimerBar> {
     final session = context.read<SessionController>();
     final catalog = context.read<CatalogController>();
     final ws = session.workspace!;
-    final blocked = timerRuleViolation(context.l10n, ws, description: _description.text, projectId: _projectId);
+    final l = context.l10n;
+    final blocked = timerRuleViolation(l, ws, description: _description.text, projectId: _projectId);
     if (blocked != null) return showSnack(context, blocked);
+    final limit = session.runningTimersLimit;
+    final stopsOldest = limit > 1 && _runningAll.length >= limit;
     await entriesRepo.start(
       workspaceId: ws.id,
       userId: session.userId!,
@@ -96,11 +119,15 @@ class _TimerBarState extends State<TimerBar> {
         tagIds: _tagIds,
         hourlyRateCents: catalog.rateFor(projectId: _projectId, userId: session.userId!),
       ),
+      maxRunning: limit,
     );
+    if (!mounted) return;
+    if (stopsOldest) showSnack(context, l.oldestTimerStopped);
     setState(() {
       _projectId = null;
       _taskId = null;
       _tagIds = const [];
+      if (_parallel) _description.clear();
     });
   }
 
@@ -259,27 +286,63 @@ class _TimerBarState extends State<TimerBar> {
       ],
     );
 
+    final bar = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: wide
+          ? Row(children: [
+              Expanded(child: descriptionField),
+              projectButton,
+              tagButton,
+              billableButton,
+              const SizedBox(width: 8),
+              clock,
+              const SizedBox(width: 12),
+              mainButton,
+              menu,
+            ])
+          : Column(mainAxisSize: MainAxisSize.min, children: [
+              Row(children: [Expanded(child: descriptionField), clock, const SizedBox(width: 8), mainButton]),
+              Row(children: [Expanded(child: Align(alignment: Alignment.centerLeft, child: projectButton)), tagButton, billableButton, menu]),
+            ]),
+    );
+
     return Material(
       color: theme.colorScheme.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: wide
-            ? Row(children: [
-                Expanded(child: descriptionField),
-                projectButton,
-                tagButton,
-                billableButton,
-                const SizedBox(width: 8),
-                clock,
-                const SizedBox(width: 12),
-                mainButton,
-                menu,
-              ])
-            : Column(mainAxisSize: MainAxisSize.min, children: [
-                Row(children: [Expanded(child: descriptionField), clock, const SizedBox(width: 8), mainButton]),
-                Row(children: [Expanded(child: Align(alignment: Alignment.centerLeft, child: projectButton)), tagButton, billableButton, menu]),
-              ]),
-      ),
+      child: !_parallel || _runningAll.isEmpty
+          ? bar
+          : Column(mainAxisSize: MainAxisSize.min, children: [
+              bar,
+              const Divider(height: 1),
+              ..._runningRows(wide),
+            ]),
     );
+  }
+
+  /// Chronomètres simultanés : une ligne chacun ; repliés sur mobile au-delà de deux.
+  List<Widget> _runningRows(bool wide) {
+    final theme = Theme.of(context);
+    final collapsible = !wide && _runningAll.length > 2;
+    return [
+      if (collapsible)
+        InkWell(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(children: [
+              Icon(Icons.timer_outlined, size: 16, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(child: Text(context.l10n.runningTimersCount(_runningAll.length), style: theme.textTheme.labelLarge)),
+              Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+            ]),
+          ),
+        ),
+      if (!collapsible || _expanded)
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 240),
+          child: SingleChildScrollView(
+            child: Column(children: [for (final e in _runningAll) RunningTimerRow(key: ValueKey(e.id), entry: e)]),
+          ),
+        ),
+    ];
   }
 }

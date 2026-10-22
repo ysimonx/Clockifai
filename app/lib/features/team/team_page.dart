@@ -49,10 +49,11 @@ class _TeamPageState extends State<TeamPage> {
       builder: (context, snap) {
         final rows = snap.data ?? const <EntryRow>[];
         final weekByUser = <String, int>{};
-        final runningByUser = <String, EntryRow>{};
+        // Plusieurs chronomètres par membre si le workspace le permet (les plus récents d'abord).
+        final runningByUser = <String, List<EntryRow>>{};
         for (final r in rows) {
           weekByUser[r.entry.userId] = (weekByUser[r.entry.userId] ?? 0) + r.seconds;
-          if (r.entry.endAt == null) runningByUser[r.entry.userId] = r;
+          if (r.entry.endAt == null) (runningByUser[r.entry.userId] ??= []).add(r);
         }
         return ListView(padding: const EdgeInsets.all(16), children: [
           if (!rights.seesTeam)
@@ -66,7 +67,7 @@ class _TeamPageState extends State<TeamPage> {
               child: _MemberCard(
                 member: m,
                 weekSeconds: weekByUser[m.userId] ?? 0,
-                running: runningByUser[m.userId],
+                running: runningByUser[m.userId] ?? const [],
                 showActivity: m.userId == session.userId || rights.manages(m.userId),
               ),
             ),
@@ -168,7 +169,7 @@ class _MemberCard extends StatelessWidget {
   const _MemberCard({required this.member, required this.weekSeconds, required this.running, required this.showActivity});
   final WorkspaceMember member;
   final int weekSeconds;
-  final EntryRow? running;
+  final List<EntryRow> running;
   final bool showActivity;
 
   @override
@@ -181,7 +182,6 @@ class _MemberCard extends StatelessWidget {
     final inactive = member.status != 'active';
     final ws = session.workspace!;
     final locale = context.localeTag;
-    final run = running;
     // Ce que le membre encadre : groupes entiers, puis personnes affectées directement.
     final manages = [
       for (final a in catalog.assignments.where((a) => a.managerId == member.userId))
@@ -194,9 +194,10 @@ class _MemberCard extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: Badge(
-          isLabelVisible: run != null,
+          isLabelVisible: running.isNotEmpty,
           backgroundColor: Colors.green,
           smallSize: 10,
+          label: running.length > 1 ? Text('${running.length}') : null,
           child: CircleAvatar(child: Text(name[0].toUpperCase())),
         ),
         title: Row(children: [
@@ -207,7 +208,7 @@ class _MemberCard extends StatelessWidget {
         subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           if (member.email != null) Text(member.email!),
           if (showActivity) ...[
-            if (run != null)
+            for (final run in running)
               Row(children: [
                 const Icon(Icons.play_circle, size: 14, color: Colors.green),
                 const SizedBox(width: 4),

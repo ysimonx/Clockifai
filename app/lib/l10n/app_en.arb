@@ -261,10 +261,21 @@
   "nothingToInvoice": "No billable, uninvoiced time for this client in the period.",
   "offline": "Offline",
   "offlineExplanation": "Your changes are stored on the device and sent automatically when the connection is back.",
+  "oldestTimerStopped": "Limit reached: the oldest timer was stopped",
   "online": "Online",
   "onlineOnly": "Not available offline.",
   "openSystemSettings": "Open Settings",
+  "otherRunningTimers": "{count, plural, =1{+ 1 other} other{+ {count} others}}",
+  "@otherRunningTimers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "paid": "Paid",
+  "parallelTimers": "Simultaneous timers",
+  "parallelTimersHelp": "How many timers a member can run at once; beyond that, the oldest one stops",
   "password": "Password",
   "passwordTooShort": "Password must be at least 8 characters.",
   "passwordUpdated": "Password updated.",
@@ -312,6 +323,14 @@
   "rounding": "Duration rounding",
   "roundingHelp": "Applied in reports on request",
   "runningTimer": "Running timer",
+  "runningTimersCount": "{count, plural, =1{1 running timer} other{{count} running timers}}",
+  "@runningTimersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "save": "Save",
   "saved": "Saved.",
   "schedule": "Schedule",

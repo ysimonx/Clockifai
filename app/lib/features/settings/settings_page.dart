@@ -356,6 +356,16 @@ class _WorkspaceSettingsState extends State<_WorkspaceSettings> {
         ),
       ),
       ListTile(
+        title: Text(l.parallelTimers),
+        subtitle: Text(l.parallelTimersHelp),
+        trailing: DropdownButton<int>(
+          value: ws.maxRunningTimers ?? 1,
+          underline: const SizedBox.shrink(),
+          items: [for (final n in const [1, 2, 3, 5, 0]) DropdownMenuItem(value: n, child: Text(n == 0 ? l.unlimited : '$n'))],
+          onChanged: !e ? null : (v) => _update(WorkspacesCompanion(maxRunningTimers: Value(v!))),
+        ),
+      ),
+      ListTile(
         title: Text(l.lockEntriesBefore),
         subtitle: Text(lock == null ? l.lockEntriesNone : DateFormat.yMMMMd(context.localeTag).format(lock)),
         trailing: !e

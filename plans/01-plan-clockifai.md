@@ -202,6 +202,7 @@ Chaque lot se termine par un état déployable.
 - PowerSync : **Sync Streams** (successeur des Sync Rules) ; les listes littérales `IN ('a','b')` ne sont pas acceptées dans les sous-requêtes → `role != 'member'`.
 - Upsert PostgREST (utilisé par le connecteur) : la politique SELECT s'applique à la nouvelle ligne → migration 0005 « le créateur d'un workspace peut le lire ».
 - Conflits de chronomètre résolus **côté serveur** (trigger, migration 0004, « le plus récent gagne ») au lieu d'un rejet.
+- Chronomètres **simultanés** (migration 0011) : `workspaces.max_running_timers` (1 par défaut, 0 = illimité) remplace l'index unique ; le trigger généralise la règle de 0004 aux N plus récents. Voir [05-chronometres-paralleles.md](05-chronometres-paralleles.md).
 - Flask exposé sur le port hôte **5050** (5000 est pris par AirPlay sur macOS).
 - `connectivity_plus` retiré : l'état réseau vient de PowerSync (`SyncStatus.connected`).
 - Outils : **fvm** pour Flutter (SDK 3.47.0 épinglé dans `app/.fvmrc`), **uv** pour Python.
@@ -211,6 +212,7 @@ Chaque lot se termine par un état déployable.
 
 - [02-integration-fidwork.md](02-integration-fidwork.md) : saisie des temps des échafaudeurs et calorifugeurs depuis Fidwork.
 - [03-saisie-pour-autrui.md](03-saisie-pour-autrui.md) : chef d'équipe (groupes, périmètre), saisie du temps pour autrui et pointage d'équipe.
+- [05-chronometres-paralleles.md](05-chronometres-paralleles.md) : plusieurs chronomètres en même temps, limite réglable par workspace.
 
 ## État d'avancement (11 octobre 2026)
 

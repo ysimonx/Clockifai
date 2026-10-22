@@ -36,6 +36,8 @@ class _Session extends ChangeNotifier implements SessionController {
   @override
   bool get waitingForFirstSync => false;
   @override
+  int get runningTimersLimit => workspace.maxRunningTimers ?? 1;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

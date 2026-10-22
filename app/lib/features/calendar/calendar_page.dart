@@ -142,6 +142,8 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 }
 
+const _minBlockHeight = 18.0;
+
 class _DayColumn extends StatelessWidget {
   const _DayColumn({required this.day, required this.rows, required this.hourHeight, required this.userId, required this.editable});
   final DateTime day;
@@ -155,6 +157,7 @@ class _DayColumn extends StatelessWidget {
     final theme = Theme.of(context);
     final catalog = context.watch<CatalogController>();
     final dayEnd = day.add(const Duration(days: 1));
+    final lanes = _lanes(dayEnd);
     return LayoutBuilder(builder: (context, constraints) {
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -179,27 +182,76 @@ class _DayColumn extends StatelessWidget {
               right: 0,
               child: Container(height: 2, color: theme.colorScheme.error),
             ),
-          for (final r in rows) _block(context, r, catalog, dayEnd),
+          for (final r in rows) _block(context, r, catalog, dayEnd, lanes[r.entry.id]!, constraints.maxWidth),
         ]),
       );
     });
   }
 
-  Widget _block(BuildContext context, EntryRow r, CatalogController catalog, DateTime dayEnd) {
-    final theme = Theme.of(context);
+  /// Intervalle de l'entrée borné à la journée (heure locale) ; un chronomètre court jusqu'à maintenant.
+  (DateTime, DateTime) _span(EntryRow r, DateTime dayEnd) {
     var s = r.entry.startAt.toLocal();
     var e = (r.entry.endAt ?? DateTime.now().toUtc()).toLocal();
     if (s.isBefore(day)) s = day;
     if (e.isAfter(dayEnd)) e = dayEnd;
+    return (s, e);
+  }
+
+  /// Colonne de chaque bloc et nombre de colonnes de son groupe : les entrées qui se
+  /// chevauchent (chronomètres simultanés, saisies superposées) sont posées côte à côte.
+  /// Une entrée très courte compte pour la hauteur minimale de son bloc.
+  Map<String, (int, int)> _lanes(DateTime dayEnd) {
+    final minSpan = Duration(minutes: (_minBlockHeight / hourHeight * 60).ceil());
+    final spans = <(String, DateTime, DateTime)>[];
+    for (final r in rows) {
+      final (s, e) = _span(r, dayEnd);
+      spans.add((r.entry.id, s, e.isBefore(s.add(minSpan)) ? s.add(minSpan) : e));
+    }
+    spans.sort((a, b) => a.$2.compareTo(b.$2));
+    final result = <String, (int, int)>{};
+    var group = <(String, int)>[];
+    var laneEnds = <DateTime>[];
+    DateTime? groupEnd;
+    void flush() {
+      for (final (id, lane) in group) {
+        result[id] = (lane, laneEnds.length);
+      }
+      group = [];
+      laneEnds = [];
+    }
+
+    for (final (id, s, e) in spans) {
+      if (groupEnd != null && !s.isBefore(groupEnd)) {
+        flush();
+        groupEnd = null;
+      }
+      var lane = laneEnds.indexWhere((end) => !end.isAfter(s));
+      if (lane == -1) {
+        lane = laneEnds.length;
+        laneEnds.add(e);
+      } else {
+        laneEnds[lane] = e;
+      }
+      group.add((id, lane));
+      if (groupEnd == null || e.isAfter(groupEnd)) groupEnd = e;
+    }
+    flush();
+    return result;
+  }
+
+  Widget _block(BuildContext context, EntryRow r, CatalogController catalog, DateTime dayEnd, (int, int) lane, double width) {
+    final theme = Theme.of(context);
+    final (s, e) = _span(r, dayEnd);
+    final laneWidth = width / lane.$2;
     final top = s.difference(day).inMinutes / 60 * hourHeight;
-    final height = (e.difference(s).inMinutes / 60 * hourHeight).clamp(18.0, 24 * hourHeight);
+    final height = (e.difference(s).inMinutes / 60 * hourHeight).clamp(_minBlockHeight, 24 * hourHeight);
     final project = catalog.project(r.entry.projectId);
     final color = project == null ? theme.colorScheme.outline : colorFromHex(project.color);
     final running = r.entry.endAt == null;
     return Positioned(
       top: top,
-      left: 2,
-      right: 2,
+      left: lane.$1 * laneWidth + 2,
+      width: (laneWidth - 4).clamp(1.0, double.infinity),
       height: height,
       child: Material(
         color: color.withValues(alpha: 0.18),

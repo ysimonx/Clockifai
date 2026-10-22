@@ -72,8 +72,8 @@
   - `process_event` empile un `partner_call` « clockifai » (même mécanisme que Mob2e).
 - **Clockifai** : `POST /api/integrations/fidwork/events` écrit d'abord dans une **inbox** (`integration_inbox`, unique sur l'id d'événement Fidwork), puis :
   - `work_start` → entrée de temps en cours, id déterministe `uuid5(event_on_site_uuid)`, tâche = intervention, tag = phase, `source = 'fidwork'`, géolocalisation de début ;
-  - `work_stop` → clôt l'entrée démarrée référencée (`start_event_id`) ou, à défaut, l'entrée en cours de la personne ;
-  - événements arrivés dans le désordre : traités selon `occurred_at` ; l'arbitrage « un seul chronomètre en cours » est déjà assuré par le trigger serveur (migration 0004) ;
+  - `work_stop` → clôt l'entrée démarrée référencée (`start_event_id`) ou, à défaut, l'entrée en cours de la personne de source `fidwork` (plusieurs chronomètres peuvent tourner, migration 0011) ;
+  - événements arrivés dans le désordre : traités selon `occurred_at` ; l'arbitrage du nombre de chronomètres en cours est déjà assuré par le trigger serveur (migrations 0004 puis 0011) ;
   - anomalies (arrêt sans départ, pointage > 14 h, intervention inconnue) → liste « pointages à vérifier » pour les managers.
 - Les entrées apparaissent ensuite dans l'app Clockifai de chacun via PowerSync, éditables selon les règles habituelles (verrouillage, approbation).
 

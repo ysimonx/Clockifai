@@ -199,6 +199,7 @@ class _MacMenuBarState extends State<MacMenuBar> {
         billable: _catalog.project(projectId)?.billableDefault ?? true,
         hourlyRateCents: _catalog.rateFor(projectId: projectId, userId: userId),
       ),
+      maxRunning: _session.runningTimersLimit,
     );
     return null;
   }
@@ -245,6 +246,7 @@ class _MacMenuBarState extends State<MacMenuBar> {
         hourlyRateCents: e.hourlyRateCents,
         tagIds: row.tagIds,
       ),
+      maxRunning: _session.runningTimersLimit,
     );
     return null;
   }

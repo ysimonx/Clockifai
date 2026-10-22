@@ -67,6 +67,8 @@ class SessionController extends ChangeNotifier {
   bool get isAdmin => const {'owner', 'admin'}.contains(role);
   /// Miroir de `can_create_task` (0010) ; la RLS reste juge (projet actif du workspace).
   bool get canCreateTasks => isManager || (workspace?.taskCreation ?? 'everyone') == 'everyone';
+  /// Chronomètres simultanés autorisés (0011) : 1 = un seul, 0 = illimité.
+  int get runningTimersLimit => workspace?.maxRunningTimers ?? 1;
   String get displayName => _profile?.displayName.isNotEmpty == true
       ? _profile!.displayName
       : (_user?.email ?? '');

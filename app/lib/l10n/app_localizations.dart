@@ -1664,6 +1664,12 @@ abstract class AppLocalizations {
   /// **'Vos saisies sont enregistrées sur l\'appareil et envoyées automatiquement dès que la connexion revient.'**
   String get offlineExplanation;
 
+  /// No description provided for @oldestTimerStopped.
+  ///
+  /// In fr, this message translates to:
+  /// **'Limite atteinte : le chronomètre le plus ancien a été arrêté'**
+  String get oldestTimerStopped;
+
   /// No description provided for @online.
   ///
   /// In fr, this message translates to:
@@ -1682,11 +1688,29 @@ abstract class AppLocalizations {
   /// **'Ouvrir les Réglages'**
   String get openSystemSettings;
 
+  /// No description provided for @otherRunningTimers.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{+ 1 autre} other{+ {count} autres}}'**
+  String otherRunningTimers(int count);
+
   /// No description provided for @paid.
   ///
   /// In fr, this message translates to:
   /// **'Rémunérée'**
   String get paid;
+
+  /// No description provided for @parallelTimers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chronomètres simultanés'**
+  String get parallelTimers;
+
+  /// No description provided for @parallelTimersHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nombre de chronomètres qu\'un membre peut faire tourner en même temps ; au-delà, le plus ancien s\'arrête'**
+  String get parallelTimersHelp;
 
   /// No description provided for @password.
   ///
@@ -1969,6 +1993,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Chronomètre en cours'**
   String get runningTimer;
+
+  /// No description provided for @runningTimersCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 chronomètre en cours} other{{count} chronomètres en cours}}'**
+  String runningTimersCount(int count);
 
   /// No description provided for @save.
   ///

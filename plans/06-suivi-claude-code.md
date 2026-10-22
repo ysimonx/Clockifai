@@ -146,12 +146,17 @@ dossier hors git est identifié par son nom.
   et la règle réattribue aussi les lignes passées en attente.
 - La branche donnera la tâche quand elle contiendra un numéro de ticket (`CLK-42`, plan 04).
 
-**D10. Descriptions.**
-- Pour une ligne `agent_time` : l'outil MCP `describe_current_work`, appelé par Claude (commande
-  `/clockifai:decrire`). En option, un extrait (200 caractères) du prompt ou de `last_assistant_message`, si
-  l'option `send_excerpts` du plugin est activée.
-- Pour une suggestion humaine : préremplie avec les descriptions des lignes `agent_time` du même projet qui la
-  chevauchent (« ce que Claude faisait pendant ce temps »), sinon avec le dépôt et la branche.
+**D10. Descriptions**, par ordre de priorité :
+1. Une description saisie dans l'app, ou donnée par Claude avec l'outil MCP `describe_current_work`
+   (commande `/clockifai:decrire`), n'est jamais écrasée.
+2. Sinon, les **messages des commits** faits pendant la plage (D13), séparés par « ; ». C'est la meilleure
+   source automatique.
+3. Sinon, en option, un extrait (200 caractères) du prompt ou de `last_assistant_message`, si l'option
+   `send_excerpts` du plugin est activée.
+4. Sinon, le dépôt et la branche.
+
+Pour une suggestion humaine, les sources 2 et 3 incluent aussi les lignes `agent_time` du même projet qui la
+chevauchent (« ce que Claude faisait pendant ce temps »).
 
 **D11. Serveur MCP séparé**, sur le même Postgres. Flask (un seul worker synchrone) convient mal au
 transport MCP en HTTP.
@@ -167,14 +172,34 @@ transport MCP en HTTP.
   version auto-hébergée épinglée (v1.26.08).
 - Comme les hooks n'existent pas hors de Claude Code, le connecteur ne servirait là qu'à consulter et saisir.
 
+**D13. Commits vus en local**, sans forge. Le plan 09 (`09-forges-git.md`) ajoute les forges : GitHub,
+GitLab, Gitea/Forgejo…
+- **Détection** : deux sources comparent HEAD au dernier HEAD vu dans le dépôt.
+  - Le hook le fait à chaque `PostToolUse` de l'outil `Bash`, et au `Stop`.
+  - L'extension VSCode le fait sur `repository.state.onDidChange` de l'API `vscode.git`, ce qui couvre aussi mes commits faits depuis VSCode ou un terminal.
+- **Envoi** : un événement `commit` par commit nouveau, selon
+  `git log <dernier>..HEAD --author=<user.email> --since=<dernière vérification − 1 min>` (20 au plus).
+  Un changement de branche, un `pull` ou un rebase de commits d'autrui ne produit donc rien.
+- **Contenu** : sha, branche, première ligne du message (200 caractères), e-mail de l'auteur, date. Jamais le diff.
+- **Idempotence** : la clé est `uuid5(dépôt, sha)`. Le hook et l'extension voient le même commit sans le compter deux fois.
+- **Côté serveur** :
+  - le commit est enregistré dans `code_commits`, avec la session ou la fenêtre d'origine ;
+  - il est rattaché à la ligne `agent_time` de la session qui l'a produit (commit de Claude), ou à l'intervalle de focus de la fenêtre (mon commit) ;
+  - ses messages servent de description (D10) ;
+  - la tâche de cette ligne ou de cet intervalle devient celle du commit (lien « contexte », plan 09 §3).
+- **Réécritures** : un `commit --amend` ou un rebase crée de nouveaux sha. Les anciens restent marqués
+  « local », jamais poussés, et le plan 09 les réconcilie avec la forge.
+
 ## 4. Modèle de données — migration `0012_activity.sql`
 
 | Table | Colonnes | Sync |
 |---|---|---|
 | `clockifai_private.api_tokens` | `id`, `workspace_id`, `user_id`, `name`, `token_hash` (unique), `last_used_at`, `created_at`, `revoked_at` | non |
-| `clockifai_private.activity_events` | `id` (clé d'idempotence : `event_id` généré par le hook ou l'extension), `workspace_id`, `user_id`, `token_id`, `actor` (`agent`, `human`), `kind` (`prompt`, `agent_tool`, `agent_stop`, `session_start`, `session_end`, `focus_start`, `focus_alive`, `focus_end`, `edit`, `terminal`, `presence`), `occurred_at`, `received_at`, `session_id` (hook) ou `window_id` (extension), `repo`, `cwd`, `git_remote`, `git_branch`, `editor`, `machine`, `active` (présence), `excerpt` ; index `(user_id, occurred_at)` | non |
+| `clockifai_private.activity_events` | `id` (clé d'idempotence : `event_id` généré par le hook ou l'extension, `uuid5(dépôt, sha)` pour un commit), `workspace_id`, `user_id`, `token_id`, `actor` (`agent`, `human`), `kind` (`prompt`, `agent_tool`, `agent_stop`, `session_start`, `session_end`, `focus_start`, `focus_alive`, `focus_end`, `edit`, `terminal`, `commit`, `presence`), `occurred_at`, `received_at`, `session_id` (hook) ou `window_id` (extension), `repo`, `cwd`, `git_remote`, `git_branch`, `sha`, `subject`, `editor`, `machine`, `active` (présence), `excerpt` ; index `(user_id, occurred_at)` | non |
+| `public.code_repositories` | `workspace_id`, `remote_key` (URL distante normalisée `hôte/chemin`, ou `local:<dossier>` sans remote ; unique par workspace), `name`, `project_id` (facultatif), + colonnes standard. Le plan 09 l'étend (forge, URL web, branche par défaut) | non |
+| `public.code_commits` | `workspace_id`, `repository_id`, `sha` (unique par dépôt), `branch`, `subject`, `author_email`, `author_user_id`, `authored_at`, `seen_locally_at`, `session_id` ou `window_id`, `agent_time_id`, + colonnes standard. Le plan 09 l'étend (`pushed_at`, `url`) | non : les messages arrivent dans l'app par les descriptions |
 | `public.activity_rules` | `workspace_id`, `user_id`, `match_kind` (`repo`, `path_prefix`), `pattern`, `project_id`, `task_id`, + colonnes standard | `my_time_entries` |
-| `public.agent_time` | `workspace_id`, `user_id` (la personne qui pilote l'agent), `session_id`, `project_id`, `task_id`, `description`, `start_at`, `end_at` (nul = en cours), `last_event_at`, `prompt_count`, `repo`, `git_branch`, `cwd`, + colonnes standard | `my_time_entries`, puis `team_data` et `managed_team` |
+| `public.agent_time` | `workspace_id`, `user_id` (la personne qui pilote l'agent), `session_id`, `project_id`, `task_id`, `description`, `start_at`, `end_at` (nul = en cours), `last_event_at`, `prompt_count`, `commit_count`, `repo`, `git_branch`, `cwd`, + colonnes standard | `my_time_entries`, puis `team_data` et `managed_team` |
 | `public.time_suggestions` | `workspace_id`, `user_id`, `project_id`, `task_id`, `description`, `start_at`, `end_at`, `repo`, `git_branch`, `signals` (jsonb : minutes de focus, nombre de prompts et de modifications, éditeurs), `status` (`pending`, `accepted`, `dismissed`), `time_entry_id`, + colonnes standard | `my_time_entries` |
 | `public.time_entries` | `+ source text not null default 'app'`. C'est la même colonne que dans le plan 02 : le premier lot livré la crée, avec la valeur `activity` parmi les valeurs admises | existante |
 
@@ -188,6 +213,7 @@ RLS :
   - lecture de ses lignes ; pas d'insertion côté client ;
   - en mise à jour, le client ne change que `status`, `project_id`, `task_id`, `description` et `time_entry_id`, ce que contrôle un trigger de garde.
 - Comme le connecteur envoie `patch` → `update`, aucune politique INSERT n'est nécessaire sur ces deux tables.
+- `code_repositories` et `code_commits` : lecture par les membres du workspace, écriture par le serveur seulement.
 
 À aligner, comme toute colonne synchronisée : la migration, `schema.dart`, `database.dart`
 (`make app-gen`) et `sync-config.yaml`.
@@ -235,6 +261,9 @@ Le script `clockifai_hook.py` :
 - génère `event_id` (uuid4) et `occurred_at` (UTC) ;
 - **n'écrit rien sur stdout**, et termine toujours avec le code 0 ;
 - limite `PostToolUse` à un événement par minute et par session (horodatage dans `~/.cache/clockifai/`) ;
+- détecte les commits nouveaux après chaque `PostToolUse` de `Bash` et au `Stop` (D13). Le dernier HEAD vu par
+  dépôt est conservé dans `~/.cache/clockifai/`. Cette vérification n'est pas soumise à la limite d'un
+  événement par minute ;
 - en cas d'échec réseau (délai de 2 s), ajoute l'événement à `~/.cache/clockifai/spool.jsonl`, renvoyé au
   prochain appel réussi.
 
@@ -254,7 +283,8 @@ Les commandes :
 - **Signaux** (D8) :
   - `focus_start` / `focus_alive` (60 s) / `focus_end` selon `window.state.focused && window.state.active` ;
   - `edit` (au plus un par minute) ;
-  - `terminal` (début d'une commande dans le terminal intégré, sans la commande elle-même).
+  - `terminal` (début d'une commande dans le terminal intégré, sans la commande elle-même) ;
+  - `commit` (D13), sur `repository.state.onDidChange` de l'API `vscode.git`.
 - **Plusieurs fenêtres** : chaque fenêtre a son instance avec un `window_id` aléatoire. Seule la fenêtre qui a
   le focus envoie des signaux `focus_*`, ce qui respecte la règle « une seule attention ».
 - **Envoi** par lots toutes les 60 s et à la perte du focus. En cas d'échec, une file locale dans
@@ -320,7 +350,9 @@ Les commandes :
     - coupure par la présence ;
     - plages acceptées exclues ;
     - recalcul différentiel ;
-  - rattachement par dépôt et par chemin.
+  - rattachement par dépôt et par chemin ;
+  - D13 côté serveur : commit rattaché à la ligne `agent_time` de sa session ou à l'intervalle de focus de sa
+    fenêtre, descriptions tirées des messages, normalisation de `remote_key` (ssh, https, port, sous-groupes).
 - `services/tests/integration/` :
   - jetons : création, révocation, jeton d'un ancien membre refusé ;
   - envoi d'événements idempotent, `agent_time` ouvert puis fermé ;
@@ -331,11 +363,17 @@ Les commandes :
 - Plugin : le script avec un stdin factice et un serveur HTTP local.
   - stdout vide ;
   - `tool_input` jamais envoyé ;
-  - file locale remplie quand le serveur est coupé, puis vidée.
+  - file locale remplie quand le serveur est coupé, puis vidée ;
+  - commits, dans un dépôt git temporaire :
+    - un nouveau commit → un événement ;
+    - trois commits dans une même commande → trois événements ;
+    - changement de branche ou `pull` de commits d'autrui → aucun événement ;
+    - `commit --amend` → un nouveau sha.
 - Extension (`@vscode/test-electron`) :
   - changement d'état de fenêtre simulé → `focus_start` puis `focus_end` ;
   - aucun chemin de fichier dans les événements ;
-  - file locale remplie quand le serveur est coupé, puis vidée.
+  - file locale remplie quand le serveur est coupé, puis vidée ;
+  - un commit vu à la fois par le hook et par l'extension ne crée qu'une ligne `code_commits`.
 - Bout à bout, contre la pile locale : deux fenêtres VSCode sur deux dépôts, on alterne. Les signaux `focus_*`
   ne viennent que de la fenêtre active, et les suggestions ne se chevauchent pas.
 
@@ -343,8 +381,8 @@ Les commandes :
 
 | Lot | Contenu | Taille |
 |---|---|---|
-| 1 Temps de Claude | Migration (jetons, événements, `agent_time`, règles), Flask (jetons, `events`, D7), plugin minimal (hooks seuls), écrans des jetons et du temps de Claude, bandeau « Claude travaille » ; vérifier les hooks dans l'extension VSCode | M |
-| 2 Mon temps | Extension VSCode (signaux, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions, `source` sur les entrées | L |
+| 1 Temps de Claude | Migration (jetons, événements, `agent_time`, règles, `code_repositories`, `code_commits`), Flask (jetons, `events`, D7), plugin minimal (hooks seuls, commits de Claude D13), descriptions tirées des commits, écrans des jetons et du temps de Claude, bandeau « Claude travaille » ; vérifier les hooks dans l'extension VSCode | M |
+| 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions, `source` sur les entrées | L |
 | 3 MCP | Service `mcp`, outils, `.mcp.json` et commandes du plugin | M |
 | 4 Rapports et confort | Colonne Claude dans les rapports, calendrier, barre de menus macOS, signal de présence, extraits de prompt | M |
 | 5 Connecteur claude.ai | OAuth (selon Supabase Auth auto-hébergé), publication du connecteur | M, conditionnel |

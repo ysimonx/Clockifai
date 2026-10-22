@@ -848,13 +848,35 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vos saisies sont enregistrées sur l\'appareil et envoyées automatiquement dès que la connexion revient.';
 
   @override
+  String get oldestTimerStopped =>
+      'Limite atteinte : le chronomètre le plus ancien a été arrêté';
+
+  @override
   String get online => 'En ligne';
 
   @override
   String get onlineOnly => 'Action impossible hors ligne.';
 
   @override
+  String otherRunningTimers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+ $count autres',
+      one: '+ 1 autre',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get paid => 'Rémunérée';
+
+  @override
+  String get parallelTimers => 'Chronomètres simultanés';
+
+  @override
+  String get parallelTimersHelp =>
+      'Nombre de chronomètres qu\'un membre peut faire tourner en même temps ; au-delà, le plus ancien s\'arrête';
 
   @override
   String get password => 'Mot de passe';
@@ -1018,6 +1040,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get runningTimer => 'Chronomètre en cours';
+
+  @override
+  String runningTimersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chronomètres en cours',
+      one: '1 chronomètre en cours',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get save => 'Enregistrer';

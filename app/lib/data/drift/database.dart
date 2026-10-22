@@ -57,6 +57,8 @@ class Workspaces extends Table {
   TextColumn get timeForOthers => text().nullable()();
   /// 'everyone' | 'managers' : qui crée des tâches depuis le sélecteur (nullable côté client : rempli par la sync).
   TextColumn get taskCreation => text().nullable()();
+  /// Chronomètres simultanés par membre : 1 = un seul, 0 = illimité (nullable côté client : rempli par la sync).
+  IntColumn get maxRunningTimers => integer().nullable()();
   TextColumn get createdBy => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();

@@ -135,6 +135,44 @@ def test_running_timer_conflict_latest_wins(alice, alice_ws):
     assert status == 200
 
 
+def test_parallel_timers_limit(bob):
+    """0011 : `max_running_timers` généralise « le plus récent gagne » à N chronomètres."""
+    token, uid = signup("parallel")
+    _, rows = rest("GET", f"workspace_members?user_id=eq.{uid}&select=workspace_id", token)
+    wid = rows[0]["workspace_id"]
+    assert rest("PATCH", f"workspaces?id=eq.{wid}", token, {"max_running_timers": 2})[0] == 200
+    now = datetime.now(UTC).replace(microsecond=0)
+
+    def start(minutes_ago: int) -> str:
+        eid = str(uuid.uuid4())
+        status, body = rest("POST", "time_entries", token, {
+            "id": eid, "workspace_id": wid, "user_id": uid, "start_at": iso(now - timedelta(minutes=minutes_ago))})
+        assert status == 201, body
+        return eid
+
+    def durations(*ids: str) -> dict:
+        _, rows = rest("GET", f"time_entries?id=in.({','.join(ids)})&select=id,duration_seconds", token)
+        return {r["id"]: r["duration_seconds"] for r in rows}
+
+    a, b = start(30), start(20)
+    c = start(0)   # limite atteinte : A, le plus ancien, s'arrête au début de C
+    d = start(40)  # arrivé en retard, plus ancien que B et C : enregistré terminé au début de B
+    assert durations(a, b, c, d) == {a: 30 * 60, b: None, c: None, d: 20 * 60}
+
+    # Illimité : rien ne s'arrête.
+    assert rest("PATCH", f"workspaces?id=eq.{wid}", token, {"max_running_timers": 0})[0] == 200
+    e = start(5)
+    assert durations(b, c, e) == {b: None, c: None, e: None}
+
+    # Un simple membre ne change pas le réglage (la RLS filtre la ligne).
+    assert rest("POST", "workspace_members", token,
+                {"workspace_id": wid, "user_id": bob["id"], "role": "member", "display_name": "bob"})[0] == 201
+    status, rows = rest("PATCH", f"workspaces?id=eq.{wid}", bob["token"], {"max_running_timers": 1})
+    assert status == 200 and rows == []
+    _, rows = rest("GET", f"workspaces?id=eq.{wid}&select=max_running_timers", token)
+    assert rows == [{"max_running_timers": 0}]
+
+
 def test_roles_and_visibility(alice, bob, alice_ws):
     # Alice (owner) ajoute Bob comme simple membre.
     status, rows = rest("POST", "workspace_members", alice["token"], {

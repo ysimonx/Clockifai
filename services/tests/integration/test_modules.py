@@ -176,6 +176,20 @@ def test_kiosk_device_and_punch(team):
     assert rows == [{"end_at": None}]
     status, res2 = kiosk("POST", "/punch", {"user_id": w, "pin": "2468"})
     assert status == 200 and res2["action"] == "out" and res2["entry_id"] == res["entry_id"]
+
+    # Chronomètres simultanés (0011) : le membre apparaît une fois, la sortie arrête tout.
+    assert rest("PATCH", f"workspaces?id=eq.{wid}", bt, {"max_running_timers": 2})[0] == 200
+    now = datetime.now(UTC).replace(microsecond=0)
+    for minutes_ago in (20, 10):
+        assert rest("POST", "time_entries", wt, {"id": str(uuid.uuid4()), "workspace_id": wid, "user_id": w,
+                                                  "start_at": iso(now - timedelta(minutes=minutes_ago))})[0] == 201
+    _, st = kiosk("GET", "/state")
+    assert [m["user_id"] for m in st["members"]].count(w) == 1
+    status, res3 = kiosk("POST", "/punch", {"user_id": w, "pin": "2468"})
+    assert status == 200 and res3["action"] == "out"
+    _, rows = rest("GET", f"time_entries?workspace_id=eq.{wid}&user_id=eq.{w}&end_at=is.null&deleted_at=is.null&select=id", wt)
+    assert rows == []
+    assert rest("PATCH", f"workspaces?id=eq.{wid}", bt, {"max_running_timers": 1})[0] == 200
     # Révocation → le jeton ne fonctionne plus.
     assert _call("DELETE", f"{SERVICES}/api/kiosk/devices/{dev['id']}?workspace_id={wid}", bt)[0] == 200
     assert kiosk("GET", "/state")[0] == 401

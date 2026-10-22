@@ -50,7 +50,7 @@ make app-analyze / make app-test
 - Toute nouvelle table métier : `workspace_id`, `created_at`, `updated_at` (trigger `set_updated_at`), `deleted_at`, RLS activée avec les helpers `is_member` / `is_manager` / `is_admin`.
 - Chefs d'équipe (migration 0009, `plans/03-saisie-pour-autrui.md`) : ce n'est pas un rôle. Le périmètre est matérialisé dans `team_scope`, recalculé par trigger (`refresh_team_scope`) depuis `team_manager_assignments` et `user_groups`. Droits : `manages()` (lecture), `can_edit_others_time()` (saisie pour autrui selon `workspaces.time_for_others`), `can_decide_time_off()` (selon `time_off_policies.approvers`). `time_entries.created_by` / `updated_by` sont posés par trigger depuis le JWT. Côté app, `TeamRights` (`core/team_rights.dart`) reproduit ces règles pour l'affichage.
 - Les écritures client passent par **upsert** : la politique SELECT doit accepter la nouvelle ligne (cf. migration 0005).
-- Règles métier critiques côté serveur (triggers), pas seulement dans l'app : verrouillage des entrées, chronomètre unique, garde des rôles, approbations, absences, numérotation et totaux de facture.
+- Règles métier critiques côté serveur (triggers), pas seulement dans l'app : verrouillage des entrées, limite de chronomètres simultanés (`workspaces.max_running_timers`, trigger 0011, « le plus récent gagne »), garde des rôles, approbations, absences, numérotation et totaux de facture.
 - Un trigger qui doit modifier des entrées sans passer la garde pose `set_config('clockifai.bypass_guard', 'on', true)` (voir `timesheet_submissions_apply`).
 - Données sensibles (hash de PIN, compteurs) dans le schéma `clockifai_private` : hors API, hors réplication.
 
@@ -66,7 +66,7 @@ make app-analyze / make app-test
 - Les droits affichés suivent `session.isManager` / `isAdmin`, mais la RLS reste la seule vraie barrière.
 
 ## Tests
-- `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètre, verrouillage, upsert du connecteur, exports, chefs d'équipe).
+- `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètres simultanés, verrouillage, upsert du connecteur, exports, chefs d'équipe).
 - `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, sur base Drift en mémoire.
 - Parcours navigateur (Playwright, hors dépôt) : activer l'arbre d'accessibilité Flutter en cliquant `flt-semantics-placeholder`, puis cliquer un champ et taper au clavier (`fill` ne suffit pas).
 

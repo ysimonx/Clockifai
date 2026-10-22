@@ -111,9 +111,12 @@ def state():
                         where p.workspace_id = m.workspace_id and p.user_id = m.user_id) as has_pin,
                te.start_at as running_since, pr.name as running_project
           from public.workspace_members m
-          left join public.time_entries te
-                 on te.workspace_id = m.workspace_id and te.user_id = m.user_id
-                and te.end_at is null and te.deleted_at is null
+          -- Le plus récent seulement : plusieurs chronomètres peuvent tourner (0011).
+          left join lateral (
+                select t.start_at, t.project_id from public.time_entries t
+                 where t.workspace_id = m.workspace_id and t.user_id = m.user_id
+                   and t.end_at is null and t.deleted_at is null
+                 order by t.start_at desc limit 1) te on true
           left join public.projects pr on pr.id = te.project_id
          where m.workspace_id = %s and m.status = 'active' and m.deleted_at is null
          order by lower(m.display_name)
@@ -164,13 +167,15 @@ def punch():
         with _fails_lock:
             _fails.pop(key, None)
 
+        # Le kiosque pointe la présence : la sortie arrête tous les chronomètres en cours.
         running = conn.execute(
-            "select id from public.time_entries where workspace_id = %s and user_id = %s and end_at is null and deleted_at is null",
+            "select id from public.time_entries where workspace_id = %s and user_id = %s and end_at is null and deleted_at is null"
+            " order by start_at desc",
             (g.workspace_id, user_id),
-        ).fetchone()
+        ).fetchall()
         if running:
-            conn.execute("update public.time_entries set end_at = now() where id = %s", (running["id"],))
-            action, entry_id = "out", running["id"]
+            conn.execute("update public.time_entries set end_at = now() where id = any(%s)", ([r["id"] for r in running],))
+            action, entry_id = "out", running[0]["id"]
         else:
             rate = None
             billable = True

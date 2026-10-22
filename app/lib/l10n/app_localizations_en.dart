@@ -842,13 +842,35 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your changes are stored on the device and sent automatically when the connection is back.';
 
   @override
+  String get oldestTimerStopped =>
+      'Limit reached: the oldest timer was stopped';
+
+  @override
   String get online => 'Online';
 
   @override
   String get onlineOnly => 'Not available offline.';
 
   @override
+  String otherRunningTimers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+ $count others',
+      one: '+ 1 other',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get paid => 'Paid';
+
+  @override
+  String get parallelTimers => 'Simultaneous timers';
+
+  @override
+  String get parallelTimersHelp =>
+      'How many timers a member can run at once; beyond that, the oldest one stops';
 
   @override
   String get password => 'Password';
@@ -1011,6 +1033,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get runningTimer => 'Running timer';
+
+  @override
+  String runningTimersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count running timers',
+      one: '1 running timer',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get save => 'Save';

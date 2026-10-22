@@ -40,6 +40,31 @@ void main() {
     expect(a.durationSeconds, 3600);
   });
 
+  test('limite 2 : deux chronomètres tournent en parallèle, les plus récents d\'abord', () async {
+    final a = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'A'), at: DateTime.utc(2026, 10, 11, 8), maxRunning: 2);
+    final b = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'B'), at: DateTime.utc(2026, 10, 11, 9), maxRunning: 2);
+    final running = await repo.watchRunningAll(ws, me).first;
+    expect(running.map((e) => e.id), [b, a]);
+  });
+
+  test('limite 2 atteinte : le plus ancien s\'arrête au début du nouveau', () async {
+    final a = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'A'), at: DateTime.utc(2026, 10, 11, 8), maxRunning: 2);
+    final b = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'B'), at: DateTime.utc(2026, 10, 11, 9), maxRunning: 2);
+    final c = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'C'), at: DateTime.utc(2026, 10, 11, 10), maxRunning: 2);
+    final running = await repo.watchRunningAll(ws, me).first;
+    expect(running.map((e) => e.id), [c, b]);
+    final stopped = await (db.select(db.timeEntries)..where((t) => t.id.equals(a))).getSingle();
+    expect(stopped.endAt, DateTime.utc(2026, 10, 11, 10));
+    expect(stopped.durationSeconds, 2 * 3600);
+  });
+
+  test('limite 0 (illimité) : rien ne s\'arrête', () async {
+    for (var h = 8; h < 12; h++) {
+      await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(), at: DateTime.utc(2026, 10, 11, h), maxRunning: 0);
+    }
+    expect(await repo.watchRunningAll(ws, me).first, hasLength(4));
+  });
+
   test('arrêt avec horloge en retard : fin jamais avant le début', () async {
     final id = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(), at: DateTime.utc(2026, 10, 11, 10));
     await repo.stop(id, at: DateTime.utc(2026, 10, 11, 9, 59));

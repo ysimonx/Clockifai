@@ -211,6 +211,7 @@ class EntryTile extends StatelessWidget {
               hourlyRateCents: e.hourlyRateCents,
               tagIds: row.tagIds,
             ),
+            maxRunning: session.runningTimersLimit,
           ),
         ),
       PopupMenuButton<String>(

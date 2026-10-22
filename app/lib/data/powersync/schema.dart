@@ -38,6 +38,7 @@ const schema = Schema([
     Column.integer('invoice_due_days'),
     Column.text('time_for_others'),
     Column.text('task_creation'),
+    Column.integer('max_running_timers'),
     Column.text('created_by'),
     ..._audit,
     ..._softDelete,

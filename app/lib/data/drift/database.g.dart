@@ -779,6 +779,17 @@ class $WorkspacesTable extends Workspaces
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _maxRunningTimersMeta = const VerificationMeta(
+    'maxRunningTimers',
+  );
+  @override
+  late final GeneratedColumn<int> maxRunningTimers = GeneratedColumn<int>(
+    'max_running_timers',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdByMeta = const VerificationMeta(
     'createdBy',
   );
@@ -843,6 +854,7 @@ class $WorkspacesTable extends Workspaces
     invoiceDueDays,
     timeForOthers,
     taskCreation,
+    maxRunningTimers,
     createdBy,
     createdAt,
     updatedAt,
@@ -997,6 +1009,15 @@ class $WorkspacesTable extends Workspaces
         ),
       );
     }
+    if (data.containsKey('max_running_timers')) {
+      context.handle(
+        _maxRunningTimersMeta,
+        maxRunningTimers.isAcceptableOrUnknown(
+          data['max_running_timers']!,
+          _maxRunningTimersMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_by')) {
       context.handle(
         _createdByMeta,
@@ -1098,6 +1119,10 @@ class $WorkspacesTable extends Workspaces
         DriftSqlType.string,
         data['${effectivePrefix}task_creation'],
       ),
+      maxRunningTimers: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}max_running_timers'],
+      ),
       createdBy: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_by'],
@@ -1145,6 +1170,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
 
   /// 'everyone' | 'managers' : qui crée des tâches depuis le sélecteur (nullable côté client : rempli par la sync).
   final String? taskCreation;
+
+  /// Chronomètres simultanés par membre : 1 = un seul, 0 = illimité (nullable côté client : rempli par la sync).
+  final int? maxRunningTimers;
   final String? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -1167,6 +1195,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     required this.invoiceDueDays,
     this.timeForOthers,
     this.taskCreation,
+    this.maxRunningTimers,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -1201,6 +1230,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     }
     if (!nullToAbsent || taskCreation != null) {
       map['task_creation'] = Variable<String>(taskCreation);
+    }
+    if (!nullToAbsent || maxRunningTimers != null) {
+      map['max_running_timers'] = Variable<int>(maxRunningTimers);
     }
     if (!nullToAbsent || createdBy != null) {
       map['created_by'] = Variable<String>(createdBy);
@@ -1246,6 +1278,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       taskCreation: taskCreation == null && nullToAbsent
           ? const Value.absent()
           : Value(taskCreation),
+      maxRunningTimers: maxRunningTimers == null && nullToAbsent
+          ? const Value.absent()
+          : Value(maxRunningTimers),
       createdBy: createdBy == null && nullToAbsent
           ? const Value.absent()
           : Value(createdBy),
@@ -1286,6 +1321,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       invoiceDueDays: serializer.fromJson<int>(json['invoiceDueDays']),
       timeForOthers: serializer.fromJson<String?>(json['timeForOthers']),
       taskCreation: serializer.fromJson<String?>(json['taskCreation']),
+      maxRunningTimers: serializer.fromJson<int?>(json['maxRunningTimers']),
       createdBy: serializer.fromJson<String?>(json['createdBy']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
@@ -1313,6 +1349,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       'invoiceDueDays': serializer.toJson<int>(invoiceDueDays),
       'timeForOthers': serializer.toJson<String?>(timeForOthers),
       'taskCreation': serializer.toJson<String?>(taskCreation),
+      'maxRunningTimers': serializer.toJson<int?>(maxRunningTimers),
       'createdBy': serializer.toJson<String?>(createdBy),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
@@ -1338,6 +1375,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     int? invoiceDueDays,
     Value<String?> timeForOthers = const Value.absent(),
     Value<String?> taskCreation = const Value.absent(),
+    Value<int?> maxRunningTimers = const Value.absent(),
     Value<String?> createdBy = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
@@ -1366,6 +1404,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
         ? timeForOthers.value
         : this.timeForOthers,
     taskCreation: taskCreation.present ? taskCreation.value : this.taskCreation,
+    maxRunningTimers: maxRunningTimers.present
+        ? maxRunningTimers.value
+        : this.maxRunningTimers,
     createdBy: createdBy.present ? createdBy.value : this.createdBy,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
@@ -1416,6 +1457,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       taskCreation: data.taskCreation.present
           ? data.taskCreation.value
           : this.taskCreation,
+      maxRunningTimers: data.maxRunningTimers.present
+          ? data.maxRunningTimers.value
+          : this.maxRunningTimers,
       createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -1443,6 +1487,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
           ..write('invoiceDueDays: $invoiceDueDays, ')
           ..write('timeForOthers: $timeForOthers, ')
           ..write('taskCreation: $taskCreation, ')
+          ..write('maxRunningTimers: $maxRunningTimers, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1470,6 +1515,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     invoiceDueDays,
     timeForOthers,
     taskCreation,
+    maxRunningTimers,
     createdBy,
     createdAt,
     updatedAt,
@@ -1496,6 +1542,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
           other.invoiceDueDays == this.invoiceDueDays &&
           other.timeForOthers == this.timeForOthers &&
           other.taskCreation == this.taskCreation &&
+          other.maxRunningTimers == this.maxRunningTimers &&
           other.createdBy == this.createdBy &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -1520,6 +1567,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
   final Value<int> invoiceDueDays;
   final Value<String?> timeForOthers;
   final Value<String?> taskCreation;
+  final Value<int?> maxRunningTimers;
   final Value<String?> createdBy;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
@@ -1543,6 +1591,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     this.invoiceDueDays = const Value.absent(),
     this.timeForOthers = const Value.absent(),
     this.taskCreation = const Value.absent(),
+    this.maxRunningTimers = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1567,6 +1616,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     this.invoiceDueDays = const Value.absent(),
     this.timeForOthers = const Value.absent(),
     this.taskCreation = const Value.absent(),
+    this.maxRunningTimers = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1591,6 +1641,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     Expression<int>? invoiceDueDays,
     Expression<String>? timeForOthers,
     Expression<String>? taskCreation,
+    Expression<int>? maxRunningTimers,
     Expression<String>? createdBy,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1616,6 +1667,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
       if (invoiceDueDays != null) 'invoice_due_days': invoiceDueDays,
       if (timeForOthers != null) 'time_for_others': timeForOthers,
       if (taskCreation != null) 'task_creation': taskCreation,
+      if (maxRunningTimers != null) 'max_running_timers': maxRunningTimers,
       if (createdBy != null) 'created_by': createdBy,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -1642,6 +1694,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     Value<int>? invoiceDueDays,
     Value<String?>? timeForOthers,
     Value<String?>? taskCreation,
+    Value<int?>? maxRunningTimers,
     Value<String?>? createdBy,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
@@ -1666,6 +1719,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
       invoiceDueDays: invoiceDueDays ?? this.invoiceDueDays,
       timeForOthers: timeForOthers ?? this.timeForOthers,
       taskCreation: taskCreation ?? this.taskCreation,
+      maxRunningTimers: maxRunningTimers ?? this.maxRunningTimers,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1728,6 +1782,9 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     if (taskCreation.present) {
       map['task_creation'] = Variable<String>(taskCreation.value);
     }
+    if (maxRunningTimers.present) {
+      map['max_running_timers'] = Variable<int>(maxRunningTimers.value);
+    }
     if (createdBy.present) {
       map['created_by'] = Variable<String>(createdBy.value);
     }
@@ -1766,6 +1823,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
           ..write('invoiceDueDays: $invoiceDueDays, ')
           ..write('timeForOthers: $timeForOthers, ')
           ..write('taskCreation: $taskCreation, ')
+          ..write('maxRunningTimers: $maxRunningTimers, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -15169,6 +15227,7 @@ typedef $$WorkspacesTableCreateCompanionBuilder = WorkspacesCompanion Function({
   Value<int> invoiceDueDays,
   Value<String?> timeForOthers,
   Value<String?> taskCreation,
+  Value<int?> maxRunningTimers,
   Value<String?> createdBy,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
@@ -15193,6 +15252,7 @@ typedef $$WorkspacesTableUpdateCompanionBuilder = WorkspacesCompanion Function({
   Value<int> invoiceDueDays,
   Value<String?> timeForOthers,
   Value<String?> taskCreation,
+  Value<int?> maxRunningTimers,
   Value<String?> createdBy,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
@@ -15291,6 +15351,11 @@ class $$WorkspacesTableFilterComposer
 
   ColumnFilters<String> get taskCreation => $composableBuilder(
     column: $table.taskCreation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maxRunningTimers => $composableBuilder(
+    column: $table.maxRunningTimers,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15409,6 +15474,11 @@ class $$WorkspacesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get maxRunningTimers => $composableBuilder(
+    column: $table.maxRunningTimers,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdBy => $composableBuilder(
     column: $table.createdBy,
     builder: (column) => ColumnOrderings(column),
@@ -15516,6 +15586,11 @@ class $$WorkspacesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get maxRunningTimers => $composableBuilder(
+    column: $table.maxRunningTimers,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdBy =>
       $composableBuilder(column: $table.createdBy, builder: (column) => column);
 
@@ -15577,6 +15652,7 @@ class $$WorkspacesTableTableManager
                 Value<int> invoiceDueDays = const Value.absent(),
                 Value<String?> timeForOthers = const Value.absent(),
                 Value<String?> taskCreation = const Value.absent(),
+                Value<int?> maxRunningTimers = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -15600,6 +15676,7 @@ class $$WorkspacesTableTableManager
                 invoiceDueDays: invoiceDueDays,
                 timeForOthers: timeForOthers,
                 taskCreation: taskCreation,
+                maxRunningTimers: maxRunningTimers,
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -15625,6 +15702,7 @@ class $$WorkspacesTableTableManager
                 Value<int> invoiceDueDays = const Value.absent(),
                 Value<String?> timeForOthers = const Value.absent(),
                 Value<String?> taskCreation = const Value.absent(),
+                Value<int?> maxRunningTimers = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -15648,6 +15726,7 @@ class $$WorkspacesTableTableManager
                 invoiceDueDays: invoiceDueDays,
                 timeForOthers: timeForOthers,
                 taskCreation: taskCreation,
+                maxRunningTimers: maxRunningTimers,
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

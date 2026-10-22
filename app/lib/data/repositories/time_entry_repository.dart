@@ -60,6 +60,16 @@ class TimeEntryRepository {
     return q.watchSingleOrNull();
   }
 
+  /// Chronomètres en cours de l'utilisateur dans le workspace, les plus récents d'abord
+  /// (plusieurs quand `workspaces.max_running_timers` le permet).
+  Stream<List<TimeEntry>> watchRunningAll(String workspaceId, String userId) {
+    final q = db.select(db.timeEntries)
+      ..where((t) =>
+          t.workspaceId.equals(workspaceId) & t.userId.equals(userId) & t.endAt.isNull() & t.deletedAt.isNull())
+      ..orderBy([(t) => OrderingTerm.desc(epoch(t.startAt))]);
+    return q.watch();
+  }
+
   /// Entrées démarrées dans [from, to[ (UTC), les plus récentes d'abord.
   /// [userId] null = toute l'équipe (selon ce que la sync a fourni).
   Stream<List<EntryRow>> watchEntries({
@@ -120,12 +130,14 @@ class TimeEntryRepository {
         .map((rows) => {for (final r in rows) r.read<String?>('project_id'): r.read<int?>('secs') ?? 0});
   }
 
-  /// Démarre un chronomètre (arrête d'abord celui qui tourne, dans la même transaction).
+  /// Démarre un chronomètre. Au-delà de [maxRunning] chronomètres en cours (0 = illimité),
+  /// les plus anciens sont arrêtés dans la même transaction, comme le fait le trigger serveur (0011).
   Future<String> start({
     required String workspaceId,
     required String userId,
     required EntryDraft draft,
     DateTime? at,
+    int maxRunning = 1,
   }) async {
     final now = (at ?? DateTime.now()).toUtc();
     final id = newId();
@@ -135,9 +147,11 @@ class TimeEntryRepository {
                 t.workspaceId.equals(workspaceId) &
                 t.userId.equals(userId) &
                 t.endAt.isNull() &
-                t.deletedAt.isNull()))
+                t.deletedAt.isNull())
+            ..orderBy([(t) => OrderingTerm.desc(epoch(t.startAt))]))
           .get();
-      for (final r in running) {
+      final toStop = maxRunning == 0 ? const <TimeEntry>[] : running.skip(maxRunning - 1);
+      for (final r in toStop) {
         final end = now.isBefore(r.startAt) ? r.startAt : now;
         await (db.update(db.timeEntries)..where((t) => t.id.equals(r.id))).write(
             TimeEntriesCompanion(endAt: Value(end), durationSeconds: Value(end.difference(r.startAt).inSeconds)));

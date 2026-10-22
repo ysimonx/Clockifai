@@ -13,6 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config.dart';
 import 'core/catalog.dart';
 import 'core/di.dart';
+import 'core/display_prefs.dart';
 import 'core/l10n.dart';
 import 'core/locale_controller.dart';
 import 'core/session.dart';
@@ -61,6 +62,7 @@ class _ClockifaiAppState extends State<ClockifaiApp> {
   late final SessionController _session = SessionController(sync: syncService, workspaces: workspaceRepo, prefs: widget.prefs);
   late final CatalogController _catalog = CatalogController(catalogRepo, workspaceRepo, teamRepo);
   late final LocaleController _locale = LocaleController(widget.prefs);
+  late final DisplayPrefs _display = DisplayPrefs(widget.prefs);
   late final GoRouter _router = buildRouter(_session);
 
   @override
@@ -78,6 +80,7 @@ class _ClockifaiAppState extends State<ClockifaiApp> {
     _session.dispose();
     _catalog.dispose();
     _locale.dispose();
+    _display.dispose();
     super.dispose();
   }
 
@@ -88,6 +91,7 @@ class _ClockifaiAppState extends State<ClockifaiApp> {
         ChangeNotifierProvider.value(value: _session),
         ChangeNotifierProvider.value(value: _catalog),
         ChangeNotifierProvider.value(value: _locale),
+        ChangeNotifierProvider.value(value: _display),
       ],
       child: Consumer<LocaleController>(
         builder: (context, locale, _) => MaterialApp.router(

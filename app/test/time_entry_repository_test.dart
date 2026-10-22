@@ -60,9 +60,46 @@ void main() {
 
   test('limite 0 (illimité) : rien ne s\'arrête', () async {
     for (var h = 8; h < 12; h++) {
-      await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(), at: DateTime.utc(2026, 10, 11, h), maxRunning: 0);
+      await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'T$h'), at: DateTime.utc(2026, 10, 11, h), maxRunning: 0);
     }
     expect(await repo.watchRunningAll(ws, me).first, hasLength(4));
+  });
+
+  test('un chronomètre par tâche : relancer la même tâche ne crée rien et n\'arrête rien', () async {
+    final a = await repo.start(
+        workspaceId: ws, userId: me, draft: EntryDraft(description: 'Revue', projectId: 'p1', taskId: 't1'), at: DateTime.utc(2026, 10, 11, 8), maxRunning: 3);
+    final again = await repo.start(
+        workspaceId: ws, userId: me, draft: EntryDraft(description: 'Correctif', projectId: 'p1', taskId: 't1'), at: DateTime.utc(2026, 10, 11, 9), maxRunning: 3);
+    expect(again, a);
+    final running = await repo.watchRunningAll(ws, me).first;
+    expect(running.map((e) => e.id), [a]);
+    expect(running.single.startAt, DateTime.utc(2026, 10, 11, 8));
+  });
+
+  test('un chronomètre par tâche : deux tâches différentes tournent en parallèle', () async {
+    await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(projectId: 'p1', taskId: 't1'), at: DateTime.utc(2026, 10, 11, 8), maxRunning: 3);
+    await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(projectId: 'p1', taskId: 't2'), at: DateTime.utc(2026, 10, 11, 9), maxRunning: 3);
+    expect(await repo.watchRunningAll(ws, me).first, hasLength(2));
+  });
+
+  test('sans tâche : même projet et même description = même chronomètre ; autre description = autre chronomètre', () async {
+    final a = await repo.start(
+        workspaceId: ws, userId: me, draft: EntryDraft(description: 'Réunion', projectId: 'p1'), at: DateTime.utc(2026, 10, 11, 8), maxRunning: 3);
+    expect(
+        await repo.start(
+            workspaceId: ws, userId: me, draft: EntryDraft(description: 'Réunion ', projectId: 'p1'), at: DateTime.utc(2026, 10, 11, 9), maxRunning: 3),
+        a);
+    await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'Support', projectId: 'p1'), at: DateTime.utc(2026, 10, 11, 10), maxRunning: 3);
+    await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'Réunion'), at: DateTime.utc(2026, 10, 11, 11), maxRunning: 3);
+    expect(await repo.watchRunningAll(ws, me).first, hasLength(3));
+  });
+
+  test('sameTimerTarget : une tâche d\'un côté seulement ne correspond pas', () async {
+    await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'Revue', projectId: 'p1', taskId: 't1'), maxRunning: 3);
+    final running = (await repo.watchRunningAll(ws, me).first).single;
+    expect(sameTimerTarget(running, description: 'Autre', projectId: 'p1', taskId: 't1'), isTrue);
+    expect(sameTimerTarget(running, description: 'Revue', projectId: 'p1', taskId: null), isFalse);
+    expect(sameTimerTarget(running, description: 'Revue', projectId: 'p1', taskId: 't2'), isFalse);
   });
 
   test('arrêt avec horloge en retard : fin jamais avant le début', () async {

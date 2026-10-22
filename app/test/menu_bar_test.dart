@@ -142,6 +142,13 @@ void main() {
     expect(running()!['project'], 'Chantier');
     expect(running()!['id'], isNot(last['id']));
 
+    // Un chronomètre par tâche : relancer ou redémarrer la même activité est refusé, rien ne change.
+    final current = running()!['id'];
+    const alreadyRunning = 'Un chronomètre tourne déjà sur cette tâche';
+    expect(await send(tester, 'continue', {'id': last['id']}), alreadyRunning);
+    expect(await send(tester, 'start', {'description': 'Pose carrelage', 'projectId': chantier}), alreadyRunning);
+    expect(running()!['id'], current);
+
     await tester.pumpWidget(const SizedBox());
     await tester.pump(Duration.zero); // minuteurs de Drift à la fermeture des flux
   }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));

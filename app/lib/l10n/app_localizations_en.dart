@@ -295,6 +295,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Existing entries are kept but no longer linked to a visible project.';
 
   @override
+  String deleteSimilarEntries(int count) {
+    return 'Delete the $count entries';
+  }
+
+  @override
+  String deleteSimilarEntriesMessage(int count) {
+    return 'The $count entries of this group will be deleted.';
+  }
+
+  @override
   String get deleteTag => 'Delete tag?';
 
   @override
@@ -351,6 +361,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editRates => 'Edit rates';
+
+  @override
+  String editSimilarEntries(int count) {
+    return 'Edit the $count entries';
+  }
 
   @override
   String get editTag => 'Edit tag';
@@ -439,10 +454,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupName => 'Group name';
 
   @override
+  String get groupSimilarEntries => 'Group similar entries';
+
+  @override
+  String get groupSimilarEntriesHelp =>
+      'Time tracker: entries of the same day with the same description, project, task, tags and billable status are shown on one expandable row';
+
+  @override
   String get groups => 'Groups';
 
   @override
   String get halfDay => 'Half day';
+
+  @override
+  String get hideSimilarEntries => 'Hide details';
 
   @override
   String get history => 'History';
@@ -1130,6 +1155,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showArchived => 'Archived';
 
   @override
+  String showSimilarEntries(int count) {
+    return 'Show the $count entries';
+  }
+
+  @override
   String get signIn => 'Sign in';
 
   @override
@@ -1140,6 +1170,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signUp => 'Sign up';
+
+  @override
+  String get similarEntriesEditHelp => 'The times of each entry stay the same.';
+
+  @override
+  String get similarEntriesLocked =>
+      'Some entries of this group can no longer be edited';
 
   @override
   String get start => 'Start';
@@ -1298,6 +1335,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timeTracker => 'Time tracker';
+
+  @override
+  String get timerAlreadyRunningOnTask =>
+      'A timer is already running on this task';
 
   @override
   String get timesheet => 'Timesheet';

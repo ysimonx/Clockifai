@@ -104,7 +104,8 @@ class _TimerBarState extends State<TimerBar> {
     final catalog = context.read<CatalogController>();
     final ws = session.workspace!;
     final l = context.l10n;
-    final blocked = timerRuleViolation(l, ws, description: _description.text, projectId: _projectId);
+    final blocked = timerRuleViolation(l, ws, description: _description.text, projectId: _projectId) ??
+        alreadyRunningViolation(l, _runningAll, description: _description.text, projectId: _projectId, taskId: _taskId);
     if (blocked != null) return showSnack(context, blocked);
     final limit = session.runningTimersLimit;
     final stopsOldest = limit > 1 && _runningAll.length >= limit;

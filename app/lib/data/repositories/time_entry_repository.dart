@@ -15,6 +15,14 @@ class EntryRow {
   }
 }
 
+/// Un seul chronomètre en cours par tâche (une tâche joue le rôle d'un ticket, plan 04) :
+/// [running] vise la même cible si l'un des deux a une tâche et que c'est la même, quelle que soit
+/// la description ; sans tâche, s'il a le même projet (ou aucun) et la même description.
+bool sameTimerTarget(TimeEntry running, {required String description, String? projectId, String? taskId}) {
+  if (taskId != null || running.taskId != null) return running.taskId == taskId;
+  return running.projectId == projectId && running.description.trim() == description.trim();
+}
+
 /// Paramètres d'une nouvelle entrée ou d'un nouveau chronomètre.
 class EntryDraft {
   EntryDraft({
@@ -154,6 +162,7 @@ class TimeEntryRepository {
 
   /// Démarre un chronomètre. Au-delà de [maxRunning] chronomètres en cours (0 = illimité),
   /// les plus anciens sont arrêtés dans la même transaction, comme le fait le trigger serveur (0011).
+  /// Si la même tâche tourne déjà ([sameTimerTarget]), rien ne change et son id est renvoyé.
   Future<String> start({
     required String workspaceId,
     required String userId,
@@ -162,7 +171,7 @@ class TimeEntryRepository {
     int maxRunning = 1,
   }) async {
     final now = (at ?? DateTime.now()).toUtc();
-    final id = newId();
+    var id = newId();
     await db.transaction(() async {
       final running = await (db.select(db.timeEntries)
             ..where((t) =>
@@ -172,6 +181,14 @@ class TimeEntryRepository {
                 t.deletedAt.isNull())
             ..orderBy([(t) => OrderingTerm.desc(epoch(t.startAt))]))
           .get();
+      // Filet : la tâche tourne déjà, on la laisse tourner (l'interface prévient avant d'arriver ici).
+      final same = running
+          .where((r) => sameTimerTarget(r, description: draft.description, projectId: draft.projectId, taskId: draft.taskId))
+          .firstOrNull;
+      if (same != null) {
+        id = same.id;
+        return;
+      }
       final toStop = maxRunning == 0 ? const <TimeEntry>[] : running.skip(maxRunning - 1);
       for (final r in toStop) {
         final end = now.isBefore(r.startAt) ? r.startAt : now;
@@ -271,29 +288,83 @@ class TimeEntryRepository {
     DateTime? start,
     DateTime? end,
     List<String>? tagIds,
+  }) =>
+      db.transaction(() => _updateOne(entry,
+          description: description,
+          projectId: projectId,
+          clearProject: clearProject,
+          taskId: taskId,
+          clearTask: clearTask,
+          billable: billable,
+          hourlyRateCents: hourlyRateCents,
+          start: start,
+          end: end,
+          tagIds: tagIds));
+
+  /// Même modification pour plusieurs entrées (groupe d'entrées similaires), sans toucher aux horaires.
+  /// [hourlyRateFor] : nouveau taux d'une entrée dont le projet change (null : taux inchangé).
+  Future<void> updateMany(
+    List<TimeEntry> entries, {
+    required String description,
+    String? projectId,
+    String? taskId,
+    required bool billable,
+    required List<String> tagIds,
+    int? Function(TimeEntry entry)? hourlyRateFor,
+  }) =>
+      db.transaction(() async {
+        for (final e in entries) {
+          await _updateOne(e,
+              description: description,
+              projectId: projectId,
+              clearProject: projectId == null,
+              taskId: taskId,
+              clearTask: taskId == null,
+              billable: billable,
+              hourlyRateCents: projectId != e.projectId ? hourlyRateFor?.call(e) : null,
+              tagIds: tagIds);
+        }
+      });
+
+  Future<void> _updateOne(
+    TimeEntry entry, {
+    String? description,
+    String? projectId,
+    bool clearProject = false,
+    String? taskId,
+    bool clearTask = false,
+    bool? billable,
+    int? hourlyRateCents,
+    DateTime? start,
+    DateTime? end,
+    List<String>? tagIds,
   }) async {
-    await db.transaction(() async {
-      final newStart = start?.toUtc() ?? entry.startAt;
-      final newEnd = end?.toUtc() ?? entry.endAt;
-      await (db.update(db.timeEntries)..where((t) => t.id.equals(entry.id))).write(TimeEntriesCompanion(
-        description: description == null ? const Value.absent() : Value(description.trim()),
-        projectId: clearProject ? const Value(null) : (projectId == null ? const Value.absent() : Value(projectId)),
-        taskId: (clearTask || clearProject) ? const Value(null) : (taskId == null ? const Value.absent() : Value(taskId)),
-        billable: billable == null ? const Value.absent() : Value(billable),
-        hourlyRateCents: hourlyRateCents == null ? const Value.absent() : Value(hourlyRateCents),
-        startAt: start == null ? const Value.absent() : Value(newStart),
-        endAt: end == null ? const Value.absent() : Value(newEnd),
-        durationSeconds: (start == null && end == null) || newEnd == null
-            ? const Value.absent()
-            : Value(newEnd.difference(newStart).inSeconds),
-      ));
-      if (tagIds != null) await _replaceTags(entry, tagIds);
-    });
+    final newStart = start?.toUtc() ?? entry.startAt;
+    final newEnd = end?.toUtc() ?? entry.endAt;
+    await (db.update(db.timeEntries)..where((t) => t.id.equals(entry.id))).write(TimeEntriesCompanion(
+      description: description == null ? const Value.absent() : Value(description.trim()),
+      projectId: clearProject ? const Value(null) : (projectId == null ? const Value.absent() : Value(projectId)),
+      taskId: (clearTask || clearProject) ? const Value(null) : (taskId == null ? const Value.absent() : Value(taskId)),
+      billable: billable == null ? const Value.absent() : Value(billable),
+      hourlyRateCents: hourlyRateCents == null ? const Value.absent() : Value(hourlyRateCents),
+      startAt: start == null ? const Value.absent() : Value(newStart),
+      endAt: end == null ? const Value.absent() : Value(newEnd),
+      durationSeconds: (start == null && end == null) || newEnd == null
+          ? const Value.absent()
+          : Value(newEnd.difference(newStart).inSeconds),
+    ));
+    if (tagIds != null) await _replaceTags(entry, tagIds);
   }
 
   /// Suppression logique : le serveur garde la trace, les clients la retirent.
   Future<void> delete(String entryId) async {
     await (db.update(db.timeEntries)..where((t) => t.id.equals(entryId)))
+        .write(TimeEntriesCompanion(deletedAt: Value(nowUtc())));
+  }
+
+  /// Suppression logique de plusieurs entrées (groupe d'entrées similaires).
+  Future<void> deleteMany(List<String> entryIds) async {
+    await (db.update(db.timeEntries)..where((t) => t.id.isIn(entryIds)))
         .write(TimeEntriesCompanion(deletedAt: Value(nowUtc())));
   }
 

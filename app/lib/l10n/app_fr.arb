@@ -147,6 +147,22 @@
   "deletePolicy": "Supprimer la politique ?",
   "deleteProject": "Supprimer le projet ?",
   "deleteProjectMessage": "Les entrées existantes restent, mais ne seront plus rattachées à un projet visible.",
+  "deleteSimilarEntries": "Supprimer les {count} entrées",
+  "@deleteSimilarEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteSimilarEntriesMessage": "Les {count} entrées de ce groupe seront supprimées.",
+  "@deleteSimilarEntriesMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "deleteTag": "Supprimer le tag ?",
   "description": "Description",
   "descriptionRequired": "Une description est obligatoire dans ce workspace.",
@@ -166,6 +182,14 @@
   "editPolicy": "Modifier la politique",
   "editProject": "Modifier le projet",
   "editRates": "Modifier les taux",
+  "editSimilarEntries": "Modifier les {count} entrées",
+  "@editSimilarEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "editTag": "Modifier le tag",
   "editTimer": "Modifier le chronomètre",
   "email": "Email",
@@ -218,8 +242,11 @@
   "groupBy": "Grouper par",
   "groupMembers": "Membres du groupe",
   "groupName": "Nom du groupe",
+  "groupSimilarEntries": "Regrouper les entrées similaires",
+  "groupSimilarEntriesHelp": "Suivi du temps : les entrées d'une même journée avec la même description, le même projet, la même tâche, les mêmes tags et la même facturation sont réunies sur une ligne dépliable",
   "groups": "Groupes",
   "halfDay": "Demi-journée",
+  "hideSimilarEntries": "Masquer le détail",
   "history": "Historique",
   "holidays": "Jours fériés",
   "hourlyRate": "Taux horaire",
@@ -519,10 +546,20 @@
   "setPasswordHelp": "Utile après une invitation ou un lien magique",
   "settings": "Paramètres",
   "showArchived": "Archivés",
+  "showSimilarEntries": "Afficher les {count} entrées",
+  "@showSimilarEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "signIn": "Connexion",
   "signOut": "Se déconnecter",
   "signOutHelp": "Les données locales de cet appareil seront effacées.",
   "signUp": "Inscription",
+  "similarEntriesEditHelp": "Les horaires de chaque entrée ne changent pas.",
+  "similarEntriesLocked": "Certaines entrées de ce groupe ne sont plus modifiables",
   "start": "Démarrer",
   "startInFuture": "L'heure de début ne peut pas être dans le futur.",
   "startTime": "Début",
@@ -585,6 +622,7 @@
   "timeForOthersHelp": "Qui peut saisir et modifier le temps des autres membres.",
   "timeOff": "Absences",
   "timeTracker": "Suivi du temps",
+  "timerAlreadyRunningOnTask": "Un chronomètre tourne déjà sur cette tâche",
   "timesheet": "Feuille de temps",
   "toApprove": "À valider",
   "today": "Aujourd'hui",

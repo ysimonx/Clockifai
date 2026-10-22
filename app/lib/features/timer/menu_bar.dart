@@ -188,7 +188,9 @@ class _MacMenuBarState extends State<MacMenuBar> {
   }
 
   Future<String?> _start(Workspace ws, String userId, String description, String? projectId) async {
-    final blocked = timerRuleViolation(_l, ws, description: description, projectId: projectId);
+    final blocked = timerRuleViolation(_l, ws, description: description, projectId: projectId) ??
+        alreadyRunningViolation(_l, await entriesRepo.watchRunningAll(ws.id, userId).first,
+            description: description, projectId: projectId, taskId: null);
     if (blocked != null) return blocked;
     await entriesRepo.start(
       workspaceId: ws.id,
@@ -235,6 +237,9 @@ class _MacMenuBarState extends State<MacMenuBar> {
     final row = _recent.where((r) => r.entry.id == id).firstOrNull;
     if (row == null) return null;
     final e = row.entry;
+    final running = await entriesRepo.watchRunningAll(e.workspaceId, e.userId).first;
+    final blocked = alreadyRunningViolation(_l, running, description: e.description, projectId: e.projectId, taskId: e.taskId);
+    if (blocked != null) return blocked;
     await entriesRepo.start(
       workspaceId: e.workspaceId,
       userId: e.userId,

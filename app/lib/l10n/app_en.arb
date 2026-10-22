@@ -88,6 +88,22 @@
   "deletePolicy": "Delete policy?",
   "deleteProject": "Delete project?",
   "deleteProjectMessage": "Existing entries are kept but no longer linked to a visible project.",
+  "deleteSimilarEntries": "Delete the {count} entries",
+  "@deleteSimilarEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteSimilarEntriesMessage": "The {count} entries of this group will be deleted.",
+  "@deleteSimilarEntriesMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "deleteTag": "Delete tag?",
   "description": "Description",
   "descriptionRequired": "A description is required in this workspace.",
@@ -107,6 +123,14 @@
   "editPolicy": "Edit policy",
   "editProject": "Edit project",
   "editRates": "Edit rates",
+  "editSimilarEntries": "Edit the {count} entries",
+  "@editSimilarEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "editTag": "Edit tag",
   "editTimer": "Edit timer",
   "email": "Email",
@@ -131,8 +155,11 @@
   "groupBy": "Group by",
   "groupMembers": "Group members",
   "groupName": "Group name",
+  "groupSimilarEntries": "Group similar entries",
+  "groupSimilarEntriesHelp": "Time tracker: entries of the same day with the same description, project, task, tags and billable status are shown on one expandable row",
   "groups": "Groups",
   "halfDay": "Half day",
+  "hideSimilarEntries": "Hide details",
   "history": "History",
   "holidays": "Holidays",
   "hourlyRate": "Hourly rate",
@@ -348,10 +375,20 @@
   "setPasswordHelp": "Useful after an invitation or a magic link",
   "settings": "Settings",
   "showArchived": "Archived",
+  "showSimilarEntries": "Show the {count} entries",
+  "@showSimilarEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "signIn": "Sign in",
   "signOut": "Sign out",
   "signOutHelp": "Local data on this device will be erased.",
   "signUp": "Sign up",
+  "similarEntriesEditHelp": "The times of each entry stay the same.",
+  "similarEntriesLocked": "Some entries of this group can no longer be edited",
   "start": "Start",
   "startInFuture": "Start time cannot be in the future.",
   "startTime": "Start",
@@ -400,6 +437,7 @@
   "timeForOthersHelp": "Who can add and edit other members' time.",
   "timeOff": "Time off",
   "timeTracker": "Time tracker",
+  "timerAlreadyRunningOnTask": "A timer is already running on this task",
   "timesheet": "Timesheet",
   "toApprove": "To approve",
   "today": "Today",

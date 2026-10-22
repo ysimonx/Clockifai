@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../core/di.dart';
 import '../../core/l10n.dart';
-import '../../core/session.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import '../time_entries/entry_dialog.dart';
+import 'timer_rules.dart';
 
 /// Ligne compacte d'un chronomètre en cours, sous la barre, quand le workspace
 /// autorise plusieurs chronomètres simultanés (`max_running_timers` ≠ 1).
@@ -18,14 +17,6 @@ class RunningTimerRow extends StatelessWidget {
     final tagIds = await entriesRepo.tagIdsOf(entry.id);
     if (!context.mounted) return;
     await showEntryDialog(context, entry: entry, tagIds: tagIds);
-  }
-
-  Future<void> _stop(BuildContext context) async {
-    final ws = context.read<SessionController>().workspace!;
-    final l = context.l10n;
-    if (ws.requireProject && entry.projectId == null) return showSnack(context, l.projectRequired);
-    if (ws.requireDescription && entry.description.trim().isEmpty) return showSnack(context, l.descriptionRequired);
-    await entriesRepo.stop(entry.id);
   }
 
   Future<void> _discard(BuildContext context) async {
@@ -64,7 +55,7 @@ class RunningTimerRow extends StatelessWidget {
               style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, fontFeatures: const [FontFeature.tabularFigures()])),
           IconButton(
             tooltip: l.stop,
-            onPressed: () => _stop(context),
+            onPressed: () => stopTimer(context, entry),
             icon: Icon(Icons.stop_circle, color: theme.colorScheme.error),
           ),
           PopupMenuButton<String>(

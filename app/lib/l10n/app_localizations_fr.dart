@@ -299,6 +299,16 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les entrées existantes restent, mais ne seront plus rattachées à un projet visible.';
 
   @override
+  String deleteSimilarEntries(int count) {
+    return 'Supprimer les $count entrées';
+  }
+
+  @override
+  String deleteSimilarEntriesMessage(int count) {
+    return 'Les $count entrées de ce groupe seront supprimées.';
+  }
+
+  @override
   String get deleteTag => 'Supprimer le tag ?';
 
   @override
@@ -355,6 +365,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get editRates => 'Modifier les taux';
+
+  @override
+  String editSimilarEntries(int count) {
+    return 'Modifier les $count entrées';
+  }
 
   @override
   String get editTag => 'Modifier le tag';
@@ -444,10 +459,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String get groupName => 'Nom du groupe';
 
   @override
+  String get groupSimilarEntries => 'Regrouper les entrées similaires';
+
+  @override
+  String get groupSimilarEntriesHelp =>
+      'Suivi du temps : les entrées d\'une même journée avec la même description, le même projet, la même tâche, les mêmes tags et la même facturation sont réunies sur une ligne dépliable';
+
+  @override
   String get groups => 'Groupes';
 
   @override
   String get halfDay => 'Demi-journée';
+
+  @override
+  String get hideSimilarEntries => 'Masquer le détail';
 
   @override
   String get history => 'Historique';
@@ -1138,6 +1163,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get showArchived => 'Archivés';
 
   @override
+  String showSimilarEntries(int count) {
+    return 'Afficher les $count entrées';
+  }
+
+  @override
   String get signIn => 'Connexion';
 
   @override
@@ -1149,6 +1179,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get signUp => 'Inscription';
+
+  @override
+  String get similarEntriesEditHelp =>
+      'Les horaires de chaque entrée ne changent pas.';
+
+  @override
+  String get similarEntriesLocked =>
+      'Certaines entrées de ce groupe ne sont plus modifiables';
 
   @override
   String get start => 'Démarrer';
@@ -1310,6 +1348,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get timeTracker => 'Suivi du temps';
+
+  @override
+  String get timerAlreadyRunningOnTask =>
+      'Un chronomètre tourne déjà sur cette tâche';
 
   @override
   String get timesheet => 'Feuille de temps';

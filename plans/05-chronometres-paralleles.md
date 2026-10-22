@@ -11,6 +11,7 @@
 | Modèle | **Limite par workspace** `workspaces.max_running_timers` (réglage admin) : 1, 2, 3, 5 ou illimité (`0`). Inspiré de Kimai (`active_entries.hard_limit`) |
 | Défaut | **1** : comportement d'origine, rien ne change pour une entreprise qui pointe la présence |
 | Limite atteinte | Le **plus ancien** s'arrête au début du nouveau : la règle « le plus récent gagne » (0004) généralisée |
+| Même tâche (22 octobre 2026) | **Un seul chronomètre en cours par tâche** : une tâche joue le rôle d'un ticket (plan 04), la description dit ce qu'on y fait. Sans tâche : même projet (ou aucun) et même description. Démarrer ou relancer une tâche qui tourne déjà est refusé (« Un chronomètre tourne déjà sur cette tâche ») ; dans la liste, ▶ devient ■ Arrêter. Contrôle **côté app** (`sameTimerTarget`, filet dans `TimeEntryRepository.start()`) : deux appareils hors ligne pourraient encore lancer la même tâche, cas accepté |
 | Écartés | Un chronomètre **par appareil** : il faudrait identifier les appareils, deux sessions sur la même machine resteraient impossibles, et le téléphone ne pourrait pas arrêter le chronomètre d'un autre poste. Opt-in **par membre** : un réglage de plus, sans besoin identifié |
 
 Le temps cumulé peut dépasser le temps réel, puisque deux projets comptent chacun leur heure. C'est voulu, et c'est pour cela que la limite reste à 1 par défaut.

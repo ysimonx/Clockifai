@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase, UserAttributes;
 
 import '../../core/di.dart';
+import '../../core/display_prefs.dart';
 import '../../core/launch_at_login.dart';
 import '../../core/l10n.dart';
 import '../../core/locale_controller.dart';
@@ -64,6 +65,13 @@ class SettingsPage extends StatelessWidget {
             onTap: () => _setPin(context, session.workspaceId!),
           ),
           const _LanguageTile(),
+          SwitchListTile(
+            secondary: const Icon(Icons.layers_outlined),
+            title: Text(l.groupSimilarEntries),
+            subtitle: Text(l.groupSimilarEntriesHelp),
+            value: context.watch<DisplayPrefs>().groupSimilarEntries,
+            onChanged: (v) => context.read<DisplayPrefs>().setGroupSimilarEntries(v),
+          ),
           if (LaunchAtLogin.supported) const LaunchAtLoginTile(),
         ]),
         const SizedBox(height: 16),

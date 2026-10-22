@@ -626,6 +626,18 @@ abstract class AppLocalizations {
   /// **'Les entrées existantes restent, mais ne seront plus rattachées à un projet visible.'**
   String get deleteProjectMessage;
 
+  /// No description provided for @deleteSimilarEntries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer les {count} entrées'**
+  String deleteSimilarEntries(int count);
+
+  /// No description provided for @deleteSimilarEntriesMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les {count} entrées de ce groupe seront supprimées.'**
+  String deleteSimilarEntriesMessage(int count);
+
   /// No description provided for @deleteTag.
   ///
   /// In fr, this message translates to:
@@ -739,6 +751,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Modifier les taux'**
   String get editRates;
+
+  /// No description provided for @editSimilarEntries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier les {count} entrées'**
+  String editSimilarEntries(int count);
 
   /// No description provided for @editTag.
   ///
@@ -884,6 +902,18 @@ abstract class AppLocalizations {
   /// **'Nom du groupe'**
   String get groupName;
 
+  /// No description provided for @groupSimilarEntries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Regrouper les entrées similaires'**
+  String get groupSimilarEntries;
+
+  /// No description provided for @groupSimilarEntriesHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivi du temps : les entrées d\'une même journée avec la même description, le même projet, la même tâche, les mêmes tags et la même facturation sont réunies sur une ligne dépliable'**
+  String get groupSimilarEntriesHelp;
+
   /// No description provided for @groups.
   ///
   /// In fr, this message translates to:
@@ -895,6 +925,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Demi-journée'**
   String get halfDay;
+
+  /// No description provided for @hideSimilarEntries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Masquer le détail'**
+  String get hideSimilarEntries;
 
   /// No description provided for @history.
   ///
@@ -2102,6 +2138,12 @@ abstract class AppLocalizations {
   /// **'Archivés'**
   String get showArchived;
 
+  /// No description provided for @showSimilarEntries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher les {count} entrées'**
+  String showSimilarEntries(int count);
+
   /// No description provided for @signIn.
   ///
   /// In fr, this message translates to:
@@ -2125,6 +2167,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Inscription'**
   String get signUp;
+
+  /// No description provided for @similarEntriesEditHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les horaires de chaque entrée ne changent pas.'**
+  String get similarEntriesEditHelp;
+
+  /// No description provided for @similarEntriesLocked.
+  ///
+  /// In fr, this message translates to:
+  /// **'Certaines entrées de ce groupe ne sont plus modifiables'**
+  String get similarEntriesLocked;
 
   /// No description provided for @start.
   ///
@@ -2413,6 +2467,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Suivi du temps'**
   String get timeTracker;
+
+  /// No description provided for @timerAlreadyRunningOnTask.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un chronomètre tourne déjà sur cette tâche'**
+  String get timerAlreadyRunningOnTask;
 
   /// No description provided for @timesheet.
   ///

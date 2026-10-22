@@ -45,6 +45,7 @@ reset: ## DÉTRUIT les données locales (volumes Postgres/stockage) et redémarr
 	$(COMPOSE) up -d
 
 DEPLOY_DIR ?= Clockifai
+.PHONY: deploy   # homonyme du dossier deploy/
 deploy: ## Copie le dépôt (sans .env ni données) sur un serveur et relance la prod : make deploy HOST=user@ip
 	@test -n "$(HOST)" || (echo "Usage : make deploy HOST=user@ip [DEPLOY_DIR=Clockifai]" && exit 1)
 	git ls-files -co --exclude-standard | while read -r f; do [ -e "$$f" ] && echo "$$f"; done \

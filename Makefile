@@ -37,7 +37,7 @@ seed: ## Données de démo dans le workspace d'un utilisateur : make seed EMAIL=
 	$(COMPOSE) exec -T db psql -U postgres -v email="$(EMAIL)" < deploy/seed-demo.sql
 
 backup: ## Sauvegarde immédiate de Postgres dans deploy/backups
-	$(COMPOSE) --profile prod run --rm backup sh /backup.sh
+	$(COMPOSE) --profile prod run --rm --entrypoint sh backup /backup.sh
 
 reset: ## DÉTRUIT les données locales (volumes Postgres/stockage) et redémarre
 	$(COMPOSE) --profile prod down -v

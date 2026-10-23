@@ -1,0 +1,12 @@
+{
+  "name": "clockifai-dev",
+  "owner": { "name": "Clockifai" },
+  "description": "Plugin Clockifai lu dans le dépôt, pour la pile locale (l'instance sert le sien sur /api/claude)",
+  "plugins": [
+    {
+      "name": "clockifai",
+      "description": "Temps de Claude Code dans Clockifai : un chronomètre par session, au nom de votre agent « Claude · vous ».",
+      "source": "./claude-code"
+    }
+  ]
+}

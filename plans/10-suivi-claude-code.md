@@ -325,18 +325,25 @@ GitLab, Gitea/Forgejo…
 - **Attribution à une session** : plusieurs sessions peuvent travailler dans le même dossier, et le dernier
   HEAD vu leur est commun. Sans précaution, un commit de la session A serait pris par la session B si B
   lançait une commande juste avant la vérification de A. D'où la règle :
-  - une session ne revendique les nouveaux commits qu'après l'une de ses propres commandes `Bash` qui en
+  - une session ne revendique que les commits faits **pendant** l'une de ses propres commandes `Bash` qui en
     crée : `git commit`, `merge`, `cherry-pick`, `revert`, `am` ou `rebase`, `git -C …` compris. Le script le
-    voit en lisant la commande sur le poste, sans l'envoyer (D6) ;
-  - une autre session qui voit passer ces commits ne les envoie pas et ne déplace pas le dernier HEAD vu ;
-  - les commits que personne n'a revendiqués au bout d'une minute (faits hors de Claude, alias git non
-    reconnu) partent sans session au `Stop` suivant. Le serveur les rattache à l'intervalle de focus humain
-    qui les couvre (D8), sinon à rien.
-- **Envoi** : un événement `commit` par commit nouveau, selon
-  `git log <dernier>..HEAD --author=<user.email> --since=<dernière vérification − 1 min>` (20 au plus).
-  Un changement de branche, un `pull` ou un rebase de commits d'autrui ne produit donc rien.
+    voit en lisant la commande sur le poste, sans l'envoyer (D6). « Pendant » : date du commit postérieure au
+    début de la commande (fin moins `duration_ms`, à 5 s près) ;
+  - les nouveaux commits vus par une vérification sont mis de côté, « non revendiqués », dans l'état du
+    dossier de travail. Une autre session qui les voit passer ne les envoie pas ;
+  - les commits que personne n'a revendiqués au bout de **10 minutes** (faits hors de Claude, alias git non
+    reconnu) partent sans session à la vérification suivante. Le serveur les rattache à l'intervalle de focus
+    humain qui les couvre (D8), sinon à rien. Dix minutes et non une : une commande `git commit && npm test`
+    ne rend la main, et ne revendique son commit, qu'à la fin des tests.
+- **Envoi** : un événement `commit` par commit nouveau de `git log <dernier HEAD vu>..HEAD`, dont l'auteur a
+  l'e-mail `user.email` (comparaison exacte) et dont la date de commit suit la dernière vérification
+  (moins 1 min) ; 20 au plus. Un changement de branche, un `pull` ou un rebase de commits d'autrui ne produit
+  donc rien. Un dossier jamais vu fixe son point de départ au `SessionStart` ; une commande qui commite dans un
+  dossier jamais vu revendique quand même ses commits.
 - **Contenu** : sha, branche, première ligne du message (200 caractères), e-mail de l'auteur, date. Jamais le diff.
-- **Idempotence** : la clé est `uuid5(remote_key, sha)`. Le hook et l'extension voient le même commit sans le compter deux fois.
+- **Idempotence** : la clé est `uuid5(NAMESPACE_URL, "clockifai:commit:<remote_key>:<sha>")`. Le hook et
+  l'extension voient le même commit sans le compter deux fois. Le premier arrivé l'emporte : au lot 2, un
+  commit d'abord reçu de l'extension (sans session) puis du hook (avec session) devra passer à la session.
 - **Côté serveur** :
   - le commit est enregistré dans `code_commits`, avec la session ou la fenêtre d'origine ;
   - il est rattaché à l'entrée d'agent de la session qui l'a produit (commit de Claude), ou à l'intervalle de focus de la fenêtre (mon commit) ;
@@ -488,10 +495,18 @@ envoie ce qu'on écrit.
 - `POST /api/activity/presence` (lot 4, JWT de l'app macOS) : signal de présence (D4.3).
 - **Marketplace de l'instance** (publique, sans jeton : le plugin ne contient aucun secret) :
   - `GET /api/claude/marketplace.json` : la marketplace `clockifai`, qui référence l'archive ci-dessous ;
-  - `GET /api/claude/clockifai-plugin.tar.gz` : l'archive de `integrations/claude-code/`, avec l'URL de
-    l'instance posée comme valeur par défaut de `userConfig.url`. Elle est construite au démarrage depuis les
-    fichiers embarqués dans l'image `services`. Le contexte de build étant `services/`, `docker-compose.yml`
-    lui ajoute `integrations/` par `additional_contexts`.
+  - `GET /api/claude/clockifai-plugin.zip` : l'archive de `integrations/claude-code/` (manifeste, hooks,
+    script), avec l'adresse de l'instance posée comme valeur par défaut de `userConfig.url`. L'adresse est
+    celle de la requête (hôte et `X-Forwarded-Proto` transmis par Caddy). Le zip est reproductible (dates et
+    droits fixes) et construit à la première demande depuis les fichiers embarqués dans l'image `services` :
+    le contexte de build étant `services/`, `docker-compose.yml` lui ajoute `integrations/` par
+    `additional_contexts`.
+  - Claude Code n'accepte qu'un **zip** servi en **HTTPS**, hors `localhost` (vérifié avec
+    `claude plugin validate`, v2.1.309). L'entrée de la marketplace porte le `sha256` du zip et le plugin n'a
+    pas de `version` : l'empreinte en tient lieu, donc un plugin modifié par une mise à jour de l'instance est
+    proposé aux postes.
+  - En local, la marketplace `clockifai-dev` est le dossier `integrations/` du dépôt
+    (`integrations/.claude-plugin/marketplace.json`), car l'archive servie en `http://localhost` est refusée.
 
   Chaque instance auto-hébergée distribue ainsi la version du plugin qui correspond à son API, sans GitHub.
 - `routes/kiosk.py` : `state` exclut les agents ; `punch` écrit `source = 'kiosk'` et utilise
@@ -519,9 +534,11 @@ envoie ce qu'on écrit.
    Il faut la commande `claude` à jour sur le poste : le binaire embarqué par l'extension VSCode n'est pas sur
    le `PATH`. Dans Claude Code en terminal, `/plugin marketplace add …` et `/plugin install …` font la même
    chose.
-2. Le plugin demande l'URL, déjà remplie, puis le jeton (saisie masquée, magasin sécurisé du système). À
-   vérifier au lot 1 : où se fait cette saisie quand l'installation passe par `claude plugin install`, et sinon
-   `claude plugin configure clockifai@clockifai --values-stdin`. L'installation au niveau utilisateur couvre
+2. Le plugin demande l'URL, déjà remplie, puis le jeton (saisie masquée, magasin sécurisé du système). La doc
+   ne dit pas si `claude plugin install` la demande lui-même : à vérifier à l'étape 5. Sinon,
+   `claude plugin configure clockifai@clockifai --values-stdin` (v2.1.285 et plus) lit un objet JSON sur
+   l'entrée standard, ce qui garde le jeton hors de l'historique du shell, contrairement à
+   `claude plugin install … --config token=…`. L'installation au niveau utilisateur couvre
    tous les projets du poste, dans le terminal, VSCode et l'app desktop ; le plugin se charge à la session
    suivante.
 3. Au prompt suivant, l'agent démarre un chronomètre. Intégrations affiche « dernier événement reçu il y a
@@ -542,13 +559,13 @@ l'installe et saisit son propre jeton.
 
 ```
 integrations/claude-code/              servi par l'instance (§5), pas par GitHub
-├─ .claude-plugin/plugin.json          userConfig : url (défaut : l'instance), token (sensitive), send_excerpts
+├─ .claude-plugin/plugin.json          userConfig : url (défaut : l'instance), token (sensitive) ; send_excerpts au lot 4
 ├─ hooks/hooks.json                    UserPromptSubmit, PostToolUse, Stop, SubagentStop,
 │                                        Notification (matcher permission_prompt), SessionStart, SessionEnd → async
-├─ scripts/clockifai_hook.py           Python 3, bibliothèque standard uniquement
-├─ .mcp.json                           {"clockifai": {"type": "http", "url": "${user_config.url}/mcp",
+├─ scripts/clockifai_hook.py           Python 3.9 (celui de macOS), bibliothèque standard uniquement
+├─ .mcp.json                           lot 3 : {"clockifai": {"type": "http", "url": "${user_config.url}/mcp",
 │                                        "headers": {"Authorization": "Bearer ${user_config.token}"}}}
-└─ commands/  aujourdhui.md, decrire.md, tache.md, valider.md
+└─ commands/                           lot 3 : aujourdhui.md, decrire.md, tache.md, valider.md
 ```
 
 Le script `clockifai_hook.py` :
@@ -558,16 +575,19 @@ Le script `clockifai_hook.py` :
   `git branch --show-current` et `cwd` ;
 - génère `event_id` (uuid4) et `occurred_at` (UTC) ;
 - **n'écrit rien sur stdout**, et termine toujours avec le code 0 ;
-- limite `PostToolUse` à un événement par minute et par session (horodatage dans `~/.cache/clockifai/`) ;
+- limite `PostToolUse` à un événement par minute et par session (horodatage dans `~/.cache/clockifai/`),
+  sauf pour un outil d'une minute ou plus, qui peut prolonger l'entrée (D7.6) ;
 - détecte les commits nouveaux après chaque `PostToolUse` de `Bash` et au `Stop`, et ne revendique pour sa
   session que ceux qui suivent l'une de ses commandes git qui crée des commits (D13). Le dernier HEAD vu par
   dossier de travail est conservé dans `~/.cache/clockifai/`. Cette vérification n'est pas soumise à la
   limite d'un événement par minute ;
-- reconnaît les outils Clockifai par leur suffixe (`…__set_current_task`, `…__describe_current_work`), quel
+- (lot 3) reconnaît les outils Clockifai par leur suffixe (`…__set_current_task`, `…__describe_current_work`), quel
   que soit le préfixe que Claude Code donne au serveur d'un plugin, et envoie `session_task` ou
   `session_description` avec leur réponse JSON (D9) ;
-- en cas d'échec réseau (délai de 2 s), ajoute l'événement à `~/.cache/clockifai/spool.jsonl`, renvoyé au
-  prochain appel réussi.
+- en cas d'échec réseau ou d'erreur 5xx (délai de 2 s), ajoute l'événement à `~/.cache/clockifai/spool.jsonl`,
+  renvoyé au prochain appel réussi (au-delà de 6 jours et demi, il est abandonné : le serveur le refuserait).
+  Un refus (401 d'un jeton révoqué, 400) n'est pas réessayé. Les échecs sont notés, sans le contenu des
+  événements, dans `~/.cache/clockifai/hook.log`.
 
 Les commandes :
 - `/clockifai:aujourdhui` : mon temps et celui de Claude aujourd'hui (MCP `get_summary`).
@@ -719,8 +739,11 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
   - migrations depuis une base vide : les tables privées sont créées par `0012_activity_private.admin.sql` ;
   - jetons : création, révocation, jeton d'un ancien membre refusé, un membre ne voit ni ne révoque les
     jetons d'un autre ;
-  - marketplace : `marketplace.json` référence l'archive, et le `plugin.json` de l'archive porte l'URL de
-    l'instance ; installation réelle par `/plugin marketplace add` contre la pile locale ;
+  - marketplace : `marketplace.json` référence l'archive et son empreinte, et le `plugin.json` de l'archive
+    porte l'URL de l'instance (`services/tests/test_claude_plugin.py`) ; installation réelle contre la prod,
+    l'archive en `http://localhost` étant refusée ;
+  - le script du plugin lancé comme par Claude Code, avec le python3 de macOS, jusqu'à l'entrée de l'agent
+    décrite par le message du commit et au commit rattaché (`test_hook_script_end_to_end`) ;
   - agents (D14, D15) :
     - `ensure_agent` : deux créations de jeton simultanées → un seul compte ; l'agent ne peut pas se
       connecter ; pas d'espace personnel ;
@@ -800,8 +823,11 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 - **Fuseau du pilote** : copié dans le profil de l'agent à la création. Le fuseau n'est pas encore
   modifiable dans l'app (plan 01) ; quand il le sera, le changement devra suivre.
 - **Renommage du pilote** : le nom de l'agent n'est pas recalculé.
-- **Archive du plugin** : vérifier les formats acceptés par la source `archive` d'une marketplace servie par
-  URL, et la mise à jour du plugin quand l'instance change de version.
+- **Archive du plugin** : zip en HTTPS seulement (§5) ; reste à vérifier sur un poste que le changement
+  d'empreinte propose bien la mise à jour (`claude plugin update`).
+- **python3 sur le poste** : les hooks lancent `python3`. Sur un Mac sans outils de développement,
+  `/usr/bin/python3` propose leur installation au lieu de s'exécuter : Clockifai vise les développeurs, qui
+  les ont, mais l'écran Intégrations doit le dire.
 - **Alias git** : un commit lancé par un alias (`git ci`) n'est pas reconnu comme venant de la session. Il
   part sans session (D13).
 - **Délai de `window.state.active`** : la durée avant de passer inactif n'est pas documentée. Il faut la mesurer au lot 2. Si elle est trop courte pour une lecture, prolonger le focus de quelques minutes après `focus_end`, tant que la fenêtre garde le focus.

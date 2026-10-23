@@ -15,6 +15,7 @@ Guide pour Claude Code dans le dépôt Clockifai (clone libre et auto-hébergé 
 | `plans/` | Markdown | Plans (envisagés, validés, en cours, faits) ; statut en tête, index `plans/README.md` ; à tenir à jour avec les décisions prises |
 | `docs/` | Markdown + Mermaid, OpenAPI 3.1, HTML statique | Documentation de l'état actuel (voir § Documentation) |
 | `demo/` | Node, Playwright, ffmpeg | Vidéos de démonstration tournées automatiquement |
+| `integrations/` | Python 3.9 (bibliothèque standard) | Plugin Claude Code (`claude-code/`, hooks), servi par Flask sur `/api/claude` ; marketplace locale `clockifai-dev` |
 
 ## Commandes
 
@@ -74,7 +75,11 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 ### Flask
 - Authentifie le JWT Supabase (`auth.py`), puis vérifie explicitement l'appartenance au workspace (`require_workspace`) : la connexion psycopg contourne la RLS.
 - Un seul worker gunicorn (le scheduler APScheduler tourne dans le process).
-- Blueprints : `exports`, `invitations` (lien renvoyé si pas de SMTP), `kiosk` (jeton d'appareil `X-Kiosk-Token`, anti force brute en mémoire), `invoices` (PDF), `jobs`, `tokens` (jetons personnels `clk_…`), `activity` (événements des hooks Claude Code, temps des agents : `services/agent_clock.py` recalcule, `agent_entry_write` écrit).
+- Blueprints : `exports`, `invitations` (lien renvoyé si pas de SMTP), `kiosk` (jeton d'appareil `X-Kiosk-Token`, anti force brute en mémoire), `invoices` (PDF), `jobs`, `tokens` (jetons personnels `clk_…`), `activity` (événements des hooks Claude Code, temps des agents : `services/agent_clock.py` recalcule, `agent_entry_write` écrit), `claude` (marketplace publique : zip de `integrations/claude-code/`, HTTPS exigé par Claude Code).
+
+### Plugin Claude Code (`plans/10-suivi-claude-code.md`)
+- `integrations/claude-code/scripts/clockifai_hook.py` tourne avec le `python3` de macOS : **Python 3.9, bibliothèque standard** (ruff le vérifie avec `integrations/claude-code/ruff.toml`). Il n'écrit jamais sur stdout et sort toujours avec 0.
+- Liste blanche (D6) : jamais le prompt, `tool_input`, `tool_response` ni la transcription. Ajouter un fichier au plugin, c'est aussi l'ajouter à `PLUGIN_FILES` (`routes/claude.py`).
 
 ### Flutter
 - Organisation par fonctionnalité dans `lib/features/<feature>/` ; transverse dans `lib/core/`.
@@ -100,7 +105,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - Clé d'envoi Google Play hors dépôt (`~/.config/clockifai/android/`) ; numéro de build = minutes depuis le 2026-01-01.
 
 ## Tests
-- `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètres simultanés, verrouillage, upsert du connecteur, exports, chefs d'équipe, agents Claude, jetons et événements d'activité).
+- `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètres simultanés, verrouillage, upsert du connecteur, exports, chefs d'équipe, agents Claude, jetons et événements d'activité, script du plugin jusqu'à l'entrée de l'agent) ; `test_claude_plugin.py` : script du plugin (liste blanche, commits par session, file locale, lancé avec le python3 de macOS) et marketplace.
 - `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, pont de la barre de menus macOS (canal simulé), regroupement des entrées similaires (dont la ligne dépliable), sur base Drift en mémoire.
 - Parcours navigateur (Playwright, hors dépôt) : activer l'arbre d'accessibilité Flutter en cliquant `flt-semantics-placeholder`, puis cliquer un champ et taper au clavier (`fill` ne suffit pas).
 

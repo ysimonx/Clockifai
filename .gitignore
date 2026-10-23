@@ -16,7 +16,7 @@ powersync/*.local.yaml
 
 # Python
 services/.venv/
-services/**/__pycache__/
+__pycache__/
 services/.pytest_cache/
 services/*.egg-info/
 

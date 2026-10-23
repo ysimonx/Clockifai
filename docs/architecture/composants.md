@@ -15,6 +15,8 @@ flowchart TB
     kio["Tablette kiosque<br/>écran Kiosque, sans compte"]
   end
 
+  cc["Postes de développement<br/>Claude Code + plugin clockifai (hooks)"]
+
   edge["Reverse proxy partagé ~/edge<br/>Caddy, TLS Let's Encrypt<br/>(serveur partagé ; sinon clockifai-web fait le TLS)"]
 
   subgraph pile["Pile Clockifai : Docker Compose, réseau interne"]
@@ -39,6 +41,7 @@ flowchart TB
   fidwork["Fidwork<br/>(plan 02 en attente, non branché)"]
 
   web & mac & mob & kio -->|"HTTPS"| edge
+  cc -->|"HTTPS, jeton clk_…<br/>APP_DOMAIN /api/activity, /api/claude"| edge
   edge -->|"HTTP, réseau Docker edge"| caddy
   caddy -->|"APP_DOMAIN /api/*"| flask
   caddy -->|"SUPABASE_DOMAIN /auth/v1, /rest/v1…"| kong
@@ -92,12 +95,26 @@ L'app web appelle Flask sur sa propre origine (`SERVICES_URL` vide dans l'image)
 | Postgres | `supabase-db` | `supabase/postgres:17.6.1.136` | bases `postgres` (schéma, RLS, triggers) et `powersync_storage` ; `wal_level = logical` | 5432 | non publié |
 | Supavisor | `supabase-pooler` | `supabase/supavisor:2.9.5` | pool pour les connexions depuis l'hôte (session 5432, transaction 6543) | 5432, 6543 | local : 5432, 6543 |
 | PowerSync | `clockifai-powersync` | `journeyapps/powersync-service:1.26.1` (`POWERSYNC_VERSION`) | réplication logique → buckets → clients ; Sync Streams de `powersync/sync-config.yaml` | 8080 | local : 8080 ; prod : `SYNC_DOMAIN` |
-| Flask | `clockifai-services` | construite par `services/Dockerfile` (`python:3.12-slim-bookworm`, uv, gunicorn) | exports, factures PDF (WeasyPrint), invitations, kiosque, jetons personnels et temps des agents Claude, tâches planifiées | 5000 | local : 5050 ; prod : `APP_DOMAIN/api` |
+| Flask | `clockifai-services` | construite par `services/Dockerfile` (`python:3.12-slim-bookworm`, uv, gunicorn) | exports, factures PDF (WeasyPrint), invitations, kiosque, jetons personnels et temps des agents Claude, marketplace du plugin Claude Code (copié depuis `integrations/`), tâches planifiées | 5000 | local : 5050 ; prod : `APP_DOMAIN/api` |
 | migrate | `clockifai-migrate` | `postgres:17-alpine` | rejoue `supabase/migrations/` (suivi `clockifai_meta.schema_migrations`) avant PowerSync et Flask | — | — |
 | backup | `clockifai-backup` | `postgres:17-alpine` | profil prod : `pg_dump` quotidien à `BACKUP_HOUR`, rétention `BACKUP_KEEP_DAYS` (14 j), dans `deploy/backups/` | — | — |
 
 Ports « exposés » ci-dessus : publiés sur l'hôte par les fichiers compose de base. Derrière `~/edge`, l'override
 `docker-compose.edge.yml` les retire tous (voir [deploiement.md](deploiement.md)).
+
+## Plugin Claude Code
+
+`integrations/claude-code/` : hooks Claude Code (script Python 3.9, bibliothèque standard) installés sur les postes
+de développement. Ils envoient les événements des sessions à `POST /api/activity/events` avec un jeton personnel ;
+Flask en tire les entrées de l'agent du pilote ([séquence](../api/sequences/claude-code.md)).
+
+- **Distribution** : l'image `services` embarque le plugin (contexte de build nommé `integrations`,
+  `deploy/docker-compose.yml`) et le sert comme marketplace : `https://<APP_DOMAIN>/api/claude/marketplace.json`
+  référence un zip dont l'adresse de l'instance est la valeur par défaut, et dont l'empreinte SHA-256 tient lieu
+  de version. Claude Code refuse une archive en `http://` ou sur `localhost` : en local, la marketplace
+  `clockifai-dev` est le dossier `integrations/` du dépôt.
+- **Sur le poste** : état dans `~/.cache/clockifai/` (dernier HEAD vu par dossier de travail, file d'attente
+  `spool.jsonl` quand l'instance ne répond pas, journal des échecs `hook.log`).
 
 Tâches planifiées de Flask (`services/app/jobs/`, un seul worker donc un seul scheduler) :
 

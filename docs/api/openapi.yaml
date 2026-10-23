@@ -45,6 +45,11 @@ tags:
     description: |
       Événements des hooks Claude Code et de l'extension VSCode, temps des agents Claude (plan 10). Accepte
       un jeton personnel (`apiToken`) ou le JWT de l'app (`supabaseJwt` avec `workspace_id`).
+  - name: plugin Claude Code
+    description: |
+      Marketplace Claude Code de l'instance, publique (le plugin ne contient aucun secret). Un poste l'ajoute
+      par `claude plugin marketplace add https://<instance>/api/claude/marketplace.json`, puis
+      `claude plugin install clockifai@clockifai` (plan 10, §6.1).
   - name: tâches planifiées
     description: |
       Déclenchement manuel. En temps normal APScheduler les exécute dans le process Flask
@@ -638,6 +643,70 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/AdminRequired" }
 
+  /api/claude/marketplace.json:
+    get:
+      tags: [plugin Claude Code]
+      operationId: claudeMarketplace
+      summary: Marketplace « clockifai » de l'instance
+      description: |
+        Référence l'archive du plugin par une source `archive` : son adresse (protocole et hôte de la requête,
+        tels que transmis par Caddy) et son empreinte SHA-256. Claude Code exige une archive servie en HTTPS ;
+        l'empreinte sert de version du plugin, donc un plugin modifié par une mise à jour est proposé aux postes.
+      security: []
+      responses:
+        "200":
+          description: Marketplace Claude Code.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClaudeMarketplace" }
+              example:
+                name: clockifai
+                owner: { name: Clockifai }
+                description: Plugin Clockifai de cette instance
+                plugins:
+                  - name: clockifai
+                    description: "Temps de Claude Code dans Clockifai : un chronomètre par session…"
+                    source:
+                      source: archive
+                      url: https://clockifai.example.com/api/claude/clockifai-plugin.zip
+                      sha256: 6bfa50e3d2e00c052b46abe51fff89346ac803e45771f76dcf6df1ab74cca5e1
+        "400":
+          description: "En-tête `Host` invalide (`invalid host`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404":
+          description: "Fichiers du plugin absents de l'image (`plugin not available on this instance`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/claude/clockifai-plugin.zip:
+    get:
+      tags: [plugin Claude Code]
+      operationId: claudePluginArchive
+      summary: Archive du plugin clockifai
+      description: |
+        Zip reproductible de `integrations/claude-code/` (manifeste, hooks, script), l'adresse de l'instance
+        posée comme valeur par défaut de `userConfig.url`.
+      security: []
+      responses:
+        "200":
+          description: Archive zip du plugin.
+          content:
+            application/zip:
+              schema: { type: string, format: binary }
+        "400":
+          description: "En-tête `Host` invalide (`invalid host`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404":
+          description: Fichiers du plugin absents de l'image.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
   /api/jobs/purge-deleted:
     post:
       tags: [tâches planifiées]
@@ -733,6 +802,32 @@ components:
           schema: { $ref: "#/components/schemas/Error" }
 
   schemas:
+    ClaudeMarketplace:
+      type: object
+      required: [name, owner, plugins]
+      properties:
+        name: { type: string, const: clockifai }
+        owner:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string }
+        description: { type: string }
+        plugins:
+          type: array
+          items:
+            type: object
+            required: [name, source]
+            properties:
+              name: { type: string }
+              description: { type: string }
+              source:
+                type: object
+                required: [source, url, sha256]
+                properties:
+                  source: { type: string, const: archive }
+                  url: { type: string, format: uri }
+                  sha256: { type: string, pattern: "^[0-9a-f]{64}$" }
     Error:
       type: object
       required: [error]

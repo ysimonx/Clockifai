@@ -245,3 +245,47 @@ def test_kiosk_lists_humans_only(team):
     status, state = _call("GET", f"{SERVICES}/api/kiosk/state", None, headers={"X-Kiosk-Token": device["token"]})
     assert status == 200
     assert team["agent"] not in {m["user_id"] for m in state["members"]}
+
+
+def test_hook_script_end_to_end(team, tmp_path):
+    """Le script du plugin, lancé comme Claude Code le lance, jusqu'à l'entrée de l'agent et son commit (§6.1)."""
+    import json
+    import os
+    import subprocess
+    from pathlib import Path
+
+    script = Path(__file__).resolve().parents[3] / "integrations" / "claude-code" / "scripts" / "clockifai_hook.py"
+    python = "/usr/bin/python3" if Path("/usr/bin/python3").exists() else "python3"
+    env = dict(os.environ, CLAUDE_PLUGIN_OPTION_URL=SERVICES, CLAUDE_PLUGIN_OPTION_TOKEN=team["token"],
+               CLOCKIFAI_CACHE_DIR=str(tmp_path / "cache"), GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+    repo = tmp_path / "plugin-e2e"
+    repo.mkdir()
+    for args in (["init", "-q", "-b", "main"], ["config", "user.email", "pilote@example.com"],
+                 ["config", "user.name", "Pilote"], ["remote", "add", "origin", "git@github.com:acme/plugin-e2e.git"],
+                 ["commit", "-q", "--allow-empty", "-m", "Départ"]):
+        subprocess.run(["git", *args], cwd=repo, env=env, check=True, capture_output=True)
+    session = str(uuid.uuid4())
+
+    def hook(name, **extra):
+        data = {"hook_event_name": name, "session_id": session, "cwd": str(repo), **extra}
+        out = subprocess.run([python, str(script)], input=json.dumps(data), env=env, check=False, capture_output=True,
+                             text=True, timeout=30)
+        assert out.returncode == 0 and out.stdout == "", out.stderr
+
+    hook("SessionStart", source="startup")
+    hook("UserPromptSubmit", prompt="ajoute le plugin")
+    subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "Ajout du plugin"], cwd=repo, env=env, check=True)
+    hook("PostToolUse", tool_name="Bash", tool_input={"command": "git commit -m 'Ajout du plugin'"}, duration_ms=800)
+    hook("Stop")
+    assert not (tmp_path / "cache" / "hook.log").exists()
+
+    [entry] = [e for e in _agent_entries(team["agent"]) if e["description"] == "Ajout du plugin"]
+    assert entry["source"] == "agent" and entry["end_at"] is None and entry["deleted_at"] is None
+    sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, env=env, check=True, capture_output=True,
+                         text=True).stdout.strip()
+    _, commits = rest("GET", f"code_commits?sha=eq.{sha}&select=session_id,time_entry_id,branch,subject", SERVICE)
+    assert commits == [{"session_id": session, "time_entry_id": entry["id"], "branch": "main",
+                        "subject": "Ajout du plugin"}]
+    _, repos = rest("GET", f"code_repositories?workspace_id=eq.{team['wid']}&remote_key=eq.github.com/acme/plugin-e2e"
+                           "&select=name", SERVICE)
+    assert repos == [{"name": "plugin-e2e"}]

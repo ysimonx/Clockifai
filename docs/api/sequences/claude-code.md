@@ -28,13 +28,15 @@ sequenceDiagram
     F->>PG: workspace_members (kind agent, agent_owner_id = pilote)
     PG->>PG: team_scope : (pilote, agent), (chef du pilote, agent)
     F-->>App: {token clk_…, agent_id} (affiché une fois)
-    P->>CC: claude plugin install … (URL et jeton)
+    P->>F: claude plugin marketplace add https://…/api/claude/marketplace.json
+    F-->>P: marketplace, puis zip du plugin (adresse de l'instance par défaut)
+    P->>CC: claude plugin install clockifai@clockifai, jeton saisi (magasin sécurisé)
     end
 
     rect rgba(127, 127, 127, 0.1)
     Note over P,PS: Une session de travail
     P->>CC: prompt
-    CC->>F: POST /api/activity/events (Bearer clk_…) : prompt, outils, Stop…
+    CC->>F: POST /api/activity/events (Bearer clk_…) : prompt, outils (1 par minute), Stop, commits
     F->>PG: activity_events (idempotent par id)
     F->>PG: verrou de la session, événements des 7 derniers jours, entrées existantes
     F->>F: agent_clock : intervalles de travail, plages figées par un humain
@@ -59,3 +61,7 @@ sequenceDiagram
 - Projet d'une entrée : tâche donnée dans la session (`session_task`), sinon projet de l'entrée précédente de la
   session, sinon règle personnelle (`POST /api/activity/rules`), sinon projet du dépôt.
 - Un agent désactivé ou retiré par un admin : les événements sont gardés, aucune entrée n'est écrite.
+- Le script du plugin n'envoie ni prompt, ni contenu des outils, ni transcription : session, dépôt, branche,
+  dossier, durée de l'outil. Il lit la commande d'un outil `Bash` sur le poste pour repérer un `git commit` ; la
+  session revendique les commits faits pendant sa commande (D13). Instance injoignable : file d'attente locale,
+  renvoyée au prochain envoi réussi.

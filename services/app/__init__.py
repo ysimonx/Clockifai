@@ -7,6 +7,7 @@ Rôle volontairement limité : tout ce que Supabase (PostgREST + RLS) ne fait pa
   * /api/jobs/*      : déclenchement manuel des tâches planifiées
   * /api/tokens      : jetons personnels (hooks Claude Code, extension VSCode, MCP)
   * /api/activity/*  : événements d'activité et temps des agents Claude (plan 10)
+  * /api/claude/*    : marketplace Claude Code de l'instance (plugin clockifai)
   * /api/health      : sonde
 
 L'authentification s'appuie sur le JWT Supabase de l'utilisateur (voir auth.py).
@@ -32,6 +33,7 @@ def create_app(config: type[Config] | None = None) -> Flask:
         init_pool(app.config["DATABASE_URL"])
 
     from .routes.activity import bp as activity_bp
+    from .routes.claude import bp as claude_bp
     from .routes.exports import bp as exports_bp
     from .routes.health import bp as health_bp
     from .routes.invitations import bp as invitations_bp
@@ -48,6 +50,7 @@ def create_app(config: type[Config] | None = None) -> Flask:
     app.register_blueprint(invoices_bp, url_prefix="/api/invoices")
     app.register_blueprint(tokens_bp, url_prefix="/api/tokens")
     app.register_blueprint(activity_bp, url_prefix="/api/activity")
+    app.register_blueprint(claude_bp, url_prefix="/api/claude")
 
     origins = {o.strip() for o in app.config["CORS_ORIGINS"].split(",") if o.strip()}
 

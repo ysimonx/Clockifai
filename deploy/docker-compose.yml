@@ -82,6 +82,8 @@ services:
     container_name: clockifai-services
     build:
       context: ../services
+      additional_contexts:
+        integrations: ../integrations   # plugin Claude Code servi par /api/claude
     restart: unless-stopped
     depends_on:
       migrate:

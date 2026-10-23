@@ -24,5 +24,9 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY app ./app
 COPY gunicorn.conf.py ./
 
+# Plugin Claude Code servi par /api/claude : contexte nommé « integrations » (deploy/docker-compose.yml).
+COPY --from=integrations claude-code ./integrations/claude-code
+ENV CLAUDE_PLUGIN_DIR=/srv/integrations/claude-code
+
 EXPOSE 5000
 CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:create_app()"]

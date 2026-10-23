@@ -1,6 +1,7 @@
 """Configuration par variables d'environnement (voir deploy/.env.example)."""
 
 import os
+from pathlib import Path
 
 
 def _bool(name: str, default: bool) -> bool:
@@ -37,6 +38,10 @@ class Config:
     JOBS_ENABLED = _bool("JOBS_ENABLED", True)
     JOB_AUTOSTOP_INTERVAL_MIN = int(os.environ.get("JOB_AUTOSTOP_INTERVAL_MIN", "5"))
     JOB_PURGE_DELETED_AFTER_DAYS = int(os.environ.get("JOB_PURGE_DELETED_AFTER_DAYS", "30"))
+
+    # Plugin Claude Code servi par /api/claude (copié dans l'image, sinon lu dans le dépôt)
+    CLAUDE_PLUGIN_DIR = os.environ.get("CLAUDE_PLUGIN_DIR") or str(
+        Path(__file__).resolve().parents[2] / "integrations" / "claude-code")
 
     TESTING = False
 

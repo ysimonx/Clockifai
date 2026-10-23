@@ -80,7 +80,8 @@ cd ~/edge && docker compose up -d
 - ~~**Studio** exposé sur Internet (protégé par mot de passe)~~ : restreint au réseau local le 23 octobre 2026
   (`STUDIO_ALLOWED_IPS`, défaut `private_ranges`). Docker garde l'adresse d'origine des connexions externes
   (pas de `daemon.json`, IPv4 seulement) et `~/edge` la transmet dans `X-Forwarded-For`. Sur le serveur :
-  `STUDIO_ALLOWED_IPS=private_ranges 82.96.171.69/32` (IP publique de la box, pour le NAT en boucle). Le Mac de
-  développement sort par un VPN (84.16.74.153) : il est vu comme extérieur.
+  `STUDIO_ALLOWED_IPS=private_ranges 82.96.171.69/32 84.16.74.153/32` : IP publique de la box (NAT en boucle,
+  pas encore vérifié depuis le Wi-Fi sans VPN) et sortie du VPN personnel, par lequel passe le Mac de
+  développement. Vérifié : 403 depuis un téléphone en 4G, mot de passe demandé depuis le Mac.
 - Applications mobiles : construire avec `SUPABASE_URL=https://supabase.clockifai.kysoe.com`,
   `POWERSYNC_URL=https://sync.clockifai.kysoe.com`, `SERVICES_URL=https://clockifai.kysoe.com`.

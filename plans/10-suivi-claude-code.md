@@ -100,6 +100,12 @@
     s'installe depuis un terminal (§6.1), et un plugin installé n'est chargé qu'au démarrage d'une session ;
   - non observés, faute d'occasion : `SubagentStop`, `Notification` (aucune demande d'autorisation en mode
     automatique).
+- **Essai du plugin, même jour** (marketplace locale `clockifai-dev`, pile locale) : une nouvelle conversation
+  dans l'extension envoie `session_start`, `prompt`, `agent_tool` (avec `duration_ms`) et `agent_stop`, reçus
+  dans la seconde ; l'entrée de « Claude · Yannick » démarre au prompt, décrite par le dépôt et la branche.
+  Dix minutes plus tard, le job la ferme à l'heure de la dernière activité (19 s comptées, pas 10 min 43 s).
+  Le jeton marqué `sensitive` arrive bien au hook par `CLAUDE_PLUGIN_OPTION_TOKEN`. Un plugin installé depuis
+  une marketplace locale est lu dans son dossier source : une correction du script vaut sans réinstaller.
 
 **API des extensions VSCode** (vérifié dans `vscode.d.ts`, octobre 2026) :
 - `window.state.focused` : la fenêtre a le focus.
@@ -534,11 +540,14 @@ envoie ce qu'on écrit.
    Il faut la commande `claude` à jour sur le poste : le binaire embarqué par l'extension VSCode n'est pas sur
    le `PATH`. Dans Claude Code en terminal, `/plugin marketplace add …` et `/plugin install …` font la même
    chose.
-2. Le plugin demande l'URL, déjà remplie, puis le jeton (saisie masquée, magasin sécurisé du système). La doc
-   ne dit pas si `claude plugin install` la demande lui-même : à vérifier à l'étape 5. Sinon,
-   `claude plugin configure clockifai@clockifai --values-stdin` (v2.1.285 et plus) lit un objet JSON sur
-   l'entrée standard, ce qui garde le jeton hors de l'historique du shell, contrairement à
-   `claude plugin install … --config token=…`. L'installation au niveau utilisateur couvre
+2. `claude plugin install` **ne demande rien** (vérifié le 23 octobre 2026, v2.1.309) : il signale l'option
+   requise manquante. L'URL est déjà remplie (valeur par défaut de l'archive) ; le jeton se donne par
+   `claude plugin configure clockifai@clockifai --values-stdin` (v2.1.285 et plus), qui lit un objet JSON sur
+   l'entrée standard et le range dans le magasin sécurisé du système. L'écran Intégrations copie donc une
+   commande qui lit le presse-papiers, par exemple
+   `pbpaste | claude plugin configure clockifai@clockifai --values-stdin` avec `{"token": "clk_…"}` copié,
+   ce qui garde le jeton hors de l'historique du shell, contrairement à `--config token=…`. Dans Claude Code
+   en terminal, `/plugin configure` ouvre la même saisie. L'installation au niveau utilisateur couvre
    tous les projets du poste, dans le terminal, VSCode et l'app desktop ; le plugin se charge à la session
    suivante.
 3. Au prompt suivant, l'agent démarre un chronomètre. Intégrations affiche « dernier événement reçu il y a

@@ -202,10 +202,12 @@ hors API et hors PowerSync, et sont purgés après 30 jours. Les données sont r
    compterait le délai en trop. Dans l'app, le chronomètre tourne en direct, puis sa fin « recule » à la
    clôture.
 5. `SessionEnd` ferme l'entrée à l'heure de l'événement.
-6. **Commande longue** : un `PostToolUse` ou un `Stop` qui arrive après une clôture par le job prolonge
-   l'entrée jusqu'à lui, car Claude travaillait. Exception : une attente d'autorisation (`agent_wait`) reçue
-   entre-temps ; la reprise ouvre alors une nouvelle entrée. `PostToolUse` porte `duration_ms` : le début
-   d'une commande longue est donc connu, pas seulement sa fin.
+6. **Commande longue** : `PostToolUse` porte `duration_ms`. Un outil qui finit après le délai mais a commencé
+   avant (`fin − durée ≤ dernière activité + délai`) prolonge l'entrée jusqu'à lui, car Claude travaillait.
+   Exceptions : une attente d'autorisation (`agent_wait`) reçue entre-temps, ou un outil commencé après le
+   délai ; l'outil ouvre alors une nouvelle entrée, à son début. Un `Stop` ne porte pas de durée : après le
+   délai, il ne prolonge rien. Un outil sans prompt avant lui (session reprise, plugin installé en cours de
+   session) ouvre une entrée ; un `Stop` seul, non.
 7. **Recalcul, pas machine à états.** `agent_clock` (fonction pure, testée sans base) recalcule les
    intervalles d'une session à partir de tous ses événements bruts (7 jours au plus). Le serveur applique
    ensuite la différence avec les entrées existantes. Un événement en retard ou en double donne donc le même

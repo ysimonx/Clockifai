@@ -1,6 +1,7 @@
 # Suivi du temps : Claude et moi (hooks, extension VSCode, connecteur MCP) — plan 10
 
-> Statut : **validé**, non commencé (23 octobre 2026). Les lots 5 et 6 restent envisagés.
+> Statut : **en cours** (lot 1 commencé le 23 octobre 2026, branche `plan-10-lot-1`). Les lots 5 et 6
+> restent envisagés.
 >
 > Objectif : mesurer, projet par projet, **deux temps distincts** :
 > - le **temps de Claude**, pendant que les agents Claude Code travaillent, y compris quand on a quitté la fenêtre ;
@@ -345,8 +346,9 @@ GitLab, Gitea/Forgejo…
 **D14. Identité de l'agent.**
 - **Compte technique** : Flask le crée avec l'API admin GoTrue (`admin/users`), par le helper `_gotrue_admin`
   sorti de `routes/invitations.py` vers `services/gotrue.py`. `app_metadata` vaut
-  `{"kind": "agent", "owner_id": <pilote>}`. Le compte a un e-mail technique non routable, pas de mot de
-  passe et un `ban_duration` très long : aucune connexion possible. Un seul compte par pilote, membre de
+  `{"kind": "agent", "owner_id": <pilote>}`, et `user_metadata` porte aussi `kind: agent` : GoTrue n'écrit les
+  `app_metadata` qu'après l'insertion, que voit `handle_new_user` (constaté le 23 octobre 2026). Le compte a un
+  e-mail technique non routable, pas de mot de passe et un `ban_duration` très long : aucune connexion possible. Un seul compte par pilote, membre de
   chacun de ses workspaces.
 - Avant d'appeler GoTrue, Flask cherche le compte agent du pilote (`app_metadata.owner_id`), sous verrou
   consultatif par pilote : deux créations simultanées ne font pas deux comptes. L'appel HTTP à GoTrue se
@@ -770,7 +772,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (écran des jetons, section Agents, droits D15, exclusions, bandeau « Claude travaille », « toujours rattacher », filtre des rapports, réglages de facturation des agents) ; vérifier les hooks dans l'extension VSCode | M/L | validé |
+| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (écran des jetons, section Agents, droits D15, exclusions, bandeau « Claude travaille », « toujours rattacher », filtre des rapports, réglages de facturation des agents) ; vérifier les hooks dans l'extension VSCode | M/L | en cours |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
 | 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |

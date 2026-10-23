@@ -6,6 +6,7 @@ import logging
 import smtplib
 import ssl
 from email.message import EmailMessage
+from email.utils import formataddr
 
 from flask import current_app
 
@@ -21,7 +22,8 @@ def send_mail(to: str, subject: str, text: str) -> bool:
         log.info("SMTP non configuré : email non envoyé à %s (%s)", to, subject)
         return False
     msg = EmailMessage()
-    msg["From"] = cfg["SMTP_SENDER"]
+    name = cfg.get("SMTP_SENDER_NAME", "")
+    msg["From"] = formataddr((name, cfg["SMTP_SENDER"])) if name else cfg["SMTP_SENDER"]
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(text)

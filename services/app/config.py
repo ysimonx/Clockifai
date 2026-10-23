@@ -27,6 +27,7 @@ class Config:
     SMTP_USER = os.environ.get("SMTP_USER", "")
     SMTP_PASS = os.environ.get("SMTP_PASS", "")
     SMTP_SENDER = os.environ.get("SMTP_SENDER", "clockifai@example.com")
+    SMTP_SENDER_NAME = os.environ.get("SMTP_SENDER_NAME", "Clockifai")  # nom affiché, comme pour GoTrue
     APP_PUBLIC_URL = os.environ.get("APP_PUBLIC_URL", "http://localhost:3000")
 
     # Origines autorisées (CORS) pour l'app web servie sur un autre port en développement

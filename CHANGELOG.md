@@ -56,6 +56,8 @@ Google Play. Aucune version n'a encore été figée : tout ce qui suit est en «
 
 - Supabase Studio n'est plus accessible qu'en réseau local ; les API restent publiques (23 octobre). Réglage
   `STUDIO_ALLOWED_IPS` pour l'ouvrir à un VPN.
+- Les emails d'invitation arrivent sous le nom « Clockifai » (`SMTP_SENDER_NAME`), comme ceux de connexion et
+  de mot de passe oublié (23 octobre).
 - Un seul chronomètre par tâche (22 octobre) : démarrer une tâche qui tourne déjà propose de l'arrêter ;
   sans tâche, la règle porte sur le projet et la description.
 

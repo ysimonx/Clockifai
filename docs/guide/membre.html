@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Membre · Guide de Clockifai</title>
+  <meta name="description" content="Saisir et suivre son propre temps dans Clockifai : saisie après coup, chronomètre, feuille de temps, absences, planning, rapports, hors ligne.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%230369a1' stroke-width='4'/%3E%3Cpath d='M16 9v8' stroke='%230369a1' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="guide.css">
+  <script src="guide.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="inner">
+      <a class="brand" href="index.html">Clockifai <span>Guide</span></a>
+      <nav class="site-nav" aria-label="Pages du guide">
+        <ul>
+          <li><a href="index.html">Accueil</a></li>
+          <li><a href="membre.html" aria-current="page">Membre</a></li>
+          <li><a href="chef-equipe.html">Chef d’équipe</a></li>
+          <li><a href="manager.html">Manager</a></li>
+          <li><a href="proprietaire.html">Propriétaire et admin</a></li>
+          <li><a href="administrateur.html">Installation</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-labelledby="toc-titre">
+      <h2 id="toc-titre">Sur cette page</h2>
+      <ol>
+        <li><a href="#video">La vidéo</a></li>
+        <li><a href="#se-reperer">Se repérer</a></li>
+        <li><a href="#saisie-apres-coup">Saisir des heures après coup</a></li>
+        <li><a href="#chronometre">Chronométrer en direct</a></li>
+        <li><a href="#entrees">Retrouver et corriger ses entrées</a></li>
+        <li><a href="#feuille-de-temps">Remplir et soumettre sa feuille de temps</a></li>
+        <li><a href="#calendrier">Le calendrier</a></li>
+        <li><a href="#planning">Le planning</a></li>
+        <li><a href="#absences">Demander une absence</a></li>
+        <li><a href="#rapports">Ses rapports</a></li>
+        <li><a href="#hors-ligne">Travailler sans réseau</a></li>
+        <li><a href="#telephone">Sur téléphone</a></li>
+        <li><a href="#mac">Sur Mac</a></li>
+        <li><a href="#kiosque">Pointer sur une tablette</a></li>
+        <li><a href="#parametres">Ses paramètres</a></li>
+        <li><a href="#messages">Messages fréquents</a></li>
+      </ol>
+    </nav>
+
+    <main id="contenu">
+      <p class="eyebrow">Membre</p>
+      <h1>Saisir et suivre votre temps</h1>
+      <p class="lead">Tout le monde, quel que soit son rôle, saisit son propre temps comme décrit ici : après coup ou
+        avec le chronomètre, jour par jour ou semaine par semaine.</p>
+
+      <figure class="video" id="video">
+        <video data-video="1-camille-membre" src="videos/1-camille-membre.mp4" controls preload="metadata" playsinline aria-describedby="video-texte"></video>
+        <p class="video-missing">La vidéo n’est pas encore publiée sur cette installation. Le guide ci-dessous reste
+          valable sans elle.</p>
+        <figcaption id="video-texte">Vidéo sans son, avec bandeaux explicatifs : Camille, membre de l’équipe
+          « Unité 4 », saisit ses heures après coup et au chronomètre, remplit et soumet sa feuille de temps, consulte
+          son planning, demande une absence, regarde ses rapports, travaille sans réseau puis sur son téléphone.</figcaption>
+        <ol class="chapters" aria-label="Chapitres de la vidéo">
+          <li><a class="scene" data-video="1-camille-membre" data-scene="connexion" href="videos/1-camille-membre.mp4">Connexion</a></li>
+          <li><a class="scene" data-video="1-camille-membre" data-scene="accueil" href="videos/1-camille-membre.mp4">Suivi du temps</a></li>
+          <li><a class="scene" data-video="1-camille-membre" data-scene="saisie après coup" href="videos/1-camille-membre.mp4">Saisie après coup</a></li>
+          <li><a class="scene" data-video="1-camille-membre" data-scene="chronomètre et tâche à la volée" href="videos/1-camille-membre.mp4">Chronomètre et tâche à la volée</a></li>
+          <li><a class="scene" data-video="1-camille-membre" data-scene="feuille de temps" href="videos/1-camille-membre.mp4">Feuille de temps</a></li>
+          <li><a class="scene" data-video="1-camille-membre" data-scene="calendrier" href="videos/1-camille-membre.mp4">Calendrier</a></li>
+          <li><a class="scene" data-video="1-camille-membre" data-scene="planning" href="videos/1-camille-membre.mp4">Planning</a></li>
+          <li><a class="scene" data-video="1-camille-membre" data-scene="absences" href="videos/1-camille-membre.mp4">Absences</a></li>
+          <li><a class="scene" data-video="1-camille-membre" data-scene="rapports" href="videos/1-camille-membre.mp4">Rapports</a></li>
+          <li><a class="scene" data-video="1-camille-membre" data-scene="hors ligne" href="videos/1-camille-membre.mp4">Hors ligne</a></li>
+          <li><a class="scene" data-video="1-camille-membre" data-scene="mobile" href="videos/1-camille-membre.mp4">Sur téléphone</a></li>
+        </ol>
+      </figure>
+
+      <section aria-labelledby="se-reperer">
+        <h2 id="se-reperer">Se repérer</h2>
+        <p>En haut de chaque écran, la <strong>barre du chronomètre</strong> est toujours là : « Sur quoi
+          travaillez-vous ? », le projet, puis <span class="ui">Démarrer</span>. Le menu, à gauche sur ordinateur et en
+          bas sur téléphone (le reste sous <span class="ui">Plus</span>), donne accès aux écrans :</p>
+        <ul>
+          <li><span class="ui">Suivi du temps</span> : vos entrées, jour par jour, avec le total de chaque jour et de la
+            semaine ;</li>
+          <li><span class="ui">Feuille de temps</span>, <span class="ui">Calendrier</span>,
+            <span class="ui">Rapports</span> : votre temps vu autrement ;</li>
+          <li><span class="ui">Planning</span>, <span class="ui">Absences</span>, <span class="ui">Équipe</span> : où
+            vous êtes attendu, vos congés, l’annuaire ;</li>
+          <li><span class="ui">Projets</span>, <span class="ui">Clients</span>, <span class="ui">Tags</span> : la
+            liste de référence (seuls les managers la modifient) ;</li>
+          <li><span class="ui">Paramètres</span> : votre profil et vos préférences.</li>
+        </ul>
+        <p>Un indicateur montre l’état de la synchronisation : <span class="ui">Synchronisé</span>,
+          <span class="ui">Synchronisation…</span> ou <span class="ui">Hors ligne</span>.</p>
+        <p>Une entrée marquée « saisi par Karim Haddad » a été saisie pour vous par votre chef d’équipe (pointage
+          d’équipe, par exemple). Les heures sont bien les vôtres : vous pouvez les corriger.</p>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="accueil" href="videos/1-camille-membre.mp4">Voir l’écran Suivi du temps</a></p>
+      </section>
+
+      <section aria-labelledby="saisie-apres-coup">
+        <h2 id="saisie-apres-coup">Saisir des heures après coup</h2>
+        <p>Le plus simple pour déclarer une journée déjà faite :</p>
+        <ol class="steps">
+          <li>Dans la barre du chronomètre, ouvrez le menu à trois points (<span class="ui">⋮</span>, ou <span class="ui">⋯</span> sur Mac et iPhone) puis
+            <span class="ui">Ajouter une entrée</span>.</li>
+          <li>Écrivez une <span class="ui">Description</span> (« Contrôle des ancrages »).</li>
+          <li>Touchez <span class="ui">Sans projet</span> pour choisir le projet et la tâche : tapez quelques lettres
+            dans « Rechercher un projet, une tâche, un client ». Les tâches apparaissent sous chaque projet.</li>
+          <li>Choisissez la <span class="ui">Date</span>, puis les heures de <span class="ui">Début</span> et de
+            <span class="ui">Fin</span>, ou seulement une <span class="ui">Durée</span> : « 1:30 », « 1,5 » ou
+            « 90m », l’heure de fin se calcule toute seule.</li>
+          <li>Si besoin, <span class="ui">Ajouter des tags</span> et cochez ou décochez
+            <span class="ui">Facturable</span>, puis <span class="ui">Enregistrer</span>.</li>
+        </ol>
+        <p>L’entrée est enregistrée immédiatement sur l’appareil, puis envoyée au serveur. Une fin plus tôt que le début
+          signifie que le travail s’est terminé après minuit (« Se termine le lendemain. »).</p>
+        <p>Sur le <a href="#calendrier">Calendrier</a>, un clic sur un créneau libre ouvre la même saisie, déjà calée
+          sur cette heure-là.</p>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="saisie après coup" href="videos/1-camille-membre.mp4">Voir la saisie après coup</a></p>
+      </section>
+
+      <section aria-labelledby="chronometre">
+        <h2 id="chronometre">Chronométrer en direct</h2>
+        <ol class="steps">
+          <li>Dans la barre du haut, écrivez ce que vous faites (« Sur quoi travaillez-vous ? »).</li>
+          <li>Touchez <span class="ui">Projet</span> pour choisir le projet et la tâche ; les boutons voisins ajoutent
+            des <span class="ui">Tags</span> et basculent <span class="ui">Facturable</span> /
+            <span class="ui">Non facturable</span>.</li>
+          <li>Touchez <span class="ui">Démarrer</span>. Le temps défile ; touchez <span class="ui">Arrêter</span> à la
+            fin.</li>
+        </ol>
+        <p>Le chronomètre continue même si vous fermez l’application, et vous le retrouvez sur vos autres appareils. Sur
+          iPhone et Android, une notification « chronomètre en cours » l’affiche en permanence.</p>
+        <p>Pendant qu’il tourne, vous pouvez changer la description, le projet ou les tags. Le menu
+          à trois points propose aussi <span class="ui">Modifier le chronomètre</span> (pour corriger
+          l’heure de début, par exemple) et <span class="ui">Abandonner le chronomètre</span> : le temps en cours n’est
+          alors pas enregistré.</p>
+        <p>Votre entreprise peut imposer un projet ou une description, et arrêter automatiquement les chronomètres
+          oubliés après une certaine durée.</p>
+
+        <h3 id="tache-a-la-volee">La tâche n’existe pas ? Créez-la sur place</h3>
+        <p>Dans le sélecteur de projet, tapez le nom de la tâche puis touchez « Créer la tâche « … » dans : » et
+          choisissez le projet où la ranger. Selon le réglage de votre entreprise (<span class="ui">Création de
+          tâches</span>), cette possibilité est ouverte à tout le monde ou réservée aux managers.</p>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="chronomètre et tâche à la volée" href="videos/1-camille-membre.mp4">Voir le chronomètre et la création de tâche</a></p>
+
+        <h3 id="plusieurs-chronometres">Plusieurs chronomètres en même temps</h3>
+        <p>Si votre entreprise l’autorise (réglage <span class="ui">Chronomètres simultanés</span>), vous pouvez mener
+          plusieurs chronomètres de front, sur des chantiers différents par exemple. La barre du haut reste alors prête
+          pour en démarrer un autre, et chaque chronomètre en cours s’affiche sur sa propre ligne avec son bouton
+          <span class="ui">Arrêter</span>.</p>
+        <ul>
+          <li>Au-delà du nombre permis, le plus ancien s’arrête : « Limite atteinte : le chronomètre le plus ancien a
+            été arrêté ».</li>
+          <li>Un seul chronomètre par tâche : « Un chronomètre tourne déjà sur cette tâche ».</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="entrees">
+        <h2 id="entrees">Retrouver et corriger ses entrées</h2>
+        <p>L’écran <span class="ui">Suivi du temps</span> liste vos entrées par jour (<span class="ui">Aujourd’hui</span>,
+          <span class="ui">Hier</span>…), regroupées par semaine avec le <span class="ui">Total semaine</span>.
+          <span class="ui">Afficher plus</span> remonte plus loin dans le passé.</p>
+        <ul>
+          <li>Touchez une entrée pour la modifier.</li>
+          <li>Le bouton <span class="ui">Continuer</span> (▶) relance un chronomètre avec la même description, le même
+            projet et la même tâche.</li>
+          <li>Le menu de la ligne propose <span class="ui">Modifier</span>, <span class="ui">Dupliquer</span> et
+            <span class="ui">Supprimer</span>. Une entrée supprimée disparaît de tous vos appareils.</li>
+          <li>Un cadenas signale une entrée verrouillée (semaine approuvée ou période close) : vous pouvez seulement la
+            <span class="ui">Consulter</span>.</li>
+        </ul>
+
+        <h3 id="regroupement">Entrées similaires regroupées</h3>
+        <p>Les entrées d’une même journée qui ont la même description, le même projet, la même tâche, les mêmes tags et
+          la même facturation sont réunies sur une seule ligne, avec leur total. Touchez
+          <span class="ui">Afficher les … entrées</span> pour voir le détail, <span class="ui">Masquer le détail</span>
+          pour le replier. Le menu de la ligne regroupée permet de
+          <span class="ui">Modifier les … entrées</span> d’un coup (description, projet, tags, facturation ; « Les
+          horaires de chaque entrée ne changent pas. ») ou de toutes les supprimer.</p>
+        <p>Vous préférez une ligne par entrée ? Désactivez <span class="ui">Regrouper les entrées similaires</span> dans
+          vos <a href="#parametres">paramètres</a> (réglage propre à chaque appareil).</p>
+      </section>
+
+      <section aria-labelledby="feuille-de-temps">
+        <h2 id="feuille-de-temps">Remplir et soumettre sa feuille de temps</h2>
+        <p>La <span class="ui">Feuille de temps</span> montre la semaine en une grille : une ligne par projet et tâche,
+          une colonne par jour. Tapez les heures directement dans les cases (« 7:30 », « 7,5 »).
+          <span class="ui">Ajouter une ligne</span> ajoute un projet ; les flèches <span class="ui">Semaine
+          précédente</span> et <span class="ui">Semaine suivante</span> changent de semaine.</p>
+        <h3 id="soumettre">Soumettre la semaine</h3>
+        <ol class="steps">
+          <li>Vérifiez la semaine, puis touchez <span class="ui">Soumettre pour approbation</span> (un commentaire est
+            facultatif).</li>
+          <li>La semaine passe <span class="ui">En attente d’approbation</span>. Tant qu’elle n’est pas traitée, vous
+            pouvez la <span class="ui">Retirer</span> pour la corriger.</li>
+          <li><span class="ui">Approuvée</span> : la semaine est verrouillée, plus personne ne la modifie sauf un
+            administrateur. <span class="ui">Refusée</span> : lisez le commentaire, corrigez, puis soumettez à
+            nouveau.</li>
+        </ol>
+        <p>Votre feuille est validée par votre chef d’équipe s’il y en a un, sinon par un manager.</p>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="feuille de temps" href="videos/1-camille-membre.mp4">Voir la feuille de temps et sa soumission</a></p>
+      </section>
+
+      <section aria-labelledby="calendrier">
+        <h2 id="calendrier">Le calendrier</h2>
+        <p>Le <span class="ui">Calendrier</span> affiche vos journées en blocs horaires : la semaine sur ordinateur, le
+          jour sur téléphone. Touchez un bloc pour modifier l’entrée, ou un créneau libre pour en créer une à cette
+          heure-là.</p>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="calendrier" href="videos/1-camille-membre.mp4">Voir le calendrier</a></p>
+      </section>
+
+      <section aria-labelledby="planning">
+        <h2 id="planning">Le planning</h2>
+        <p>Le <span class="ui">Planning</span> montre où vous êtes attendu : vos affectations sur les projets, posées par
+          un manager, vos absences approuvées et les jours fériés. Vous le consultez ; seuls les managers le
+          modifient.</p>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="planning" href="videos/1-camille-membre.mp4">Voir le planning</a></p>
+      </section>
+
+      <section aria-labelledby="absences">
+        <h2 id="absences">Demander une absence</h2>
+        <p>L’écran <span class="ui">Absences</span> affiche vos soldes de l’année (« Mes soldes ») pour chaque type
+          d’absence : droit annuel, jours pris, jours restants, calculés à partir des demandes approuvées.</p>
+        <ol class="steps">
+          <li>Touchez <span class="ui">Demander une absence</span>.</li>
+          <li>Choisissez le <span class="ui">Type d’absence</span> (congés payés, RTT…), les dates, éventuellement
+            <span class="ui">Demi-journée</span>. Le nombre de jours ouvrés se calcule seul, jours fériés exclus.</li>
+          <li><span class="ui">Envoyer</span>. La demande apparaît dans <span class="ui">Mes demandes</span>,
+            <span class="ui">En attente</span> si une validation est requise.</li>
+        </ol>
+        <p>Selon le type d’absence, la demande est validée par un manager ou aussi par votre chef d’équipe. Une absence
+          approuvée apparaît dans le planning et se décompte de votre solde. Vos plans changent ? Une demande en attente
+          ou déjà approuvée peut être annulée (<span class="ui">Annuler la demande</span>).</p>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="absences" href="videos/1-camille-membre.mp4">Voir les absences</a></p>
+      </section>
+
+      <section aria-labelledby="rapports">
+        <h2 id="rapports">Ses rapports</h2>
+        <p>Les <span class="ui">Rapports</span> d’un membre ne portent que sur ses propres heures : <span class="ui">Temps
+          total</span>, <span class="ui">Temps facturable</span>, <span class="ui">Montant</span> et répartition.</p>
+        <ul>
+          <li>Choisissez la période (<span class="ui">Cette semaine</span>, <span class="ui">Mois dernier</span>,
+            <span class="ui">Période personnalisée</span>…) et filtrez par client, projet ou facturation.</li>
+          <li><span class="ui">Résumé</span> regroupe le temps (<span class="ui">Grouper par</span> projet, client, tag,
+            jour ou description) ; <span class="ui">Détaillé</span> liste chaque entrée.</li>
+          <li><span class="ui">Exporter</span> : <span class="ui">CSV (hors ligne)</span> fonctionne même sans réseau ;
+            CSV, Excel (.xlsx) et PDF sont produits par le serveur.</li>
+        </ul>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="rapports" href="videos/1-camille-membre.mp4">Voir les rapports</a></p>
+      </section>
+
+      <section aria-labelledby="hors-ligne">
+        <h2 id="hors-ligne">Travailler sans réseau</h2>
+        <p>Pas de réseau sur le chantier ? Continuez comme d’habitude : saisies, chronomètre, feuille de temps
+          fonctionnent hors ligne. L’indicateur passe à <span class="ui">Hors ligne</span> et vos changements attendent
+          sur l’appareil (« Modifications en attente d’envoi »). Quand le réseau revient, l’envoi se fait tout seul.</p>
+        <p>Quelques actions demandent le réseau, comme les exports CSV, Excel et PDF produits par le serveur ou le
+          pointage sur tablette : « Action impossible hors ligne. »</p>
+        <p class="note">Ne vous déconnectez pas tant que des modifications attendent l’envoi : se déconnecter efface les
+          données locales de l’appareil.</p>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="hors ligne" href="videos/1-camille-membre.mp4">Voir la saisie hors ligne</a></p>
+      </section>
+
+      <section aria-labelledby="telephone">
+        <h2 id="telephone">Sur téléphone</h2>
+        <p>Même application, mêmes données : le menu est en bas de l’écran, les écrans moins fréquents sont sous
+          <span class="ui">Plus</span>. Sur la feuille de temps, faites glisser la grille pour voir toute la semaine ;
+          le calendrier affiche un jour à la fois.</p>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="mobile" href="videos/1-camille-membre.mp4">Voir l’application sur téléphone</a></p>
+      </section>
+
+      <section aria-labelledby="mac">
+        <h2 id="mac">Sur Mac</h2>
+        <p>L’application Mac ajoute une icône dans la barre de menus, en haut à droite de l’écran. Un clic ouvre un petit
+          panneau pour démarrer ou arrêter le chronomètre, changer la description ou le projet, et relancer une entrée
+          récente (<span class="ui">Récemment</span>). Tant qu’un chronomètre tourne, le temps écoulé s’affiche à côté
+          de l’icône. <span class="ui">Ouvrir Clockifai</span> affiche la fenêtre complète.</p>
+        <ul>
+          <li>Fermer la fenêtre ne quitte pas l’application : l’icône et la synchronisation restent actives. Pour
+            quitter, utilisez <span class="ui">Quitter Clockifai</span> dans le panneau.</li>
+          <li><span class="ui">Démarrer à l’ouverture de session</span> (dans <span class="ui">Paramètres</span> ou par
+            clic droit sur l’icône) : Clockifai s’ouvre dans la barre de menus, sans fenêtre. macOS peut demander de
+            l’autoriser dans Réglages Système &gt; Général &gt; Ouverture.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="kiosque">
+        <h2 id="kiosque">Pointer sur une tablette</h2>
+        <p>Votre entreprise a peut-être installé une tablette partagée (mode kiosque), à l’entrée du chantier par
+          exemple. Pour y pointer :</p>
+        <ol class="steps">
+          <li>Une fois pour toutes, choisissez votre code dans <span class="ui">Paramètres</span> &gt;
+            <span class="ui">Code PIN kiosque</span> (4 à 8 chiffres).</li>
+          <li>Sur la tablette, touchez votre nom, tapez votre code et, à l’arrivée, choisissez le projet si on vous le
+            propose.</li>
+          <li>Au départ, même geste : « Au revoir … ! ».</li>
+        </ol>
+        <p>Le temps pointé apparaît dans votre suivi du temps comme une saisie normale. La tablette a besoin du réseau.</p>
+        <p class="watch"><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="kiosque" href="videos/4-sophie-gestion-workspace.mp4">Voir le pointage sur tablette</a></p>
+      </section>
+
+      <section aria-labelledby="parametres">
+        <h2 id="parametres">Ses paramètres</h2>
+        <dl class="glossary">
+          <dt>Profil</dt>
+          <dd>Votre nom (touchez-le pour le changer), <span class="ui">Définir le mot de passe</span>,
+            <span class="ui">Code PIN kiosque</span>, <span class="ui">Langue</span> (français, anglais ou langue du
+            système), <span class="ui">Regrouper les entrées similaires</span> et, sur Mac,
+            <span class="ui">Démarrer à l’ouverture de session</span>.</dd>
+          <dt>Workspaces</dt>
+          <dd>Vos workspaces et votre rôle dans chacun ; touchez-en un pour y basculer.
+            <span class="ui">Créer un workspace</span> ouvre un nouvel espace dont vous êtes propriétaire.</dd>
+          <dt>Réglages du workspace</dt>
+          <dd>Les règles fixées par votre entreprise, en lecture seule : « Seuls les administrateurs peuvent modifier ces
+            réglages. »</dd>
+          <dt>Compte</dt>
+          <dd><span class="ui">Se déconnecter</span> : les données locales de l’appareil sont effacées (elles restent sur
+            le serveur).</dd>
+        </dl>
+      </section>
+
+      <section aria-labelledby="messages">
+        <h2 id="messages">Messages fréquents</h2>
+        <dl class="glossary">
+          <dt>« Un projet est obligatoire dans ce workspace. » / « Une description est obligatoire dans ce workspace. »</dt>
+          <dd>Votre entreprise l’exige : complétez avant de démarrer, d’arrêter ou d’enregistrer.</dd>
+          <dt>« Entrée verrouillée : seule une personne administratrice peut la modifier. »</dt>
+          <dd>La semaine a été approuvée ou la période est close. Demandez une correction à un administrateur, ou à votre
+            valideur de rouvrir la semaine.</dd>
+          <dt>« Modification refusée : droits insuffisants ou période verrouillée. Elle a été annulée. »</dt>
+          <dd>Le serveur a refusé un changement fait hors ligne (la semaine a été approuvée entre-temps, par exemple).
+            L’affichage revient à l’état du serveur.</dd>
+          <dt>« L’heure de début ne peut pas être dans le futur. »</dt>
+          <dd>Pour un travail à venir, attendez de l’avoir fait, ou demandez à un manager de vous affecter au
+            planning.</dd>
+          <dt>« Aucun workspace »</dt>
+          <dd>Votre compte n’appartient à aucun workspace actif : demandez une invitation à un administrateur.</dd>
+        </dl>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="inner">Clockifai, suivi du temps libre et auto-hébergé · <a href="index.html">Accueil du guide</a></div>
+  </footer>
+</body>
+</html>

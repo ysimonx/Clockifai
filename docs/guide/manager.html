@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manager · Guide de Clockifai</title>
+  <meta name="description" content="Le rôle Manager dans Clockifai : voir toute l’entreprise, valider feuilles de temps et absences, planifier, exporter, suivre les budgets, facturer.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%230369a1' stroke-width='4'/%3E%3Cpath d='M16 9v8' stroke='%230369a1' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="guide.css">
+  <script src="guide.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="inner">
+      <a class="brand" href="index.html">Clockifai <span>Guide</span></a>
+      <nav class="site-nav" aria-label="Pages du guide">
+        <ul>
+          <li><a href="index.html">Accueil</a></li>
+          <li><a href="membre.html">Membre</a></li>
+          <li><a href="chef-equipe.html">Chef d’équipe</a></li>
+          <li><a href="manager.html" aria-current="page">Manager</a></li>
+          <li><a href="proprietaire.html">Propriétaire et admin</a></li>
+          <li><a href="administrateur.html">Installation</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-labelledby="toc-titre">
+      <h2 id="toc-titre">Sur cette page</h2>
+      <ol>
+        <li><a href="#video">La vidéo</a></li>
+        <li><a href="#role">Le rôle Manager</a></li>
+        <li><a href="#equipe">Le temps de tout le monde</a></li>
+        <li><a href="#approbations">Valider les feuilles de temps</a></li>
+        <li><a href="#absences">Valider les absences</a></li>
+        <li><a href="#planning">Planifier</a></li>
+        <li><a href="#rapports">Rapports et exports</a></li>
+        <li><a href="#projets">Projets, tâches, clients, tags</a></li>
+        <li><a href="#factures">Facturer</a></li>
+        <li><a href="#saisie-autrui">Saisir pour les autres</a></li>
+        <li><a href="#parametres">Les règles, en lecture seule</a></li>
+      </ol>
+    </nav>
+
+    <main id="contenu">
+      <p class="eyebrow">Manager</p>
+      <h1>Piloter toute l’entreprise</h1>
+      <p class="lead">Le manager voit le temps de chacun, valide, planifie, exporte et facture, sans toucher aux rôles
+        ni aux règles de l’entreprise. Pour votre propre temps, voir la page <a href="membre.html">Membre</a> ; les
+        gestes de validation sont détaillés dans la page <a href="chef-equipe.html">Chef d’équipe</a>.</p>
+
+      <figure class="video" id="video">
+        <video data-video="3-julien-manager" src="videos/3-julien-manager.mp4" controls preload="metadata" playsinline aria-describedby="video-texte"></video>
+        <p class="video-missing">La vidéo n’est pas encore publiée sur cette installation. Le guide ci-dessous reste
+          valable sans elle.</p>
+        <figcaption id="video-texte">Vidéo sans son, avec bandeaux explicatifs : Julien, conducteur de travaux et
+          manager, consulte les heures de toutes les équipes, approuve une feuille de temps et des congés, affecte un
+          compagnon au planning, exporte les heures pour la paie, suit les budgets des chantiers et parcourt les
+          réglages, qu’il ne peut pas modifier.</figcaption>
+        <ol class="chapters" aria-label="Chapitres de la vidéo">
+          <li><a class="scene" data-video="3-julien-manager" data-scene="connexion" href="videos/3-julien-manager.mp4">Son menu</a></li>
+          <li><a class="scene" data-video="3-julien-manager" data-scene="équipe" href="videos/3-julien-manager.mp4">Équipe</a></li>
+          <li><a class="scene" data-video="3-julien-manager" data-scene="approbations" href="videos/3-julien-manager.mp4">Approbations</a></li>
+          <li><a class="scene" data-video="3-julien-manager" data-scene="absences" href="videos/3-julien-manager.mp4">Absences</a></li>
+          <li><a class="scene" data-video="3-julien-manager" data-scene="planning" href="videos/3-julien-manager.mp4">Planning</a></li>
+          <li><a class="scene" data-video="3-julien-manager" data-scene="rapports" href="videos/3-julien-manager.mp4">Rapports et export</a></li>
+          <li><a class="scene" data-video="3-julien-manager" data-scene="projets" href="videos/3-julien-manager.mp4">Projets et budgets</a></li>
+          <li><a class="scene" data-video="3-julien-manager" data-scene="paramètres" href="videos/3-julien-manager.mp4">Paramètres</a></li>
+        </ol>
+      </figure>
+
+      <section aria-labelledby="role">
+        <h2 id="role">Le rôle Manager</h2>
+        <p>Le propriétaire ou un administrateur vous a donné le rôle <span class="ui">Manager</span>. Votre menu
+          comprend tous les écrans d’équipe (<span class="ui">Approbations</span>, <span class="ui">Factures</span>…),
+          mais pas la gestion des rôles, des groupes, des règles ni des tablettes kiosque.</p>
+        <p class="watch"><a class="scene" data-video="3-julien-manager" data-scene="connexion" href="videos/3-julien-manager.mp4">Voir le menu d’un manager</a></p>
+      </section>
+
+      <section aria-labelledby="equipe">
+        <h2 id="equipe">Le temps de tout le monde</h2>
+        <p>La page <span class="ui">Équipe</span> montre les heures de la semaine de chaque personne, toutes équipes
+          confondues, avec les taux horaires. Sur la <span class="ui">Feuille de temps</span> et le
+          <span class="ui">Calendrier</span>, le sélecteur <span class="ui">Collaborateur</span> affiche le temps de
+          n’importe qui (en consultation, sauf si la règle de saisie pour autrui vous y autorise).</p>
+        <p>Les invitations et les changements de rôle restent l’affaire du propriétaire et des administrateurs.</p>
+        <p class="watch"><a class="scene" data-video="3-julien-manager" data-scene="équipe" href="videos/3-julien-manager.mp4">Voir la page Équipe d’un manager</a></p>
+      </section>
+
+      <section aria-labelledby="approbations">
+        <h2 id="approbations">Valider les feuilles de temps</h2>
+        <p><span class="ui">Approbations</span> liste toutes les semaines soumises, quelle que soit l’équipe. Ouvrez-en
+          une pour la lire entrée par entrée, puis <span class="ui">Approuver</span> (la semaine est verrouillée) ou
+          <span class="ui">Refuser</span> avec un commentaire. <span class="ui">Historique</span> garde les décisions ;
+          <span class="ui">Rouvrir</span> y déverrouille une semaine approuvée. C’est aussi vous qui validez la feuille
+          des chefs d’équipe et celle des personnes sans chef d’équipe.</p>
+        <p class="watch"><a class="scene" data-video="3-julien-manager" data-scene="approbations" href="videos/3-julien-manager.mp4">Voir l’approbation d’une semaine</a></p>
+      </section>
+
+      <section aria-labelledby="absences">
+        <h2 id="absences">Valider les absences</h2>
+        <p>Dans <span class="ui">Absences</span>, la rubrique <span class="ui">À valider</span> réunit les demandes de
+          toute l’entreprise ; un chef d’équipe ne voit que celles de son équipe. <span class="ui">Approuver</span> ou
+          <span class="ui">Refuser</span>, avec un commentaire facultatif. Une absence approuvée s’affiche dans le
+          planning et se décompte du solde de la personne.</p>
+        <p class="watch"><a class="scene" data-video="3-julien-manager" data-scene="absences" href="videos/3-julien-manager.mp4">Voir la validation des congés</a></p>
+      </section>
+
+      <section aria-labelledby="planning">
+        <h2 id="planning">Planifier</h2>
+        <p>Le <span class="ui">Planning</span> montre qui est où, sur 1, 2 ou 4 semaines : affectations, absences
+          approuvées, jours fériés grisés. Chaque case indique les heures prévues au regard de la capacité quotidienne de
+          la personne (7 h par défaut) ; en rouge, la surcharge.</p>
+        <ol class="steps">
+          <li>Touchez la case d’un jour (la personne et la date sont déjà remplies) ou
+            <span class="ui">Nouvelle affectation</span>.</li>
+          <li>Choisissez le projet, les jours couverts (une affectation peut durer plusieurs jours), les
+            <span class="ui">Heures par jour</span> et éventuellement un commentaire, puis
+            <span class="ui">Enregistrer</span>.</li>
+        </ol>
+        <p>La personne voit l’affectation dans son propre planning. Touchez une affectation pour la
+          <span class="ui">Modifier l’affectation</span> ou la supprimer.</p>
+        <p class="watch"><a class="scene" data-video="3-julien-manager" data-scene="planning" href="videos/3-julien-manager.mp4">Voir une affectation au planning</a></p>
+      </section>
+
+      <section aria-labelledby="rapports">
+        <h2 id="rapports">Rapports et exports</h2>
+        <p>Vos <span class="ui">Rapports</span> portent sur toute l’entreprise, avec les montants au taux de chaque
+          personne ou de chaque projet. Filtrez par membre, client, projet ou facturation ; groupez par projet, client,
+          utilisateur, tag, jour ou description. Les bases sont décrites dans la page
+          <a href="membre.html#rapports">Membre</a>.</p>
+        <ul>
+          <li><span class="ui">Exporter</span> en Excel (.xlsx) pour la paie : une ligne par entrée, avec la personne, le
+            client, le projet, la tâche, les horaires et la durée. Existe aussi en CSV et en PDF.</li>
+          <li>Si l’entreprise a défini un <span class="ui">Arrondi des durées</span>, l’option « Arrondi … min »
+            l’applique au rapport.</li>
+        </ul>
+        <p class="watch"><a class="scene" data-video="3-julien-manager" data-scene="rapports" href="videos/3-julien-manager.mp4">Voir les rapports et l’export Excel</a></p>
+      </section>
+
+      <section aria-labelledby="projets">
+        <h2 id="projets">Projets, tâches, clients, tags</h2>
+        <p>Les managers tiennent la liste de référence, que tout le monde utilise pour classer son temps.</p>
+        <dl class="glossary">
+          <dt>Projets</dt>
+          <dd><span class="ui">Nouveau projet</span> : nom, client, couleur, <span class="ui">Taux horaire</span>,
+            <span class="ui">Budget</span> en heures, <span class="ui">Facturable par défaut</span>,
+            <span class="ui">Projet public</span> (visible et utilisable par tous les membres), note. La jauge compare
+            les heures passées au budget (« … % du budget de … h »). Un projet terminé s’archive
+            (<span class="ui">Archiver</span>, <span class="ui">Restaurer</span>).</dd>
+          <dt>Tâches</dt>
+          <dd>Dans le menu d’un projet, <span class="ui">Ajouter une tâche</span>. Une tâche finie se
+            <span class="ui">Marquer terminée</span> et se <span class="ui">Rouvrir</span>. Selon le réglage
+            <span class="ui">Création de tâches</span>, les membres peuvent aussi en créer depuis le sélecteur de
+            projet.</dd>
+          <dt>Clients</dt>
+          <dd><span class="ui">Nouveau client</span> : nom, <span class="ui">Adresse de facturation</span>,
+            <span class="ui">Email de facturation</span>, devise spécifique, note. Supprimer un client garde ses
+            projets, sans client.</dd>
+          <dt>Tags</dt>
+          <dd><span class="ui">Nouveau tag</span>, ou directement depuis le sélecteur de tags
+            (« Créer le tag « … » »).</dd>
+        </dl>
+        <p class="watch"><a class="scene" data-video="3-julien-manager" data-scene="projets" href="videos/3-julien-manager.mp4">Voir le suivi des budgets</a></p>
+      </section>
+
+      <section aria-labelledby="factures">
+        <h2 id="factures">Facturer</h2>
+        <p>L’écran <span class="ui">Factures</span> transforme le temps facturable en factures.</p>
+        <ol class="steps">
+          <li><span class="ui">Nouvelle facture</span> : choisissez le client, la période et la
+            <span class="ui">TVA</span>, puis <span class="ui">Générer</span>. Une ligne par projet est créée à partir
+            du temps facturable non encore facturé du client sur la période, au bon taux.</li>
+          <li>Tant qu’elle est en <span class="ui">Brouillon</span>, ajustez les lignes (<span class="ui">Ajouter une
+            ligne</span> : description, quantité en heures, prix unitaire HT), la <span class="ui">Remise</span>, la
+            TVA et les <span class="ui">Mentions / conditions</span>.</li>
+          <li>Téléchargez le <span class="ui">PDF</span>, puis passez la facture en <span class="ui">Envoyée</span>,
+            <span class="ui">Payée</span> ou <span class="ui">Annulée</span>.</li>
+        </ol>
+        <p>Le numéro (préfixe, année, numéro d’ordre) est attribué par le serveur : numérotation continue, sans doublon. Les heures
+          facturées ne peuvent plus être modifiées ; supprimer la facture les rend à nouveau facturables. Les
+          coordonnées de l’entreprise qui figurent en en-tête sont réglées par un administrateur (voir
+          <a href="proprietaire.html#facturation">Facturation</a>).</p>
+        <p class="watch"><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="factures" href="videos/4-sophie-gestion-workspace.mp4">Voir la création d’une facture</a></p>
+      </section>
+
+      <section aria-labelledby="saisie-autrui">
+        <h2 id="saisie-autrui">Saisir pour les autres</h2>
+        <p>Si l’entreprise a choisi « Administrateurs et chefs d’équipe » pour la <span class="ui">Saisie du temps pour
+          autrui</span>, vous pouvez saisir et corriger le temps de tout le monde : <span class="ui">Pointage
+          d’équipe</span>, sélecteur <span class="ui">Collaborateur</span> de la feuille de temps,
+          <span class="ui">Ajouter du temps pour d’autres</span>. Les gestes sont ceux du
+          <a href="chef-equipe.html#pointage">chef d’équipe</a>. Avec le réglage « Administrateurs », vous consultez
+          seulement.</p>
+      </section>
+
+      <section aria-labelledby="parametres">
+        <h2 id="parametres">Les règles, en lecture seule</h2>
+        <p>Dans <span class="ui">Paramètres</span>, vous voyez les <span class="ui">Réglages du workspace</span> sans
+          pouvoir les modifier. Règles, rôles, groupes, types d’absence, jours fériés et tablettes relèvent du
+          <a href="proprietaire.html">propriétaire et des administrateurs</a>.</p>
+        <p class="watch"><a class="scene" data-video="3-julien-manager" data-scene="paramètres" href="videos/3-julien-manager.mp4">Voir les paramètres d’un manager</a></p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="inner">Clockifai, suivi du temps libre et auto-hébergé · <a href="index.html">Accueil du guide</a></div>
+  </footer>
+</body>
+</html>

@@ -4,8 +4,8 @@
 #   sh backup.sh          # une sauvegarde immédiate
 #   sh backup.sh loop     # boucle : une sauvegarde par jour à BACKUP_HOUR (conteneur `backup`)
 #
-# Restauration (base vide, stack arrêtée sauf db) :
-#   docker compose exec -T db pg_restore -U supabase_admin -d postgres --clean --if-exists < backups/clockifai-YYYYMMDD-HHMMSS.dump
+# Restauration : docs/exploitation.md, § Restauration. Pas de `pg_restore --clean` direct : le dump est pris
+# sans les droits (--no-privileges), on importe donc les seules données dans une base neuve créée par les migrations.
 set -eu
 
 BACKUP_DIR="${BACKUP_DIR:-/backups}"

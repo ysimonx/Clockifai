@@ -1,7 +1,7 @@
 #!/bin/sh
 # Écrit sur la sortie standard la config Flutter (--dart-define-from-file) à partir de deploy/.env.
 #   sh deploy/app-config.sh > app/config/local.json
-# Variables surchargeables : SUPABASE_URL, POWERSYNC_URL, SERVICES_URL
+# Variables surchargeables : SUPABASE_URL, POWERSYNC_URL, SERVICES_URL, GUIDE_URL
 #   (ex. pour un émulateur Android : SUPABASE_URL=http://10.0.2.2:8000),
 #   ENV_FILE (chemin absolu d'un autre .env, ex. celui du serveur de prod : make app-config-prod).
 set -eu
@@ -13,11 +13,14 @@ anon=$(get ANON_KEY)
 supabase_url=${SUPABASE_URL:-$(get SUPABASE_PUBLIC_URL)}
 powersync_url=${POWERSYNC_URL:-$(get POWERSYNC_PUBLIC_URL)}
 services_url=${SERVICES_URL:-http://localhost:$(get SERVICES_PORT)}
+# Guide d'utilisation : en local, `make docs-serve` ; avec un SERVICES_URL (prod), vide = <SERVICES_URL>/guide/.
+if [ -n "${SERVICES_URL:-}" ]; then guide_url=${GUIDE_URL:-}; else guide_url=${GUIDE_URL:-http://localhost:3200/guide/}; fi
 cat <<JSON
 {
   "SUPABASE_URL": "$supabase_url",
   "SUPABASE_ANON_KEY": "$anon",
   "POWERSYNC_URL": "$powersync_url",
-  "SERVICES_URL": "$services_url"
+  "SERVICES_URL": "$services_url",
+  "GUIDE_URL": "$guide_url"
 }
 JSON

@@ -1,5 +1,7 @@
 # Forges git : branches, commits et demandes de fusion rattachés aux tâches — plan
 
+> Statut : **envisagé** (23 octobre 2026) : questions encore ouvertes (§11).
+>
 > Objectif : voir, sur chaque tâche, les branches, commits et demandes de fusion (pull requests et merge
 > requests) qui la concernent, **quel que soit l'hébergeur** : GitHub, GitLab, Gitea/Forgejo, Bitbucket, ou
 > aucun. On les montre à côté du temps des humains et de celui des agents, et leurs messages servent à
@@ -238,13 +240,13 @@ Les tables privées vont dans une migration `*.admin.sql`, le reste dans une mig
 
 ## 9. Lots
 
-| Lot | Contenu | Taille |
-|---|---|---|
-| 1 Socle et GitHub | Migrations, adaptateur GitHub (`push`, `pull_request`, `create`, `delete`), réception en tâche de fond, rattrapage des livraisons GitHub, module de règles §3 (liens `context` des commits de Claude), routes de liens, administration des connexions, fiche de tâche et volet Développement. Prérequis : plan 10 lot 1, plan 04 lot 0 | M/L |
-| 2 GitLab et Gitea/Forgejo | Deux adaptateurs de plus et leurs jeux de test | S chacun |
-| 3 Rattrapage et auteurs | `backfill` par API (en job), `identity_links` et rapprochement auteurs ↔ membres | S/M |
-| 4 Issues | Issues importées comme tâches (`external_*` sur `tasks`, garde de lecture seule), références `#12`, tâche terminée à la fusion de sa demande. Le dépôt doit avoir un projet (`code_repositories.project_id`) : une issue devient une tâche de ce projet | M |
-| 5 Bitbucket | À la demande | S |
+| Lot | Contenu | Taille | État |
+|---|---|---|---|
+| 1 Socle et GitHub | Migrations, adaptateur GitHub (`push`, `pull_request`, `create`, `delete`), réception en tâche de fond, rattrapage des livraisons GitHub, module de règles §3 (liens `context` des commits de Claude), routes de liens, administration des connexions, fiche de tâche et volet Développement. Prérequis : plan 10 lot 1, plan 04 lot 0 | M/L | envisagé |
+| 2 GitLab et Gitea/Forgejo | Deux adaptateurs de plus et leurs jeux de test | S chacun | envisagé |
+| 3 Rattrapage et auteurs | `backfill` par API (en job), `identity_links` et rapprochement auteurs ↔ membres | S/M | envisagé |
+| 4 Issues | Issues importées comme tâches (`external_*` sur `tasks`, garde de lecture seule), références `#12`, tâche terminée à la fusion de sa demande. Le dépôt doit avoir un projet (`code_repositories.project_id`) : une issue devient une tâche de ce projet | M | envisagé |
+| 5 Bitbucket | À la demande | S | envisagé |
 
 Les liens `context` de **mes** commits (piste humaine) arrivent avec le lot 2 du plan 10 (suggestions acceptées).
 

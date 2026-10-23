@@ -356,6 +356,12 @@ abstract class AppLocalizations {
   /// **'Annuler la demande'**
   String get cancelRequest;
 
+  /// No description provided for @cannotOpenLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'ouvrir {url}'**
+  String cannotOpenLink(String url);
+
   /// No description provided for @changeRejected.
   ///
   /// In fr, this message translates to:
@@ -925,6 +931,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Demi-journée'**
   String get halfDay;
+
+  /// No description provided for @help.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aide'**
+  String get help;
 
   /// No description provided for @hideSimilarEntries.
   ///
@@ -2551,6 +2563,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Utilisateur'**
   String get user;
+
+  /// No description provided for @userGuide.
+  ///
+  /// In fr, this message translates to:
+  /// **'Guide d\'utilisation'**
+  String get userGuide;
+
+  /// No description provided for @userGuideHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment utiliser Clockifai selon votre rôle, avec des vidéos de démonstration.'**
+  String get userGuideHelp;
 
   /// No description provided for @users.
   ///

@@ -1,8 +1,10 @@
 # Tickets à la Jira — plan
 
+> Statut : **validé** pour le lot 0, numéro de tâche (23 octobre 2026) ; **envisagé** pour le reste
+> (11 octobre 2026).
+>
 > Objectif : savoir si les **tâches** de Clockifai peuvent servir de tickets à la Jira,
-> et jusqu'où aller. Statut : **lot 0 engagé** (numéro de tâche, 23 octobre 2026), le reste en
-> **réflexion** (11 octobre 2026).
+> et jusqu'où aller.
 >
 > Plans qui en dépendent : `10-suivi-claude-code.md` (D9 : tâche d'une branche) et `09-forges-git.md`
 > (§3 : références, nom de branche proposé).
@@ -22,12 +24,12 @@
 
 ## 2. Ce qui manque, classé par coût
 
-| Coût | Ajout | Mise en œuvre |
-|---|---|---|
-| **XS — lot 0** | Numéro lisible `CLK-42` | §3 |
-| **S** | Description, personne assignée, priorité, échéance, étape `todo` / `in_progress` / `done` | Colonnes sur `tasks` ; l'étape est une colonne **à part** (`stage`), le statut `active` / `done` reste tel quel (§4) |
-| **M** | Tableau kanban, liste « mes tickets », commentaires, historique d'activité | Table `task_comments` synchronisée, trigger d'historique, deux écrans Flutter. La fiche de tâche elle-même est créée par le plan 09 (lot 1) ; ce lot y ajoute commentaires et historique |
-| **L+ (à éviter)** | Pièces jointes hors connexion, notifications, sprints / backlog, workflows personnalisables, épopées et liens entre tickets, recherche avancée façon JQL | Ce qui fait la taille de Jira ; hors du métier d'un outil de temps |
+| Coût | Ajout | Mise en œuvre | État |
+|---|---|---|---|
+| **XS — lot 0** | Numéro lisible `CLK-42` | §3 | validé |
+| **S** | Description, personne assignée, priorité, échéance, étape `todo` / `in_progress` / `done` | Colonnes sur `tasks` ; l'étape est une colonne **à part** (`stage`), le statut `active` / `done` reste tel quel (§4) | envisagé |
+| **M** | Tableau kanban, liste « mes tickets », commentaires, historique d'activité | Table `task_comments` synchronisée, trigger d'historique, deux écrans Flutter. La fiche de tâche elle-même est créée par le plan 09 (lot 1) ; ce lot y ajoute commentaires et historique | envisagé |
+| **L+ (à éviter)** | Pièces jointes hors connexion, notifications, sprints / backlog, workflows personnalisables, épopées et liens entre tickets, recherche avancée façon JQL | Ce qui fait la taille de Jira ; hors du métier d'un outil de temps | — |
 
 ## 3. Lot 0 — numéro de tâche
 

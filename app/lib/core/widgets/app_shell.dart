@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../data/powersync/connector.dart';
 import '../../features/timer/timer_bar.dart';
 import '../di.dart';
+import '../guide.dart';
 import '../l10n.dart';
 import '../session.dart';
 import '../team_rights.dart';
@@ -160,6 +161,20 @@ class _AppShellState extends State<AppShell> {
                     ),
                   NavigationDrawerDestination(icon: Icon(d.icon), selectedIcon: Icon(d.selectedIcon), label: Text(d.label(l))),
                 ],
+                // Hors destinations (n'entre pas dans selectedIndex) : ouvre le guide dans le navigateur.
+                const Padding(padding: EdgeInsets.fromLTRB(28, 8, 28, 8), child: Divider(height: 1)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: ListTile(
+                    shape: const StadiumBorder(),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    leading: const Icon(Icons.help_outline),
+                    title: Text(l.userGuide),
+                    trailing: const Icon(Icons.open_in_new, size: 16),
+                    onTap: () => openGuide(context),
+                  ),
+                ),
+                const SizedBox(height: 12),
               ],
             ),
           ),
@@ -223,6 +238,16 @@ class _AppShellState extends State<AppShell> {
                         context.go(d.path);
                       },
                     ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.help_outline),
+                    title: Text(l.userGuide),
+                    trailing: const Icon(Icons.open_in_new, size: 18),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      openGuide(context);
+                    },
+                  ),
                 ]),
               ),
             );

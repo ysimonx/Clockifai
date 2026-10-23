@@ -17,9 +17,27 @@ dans un navigateur (Playwright) sur la pile locale :
 make up                         # pile Docker démarrée
 make app-build-web              # build web de production à jour
 cd demo && npm install
-node record.mjs                 # les 5 vidéos → demo/out/*.mp4
+node record.mjs                 # les 5 vidéos → demo/out/*.mp4 (+ *.chapters.json pour le guide)
 node record.mjs 2               # une seule vidéo
 DEMO_FAST=1 node record.mjs 1   # répétition rapide, sans vidéo, pour mettre au point un scénario
+```
+
+Le tournage utilise le Chromium et le ffmpeg de Playwright (`npx playwright install chromium ffmpeg`, une fois).
+Le Google Chrome installé (`DEMO_CHANNEL=chrome`) suffit pour les répétitions `DEMO_FAST`, pas pour filmer :
+Playwright y produit des vidéos à l'horodatage faux, plus courtes ou plus longues que le temps réel, d'où des
+coupes et des chapitres décalés.
+
+Avec Node 26, l'installateur de Playwright peut se figer en pleine décompression et laisser un binaire tronqué
+(« spawn Unknown system error -88 », ou un téléchargement qui ne finit jamais). Installer alors à la main, avec
+les révisions de `node_modules/playwright-core/browsers.json` (ici Mac Apple Silicon, Playwright 1.55) :
+
+```bash
+CDN=https://cdn.playwright.dev/dbazure/download/playwright/builds; PW=~/Library/Caches/ms-playwright
+curl -fLo /tmp/ffmpeg.zip $CDN/ffmpeg/1011/ffmpeg-mac-arm64.zip
+rm -rf $PW/ffmpeg-1011 && mkdir -p $PW/ffmpeg-1011 && ditto -x -k /tmp/ffmpeg.zip $PW/ffmpeg-1011
+curl -fLo /tmp/chromium.zip $CDN/chromium/1187/chromium-mac-arm64.zip
+rm -rf $PW/chromium-1187 && mkdir -p $PW/chromium-1187 && ditto -x -k /tmp/chromium.zip $PW/chromium-1187
+touch $PW/ffmpeg-1011/INSTALLATION_COMPLETE $PW/chromium-1187/INSTALLATION_COMPLETE
 ```
 
 Avant chaque vidéo, `prepare-demo.sh` recrée l'entreprise fictive « Échafaudages du Nord »
@@ -30,6 +48,18 @@ laissés par les tests automatiques.
 L'app est servie depuis `app/build/web` sur le port **3100** (le 3000 sert au `flutter run` de
 développement). Une scène qui échoue est notée, une capture est enregistrée dans `demo/out/echec-*.png`
 et le tournage continue.
+
+## Publier dans le guide utilisateur
+
+Le guide (`docs/guide/`, en ligne sous `https://<APP_DOMAIN>/guide/`) intègre les vidéos et renvoie à leurs
+scènes par leur nom (`h.scene('feuille de temps', …)`) : `*.chapters.json` donne le début de chaque scène.
+Renommer une vidéo ou une scène impose de reprendre le guide ; `make docs-check` le signale.
+
+```bash
+make guide-videos                          # demo/out → docs/guide/videos (hors git)
+make docs-serve                            # aperçu : http://localhost:3200/guide/
+make guide-publish HOST=user@serveur       # envoi sur le serveur de production
+```
 
 Sous macOS, `record.mjs` réveille l'écran et empêche la mise en veille (`caffeinate`) le temps du
 tournage. Sur batterie, capot fermé, le Mac s'endort malgré tout et les vidéos se remplissent de temps

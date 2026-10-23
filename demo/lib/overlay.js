@@ -92,6 +92,16 @@
       el.classList.add('on');
     },
     hideCode() { ensure(); document.getElementById('demo-code').classList.remove('on'); },
+    /**
+     * Repère de début de scène : carré magenta dans le coin, retrouvé dans la vidéo puis effacé au montage
+     * (encode() dans helpers.mjs). L'horloge ne suffit pas : la vidéo de Playwright s'étire quand l'app anime.
+     */
+    mark() {
+      const m = document.createElement('div');
+      m.style.cssText = 'position:fixed;right:2px;bottom:2px;width:12px;height:12px;background:#f0f;z-index:2147483647;pointer-events:none';
+      document.documentElement.appendChild(m);
+      setTimeout(() => m.remove(), 500);
+    },
     ensure,
   };
   if (document.readyState !== 'loading') ensure();

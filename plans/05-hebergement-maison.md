@@ -1,5 +1,7 @@
 # Plan 05 — Hébergement de production à la maison (clockifai.kysoe.com)
 
+> Statut : **fait** (en production depuis le 13 octobre 2026). Restent les « Points ouverts ».
+
 ## Contexte
 
 - Serveur : PC Ubuntu `pcyannick` (192.168.0.84, 8 cœurs, 31 Go, Docker), accès SSH `ysimonx`.

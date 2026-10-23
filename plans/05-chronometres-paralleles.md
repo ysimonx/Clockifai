@@ -1,5 +1,7 @@
 # Chronomètres simultanés — plan
 
+> Statut : **fait** (22 octobre 2026). Pistes : §6 « Plus tard ».
+>
 > Objectif : pouvoir faire tourner **plusieurs chronomètres en même temps**. Avec des agents IA,
 > on mène souvent plusieurs chantiers en parallèle, sur plusieurs ordinateurs ou dans plusieurs sessions,
 > et chacun mérite son propre chronomètre.

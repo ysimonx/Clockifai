@@ -1,5 +1,7 @@
 # Plan 06 — Version macOS et icône de la barre de menus
 
+> Statut : **fait** (14 octobre 2026). Pistes : « Pistes », en fin de plan.
+
 ## Besoin
 
 Une version macOS de l'app avec, comme Clockify, une petite icône en haut à droite de l'écran (barre de menus)

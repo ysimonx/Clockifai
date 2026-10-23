@@ -114,13 +114,13 @@ L'app envoie son jeton Fidwork à `POST /api/integrations/fidwork/session` ; Clo
 
 ## 6. Lots et ordre de livraison
 
-| Lot | Résultat visible | Prérequis |
-|---|---|---|
-| **F0** Cadrage | Choix du tenant pilote, liste des phases, rôles → managers, information des salariés (géolocalisation) | — |
-| **F1** Référentiel | Les interventions d'un site pilote apparaissent comme tâches dans Clockifai ; les compagnons sont invités et peuvent déjà pointer depuis l'app Clockifai | Clockifai lot 3 (invitations) : fait |
-| **F2** Pointage terrain | Scan QR → départ/arrêt du pointage dans Fidwork, y compris hors ligne et en équipe | F1 + correctif heure des événements |
-| **F3** Retour Fidwork | Heures par intervention visibles dans Fidwork, pré-remplissage des formulaires nucléaires | F2 |
-| **F4** SSO | « Continuer avec Fidwork » dans l'app Clockifai | facultatif |
+| Lot | Résultat visible | Prérequis | État |
+|---|---|---|---|
+| **F0** Cadrage | Choix du tenant pilote, liste des phases, rôles → managers, information des salariés (géolocalisation) | — | en attente |
+| **F1** Référentiel | Les interventions d'un site pilote apparaissent comme tâches dans Clockifai ; les compagnons sont invités et peuvent déjà pointer depuis l'app Clockifai | Clockifai lot 3 (invitations) : fait | en attente |
+| **F2** Pointage terrain | Scan QR → départ/arrêt du pointage dans Fidwork, y compris hors ligne et en équipe | F1 + correctif heure des événements | en attente |
+| **F3** Retour Fidwork | Heures par intervention visibles dans Fidwork, pré-remplissage des formulaires nucléaires | F2 | en attente |
+| **F4** SSO | « Continuer avec Fidwork » dans l'app Clockifai | facultatif | en attente |
 
 ## 7. Points d'attention
 

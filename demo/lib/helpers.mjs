@@ -1,5 +1,5 @@
 // Outils communs du tournage : pilotage de l'app Flutter web, incrustations, encodage.
-import { execSync, spawn } from 'node:child_process';
+import { execSync, spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,10 +29,12 @@ export async function ensureServer() {
 }
 
 /**
- * Temps morts à couper au montage, par fichier vidéo : quand une action attend l'app (synchronisation,
- * machine chargée) bien au-delà du prévu, l'intervalle est noté et retiré de la vidéo.
+ * Horloge de chaque fichier vidéo ({ start, cuts, scenes }) :
+ * - cuts : temps morts à couper au montage ; quand une action attend l'app (synchronisation,
+ *   machine chargée) bien au-delà du prévu, l'intervalle est noté et retiré de la vidéo ;
+ * - scenes : début de chaque scène, d'où les chapitres que le guide utilisateur relie à ses sections.
  */
-export const deadTime = new Map();
+export const timeline = new Map();
 const SLACK = 1.5; // secondes d'attente tolérées à l'image
 
 /**
@@ -64,16 +66,74 @@ function mergeCuts(cuts) {
   return merged;
 }
 
-/** webm Playwright → mp4 H.264 1440×900 (téléphone centré sur fond sombre), temps morts retirés. */
+/**
+ * Repères de début de scène (__demo.mark, overlay.js) : intervalles [début, fin] où le coin bas-droit du webm est
+ * magenta (Cb et Cr élevés, ce que ni l'app ni les incrustations n'affichent à cet endroit).
+ */
+function sceneMarks(webm, { width, height }) {
+  const { stderr } = spawnSync(ffmpegPath, ['-i', webm, '-vf', `crop=6:6:${width - 11}:${height - 11},signalstats,metadata=print`, '-f', 'null', '-'],
+    { encoding: 'utf8', maxBuffer: 1 << 28 });
+  const marks = [];
+  let t = 0;
+  let u = 0;
+  for (const line of stderr.split('\n')) {
+    const pts = line.match(/pts_time:([\d.]+)/);
+    if (pts) t = Number(pts[1]);
+    const cb = line.match(/signalstats\.UAVG=([\d.]+)/);
+    if (cb) u = Number(cb[1]);
+    const cr = line.match(/signalstats\.VAVG=([\d.]+)/);
+    if (cr && u > 180 && Number(cr[1]) > 180) {
+      const last = marks[marks.length - 1];
+      if (last && t - last[1] < 0.3) last[1] = t;
+      else marks.push([t, t]);
+    }
+  }
+  return marks;
+}
+
+/**
+ * webm Playwright → mp4 H.264 1440×900 (téléphone centré sur fond sombre), temps morts retirés, repères de scène
+ * effacés. Renvoie les chapitres de cette partie, [{ scene, start }], recalés sur la vidéo coupée.
+ */
 export function encode(webm, target, { phone = false } = {}) {
-  const cuts = mergeCuts(deadTime.get(webm) ?? []);
+  const { start = 0, end = start, cuts: raw = [], scenes = [] } = timeline.get(webm) ?? {};
+  const info = probe(webm);
+  // Horloge et vidéo ne coïncident pas : la vidéo commence avec sa première image (1 à 2 s après l'horloge) et
+  // s'étire quand l'app anime l'écran (Playwright écrit chaque image reçue au moins une fois à 25 i/s). Les
+  // chapitres viennent donc des repères filmés ; l'horloge, recalée sur la fin de la vidéo, ne sert qu'en secours.
+  const lead = Math.max(0, (end - start) / 1000 - info.duration);
+  const cuts = mergeCuts(raw.map(([a, b]) => [a - lead, b - lead]));
+  const marks = sceneMarks(webm, info);
+  const starts = marks.length === scenes.length
+    ? marks.map(([a]) => a)
+    : (console.log(`  ${marks.length} repère(s) pour ${scenes.length} scène(s) : chapitres d'après l'horloge, approximatifs`),
+      scenes.map(([, t]) => t - lead));
   const select = cuts.length
     ? `select='not(${cuts.map(([a, b]) => `between(t,${a.toFixed(2)},${b.toFixed(2)})`).join('+')})',setpts=N/30/TB,`
     : '';
   if (cuts.length) console.log(`  coupe ${cuts.length} temps mort(s), ${Math.round(cuts.reduce((s, [a, b]) => s + b - a, 0))} s au total`);
+  const unmark = marks.length
+    ? `delogo=x=${info.width - 16}:y=${info.height - 16}:w=15:h=15:enable='${marks.map(([a, b]) => `between(t,${(a - 0.1).toFixed(2)},${(b + 0.1).toFixed(2)})`).join('+')}',`
+    : '';
   const vf = phone ? `scale=-2:${H - 40},pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=0x0f172a` : `scale=${W}:${H}`;
-  ffmpeg(`-i "${webm}" -vf "fps=30,${select}${vf},format=yuv420p" -c:v libx264 -preset medium -crf 21 -an -movflags +faststart "${target}"`);
+  ffmpeg(`-i "${webm}" -vf "fps=30,${unmark}${select}${vf},format=yuv420p" -c:v libx264 -preset medium -crf 21 -an -movflags +faststart "${target}"`);
+  const removedBefore = (t) => cuts.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, t) - a), 0);
+  return scenes.map(([scene], i) => ({ scene, start: Math.max(0, starts[i] - removedBefore(starts[i])) }));
 }
+
+/** Durée (secondes) et dimensions d'un fichier vidéo, lues dans l'en-tête par ffmpeg. */
+export function probe(file) {
+  const { stderr } = spawnSync(ffmpegPath, ['-i', file], { encoding: 'utf8' });
+  const d = stderr.match(/Duration: (\d+):(\d+):([\d.]+)/);
+  const s = stderr.match(/Video: .*?, (\d{2,5})x(\d{2,5})/);
+  return {
+    duration: d ? Number(d[1]) * 3600 + Number(d[2]) * 60 + Number(d[3]) : 0,
+    width: s ? Number(s[1]) : W,
+    height: s ? Number(s[2]) : H,
+  };
+}
+
+export const duration = (file) => probe(file).duration;
 
 export function concat(parts, target) {
   const list = `${target}.txt`;
@@ -251,6 +311,10 @@ export function helpers(page, failures, clock = null) {
   /** Une scène : en cas d'échec, on note, on ferme les boîtes de dialogue et on continue le tournage. */
   const scene = async (name, fn) => {
     const t0 = Date.now();
+    clock?.scenes.push([name, (t0 - clock.start) / 1000]);
+    // Repère filmé (chapitres du guide) : le laisser peindre avant que la scène ne change de page.
+    await page.evaluate(() => window.__demo?.mark()).catch(() => {});
+    if (!FAST) await wait(200);
     console.log(`  · ${new Date().toLocaleTimeString('fr-FR')} scène « ${name} »`);
     try { await semantics(); await fn(); console.log(`    ok (${Math.round((Date.now() - t0) / 1000)} s)`); }
     catch (e) {
@@ -297,15 +361,16 @@ export async function record(browser, { phone = false } = {}, fn) {
     ...(FAST ? {} : { recordVideo: { dir: out, size: viewport } }),
   });
   await ctx.addInitScript(overlay);
-  const clock = { start: Date.now(), cuts: [] };
+  const clock = { start: Date.now(), cuts: [], scenes: [] };
   const page = await ctx.newPage();
   try {
     await fn(page, clock);
   } finally {
+    clock.end = Date.now();
     await ctx.close();
   }
   if (FAST) return null;
   const file = await page.video().path();
-  deadTime.set(file, clock.cuts);
+  timeline.set(file, clock);
   return file;
 }

@@ -21,6 +21,15 @@
 		reverse_proxy services:5000
 	}
 
+	# Guide utilisateur : docs/guide monté en lecture seule ; ses vidéos (docs/guide/videos, hors git)
+	# arrivent par `make guide-publish`. file_server gère les requêtes Range (saut dans une vidéo).
+	redir /guide /guide/
+	handle /guide/* {
+		root * /srv
+		file_server
+		header Cache-Control "no-cache"
+	}
+
 	handle {
 		root * /srv/web
 		try_files {path} /index.html

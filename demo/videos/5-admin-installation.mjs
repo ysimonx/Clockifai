@@ -3,7 +3,7 @@
 // Clockifai qui administre, avec Supabase Studio et le fichier deploy/.env.
 import fs from 'node:fs';
 import path from 'node:path';
-import { FAST, W, H, deadTime, helpers, out, overlay, repo } from '../lib/helpers.mjs';
+import { FAST, W, H, helpers, out, overlay, repo, timeline } from '../lib/helpers.mjs';
 
 export const name = '5-admin-installation';
 const ROLE = 'Administrateur de l’installation';
@@ -24,7 +24,7 @@ export async function run(browser, failures) {
     ...(FAST ? {} : { recordVideo: { dir: out, size: { width: W, height: H } } }),
   });
   await ctx.addInitScript(overlay);
-  const clock = { start: Date.now(), cuts: [] };
+  const clock = { start: Date.now(), cuts: [], scenes: [] };
   const page = await ctx.newPage();
   const h = helpers(page, failures, clock);
   const studio = async (route, pause = 3500) => { await page.goto(`${STUDIO}${route}`, { waitUntil: 'domcontentloaded' }); await h.wait(pause); };
@@ -128,10 +128,11 @@ export async function run(browser, failures) {
       'Membre : saisit et suit son propre temps',
     ], 9000);
   } finally {
+    clock.end = Date.now();
     await ctx.close();
   }
   if (FAST) return [];
   const webm = await page.video().path();
-  deadTime.set(webm, clock.cuts);
+  timeline.set(webm, clock);
   return [{ webm }];
 }

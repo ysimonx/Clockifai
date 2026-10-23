@@ -1,5 +1,7 @@
 # Regroupement des entrées similaires — plan
 
+> Statut : **fait** (22 octobre 2026).
+>
 > Objectif : dans « Suivi du temps », réunir sur une ligne dépliable les entrées identiques d'une même journée,
 > comme Clockify (« Group similar entries »). Utile dès qu'on relance souvent la même activité, et plus encore
 > avec les chronomètres simultanés (`05-chronometres-paralleles.md`), qui multiplient les courtes entrées.

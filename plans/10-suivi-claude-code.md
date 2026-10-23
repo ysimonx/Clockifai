@@ -1,5 +1,7 @@
 # Suivi du temps : Claude et moi (hooks, extension VSCode, connecteur MCP) — plan 10
 
+> Statut : **validé**, non commencé (23 octobre 2026). Les lots 5 et 6 restent envisagés.
+>
 > Objectif : mesurer, projet par projet, **deux temps distincts** :
 > - le **temps de Claude**, pendant que les agents Claude Code travaillent, y compris quand on a quitté la fenêtre ;
 > - **mon temps**, pendant que je travaille moi aussi : écrire un prompt, relire, coder, tester.
@@ -747,14 +749,14 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 ## 10. Lots
 
-| Lot | Contenu | Taille |
-|---|---|---|
-| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (écran des jetons, section Agents, droits D15, exclusions, bandeau « Claude travaille », « toujours rattacher », filtre des rapports, réglages de facturation des agents) ; vérifier les hooks dans l'extension VSCode | M/L |
-| 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L |
-| 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M |
-| 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M |
-| 5 Connecteur claude.ai | OAuth (selon Supabase Auth auto-hébergé), publication du connecteur | M, conditionnel |
-| 6 Sessions cloud | Hook de dépôt, `POST /api/activity/events/raw` avec filtrage à l'arrivée, guide de réglage de l'environnement (réseau, secret réseau) | S, plus tard (§12) |
+| Lot | Contenu | Taille | État |
+|---|---|---|---|
+| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (écran des jetons, section Agents, droits D15, exclusions, bandeau « Claude travaille », « toujours rattacher », filtre des rapports, réglages de facturation des agents) ; vérifier les hooks dans l'extension VSCode | M/L | validé |
+| 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
+| 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M | validé |
+| 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |
+| 5 Connecteur claude.ai | OAuth (selon Supabase Auth auto-hébergé), publication du connecteur | M, conditionnel | envisagé |
+| 6 Sessions cloud | Hook de dépôt, `POST /api/activity/events/raw` avec filtrage à l'arrivée, guide de réglage de l'environnement (réseau, secret réseau) | S, plus tard (§12) | envisagé |
 
 ## 11. Points d'attention
 

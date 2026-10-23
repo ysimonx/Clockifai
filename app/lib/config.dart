@@ -14,6 +14,10 @@ class AppConfig {
   /// URL du service Flask (exports, invitations…). Vide = même origine que l'app web (`/api`).
   static const servicesUrl = String.fromEnvironment('SERVICES_URL', defaultValue: 'http://localhost:5050');
 
+  /// Guide d'utilisation (docs/guide). Vide = `/guide/` de [servicesUrl] (ou de l'origine de l'app web), servi par
+  /// le Caddy de prod ; en local, `make docs-serve` (http://localhost:3200/guide/, écrit par `make app-config`).
+  static const guideUrl = String.fromEnvironment('GUIDE_URL');
+
   /// Schéma de deep link utilisé pour les retours d'authentification sur mobile.
   static const authRedirectMobile = 'clockifai://login-callback';
 

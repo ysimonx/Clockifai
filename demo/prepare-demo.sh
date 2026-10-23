@@ -133,6 +133,16 @@ begin
       (wid, u_julien, arret, 'Préparation arrêt de tranche', (d + time '13:00') at time zone 'Europe/Paris', (d + time '16:00') at time zone 'Europe/Paris', true, 6000);
   end loop;
 
+  -- La facture de la vidéo 4 porte par défaut sur le mois précédent, que les trois semaines ci-dessus ne couvrent
+  -- pas toujours (selon le jour du tournage) : quelques jours facturables de plus, juste avant elles.
+  for d in select generate_series(date_trunc('month', current_date) - interval '1 month', current_date - 22, interval '1 day')::date loop
+    continue when extract(isodow from d) > 5;
+    insert into public.time_entries (workspace_id, user_id, project_id, task_id, description, start_at, end_at, billable, hourly_rate_cents) values
+      (wid, u_camille, scaf, montage, 'Montage niveaux 1 et 2', (d + time '07:30') at time zone 'Europe/Paris', (d + time '12:00') at time zone 'Europe/Paris', true, 4800),
+      (wid, u_nadia, calo, null, 'Calorifugeage ligne vapeur', (d + time '08:00') at time zone 'Europe/Paris', (d + time '12:00') at time zone 'Europe/Paris', true, 5200),
+      (wid, u_julien, arret, null, 'Préparation arrêt de tranche', (d + time '13:00') at time zone 'Europe/Paris', (d + time '16:00') at time zone 'Europe/Paris', true, 6000);
+  end loop;
+
   -- Léo a soumis sa semaine dernière : Karim (ou Sophie) l'approuvera.
   insert into public.timesheet_submissions (workspace_id, user_id, period_start, period_end, total_seconds, note, status)
   values (wid, u_leo, mon - 7, mon - 1, 5 * 7.5 * 3600, 'Semaine complète sur l''unité 4', 'submitted');

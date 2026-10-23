@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guide de Clockifai</title>
+  <meta name="description" content="Guide utilisateur de Clockifai : saisir et suivre son temps, encadrer une équipe, gérer une entreprise, avec des vidéos de démonstration.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%230369a1' stroke-width='4'/%3E%3Cpath d='M16 9v8' stroke='%230369a1' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="guide.css">
+  <script src="guide.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="inner">
+      <a class="brand" href="index.html">Clockifai <span>Guide</span></a>
+      <nav class="site-nav" aria-label="Pages du guide">
+        <ul>
+          <li><a href="index.html" aria-current="page">Accueil</a></li>
+          <li><a href="membre.html">Membre</a></li>
+          <li><a href="chef-equipe.html">Chef d’équipe</a></li>
+          <li><a href="manager.html">Manager</a></li>
+          <li><a href="proprietaire.html">Propriétaire et admin</a></li>
+          <li><a href="administrateur.html">Installation</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-labelledby="toc-titre">
+      <h2 id="toc-titre">Sur cette page</h2>
+      <ol>
+        <li><a href="#role">Quel est votre rôle ?</a></li>
+        <li><a href="#premiers-pas">Premiers pas</a></li>
+        <li><a href="#installer">Installer l’application</a></li>
+        <li><a href="#droits">Qui peut faire quoi</a></li>
+        <li><a href="#videos">Les vidéos</a></li>
+        <li><a href="#lexique">Lexique</a></li>
+      </ol>
+    </nav>
+
+    <main id="contenu">
+      <p class="eyebrow">Guide utilisateur</p>
+      <h1>Bienvenue dans Clockifai</h1>
+      <p class="lead">Clockifai sert à déclarer et suivre le temps de travail : après coup ou en direct, au bureau,
+        sur le chantier, et même sans réseau. Ce guide explique comment vous en servir selon votre rôle, avec des
+        vidéos de démonstration.</p>
+
+      <section aria-labelledby="role">
+        <h2 id="role">Quel est votre rôle ?</h2>
+        <p>Chaque page part de ce que vous avez à faire. Les pages des rôles qui encadrent renvoient à la page
+          Membre pour les bases : tout le monde saisit son propre temps de la même façon.</p>
+        <ul class="cards">
+          <li><a class="card" href="membre.html"><strong>Membre</strong>
+            <span>Vous saisissez et suivez votre propre temps, vos absences et votre planning.</span></a></li>
+          <li><a class="card" href="chef-equipe.html"><strong>Chef d’équipe</strong>
+            <span>Vous pointez, corrigez et validez le temps d’un groupe de personnes.</span></a></li>
+          <li><a class="card" href="manager.html"><strong>Manager</strong>
+            <span>Vous voyez toute l’entreprise : validations, planning, rapports, projets et factures.</span></a></li>
+          <li><a class="card" href="proprietaire.html"><strong>Propriétaire ou administrateur</strong>
+            <span>Vous gérez l’entreprise : personnes, rôles, groupes, règles, absences, kiosque.</span></a></li>
+          <li><a class="card" href="administrateur.html"><strong>Administrateur de l’installation</strong>
+            <span>Vous hébergez Clockifai : serveur, comptes, sauvegardes, paramétrage.</span></a></li>
+        </ul>
+        <div class="tip">
+          <p><strong>Où voir votre rôle ?</strong> Dans <span class="ui">Paramètres</span>, rubrique
+            <span class="ui">Workspaces</span> : votre rôle est indiqué sous le nom de chaque workspace. La page
+            <span class="ui">Équipe</span> l’affiche aussi à côté de chaque nom.</p>
+          <p><strong>Chef d’équipe n’est pas un rôle</strong> : c’est une mission confiée par le propriétaire ou un
+            administrateur, en général à un membre, pour un groupe de personnes. Votre fiche dans la page
+            <span class="ui">Équipe</span> indique alors « Encadre : … ».</p>
+          <p><strong>Ce guide depuis l’application</strong> : <span class="ui">Guide d’utilisation</span>, en bas du
+            menu, ou <span class="ui">Paramètres</span> &gt; <span class="ui">Aide</span>, ouvre directement la page
+            de votre rôle.</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="premiers-pas">
+        <h2 id="premiers-pas">Premiers pas</h2>
+
+        <h3 id="ouvrir">Ouvrir Clockifai</h3>
+        <p>Sur un ordinateur, ouvrez dans votre navigateur l’adresse de votre installation, celle que votre entreprise
+          vous a communiquée (par exemple <code>https://temps.mon-entreprise.fr</code>). Il n’y a rien à installer.
+          Sur Mac, iPhone et Android, une application existe aussi : voir <a href="#installer">Installer
+          l’application</a>.</p>
+
+        <h3 id="connexion">Se connecter</h3>
+        <ol class="steps">
+          <li>Saisissez votre <span class="ui">Email</span> et votre <span class="ui">Mot de passe</span>, puis
+            touchez <span class="ui">Connexion</span>.</li>
+          <li>Pas de mot de passe ? Touchez <span class="ui">Recevoir un lien de connexion</span> : un email vous
+            connecte d’un clic.</li>
+          <li>Mot de passe perdu : <span class="ui">Mot de passe oublié</span> envoie un email de réinitialisation.</li>
+        </ol>
+        <p>Vous avez reçu une <strong>invitation</strong> ? Le lien vous connecte directement. Choisissez ensuite un
+          mot de passe dans <span class="ui">Paramètres</span> &gt; <span class="ui">Définir le mot de passe</span>,
+          pour vous connecter sur vos autres appareils.</p>
+        <p>Si votre installation accepte les inscriptions, l’onglet <span class="ui">Inscription</span> crée un compte
+          avec un workspace personnel « Espace de <em>votre nom</em> ». Pour rejoindre celui de votre entreprise, il
+          faut une invitation d’un administrateur.</p>
+        <p class="watch"><a class="scene" data-video="1-camille-membre" data-scene="connexion" href="videos/1-camille-membre.mp4">Voir la connexion en vidéo</a></p>
+
+        <h3 id="premiere-synchro">La première synchronisation</h3>
+        <p>À la première connexion sur un appareil, Clockifai copie vos données sur l’appareil
+          (« Première synchronisation en cours… »). Ensuite, tout fonctionne même sans réseau : vos saisies partent
+          au serveur dès que la connexion revient.</p>
+
+        <h3 id="workspace">Plusieurs entreprises ?</h3>
+        <p>Si vous appartenez à plusieurs workspaces, touchez le nom du workspace en haut de l’écran
+          (<span class="ui">Changer de workspace</span>), ou choisissez-le dans <span class="ui">Paramètres</span>
+          &gt; <span class="ui">Workspaces</span>.</p>
+      </section>
+
+      <section aria-labelledby="installer">
+        <h2 id="installer">Installer l’application</h2>
+        <p>C’est la même application partout, avec les mêmes données : ce que vous saisissez sur le téléphone apparaît
+          sur l’ordinateur, et inversement.</p>
+        <dl class="glossary">
+          <dt>Navigateur (ordinateur, tablette, téléphone)</dt>
+          <dd>L’adresse de votre installation dans un navigateur récent (Chrome, Edge, Firefox, Safari). Rien à
+            installer.</dd>
+          <dt>Mac</dt>
+          <dd>L’application « Clockifai » ajoute une icône dans la barre de menus, en haut à droite de l’écran, pour
+            démarrer ou arrêter le chronomètre sans ouvrir la fenêtre (voir <a href="membre.html#mac">Sur Mac</a>).</dd>
+          <dt>iPhone</dt>
+          <dd>Distribuée par TestFlight : demandez une invitation à l’administrateur de votre installation.</dd>
+          <dt>Android</dt>
+          <dd>Distribuée par Google Play, selon ce que votre administrateur a publié : demandez-lui le lien.</dd>
+        </dl>
+        <p class="note">Les applications Mac, iPhone et Android sont préparées pour une installation précise de
+          Clockifai. Si votre entreprise héberge sa propre installation, c’est son administrateur qui vous indique
+          quelle application utiliser. Le navigateur, lui, fonctionne toujours.</p>
+      </section>
+
+      <section aria-labelledby="droits">
+        <h2 id="droits">Qui peut faire quoi</h2>
+        <p>Les droits sont appliqués par le serveur lui-même, pas seulement par l’affichage : un écran que vous ne voyez
+          pas dans votre menu ne vous est pas accessible.</p>
+        <div class="table-wrap">
+          <table class="matrix">
+            <caption class="visually-hidden">Droits selon le rôle</caption>
+            <thead>
+              <tr>
+                <th scope="col">Action</th>
+                <th scope="col">Membre</th>
+                <th scope="col">Chef d’équipe</th>
+                <th scope="col">Manager</th>
+                <th scope="col">Admin et propriétaire</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Saisir et suivre son propre temps, soumettre sa feuille, demander une absence</th>
+                <td class="yes">Oui</td><td class="yes">Oui</td><td class="yes">Oui</td><td class="yes">Oui</td></tr>
+              <tr><th scope="row">Voir le temps des autres</th>
+                <td class="no">Non</td><td>Son équipe</td><td>Tout le monde</td><td>Tout le monde</td></tr>
+              <tr><th scope="row">Saisir ou corriger le temps des autres</th>
+                <td class="no">Non</td><td>Son équipe, si la règle de l’entreprise le permet</td><td>Si la règle de l’entreprise le permet</td><td class="yes">Oui</td></tr>
+              <tr><th scope="row">Approuver les feuilles de temps</th>
+                <td class="no">Non</td><td>Son équipe</td><td class="yes">Oui</td><td class="yes">Oui</td></tr>
+              <tr><th scope="row">Approuver les absences</th>
+                <td class="no">Non</td><td>Son équipe, si le type d’absence le prévoit</td><td class="yes">Oui</td><td class="yes">Oui</td></tr>
+              <tr><th scope="row">Créer une tâche depuis le sélecteur de projet</th>
+                <td>Si la règle de l’entreprise le permet</td><td>Idem</td><td class="yes">Oui</td><td class="yes">Oui</td></tr>
+              <tr><th scope="row">Affecter au planning, créer projets, clients et tags, facturer</th>
+                <td class="no">Non</td><td class="no">Non</td><td class="yes">Oui</td><td class="yes">Oui</td></tr>
+              <tr><th scope="row">Inviter, changer les rôles et les taux, créer les groupes, nommer les chefs d’équipe</th>
+                <td class="no">Non</td><td class="no">Non</td><td class="no">Non</td><td class="yes">Oui</td></tr>
+              <tr><th scope="row">Régler le workspace, les types d’absence, les jours fériés, les tablettes kiosque</th>
+                <td class="no">Non</td><td class="no">Non</td><td>Lecture seule</td><td class="yes">Oui</td></tr>
+              <tr><th scope="row">Modifier une période verrouillée ou une semaine approuvée</th>
+                <td class="no">Non</td><td class="no">Non</td><td class="no">Non</td><td class="yes">Oui</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le propriétaire est la personne qui a créé le workspace ; il a les mêmes droits qu’un administrateur, et un
+          workspace garde toujours au moins un propriétaire.</p>
+      </section>
+
+      <section aria-labelledby="videos">
+        <h2 id="videos">Les vidéos</h2>
+        <p>Cinq vidéos muettes, avec des bandeaux explicatifs, tournées sur une entreprise fictive,
+          « Échafaudages du Nord ». Chaque page de rôle commence par la sienne ; les liens
+          <span class="ui">▶</span> du texte vous emmènent directement au bon passage.</p>
+        <ol>
+          <li><a href="membre.html#video">Camille, membre</a> : saisir et suivre son propre temps.</li>
+          <li><a href="chef-equipe.html#video">Karim, chef d’équipe</a> : pointer et valider pour son équipe.</li>
+          <li><a href="manager.html#video">Julien, manager</a> : toute l’entreprise, sans les réglages.</li>
+          <li><a href="proprietaire.html#video">Sophie, propriétaire</a> : gérer l’entreprise.</li>
+          <li><a href="administrateur.html#video">L’administrateur de l’installation</a> : le serveur.</li>
+        </ol>
+      </section>
+
+      <section aria-labelledby="lexique">
+        <h2 id="lexique">Lexique</h2>
+        <dl class="glossary">
+          <dt>Workspace</dt>
+          <dd>L’espace d’une entreprise : ses personnes, ses projets, son temps. Une installation peut en héberger
+            plusieurs, totalement cloisonnés.</dd>
+          <dt>Entrée (de temps)</dt>
+          <dd>Une période de travail : une description, un projet et une tâche, des horaires, une durée.</dd>
+          <dt>Chronomètre</dt>
+          <dd>Une entrée en cours, qui se termine quand vous touchez <span class="ui">Arrêter</span>.</dd>
+          <dt>Feuille de temps</dt>
+          <dd>Votre semaine en grille, à soumettre pour approbation.</dd>
+          <dt>Projet, tâche, client</dt>
+          <dd>Le classement du temps : un projet (un chantier, par exemple) appartient éventuellement à un client et se
+            découpe en tâches.</dd>
+          <dt>Tag</dt>
+          <dd>Une étiquette libre ajoutée aux entrées, pour filtrer les rapports.</dd>
+          <dt>Facturable</dt>
+          <dd>Temps destiné à être facturé au client ; il compte dans le « temps facturable » des rapports.</dd>
+          <dt>Groupe</dt>
+          <dd>Un ensemble de personnes (équipe, chantier, sous-traitant), utilisé pour confier des personnes à un chef
+            d’équipe.</dd>
+          <dt>Chef d’équipe</dt>
+          <dd>Une personne chargée d’un groupe : elle voit, valide et parfois saisit le temps de ce groupe.</dd>
+          <dt>Approbation</dt>
+          <dd>La validation d’une feuille de temps ou d’une demande d’absence. Une semaine approuvée est verrouillée.</dd>
+          <dt>Verrouillage</dt>
+          <dd>Une période close (après la paie, par exemple) : seul un administrateur peut encore la modifier.</dd>
+          <dt>Kiosque</dt>
+          <dd>Une tablette partagée sur laquelle chacun pointe son arrivée et son départ avec un code PIN.</dd>
+          <dt>Synchronisation</dt>
+          <dd>L’échange automatique entre votre appareil et le serveur. Hors ligne, vos saisies attendent sur l’appareil
+            (« Modifications en attente d’envoi »).</dd>
+        </dl>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="inner">Clockifai, suivi du temps libre et auto-hébergé.</div>
+  </footer>
+</body>
+</html>

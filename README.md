@@ -9,10 +9,10 @@ VPS OVH, Scaleway, ou une machine chez soi.
 
 | Domaine | Contenu |
 |---|---|
-| Saisie du temps | Chronomètre (survit au redémarrage, continue sur un autre appareil), saisie manuelle, « continuer », dupliquer, tags, facturable ; sur macOS, icône dans la barre de menus pour démarrer / arrêter sans ouvrir la fenêtre |
+| Saisie du temps | Chronomètre (survit au redémarrage, continue sur un autre appareil), saisie manuelle, « continuer », dupliquer, tags, facturable, tâche créée à la volée ; chronomètres simultanés (limite par workspace, un seul par tâche) ; entrées similaires regroupées ; sur macOS, icône dans la barre de menus pour démarrer / arrêter sans ouvrir la fenêtre |
 | Feuille de temps | Grille hebdomadaire projets × jours, saisie en `1:30`, `1,5`, `90m` |
 | Référentiel | Clients, projets (couleur, taux horaire, budget, public/privé), tâches, tags, archivage |
-| Équipe | Workspaces multiples, rôles owner / admin / manager / membre, taux par membre |
+| Équipe | Workspaces multiples, rôles owner / admin / manager / membre, taux par membre, invitations ; chefs d'équipe (groupes, saisie pour un collègue, pointage d'équipe, approbations et rapports de leur équipe) |
 | Règles | Projet ou description obligatoires, arrondi, arrêt automatique des chronomètres oubliés, verrouillage des périodes |
 | Rapports | Résumé et détail, graphiques, regroupements, arrondi, exports CSV / Excel / PDF |
 | Calendrier | Vue semaine (jour sur mobile), création d'une entrée en touchant un créneau |
@@ -28,20 +28,25 @@ L'avancement détaillé par lot est suivi dans [plans/01-plan-clockifai.md](plan
 
 ## Architecture
 
-```
- Flutter (web / iOS / Android / macOS)
-   ├─ base locale SQLite (PowerSync + Drift) ── lectures/écritures instantanées, hors ligne
-   ├─ PowerSync ──────── flux de synchronisation (Sync Streams) ──┐
-   └─ Supabase (auth, envoi des modifications via PostgREST) ─────┤
-                                                                  ▼
- Docker : Supabase (Postgres 17, GoTrue, PostgREST, Realtime, Storage, Studio, Kong)
-          PowerSync Open Edition (réplication logique de Postgres)
-          services Flask (exports, jobs planifiés)
-          Caddy (HTTPS automatique)  ·  sauvegardes pg_dump quotidiennes
-```
+L'application lit et écrit dans une base SQLite locale (PowerSync + Drift) : tout est instantané et fonctionne
+hors ligne. PowerSync envoie les modifications au serveur et redescend celles des autres. Côté serveur, tout est en
+conteneurs Docker : Supabase (Postgres 17, Auth, PostgREST, Realtime, Studio, Kong), PowerSync Open Edition
+(réplication logique de Postgres), un service Flask (exports, factures, invitations, kiosque, tâches planifiées),
+Caddy (HTTPS automatique) et une sauvegarde quotidienne.
 
 - La sécurité multi-tenant repose sur la **Row Level Security** de Postgres : chaque table porte un `workspace_id`.
-- Les conflits sont arbitrés côté serveur : dernier écrit gagne, et un seul chronomètre en cours par personne (le plus récent gagne, sans perte de données).
+- Les conflits sont arbitrés côté serveur : dernier écrit gagne, et le nombre de chronomètres en cours par personne est limité par workspace (le plus récent gagne, sans perte de données).
+
+Schémas des composants, du déploiement et des données : [docs/architecture/](docs/architecture/).
+
+## Documentation
+
+L'index est dans [docs/README.md](docs/README.md) :
+
+- [guide utilisateur](docs/guide/index.html), avec les vidéos, en ligne sur `https://<APP_DOMAIN>/guide/` ;
+- [exploitation](docs/exploitation.md) : installation, mise à jour, sauvegarde, restauration ;
+- [architecture](docs/architecture/) et [API](docs/api/) (OpenAPI du service Flask, diagrammes de séquence) ;
+- [notes de version](CHANGELOG.md).
 
 ## Démarrage rapide (développement)
 
@@ -106,7 +111,7 @@ session) et [plans/07-ios-android.md](plans/07-ios-android.md) (iOS, Android, Te
 
 | Commande | Où | Rôle |
 |---|---|---|
-| `make env`, puis éditer `deploy/.env` | serveur, une fois | Secrets propres au serveur, domaines, SMTP (voir [Mise en production](#mise-en-production)) |
+| `make env`, puis éditer `deploy/.env` | serveur, une fois | Secrets propres au serveur, domaines, SMTP (voir [docs/exploitation.md](docs/exploitation.md)) |
 | `make prod-up` | serveur | Démarre tout + build de l'app web + Caddy (HTTPS) + sauvegardes |
 | `make deploy HOST=ysimonx@192.168.0.84` | poste de dev | Copie le dépôt sur le serveur (rsync, sans `.env` ni données) et lance `make prod-up` |
 | `make backup` | serveur | Sauvegarde immédiate de Postgres dans `deploy/backups/` |
@@ -161,20 +166,25 @@ Après un envoi, TestFlight propose le build au bout de 5 à 30 minutes de trait
 | `make app-test` | Tests Flutter |
 | `make app-analyze` | Analyse statique Dart |
 
+### Documentation et guide en ligne
+
+| Commande | Rôle |
+|---|---|
+| `make docs-check` | Routes Flask ↔ `docs/api/openapi.yaml`, liens et scènes vidéo du guide, statuts des plans |
+| `make docs-serve` | Guide servi comme en production : http://localhost:3200/guide/ |
+| `make guide-videos` | Copie les vidéos tournées (`demo/out/`) et leurs chapitres dans `docs/guide/videos/` |
+| `make guide-publish HOST=ysimonx@192.168.0.84` | Envoie ces vidéos sur le serveur (`make deploy` ne copie que les fichiers suivis par git) |
+
 ## Vidéos de démonstration
 
 Cinq vidéos sans voix, avec bandeaux explicatifs, une par rôle : membre, chef d'équipe, manager,
 propriétaire du workspace, administrateur de l'installation. Elles se tournent automatiquement
-sur la pile locale : voir [demo/README.md](demo/README.md).
+sur la pile locale ([demo/README.md](demo/README.md)) et se regardent dans le guide utilisateur en ligne.
 
 ## Mise en production
 
-Le même `docker compose` sert partout ; seul le fichier `deploy/.env` change.
-
-1. Un serveur Linux (x86_64 ou arm64) avec **4 vCPU / 8 Go de RAM** minimum et Docker.
-2. Trois noms DNS vers ce serveur : `APP_DOMAIN`, `SUPABASE_DOMAIN`, `SYNC_DOMAIN`.
-3. Dans `deploy/.env` : ces domaines, `SITE_URL`, `SUPABASE_PUBLIC_URL`, `API_EXTERNAL_URL`, `POWERSYNC_PUBLIC_URL`, le SMTP, et `ENABLE_EMAIL_AUTOCONFIRM=false`.
-4. Démarrer : l'image du service `web` compile elle-même l'app Flutter avec ces URLs (pas de SDK Flutter sur le serveur).
+Le même `docker compose` sert partout ; seul le fichier `deploy/.env` change. Il faut un serveur Linux
+(4 vCPU / 8 Go de RAM minimum) avec Docker, et trois noms DNS : `APP_DOMAIN`, `SUPABASE_DOMAIN`, `SYNC_DOMAIN`.
 
 ```bash
 make env                              # sur le serveur, puis éditer deploy/.env
@@ -182,14 +192,8 @@ make prod-up                          # + build web + Caddy (HTTPS Let's Encrypt
 make deploy HOST=user@serveur         # depuis le poste de dev : copie le dépôt (sans .env) et relance
 ```
 
-| Hébergement | Particularités |
-|---|---|
-| VPS OVH / Scaleway | Ouvrir 80/443, enregistrements DNS A vers l'IP |
-| Chez soi | Redirection 80/443 sur la box + DynDNS (OVH DynHost), ou Cloudflare Tunnel / Tailscale pour ne rien exposer |
-| Serveur partagé avec d'autres applications | Reverse proxy commun ([deploy/edge/](deploy/edge/)) et `deploy/docker-compose.edge.yml` copié en `deploy/docker-compose.override.yml` : aucun port publié par la pile. Voir [plans/05-hebergement-maison.md](plans/05-hebergement-maison.md) |
-
-Sauvegardes : `deploy/backups/` (rétention 14 jours), à copier hors du serveur.
-Restauration décrite en tête de [deploy/backup.sh](deploy/backup.sh).
+Installation pas à pas, variables de `deploy/.env`, serveur partagé avec d'autres applications, mises à jour,
+sauvegardes **et restauration**, surveillance : [docs/exploitation.md](docs/exploitation.md).
 
 ## Organisation du dépôt
 
@@ -202,7 +206,8 @@ Restauration décrite en tête de [deploy/backup.sh](deploy/backup.sh).
 | [powersync/](powersync/) | Configuration du service et des Sync Streams |
 | [deploy/](deploy/) | Compose, Caddyfile, génération des secrets, sauvegardes |
 | [demo/](demo/) | Tournage automatique des vidéos de démonstration (un scénario par rôle) |
-| [plans/](plans/) | Plans validés : projet (avec état d'avancement), Fidwork, saisie pour autrui, tickets, hébergement, macOS, iOS et Android |
+| [docs/](docs/) | Documentation : guide utilisateur (HTML), exploitation, architecture, API ; notes de version dans [CHANGELOG.md](CHANGELOG.md) |
+| [plans/](plans/) | Plans validés : projet (avec état d'avancement et liste des plans), Fidwork (en attente), saisie pour autrui, tickets, chronomètres simultanés, hébergement, macOS, iOS et Android, regroupement des entrées, forges git, suivi de Claude Code |
 
 ## Licence
 

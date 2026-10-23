@@ -1,0 +1,605 @@
+openapi: 3.1.0
+info:
+  title: Clockifai — services Flask
+  version: 0.1.0
+  summary: Ce que PostgREST et la RLS ne font pas bien — exports, factures PDF, invitations, kiosque, tâches planifiées.
+  description: |
+    Les **données** (entrées de temps, projets, feuilles, absences…) ne passent pas par cette API :
+    l'app les lit et les écrit dans sa base locale, synchronisée par PowerSync, et les modifications
+    remontent par PostgREST (`/rest/v1/`, soumis à la RLS). Voir `docs/api/README.md`.
+
+    Cette API se connecte à Postgres en rôle `postgres` (hors RLS) : chaque route vérifie elle-même
+    le JWT, l'appartenance au workspace et le rôle (`services/app/auth.py`).
+
+    **Erreurs** : les codes 400, 401, 403, 404, 429 et 502 renvoient `{"error": "<message>"}`
+    (messages en anglais, destinés au journal ou à l'affichage brut). Une erreur interne (500), par exemple
+    un `workspace_id` qui n'est pas un UUID, renvoie la page HTML par défaut de Flask.
+
+    **Rôles** du workspace : `owner`, `admin`, `manager`, `member`. « admin+ » = owner ou admin ;
+    « manager+ » = owner, admin ou manager. Un chef d'équipe a le rôle `member` : son périmètre vient de
+    la table `team_scope`.
+servers:
+  - url: https://{APP_DOMAIN}
+    description: Production — Caddy transmet `/api/*` au conteneur `services` (même origine que l'app web).
+    variables:
+      APP_DOMAIN:
+        default: clockifai.kysoe.com
+        description: Domaine de l'app web de l'installation (`APP_DOMAIN` dans `deploy/.env`).
+  - url: http://localhost:5050
+    description: Pile locale (`make up`). CORS limité aux origines de `CORS_ORIGINS` (app web sur :3000).
+
+tags:
+  - name: santé
+  - name: exports
+  - name: factures
+  - name: invitations
+  - name: kiosque — administration
+    description: Gestion des appareils de pointage, par un admin du workspace (JWT utilisateur).
+  - name: kiosque — appareil
+    description: Appels de la tablette, authentifiés par le jeton de l'appareil, sans compte utilisateur.
+  - name: tâches planifiées
+    description: |
+      Déclenchement manuel. En temps normal APScheduler les exécute dans le process Flask
+      (un seul worker gunicorn) : arrêt automatique toutes les `JOB_AUTOSTOP_INTERVAL_MIN` minutes
+      (5 par défaut), purge chaque jour à 04:15 UTC.
+
+security:
+  - supabaseJwt: []
+
+paths:
+  /api/health:
+    get:
+      tags: [santé]
+      operationId: health
+      summary: Sonde de vie (base comprise)
+      description: Exécute `select 1` si une base est configurée. Utilisée par le healthcheck Docker.
+      security: []
+      responses:
+        "200":
+          description: Service et base disponibles (ou aucune base configurée).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+              example: { status: ok, database: true }
+        "503":
+          description: Base injoignable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+              example: { status: degraded, database: false }
+
+  /api/exports/report:
+    get:
+      tags: [exports]
+      operationId: exportReport
+      summary: Rapport détaillé des entrées terminées (CSV, XLSX ou PDF)
+      description: |
+        Entrées terminées (`end_at` non nul, non supprimées) dont le début tombe dans `[from, to]`,
+        avec utilisateur, client, projet, tâche et tags.
+
+        Périmètre selon le rôle :
+        - **manager+** : tout le workspace, filtres libres ;
+        - **membre** : ses entrées, plus celles de son périmètre s'il est chef d'équipe (`team_scope`).
+          Un `user_id` hors de ce périmètre est refusé (403).
+
+        L'app propose aussi un export CSV calculé localement, hors ligne (« csv-local ») : il n'appelle pas
+        cette route.
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+        - name: from
+          in: query
+          description: "Premier jour inclus (`yyyy-MM-dd`). Défaut : 1er du mois en cours (date du serveur)."
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          description: "Dernier jour inclus (`yyyy-MM-dd`). Défaut : aujourd'hui (date du serveur)."
+          schema: { type: string, format: date }
+        - name: format
+          in: query
+          description: Format du fichier (insensible à la casse).
+          schema: { type: string, enum: [csv, xlsx, pdf], default: csv }
+        - name: user_id
+          in: query
+          description: Limiter à une personne.
+          schema: { type: string, format: uuid }
+        - name: project_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: client_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: billable
+          in: query
+          description: Ne garder que les entrées facturables (`true`) ou non facturables (`false`). Toute autre valeur est ignorée.
+          schema: { type: string, enum: ["true", "false"] }
+      responses:
+        "200":
+          description: |
+            Fichier en pièce jointe, nommé `clockifai-<from>_<to>.<format>`.
+            CSV : séparateur `;`, UTF-8 avec BOM, décimales à virgule, heures dans le fuseau du serveur ;
+            colonnes Utilisateur, Email, Client, Projet, Tâche, Description, Tags, Début, Fin, Durée (h),
+            Facturable, Taux horaire.
+          headers:
+            Content-Disposition:
+              schema: { type: string }
+              example: attachment; filename="clockifai-2026-10-01_2026-10-31.xlsx"
+          content:
+            text/csv:
+              schema: { type: string }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, contentEncoding: binary }
+            application/pdf:
+              schema: { type: string, contentEncoding: binary }
+        "400":
+          description: "`workspace_id` absent, date invalide (`invalid date: …`) ou format inconnu (`format must be csv, xlsx or pdf`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Pas membre actif du workspace, ou `user_id` hors du périmètre d'un membre (`user outside your team`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/invoices/{invoice_id}/pdf:
+    get:
+      tags: [factures]
+      operationId: invoicePdf
+      summary: Facture en PDF (WeasyPrint)
+      description: |
+        Réservé aux **manager+**. Numéro, totaux, remise, TVA et échéance sont calculés par les triggers
+        de la base (`invoices_before_write`, `invoice_items_before_write`) : le PDF ne fait que les mettre en page.
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+      responses:
+        "200":
+          description: PDF en pièce jointe, nommé `<numéro>.pdf` (ou `brouillon-<8 premiers caractères de l'id>.pdf`).
+          headers:
+            Content-Disposition:
+              schema: { type: string }
+              example: attachment; filename="F-2026-0007.pdf"
+          content:
+            application/pdf:
+              schema: { type: string, contentEncoding: binary }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Pas membre du workspace, ou rôle inférieur à manager (`manager role required`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404":
+          description: Facture absente de ce workspace ou supprimée (`invoice not found`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/invitations:
+    post:
+      tags: [invitations]
+      operationId: invite
+      summary: Inviter une personne dans le workspace (admin+)
+      description: |
+        - **Compte existant** : ajouté au workspace (ou réactivé s'il en était sorti), avec le rôle demandé ;
+          un owner garde son rôle. `invite_link` vaut `null`.
+        - **Nouveau compte** : créé par l'API admin de GoTrue (`/auth/v1/admin/generate_link`, type `invite`,
+          redirection vers `APP_PUBLIC_URL`), puis ajouté au workspace. Le lien d'activation est **toujours
+          renvoyé**, pour que l'admin le transmette lui-même quand aucun SMTP n'est configuré.
+
+        Un email est envoyé dans les deux cas si un SMTP est configuré (`emailed`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InvitationRequest" }
+            example: { workspace_id: 7c0e…, email: camille@exemple.fr, role: member }
+      responses:
+        "201":
+          description: Invitation enregistrée.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InvitationResult" }
+        "400":
+          description: "`workspace_id` absent, email invalide (`valid email required`) ou rôle inconnu."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/AdminRequired" }
+        "502":
+          description: "Erreur de GoTrue (`auth service error: …`), ou réponse sans identifiant d'utilisateur."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/kiosk/devices:
+    post:
+      tags: [kiosque — administration]
+      operationId: createKioskDevice
+      summary: Enregistrer un appareil de pointage (admin+)
+      description: |
+        Génère un jeton `kio_…` et n'en stocke que le hachage SHA-256 (`kiosk_devices.token_hash`).
+        Le jeton n'est renvoyé **qu'une fois** : il se saisit ensuite sur la tablette.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspace_id]
+              properties:
+                workspace_id: { type: string, format: uuid }
+                name:
+                  type: string
+                  description: Nom affiché ; tronqué à 80 caractères. Défaut « Kiosque ».
+      responses:
+        "201":
+          description: Appareil créé.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KioskDeviceCreated" }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/AdminRequired" }
+    get:
+      tags: [kiosque — administration]
+      operationId: listKioskDevices
+      summary: Appareils actifs du workspace (admin+)
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+      responses:
+        "200":
+          description: Appareils non révoqués, du plus ancien au plus récent.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [devices]
+                properties:
+                  devices:
+                    type: array
+                    items: { $ref: "#/components/schemas/KioskDevice" }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/AdminRequired" }
+
+  /api/kiosk/devices/{device_id}:
+    delete:
+      tags: [kiosque — administration]
+      operationId: revokeKioskDevice
+      summary: Révoquer un appareil (admin+)
+      description: "Soft delete (`deleted_at`) : le jeton est refusé dès l'appel suivant de la tablette."
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+      responses:
+        "200":
+          description: Appareil révoqué.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [revoked]
+                properties:
+                  revoked: { type: boolean, const: true }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/AdminRequired" }
+        "404":
+          description: Appareil inconnu dans ce workspace ou déjà révoqué (`device not found`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/kiosk/state:
+    get:
+      tags: [kiosque — appareil]
+      operationId: kioskState
+      summary: État affiché par la tablette
+      description: |
+        Workspace, membres actifs (avec leur chronomètre le plus récent en cours) et projets non archivés.
+        Chaque appel met à jour `kiosk_devices.last_seen_at`. L'app l'interroge toutes les 20 secondes.
+      security:
+        - kioskToken: []
+      responses:
+        "200":
+          description: État courant.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KioskState" }
+        "401": { $ref: "#/components/responses/KioskUnauthorized" }
+
+  /api/kiosk/punch:
+    post:
+      tags: [kiosque — appareil]
+      operationId: kioskPunch
+      summary: Pointer l'arrivée ou le départ d'un membre par son PIN
+      description: |
+        Le PIN (4 à 8 chiffres, posé par le membre via la RPC `set_kiosk_pin`) est comparé au hachage bcrypt
+        de `clockifai_private.member_pins`.
+
+        - **Un chronomètre tourne** pour ce membre : départ, **tous** ses chronomètres en cours sont arrêtés
+          (`action: out`, `entry_id` = le plus récent).
+        - **Aucun** : arrivée, une entrée en cours est créée (`action: in`), sur `project_id` s'il est fourni
+          (facturable et taux du projet), sinon sans projet (taux du membre). La limite de chronomètres
+          simultanés est appliquée par le trigger de la base.
+
+        **Anti force brute** (en mémoire, par couple appareil × membre) : au 5ᵉ PIN faux, blocage de 5 minutes
+        (429) ; tant qu'aucun PIN correct n'a été saisi, chaque nouvel échec rebloque 5 minutes.
+        Le compteur repart de zéro au redémarrage du service.
+      security:
+        - kioskToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PunchRequest" }
+      responses:
+        "200":
+          description: Pointage enregistré.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PunchResult" }
+        "400":
+          description: "`user_id and pin are required`, ou `unknown project` (projet absent du workspace)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/KioskUnauthorized" }
+        "403":
+          description: PIN faux, membre inactif ou sans PIN (`wrong PIN`) — compte comme un échec.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429":
+          description: Trop d'échecs pour ce membre sur cet appareil (`too many attempts, try again later`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/jobs/auto-stop:
+    post:
+      tags: [tâches planifiées]
+      operationId: jobAutoStop
+      summary: Arrêter les chronomètres trop longs du workspace (admin+)
+      description: |
+        Arrête les chronomètres qui dépassent `workspaces.auto_stop_after_hours` (0 = désactivé).
+        L'entrée est close à `start_at + limite`, pas à l'heure de l'appel.
+        `workspace_id` peut être passé en paramètre ou dans le corps JSON.
+      parameters:
+        - name: workspace_id
+          in: query
+          description: Workspace visé (ou champ `workspace_id` du corps JSON).
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                workspace_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Nombre de chronomètres arrêtés.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [stopped]
+                properties:
+                  stopped: { type: integer, minimum: 0 }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/AdminRequired" }
+
+  /api/jobs/purge-deleted:
+    post:
+      tags: [tâches planifiées]
+      operationId: jobPurgeDeleted
+      summary: Purger les lignes supprimées depuis plus de 30 jours (rôle service)
+      description: |
+        Supprime physiquement les lignes soft-deleted depuis plus de 30 jours (`time_entries`, `tasks`,
+        `projects`, `clients`, `tags`, `workspace_members`, `workspaces`), tous workspaces confondus.
+        L'appel manuel purge toujours à 30 jours ; la tâche planifiée suit `JOB_PURGE_DELETED_AFTER_DAYS`.
+
+        Exige un JWT dont le claim `role` vaut `service_role`, **et** qui porte `sub` et
+        `aud: authenticated` (contrôles communs de `require_user`). La clé `SERVICE_ROLE_KEY` standard de
+        Supabase n'a ni `sub` ni `aud` : elle est refusée en 401.
+      responses:
+        "200":
+          description: Nombre de lignes supprimées.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [purged]
+                properties:
+                  purged: { type: integer, minimum: 0 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: "JWT valide mais sans `role: service_role` (`service role required`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+components:
+  securitySchemes:
+    supabaseJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        `Authorization: Bearer <access_token>` de la session Supabase de l'utilisateur.
+        Vérifié avec `SUPABASE_JWT_SECRET` (HS256) ou, s'il est vide, avec le JWKS de GoTrue
+        (ES256 / RS256 / EdDSA). Claims exigés : `exp`, `sub`, `aud = authenticated`.
+    kioskToken:
+      type: apiKey
+      in: header
+      name: X-Kiosk-Token
+      description: Jeton `kio_…` d'un appareil non révoqué, obtenu par `POST /api/kiosk/devices`.
+
+  parameters:
+    WorkspaceIdQuery:
+      name: workspace_id
+      in: query
+      required: true
+      description: |
+        Workspace visé. L'utilisateur doit en être membre actif. Lu dans la chaîne de requête, ou à défaut
+        dans le corps JSON.
+      schema: { type: string, format: uuid }
+
+  responses:
+    Unauthorized:
+      description: "En-tête absent (`missing bearer token`), ou JWT invalide ou expiré (`invalid token: …`)."
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    WorkspaceIdRequired:
+      description: "`workspace_id is required`."
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    AdminRequired:
+      description: Pas membre actif du workspace (`not a member of this workspace`), ou rôle inférieur à admin (`admin role required`).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    KioskUnauthorized:
+      description: "`missing kiosk token`, ou jeton inconnu ou révoqué (`invalid kiosk token`)."
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, examples: ["workspace_id is required"] }
+
+    Health:
+      type: object
+      required: [status, database]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        database: { type: boolean }
+
+    InvitationRequest:
+      type: object
+      required: [workspace_id, email]
+      properties:
+        workspace_id: { type: string, format: uuid }
+        email:
+          type: string
+          description: Mis en minuscules ; doit contenir `@`.
+        role:
+          type: string
+          enum: [member, manager, admin]
+          default: member
+        display_name:
+          type: string
+          description: "Nom affiché d'un nouveau compte. Défaut : partie de l'email avant `@`."
+
+    InvitationResult:
+      type: object
+      required: [user_id, created, emailed, invite_link]
+      properties:
+        user_id: { type: string, format: uuid }
+        created:
+          type: boolean
+          description: Vrai si le compte vient d'être créé.
+        emailed:
+          type: boolean
+          description: Vrai si un email est parti (faux sans SMTP configuré).
+        invite_link:
+          type: [string, "null"]
+          description: Lien d'activation d'un nouveau compte ; `null` pour un compte existant.
+
+    KioskDevice:
+      type: object
+      required: [id, name, created_at, last_seen_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        created_at:
+          type: string
+          description: Date HTTP (RFC 1123, sérialisation par défaut de Flask), ex. `Fri, 23 Oct 2026 08:12:00 GMT`.
+        last_seen_at:
+          type: [string, "null"]
+          description: Dernier appel de l'appareil, même format que `created_at`.
+
+    KioskDeviceCreated:
+      type: object
+      required: [id, name, token]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        token:
+          type: string
+          description: Jeton à saisir sur la tablette ; non récupérable ensuite.
+          examples: ["kio_3q2…"]
+
+    KioskState:
+      type: object
+      required: [workspace, members, projects]
+      properties:
+        workspace:
+          type: [object, "null"]
+          properties:
+            name: { type: string }
+            currency: { type: string, examples: [EUR] }
+        members:
+          type: array
+          description: Membres actifs, par nom affiché.
+          items:
+            type: object
+            required: [user_id, display_name, has_pin, running_since, running_project]
+            properties:
+              user_id: { type: string, format: uuid }
+              display_name: { type: string }
+              has_pin: { type: boolean }
+              running_since:
+                type: [string, "null"]
+                format: date-time
+                description: Début (ISO 8601) du chronomètre en cours le plus récent.
+              running_project: { type: [string, "null"] }
+        projects:
+          type: array
+          description: Projets non archivés, par nom.
+          items:
+            type: object
+            required: [id, name, color]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              color: { type: [string, "null"] }
+
+    PunchRequest:
+      type: object
+      required: [user_id, pin]
+      properties:
+        user_id: { type: string, format: uuid }
+        pin: { type: string, pattern: "^[0-9]{4,8}$" }
+        project_id:
+          type: [string, "null"]
+          format: uuid
+          description: Projet de l'arrivée ; ignoré au départ.
+
+    PunchResult:
+      type: object
+      required: [action, entry_id]
+      properties:
+        action:
+          type: string
+          enum: [in, out]
+          description: "`in` : arrivée (entrée créée) ; `out` : départ (chronomètres arrêtés)."
+        entry_id: { type: string, format: uuid }

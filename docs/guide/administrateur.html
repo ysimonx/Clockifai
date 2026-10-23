@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administrateur de l’installation · Guide de Clockifai</title>
+  <meta name="description" content="Administrer une installation de Clockifai : Supabase Studio, comptes, données, sécurité, paramétrage du serveur, sauvegardes et applications.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%230369a1' stroke-width='4'/%3E%3Cpath d='M16 9v8' stroke='%230369a1' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="guide.css">
+  <script src="guide.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="inner">
+      <a class="brand" href="index.html">Clockifai <span>Guide</span></a>
+      <nav class="site-nav" aria-label="Pages du guide">
+        <ul>
+          <li><a href="index.html">Accueil</a></li>
+          <li><a href="membre.html">Membre</a></li>
+          <li><a href="chef-equipe.html">Chef d’équipe</a></li>
+          <li><a href="manager.html">Manager</a></li>
+          <li><a href="proprietaire.html">Propriétaire et admin</a></li>
+          <li><a href="administrateur.html" aria-current="page">Installation</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-labelledby="toc-titre">
+      <h2 id="toc-titre">Sur cette page</h2>
+      <ol>
+        <li><a href="#video">La vidéo</a></li>
+        <li><a href="#niveaux">Trois niveaux</a></li>
+        <li><a href="#studio">Supabase Studio</a></li>
+        <li><a href="#comptes">Les comptes</a></li>
+        <li><a href="#nouvelle-entreprise">Ouvrir une nouvelle entreprise</a></li>
+        <li><a href="#donnees">Les données et la sécurité</a></li>
+        <li><a href="#sql">Requêtes SQL</a></li>
+        <li><a href="#parametrage">Paramétrage du serveur</a></li>
+        <li><a href="#exploitation">Exploitation et sauvegardes</a></li>
+        <li><a href="#applications">Les applications et ce guide</a></li>
+      </ol>
+    </nav>
+
+    <main id="contenu">
+      <p class="eyebrow">Administrateur de l’installation</p>
+      <h1>Administrer le serveur</h1>
+      <p class="lead">Vous hébergez Clockifai (chez un hébergeur ou sur un serveur interne). Vous administrez le serveur
+        et les comptes, pas le travail des équipes : les rôles et les règles d’une entreprise se règlent dans
+        l’application, par son <a href="proprietaire.html">propriétaire</a>.</p>
+
+      <figure class="video" id="video">
+        <video data-video="5-admin-installation" src="videos/5-admin-installation.mp4" controls preload="metadata" playsinline aria-describedby="video-texte"></video>
+        <p class="video-missing">La vidéo n’est pas encore publiée sur cette installation. Le guide ci-dessous reste
+          valable sans elle.</p>
+        <figcaption id="video-texte">Vidéo sans son, avec bandeaux explicatifs : l’administrateur de l’installation
+          parcourt Supabase Studio (comptes de toute l’installation, tables de Clockifai, requête SQL de statistiques),
+          puis le fichier de paramétrage du serveur et les commandes d’exploitation, et termine par un récapitulatif
+          des rôles.</figcaption>
+        <ol class="chapters" aria-label="Chapitres de la vidéo">
+          <li><a class="scene" data-video="5-admin-installation" data-scene="studio" href="videos/5-admin-installation.mp4">Supabase Studio et comptes</a></li>
+          <li><a class="scene" data-video="5-admin-installation" data-scene="données" href="videos/5-admin-installation.mp4">Données et sécurité</a></li>
+          <li><a class="scene" data-video="5-admin-installation" data-scene="sql" href="videos/5-admin-installation.mp4">Requêtes SQL</a></li>
+          <li><a class="scene" data-video="5-admin-installation" data-scene="paramétrage" href="videos/5-admin-installation.mp4">Paramétrage et exploitation</a></li>
+        </ol>
+      </figure>
+
+      <section aria-labelledby="niveaux">
+        <h2 id="niveaux">Trois niveaux</h2>
+        <dl class="glossary">
+          <dt>Installation</dt>
+          <dd>Un serveur, administré par vous. Il peut accueillir plusieurs entreprises (workspaces), totalement
+            cloisonnées.</dd>
+          <dt>Workspace</dt>
+          <dd>Une entreprise : propriétaire, administrateurs, managers, membres. Géré dans l’application.</dd>
+          <dt>Équipe</dt>
+          <dd>Un chef d’équipe pour un groupe de personnes, à l’intérieur d’un workspace.</dd>
+        </dl>
+        <p>Il n’y a pas de « super-administrateur » dans l’application : au-dessus des workspaces, vous travaillez avec
+          Supabase Studio et le fichier de paramétrage du serveur.</p>
+      </section>
+
+      <section aria-labelledby="studio">
+        <h2 id="studio">Supabase Studio</h2>
+        <p>La console d’administration du serveur est livrée avec Clockifai. Elle est accessible sur une adresse séparée
+          (le domaine Supabase de l’installation) et protégée par un identifiant et un mot de passe
+          (<code>DASHBOARD_USERNAME</code>, <code>DASHBOARD_PASSWORD</code>). Changez ce mot de passe dès
+          l’installation.</p>
+        <p class="watch"><a class="scene" data-video="5-admin-installation" data-scene="studio" href="videos/5-admin-installation.mp4">Voir Supabase Studio</a></p>
+      </section>
+
+      <section aria-labelledby="comptes">
+        <h2 id="comptes">Les comptes</h2>
+        <p>La rubrique Authentication de Studio liste tous les comptes de l’installation, quelle que soit leur entreprise,
+          avec leur date de création, leur dernière connexion et leur méthode de connexion. Vous pouvez :</p>
+        <ul>
+          <li>créer un compte ou envoyer une invitation, utile pour le tout premier propriétaire d’une entreprise ;
+            ensuite, les invitations se font dans l’application ;</li>
+          <li>depuis la fiche d’un compte : envoyer un lien de connexion, réinitialiser le mot de passe, bloquer ou
+            supprimer le compte.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="nouvelle-entreprise">
+        <h2 id="nouvelle-entreprise">Ouvrir une nouvelle entreprise</h2>
+        <ol class="steps">
+          <li>Le futur propriétaire crée son compte dans l’application (onglet <span class="ui">Inscription</span>, si
+            les inscriptions sont ouvertes), ou vous lui envoyez une invitation depuis Studio.</li>
+          <li>À l’inscription, il reçoit un workspace personnel « Espace de … » dont il est propriétaire ; il peut le
+            renommer (<span class="ui">Paramètres</span> &gt; <span class="ui">Réglages du workspace</span>) ou en créer
+            un autre (<span class="ui">Créer un workspace</span>).</li>
+          <li>Il invite ensuite ses équipes depuis la page <span class="ui">Équipe</span> (voir
+            <a href="proprietaire.html#inviter">Inviter une personne</a>).</li>
+        </ol>
+        <p>Une fois les premiers comptes créés, fermez les inscriptions publiques (<code>DISABLE_SIGNUP=true</code>) :
+          les invitations continuent de fonctionner.</p>
+      </section>
+
+      <section aria-labelledby="donnees">
+        <h2 id="donnees">Les données et la sécurité</h2>
+        <p>L’éditeur de tables de Studio montre les tables de Clockifai : entreprises (<code>workspaces</code>), membres
+          et rôles (<code>workspace_members</code>), projets, entrées de temps, absences, factures… En dépannage
+          (propriétaire parti, compte bloqué), vous pouvez y corriger un rôle directement.</p>
+        <p>Chaque entreprise ne voit que ses données : le cloisonnement est appliqué par la base elle-même (sécurité au
+          niveau des lignes), pas seulement par l’application.</p>
+        <p class="note">Studio contourne ces protections : une modification faite ici s’applique sans contrôle.
+          Préférez l’application pour tout ce qu’elle sait faire.</p>
+        <p class="watch"><a class="scene" data-video="5-admin-installation" data-scene="données" href="videos/5-admin-installation.mp4">Voir les tables de Clockifai</a></p>
+      </section>
+
+      <section aria-labelledby="sql">
+        <h2 id="sql">Requêtes SQL</h2>
+        <p>L’éditeur SQL de Studio sert aux statistiques et aux contrôles : par exemple, le nombre de personnes et
+          d’heures par entreprise. Le résultat s’exporte en CSV et les requêtes s’enregistrent pour être rejouées.</p>
+        <p class="watch"><a class="scene" data-video="5-admin-installation" data-scene="sql" href="videos/5-admin-installation.mp4">Voir une requête SQL</a></p>
+      </section>
+
+      <section aria-labelledby="parametrage">
+        <h2 id="parametrage">Paramétrage du serveur</h2>
+        <p>Tout le paramétrage tient dans un seul fichier, <code>deploy/.env</code>, sur le serveur. Les réglages que
+          vous toucherez le plus :</p>
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Principaux réglages de deploy/.env</caption>
+            <thead><tr><th scope="col">Réglage</th><th scope="col">Rôle</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><code>SITE_URL</code></th><td>Adresse de l’application (liens des emails).</td></tr>
+              <tr><th scope="row"><code>APP_DOMAIN</code>, <code>SUPABASE_DOMAIN</code>, <code>SYNC_DOMAIN</code></th><td>Les trois noms de domaine du serveur ; HTTPS automatique.</td></tr>
+              <tr><th scope="row"><code>DISABLE_SIGNUP</code></th><td><code>true</code> : inscriptions fermées, accès sur invitation seulement.</td></tr>
+              <tr><th scope="row"><code>ENABLE_EMAIL_AUTOCONFIRM</code></th><td><code>false</code> : l’adresse email doit être confirmée à l’inscription.</td></tr>
+              <tr><th scope="row"><code>SMTP_HOST</code>, <code>SMTP_USER</code>…</th><td>Envoi des emails (invitations, liens de connexion). Sans serveur d’email, l’application affiche les liens d’invitation à transmettre à la main.</td></tr>
+              <tr><th scope="row"><code>JWT_EXPIRY</code></th><td>Durée d’une session, en secondes.</td></tr>
+              <tr><th scope="row"><code>BACKUP_KEEP_DAYS</code>, <code>BACKUP_HOUR</code></th><td>Sauvegarde chaque nuit, gardée 14 jours par défaut.</td></tr>
+              <tr><th scope="row"><code>JOBS_ENABLED</code></th><td>Tâches automatiques, comme l’arrêt des chronomètres oubliés.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="watch"><a class="scene" data-video="5-admin-installation" data-scene="paramétrage" href="videos/5-admin-installation.mp4">Voir le paramétrage et les commandes</a></p>
+      </section>
+
+      <section aria-labelledby="exploitation">
+        <h2 id="exploitation">Exploitation et sauvegardes</h2>
+        <p>Quelques commandes, depuis le dossier Clockifai sur le serveur :</p>
+        <dl class="glossary">
+          <dt><code>make prod-up</code></dt><dd>Démarrer ou mettre à jour (Docker, HTTPS).</dd>
+          <dt><code>make migrate</code></dt><dd>Appliquer les évolutions de la base.</dd>
+          <dt><code>make backup</code></dt><dd>Sauvegarde immédiate, en plus de celle de chaque nuit.</dd>
+          <dt><code>make logs SERVICE=powersync</code></dt><dd>Journaux d’un service.</dd>
+          <dt><code>make psql</code></dt><dd>Console de la base.</dd>
+        </dl>
+        <p class="note">Les sauvegardes sont écrites sur le serveur lui-même : copiez-les régulièrement ailleurs, et
+          testez une restauration. La procédure complète (installation, mise à jour, sauvegarde, restauration,
+          changement d’hébergeur, dépannage) est dans le guide d’exploitation livré avec Clockifai,
+          <code>docs/exploitation.md</code>.</p>
+      </section>
+
+      <section aria-labelledby="applications">
+        <h2 id="applications">Les applications et ce guide</h2>
+        <p>L’application web est servie par votre serveur, à l’adresse de l’installation. Les applications Mac, iPhone et
+          Android, elles, sont construites pour une installation précise (ses adresses y sont intégrées) : pour votre
+          propre installation, il faut les construire et les distribuer (TestFlight, Google Play, application Mac
+          signée) avec vos adresses.</p>
+        <p>Ce guide est servi par votre serveur sous <code>/guide/</code>, à côté de l’application. Ses vidéos sont
+          publiées à part ; tant qu’elles ne le sont pas, le guide reste lisible sans elles.</p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="inner">Clockifai, suivi du temps libre et auto-hébergé · <a href="index.html">Accueil du guide</a></div>
+  </footer>
+</body>
+</html>

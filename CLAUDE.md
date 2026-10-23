@@ -12,7 +12,9 @@ Guide pour Claude Code dans le dépôt Clockifai (clone libre et auto-hébergé 
 | `supabase/docker/` | Copie épinglée du `docker/` officiel Supabase v1.26.08 | **Ne pas modifier** (sauf montée de version) |
 | `powersync/` | `service.yaml`, `sync-config.yaml` (Sync Streams, édition 3) | Moteur de sync |
 | `deploy/` | Docker Compose, Caddy, scripts | Tout le backend en conteneurs |
-| `plans/` | Markdown | Plans validés ; à tenir à jour avec les décisions prises |
+| `plans/` | Markdown | Plans (envisagés, validés, en cours, faits) ; statut en tête, index `plans/README.md` ; à tenir à jour avec les décisions prises |
+| `docs/` | Markdown + Mermaid, OpenAPI 3.1, HTML statique | Documentation de l'état actuel (voir § Documentation) |
+| `demo/` | Node, Playwright, ffmpeg | Vidéos de démonstration tournées automatiquement |
 
 ## Commandes
 
@@ -35,6 +37,9 @@ make app-ios / make app-android-emulator && make app-android   # « Clockifai De
 make app-dist-ios         # « Clockifai » → App Store Connect / TestFlight (compte Xcode)
 make app-android-keystore && make app-dist-android            # clé d'envoi (une fois) puis .aab Google Play
 make app-analyze / make app-test
+make docs-check           # routes Flask ↔ openapi.yaml, liens et scènes vidéo du guide, statuts des plans
+make docs-serve           # guide servi comme en prod : http://localhost:3200/guide/
+make guide-videos && make guide-publish HOST=ysimonx@192.168.0.84   # vidéos tournées → guide en ligne
 ```
 
 Production (`plans/05-hebergement-maison.md`) : `make prod-up` construit aussi l'app web (`app/Dockerfile`, SDK Flutter
@@ -52,7 +57,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - Suppressions : **soft delete** (`deleted_at`) pour les tables métier ; les Sync Streams filtrent `deleted_at IS NULL`. `time_entry_tags` est supprimé physiquement.
 - Booléens : `integer` 0/1 côté SQLite, acceptés tels quels par Postgres.
 - Après modification de `powersync/sync-config.yaml` : `docker compose … restart powersync`. Les listes littérales `IN ('a','b')` sont refusées dans les sous-requêtes des streams.
-- Quatre flux : `workspace_core` (référentiel, auto), `my_time_entries` (données personnelles, auto), `team_data` (tout le workspace, souscrit par `SessionController` pour les managers), `managed_team` (temps, feuilles et absences des collaborateurs d'un chef d'équipe, auto, jointure sur `team_scope` par `(workspace_id, user_id)`).
+- Cinq flux : `my_profile` (son profil, auto), `workspace_core` (référentiel, auto), `my_time_entries` (données personnelles, auto), `team_data` (tout le workspace, souscrit par `SessionController` pour les managers), `managed_team` (temps, feuilles et absences des collaborateurs d'un chef d'équipe, auto, jointure sur `team_scope` par `(workspace_id, user_id)`).
 - Une colonne non nulle ajoutée à une table existante n'est répliquée qu'au prochain changement de ligne : la migration « touche » les lignes (`update … set col = col`) et la colonne Drift reste nullable.
 - Dates sans heure (`period_start`, `start_date`, `date`…) : texte `yyyy-MM-dd` côté client (`dayKey()` / `parseDay()` dans `modules_repository.dart`).
 - Le worker web PowerSync est **compilé depuis l'app** (`make app-web-assets`), pas téléchargé : le worker publié peut être en décalage de version avec `sqlite_async`.
@@ -102,11 +107,75 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 ## Ports locaux
 Kong/Supabase 8000, PowerSync 8080, Flask 5050 (5000 est pris par AirPlay sur macOS), Postgres via Supavisor 5432, app web 3000 (`flutter run`), build de démo 3100.
 
-## Vidéos de démonstration
+## Documentation (à tenir à jour)
+
+**Une tâche n'est terminée que lorsque la documentation qu'elle touche est à jour, dans le même commit.** En fin de
+tâche, parcourir le tableau ci-dessous ; une mise à jour reportée (vidéo à retourner, par exemple) est signalée
+explicitement dans le compte rendu, jamais passée sous silence. La doc décrit l'état actuel ; l'historique et les
+raisons restent dans `plans/` et git (`plans/11-documentation.md` pour les choix de cette documentation).
+`make docs-check` doit passer.
+
+**Plans** : chacun porte en tête `> Statut : **…** (date)` — `envisagé`, `validé`, `en cours`, `fait`, `en attente`
+ou `remplacé` — et ses lots une colonne « État ». Commencer ou livrer un lot met à jour le statut du plan et
+l'index `plans/README.md`, dans le même commit. Les numéros ne sont jamais réutilisés.
+
+| Doc | Où | À mettre à jour quand… |
+|---|---|---|
+| Architecture | `docs/architecture/` | un conteneur, un port, un domaine, un flux réseau ou de sync, une table, un rôle change |
+| API | `docs/api/openapi.yaml`, `docs/api/sequences/` | une route Flask, ses paramètres ou réponses, une RPC, un enchaînement entre composants change |
+| Vidéos de démonstration | `demo/videos/` → `demo/out/*.mp4` | l'interface d'un parcours filmé change, ou une fonction importante apparaît |
+| Guide utilisateur | `docs/guide/` (HTML), en ligne sur `https://<APP_DOMAIN>/guide/` | une fonction visible apparaît, change ou disparaît ; un libellé de l'ARB change |
+| Guide d'exploitation | `docs/exploitation.md` | installation, `deploy/.env`, sauvegarde / restauration, mise à jour, cibles `make` de prod |
+| Notes de version | `CHANGELOG.md` | toute évolution visible ; sert aussi de texte pour TestFlight et Google Play |
+| README | `README.md` | point d'entrée court qui renvoie vers `docs/` ; suivre les changements de commandes |
+
+### Architecture
+- Diagrammes en **Mermaid** dans le Markdown (rendus par GitHub et VSCode, relus dans les diffs), pas d'images
+  exportées à la main : un schéma qu'on ne peut pas modifier en même temps que le code finit faux.
+- `composants.md` : clients (web, macOS + barre de menus, iOS, Android, kiosque) → HTTPS → reverse proxy `~/edge` (TLS)
+  ou Caddy (Let's Encrypt) → trois domaines : `APP_DOMAIN` (build web, `/api` → Flask), `SUPABASE_DOMAIN` (Kong → Auth,
+  PostgREST, Realtime, Storage ; Studio sous basic auth), `SYNC_DOMAIN` (PowerSync) ; Postgres 17 et Supavisor,
+  réplication logique vers PowerSync, Flask en psycopg direct, APScheduler, SMTP, Fidwork.
+- `deploiement.md` : pile locale (ports ci-dessus) et prod sur serveur partagé (`deploy/edge/`, conteneurs, volumes).
+- `donnees.md` : schéma relationnel des tables métier, les Sync Streams (qui reçoit quoi), matrice des droits
+  par rôle (membre, chef d'équipe, manager, admin, propriétaire) alignée sur la RLS et `TeamRights`.
+
+### API
+- `docs/api/openapi.yaml` (OpenAPI 3.1) décrit **toutes** les routes Flask (`services/app/routes/`) : authentification
+  (JWT Supabase ou `X-Kiosk-Token`), paramètres, schémas, erreurs. Un test (`services/tests/test_openapi.py`) compare
+  `app.url_map` au fichier et échoue en cas d'écart.
+- PostgREST publie sa propre description (`/rest/v1/`) : ne pas la recopier ; documenter seulement les RPC et les règles
+  imposées par trigger que le client doit connaître (verrouillage, chronomètres, approbations).
+- Diagrammes de séquence Mermaid dans `docs/api/sequences/`, un fichier par parcours : connexion, écriture hors ligne →
+  `uploadData` → triggers → réplication → autres appareils, chronomètres simultanés, soumission et approbation,
+  invitation, kiosque, export, facture PDF, barre de menus macOS, échanges Fidwork.
+
+### Vidéos de démonstration
 `demo/` (Node, Playwright, ffmpeg embarqué) : `node record.mjs [n]`, données recréées par `prepare-demo.sh`
 (comptes `*@demo.clockifai.fr`). Après une évolution d'interface, rejouer `DEMO_FAST=1 node record.mjs n`
 (répétition sans vidéo, captures `demo/out/echec-*.png`) et ajuster le scénario dans `demo/videos/`.
 Les éléments Flutter sont repérés par leur étiquette d'accessibilité ou leur texte propre (`find()` dans `demo/lib/helpers.mjs`).
+Filmer avec le Chromium de Playwright (défaut), pas avec Chrome (`DEMO_CHANNEL=chrome`, répétitions seulement :
+horodatage des vidéos faux). Sous Node 26, `npx playwright install` peut se figer : installation manuelle dans `demo/README.md`.
+Le tournage écrit aussi `demo/out/<nom>.chapters.json` (début de chaque `h.scene(…)`, d'après un repère filmé
+puis effacé, car la vidéo de Playwright s'étire par rapport à l'horloge). Le nom
+de la vidéo (`export const name`) et ceux des scènes sont référencés par le guide : les renommer impose de reprendre
+le guide (`make docs-check` le signale). Une vidéo retournée est republiée : `make guide-videos && make guide-publish`.
+
+### Guide utilisateur
+- HTML statique sans étape de build ni ressource externe, en français, pour les utilisateurs : `index.html` puis une
+  page par rôle (membre, chef d'équipe, manager, propriétaire, administrateur), mêmes libellés que l'app (`app_fr.arb`).
+  N'y décrire que ce qui est implémenté.
+- Lien vers une scène : `<a class="scene" data-video="<nom>" data-scene="<scène>" href="videos/<nom>.mp4">` ;
+  `guide.js` lit les chapitres et cale le lecteur, donc retourner une vidéo met les liens à jour sans toucher au HTML.
+- Servi par le Caddy du profil prod sous `https://<APP_DOMAIN>/guide/` (`docs/guide` monté en lecture seule).
+  Les vidéos (`docs/guide/videos/`) sont hors git et `make deploy` ne copie que les fichiers suivis : elles partent
+  par `make guide-publish`.
+
+### Exploitation et notes de version
+- `docs/exploitation.md` : pour l'administrateur d'une installation (pas pour le développeur) ; reprend et complète
+  `plans/05-hebergement-maison.md`, avec la procédure de sauvegarde **et de restauration testée** de Postgres.
+- `CHANGELOG.md` : section « Non publié » alimentée au fil des commits, figée en version à chaque envoi en prod ou sur les stores.
 
 ## Interfaçage Fidwork
-Plan dans `plans/02-integration-fidwork.md` : Fidwork pousse son référentiel (sites, interventions, compagnons) et les pointages `work_start` / `work_stop` via son outbox `partner_calls` ; Clockifai renvoie les heures par intervention.
+Plan **en attente** dans `plans/02-integration-fidwork.md` : Fidwork pousse son référentiel (sites, interventions, compagnons) et les pointages `work_start` / `work_stop` via son outbox `partner_calls` ; Clockifai renvoie les heures par intervention.

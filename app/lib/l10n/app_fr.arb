@@ -81,6 +81,14 @@
   "calendar": "Calendrier",
   "cancel": "Annuler",
   "cancelRequest": "Annuler la demande",
+  "cannotOpenLink": "Impossible d'ouvrir {url}",
+  "@cannotOpenLink": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
   "changeRejected": "Modification refusée par le serveur : {message}",
   "@changeRejected": {
     "placeholders": {
@@ -246,6 +254,7 @@
   "groupSimilarEntriesHelp": "Suivi du temps : les entrées d'une même journée avec la même description, le même projet, la même tâche, les mêmes tags et la même facturation sont réunies sur une ligne dépliable",
   "groups": "Groupes",
   "halfDay": "Demi-journée",
+  "help": "Aide",
   "hideSimilarEntries": "Masquer le détail",
   "history": "Historique",
   "holidays": "Jours fériés",
@@ -636,6 +645,8 @@
   "unpaid": "Non rémunérée",
   "used": "Pris",
   "user": "Utilisateur",
+  "userGuide": "Guide d'utilisation",
+  "userGuideHelp": "Comment utiliser Clockifai selon votre rôle, avec des vidéos de démonstration.",
   "users": "Utilisateurs",
   "view": "Consulter",
   "weekOf": "Semaine du {date}",

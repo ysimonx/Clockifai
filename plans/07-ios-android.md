@@ -1,5 +1,7 @@
 # Plan 07 — Versions iOS et Android : développement, TestFlight, Google Play
 
+> Statut : **fait** (14 octobre 2026). Reste l'icône de l'app (« Limites connues »).
+
 ## Besoin
 
 Comme pour macOS (`06-macos-barre-de-menus.md`) : une version de développement branchée sur la pile locale et une version de production

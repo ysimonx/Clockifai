@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Propriétaire et administrateur · Guide de Clockifai</title>
+  <meta name="description" content="Gérer une entreprise dans Clockifai : inviter, attribuer les rôles et les taux, créer les groupes, nommer les chefs d’équipe, fixer les règles, les absences, la facturation et les tablettes kiosque.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%230369a1' stroke-width='4'/%3E%3Cpath d='M16 9v8' stroke='%230369a1' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="guide.css">
+  <script src="guide.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="inner">
+      <a class="brand" href="index.html">Clockifai <span>Guide</span></a>
+      <nav class="site-nav" aria-label="Pages du guide">
+        <ul>
+          <li><a href="index.html">Accueil</a></li>
+          <li><a href="membre.html">Membre</a></li>
+          <li><a href="chef-equipe.html">Chef d’équipe</a></li>
+          <li><a href="manager.html">Manager</a></li>
+          <li><a href="proprietaire.html" aria-current="page">Propriétaire et admin</a></li>
+          <li><a href="administrateur.html">Installation</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-labelledby="toc-titre">
+      <h2 id="toc-titre">Sur cette page</h2>
+      <ol>
+        <li><a href="#video">La vidéo</a></li>
+        <li><a href="#role">Propriétaire et administrateur</a></li>
+        <li><a href="#roles">Rôles, taux et comptes</a></li>
+        <li><a href="#chefs">Nommer un chef d’équipe</a></li>
+        <li><a href="#groupes">Les groupes</a></li>
+        <li><a href="#inviter">Inviter une personne</a></li>
+        <li><a href="#regles">Les règles de l’entreprise</a></li>
+        <li><a href="#facturation">Facturation</a></li>
+        <li><a href="#absences">Types d’absence et jours fériés</a></li>
+        <li><a href="#projets">Projets, planning, rapports, factures</a></li>
+        <li><a href="#kiosque">Installer une tablette kiosque</a></li>
+      </ol>
+    </nav>
+
+    <main id="contenu">
+      <p class="eyebrow">Propriétaire et administrateur</p>
+      <h1>Gérer l’entreprise</h1>
+      <p class="lead">Vous organisez le workspace : qui en fait partie, avec quel rôle, quelles règles s’appliquent,
+        comment se valident les absences, ce qui figure sur les factures. Vous avez aussi tous les droits d’un
+        <a href="manager.html">manager</a>.</p>
+
+      <figure class="video" id="video">
+        <video data-video="4-sophie-gestion-workspace" src="videos/4-sophie-gestion-workspace.mp4" controls preload="metadata" playsinline aria-describedby="video-texte"></video>
+        <p class="video-missing">La vidéo n’est pas encore publiée sur cette installation. Le guide ci-dessous reste
+          valable sans elle.</p>
+        <figcaption id="video-texte">Vidéo sans son, avec bandeaux explicatifs : Sophie, gérante et propriétaire du
+          workspace « Échafaudages du Nord », présente les rôles, nomme un chef d’équipe, crée un groupe, invite une
+          personne, règle les permissions et le verrouillage, gère projets et absences, consulte planning et rapports,
+          crée une facture et installe une tablette de pointage.</figcaption>
+        <ol class="chapters" aria-label="Chapitres de la vidéo">
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="connexion" href="videos/4-sophie-gestion-workspace.mp4">Le menu complet</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="rôles" href="videos/4-sophie-gestion-workspace.mp4">Rôles et chefs d’équipe</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="groupes" href="videos/4-sophie-gestion-workspace.mp4">Groupes</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="invitation" href="videos/4-sophie-gestion-workspace.mp4">Invitation</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="règles" href="videos/4-sophie-gestion-workspace.mp4">Règles</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="projets" href="videos/4-sophie-gestion-workspace.mp4">Projets</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="absences" href="videos/4-sophie-gestion-workspace.mp4">Absences</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="planning" href="videos/4-sophie-gestion-workspace.mp4">Planning</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="rapports" href="videos/4-sophie-gestion-workspace.mp4">Rapports</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="factures" href="videos/4-sophie-gestion-workspace.mp4">Factures</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="kiosque" href="videos/4-sophie-gestion-workspace.mp4">Kiosque</a></li>
+        </ol>
+      </figure>
+
+      <section aria-labelledby="role">
+        <h2 id="role">Propriétaire et administrateur</h2>
+        <p>Les deux rôles ont les mêmes droits : tous les écrans, dont <span class="ui">Factures</span>, et tous les
+          réglages. Le <strong>propriétaire</strong> est la personne qui a créé le workspace ; il ne peut pas être
+          rétrogradé s’il est le seul, car un workspace garde toujours au moins un propriétaire. Les
+          <strong>administrateurs</strong> sont nommés par lui.</p>
+        <p>Les quatre rôles, en bref : <span class="ui">Propriétaire</span> et <span class="ui">Administrateur</span>
+          gèrent tout ; <span class="ui">Manager</span> voit toute l’entreprise, valide et facture ;
+          <span class="ui">Membre</span> gère son propre temps. Chef d’équipe s’ajoute à un rôle, pour un groupe de
+          personnes.</p>
+        <p class="watch"><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="connexion" href="videos/4-sophie-gestion-workspace.mp4">Voir le menu complet</a></p>
+      </section>
+
+      <section aria-labelledby="roles">
+        <h2 id="roles">Rôles, taux et comptes</h2>
+        <p>Dans <span class="ui">Équipe</span>, onglet <span class="ui">Membres</span>, le menu à droite de chaque
+          personne (sauf vous-même) permet de :</p>
+        <ul>
+          <li>changer son rôle : <span class="ui">Membre</span>, <span class="ui">Manager</span> ou
+            <span class="ui">Administrateur</span> ;</li>
+          <li><span class="ui">Modifier les taux</span> : <span class="ui">Taux facturable (par heure)</span>, utilisé
+            pour les montants des rapports et des factures quand le projet n’a pas de taux horaire, et
+            <span class="ui">Coût (par heure)</span> ;</li>
+          <li>la nommer <span class="ui">Chef d’équipe de…</span> (voir ci-dessous) ;</li>
+          <li><span class="ui">Désactiver</span> son compte (départ temporaire) puis le <span class="ui">Réactiver</span>,
+            ou la <span class="ui">Retirer</span> du workspace : elle perd l’accès, ses entrées passées sont
+            conservées.</li>
+        </ul>
+        <p class="watch"><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="rôles" href="videos/4-sophie-gestion-workspace.mp4">Voir la gestion des rôles</a></p>
+      </section>
+
+      <section aria-labelledby="chefs">
+        <h2 id="chefs">Nommer un chef d’équipe</h2>
+        <p>Un chef d’équipe voit le temps des personnes qu’on lui confie et approuve leurs feuilles de temps, sans voir
+          toute l’entreprise. Il garde son rôle (souvent <span class="ui">Membre</span>).</p>
+        <ol class="steps">
+          <li>Dans le menu de la personne, choisissez <span class="ui">Chef d’équipe de…</span>.</li>
+          <li>Cochez un ou plusieurs <span class="ui">Groupes</span>, et/ou des personnes une à une, puis
+            <span class="ui">Enregistrer</span>.</li>
+        </ol>
+        <p>Ce qu’il peut faire de plus dépend de deux réglages : la <a href="#regles">Saisie du temps pour autrui</a>
+          (pointer et corriger le temps de son équipe) et, pour chaque <a href="#absences">type d’absence</a>, les
+          approbateurs. Ce que voit un chef d’équipe est décrit dans la page <a href="chef-equipe.html">Chef
+          d’équipe</a>.</p>
+      </section>
+
+      <section aria-labelledby="groupes">
+        <h2 id="groupes">Les groupes</h2>
+        <p>Équipes, chantiers, entreprises sous-traitantes : les groupes servent à confier des personnes à un chef
+          d’équipe. Dans <span class="ui">Équipe</span>, onglet <span class="ui">Groupes</span>,
+          <span class="ui">Nouveau groupe</span> : un <span class="ui">Nom du groupe</span>, puis les
+          <span class="ui">Membres du groupe</span>. Une personne peut appartenir à plusieurs groupes.</p>
+        <p>Supprimer un groupe ne retire personne du workspace, mais ses chefs d’équipe n’encadrent plus ce groupe.</p>
+        <p class="watch"><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="groupes" href="videos/4-sophie-gestion-workspace.mp4">Voir la création d’un groupe</a></p>
+      </section>
+
+      <section aria-labelledby="inviter">
+        <h2 id="inviter">Inviter une personne</h2>
+        <ol class="steps">
+          <li>Dans <span class="ui">Équipe</span>, touchez <span class="ui">Inviter</span>.</li>
+          <li>Saisissez son <span class="ui">Email</span> et son <span class="ui">Rôle</span>, puis
+            <span class="ui">Inviter</span>.</li>
+        </ol>
+        <p>Si la personne a déjà un compte sur l’installation, elle est ajoutée immédiatement. Sinon, un lien
+          d’invitation est créé et envoyé par email. Si l’installation n’a pas de serveur d’email, Clockifai affiche le
+          lien (« Lien d’invitation ») : <span class="ui">Copier</span>, puis transmettez-le par SMS ou messagerie.
+          L’invitation demande le réseau.</p>
+        <p class="watch"><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="invitation" href="videos/4-sophie-gestion-workspace.mp4">Voir une invitation</a></p>
+      </section>
+
+      <section aria-labelledby="regles">
+        <h2 id="regles">Les règles de l’entreprise</h2>
+        <p>Dans <span class="ui">Paramètres</span>, rubrique <span class="ui">Réglages du workspace</span> (les autres
+          rôles les voient en lecture seule) :</p>
+        <dl class="glossary">
+          <dt><span class="ui">Nom</span>, <span class="ui">Devise</span>, <span class="ui">La semaine commence le</span></dt>
+          <dd>Le nom affiché, la devise des montants, le premier jour des semaines (feuille de temps, rapports).</dd>
+          <dt><span class="ui">Arrondi des durées</span></dt>
+          <dd>Aucun, 5, 6, 10, 12, 15, 30 ou 60 minutes. Appliqué dans les rapports si demandé ; les entrées gardent
+            leur durée réelle.</dd>
+          <dt><span class="ui">Projet obligatoire</span>, <span class="ui">Description obligatoire</span></dt>
+          <dd>Imposés à l’arrêt du chronomètre et à chaque saisie.</dd>
+          <dt><span class="ui">Saisie du temps pour autrui</span></dt>
+          <dd>Qui peut saisir et modifier le temps des autres membres : « Administrateurs », ou « Administrateurs et chefs
+            d’équipe » (les managers en profitent alors aussi). C’est ce réglage qui fait apparaître le
+            <span class="ui">Pointage d’équipe</span>.</dd>
+          <dt><span class="ui">Création de tâches</span></dt>
+          <dd>Qui peut créer une tâche depuis le sélecteur de projet : « Tout le monde » ou « Managers et
+            administrateurs ».</dd>
+          <dt><span class="ui">Arrêt automatique des chronomètres</span></dt>
+          <dd>Arrête les chronomètres oubliés après 8, 10, 12, 14 ou 24 heures (ou jamais).</dd>
+          <dt><span class="ui">Chronomètres simultanés</span></dt>
+          <dd>Combien de chronomètres un membre peut faire tourner en même temps : 1, 2, 3, 5 ou illimité. Au-delà, le
+            plus ancien s’arrête.</dd>
+          <dt><span class="ui">Verrouiller les entrées antérieures au</span></dt>
+          <dd>Après la paie, plus personne ne modifie la période écoulée, sauf un administrateur.
+            <span class="ui">Déverrouiller</span> lève le verrou.</dd>
+        </dl>
+        <p class="watch"><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="règles" href="videos/4-sophie-gestion-workspace.mp4">Voir les règles de l’entreprise</a></p>
+      </section>
+
+      <section aria-labelledby="facturation">
+        <h2 id="facturation">Facturation</h2>
+        <p>Rubrique <span class="ui">Facturation</span> des paramètres : la <span class="ui">Raison sociale</span> et les
+          <span class="ui">Coordonnées (adresse, SIRET, TVA…)</span>, affichées en en-tête des factures, le
+          <span class="ui">Préfixe des numéros</span>, le <span class="ui">Délai de paiement (jours)</span> et la TVA
+          proposée par défaut. La création des factures est décrite dans la page <a href="manager.html#factures">Manager</a>.</p>
+        <p class="watch"><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="factures" href="videos/4-sophie-gestion-workspace.mp4">Voir la création d’une facture</a></p>
+      </section>
+
+      <section aria-labelledby="absences">
+        <h2 id="absences">Types d’absence et jours fériés</h2>
+        <p>En bas de l’écran <span class="ui">Absences</span>, deux rubriques vous sont réservées.</p>
+        <dl class="glossary">
+          <dt><span class="ui">Politiques d’absence</span></dt>
+          <dd><span class="ui">Nouvelle politique</span> : un nom (« Congés payés, RTT, Maladie… »), le
+            <span class="ui">Droit annuel</span> en jours ou en heures (vide = illimité),
+            <span class="ui">Validation requise</span> et les <span class="ui">Approbateurs</span> (« Managers », ou
+            « Managers et chefs d’équipe »), <span class="ui">Rémunérée</span> ou non. Dans le menu d’une politique,
+            <span class="ui">Droits par membre</span> fixe un droit différent pour une personne (laisser vide pour
+            appliquer celui de la politique). Une politique qui ne sert plus s’archive.</dd>
+          <dt><span class="ui">Jours fériés</span></dt>
+          <dd><span class="ui">Ajouter un jour férié</span> : il est exclu du décompte des jours d’absence et grisé dans
+            le planning.</dd>
+        </dl>
+        <p>Une personne sans chef d’équipe voit ses demandes validées par la direction (managers, administrateurs,
+          propriétaire).</p>
+        <p class="watch"><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="absences" href="videos/4-sophie-gestion-workspace.mp4">Voir les types d’absence</a></p>
+      </section>
+
+      <section aria-labelledby="projets">
+        <h2 id="projets">Projets, planning, rapports, factures</h2>
+        <p>Comme un manager, vous tenez les projets, les tâches, les clients et les tags, vous planifiez, vous
+          exportez et vous facturez : tout est décrit dans la page <a href="manager.html">Manager</a>.</p>
+        <ul>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="projets" href="videos/4-sophie-gestion-workspace.mp4">Projets, budgets et taux</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="planning" href="videos/4-sophie-gestion-workspace.mp4">Le planning de toute l’entreprise</a></li>
+          <li><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="rapports" href="videos/4-sophie-gestion-workspace.mp4">Heures et montants par client</a></li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="kiosque">
+        <h2 id="kiosque">Installer une tablette kiosque</h2>
+        <p>Pour les équipes sans smartphone, une tablette partagée (à la base vie, à l’entrée d’un atelier) permet à
+          chacun de pointer son arrivée et son départ avec un code PIN.</p>
+        <ol class="steps">
+          <li>Dans <span class="ui">Paramètres</span> &gt; <span class="ui">Appareils kiosque</span>, touchez
+            <span class="ui">Nouvel appareil</span> et nommez-le. Copiez le jeton affiché : il ne sera plus montré.</li>
+          <li>Sur la tablette, ouvrez Clockifai et touchez <span class="ui">Mode kiosque (tablette partagée)</span> sur
+            l’écran de connexion. Collez le <span class="ui">Jeton d’appareil</span>, une seule fois.</li>
+          <li>Chaque personne choisit son code dans <span class="ui">Paramètres</span> &gt; <span class="ui">Code PIN
+            kiosque</span> (voir la page <a href="membre.html#kiosque">Membre</a>). Sur la tablette, elle touche son nom
+            et tape son code.</li>
+        </ol>
+        <p>Le temps pointé apparaît dans la feuille de temps de la personne, comme une saisie normale. La liste des
+          appareils indique leur <span class="ui">Dernière activité</span> ; <span class="ui">Révoquer</span> coupe
+          immédiatement un appareil perdu ou volé. Après trop d’erreurs de code, la tablette impose une pause de
+          quelques minutes.</p>
+        <p class="watch"><a class="scene" data-video="4-sophie-gestion-workspace" data-scene="kiosque" href="videos/4-sophie-gestion-workspace.mp4">Voir l’installation d’une tablette</a></p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="inner">Clockifai, suivi du temps libre et auto-hébergé · <a href="index.html">Accueil du guide</a></div>
+  </footer>
+</body>
+</html>

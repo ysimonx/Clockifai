@@ -151,6 +151,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cancelRequest => 'Annuler la demande';
 
   @override
+  String cannotOpenLink(String url) {
+    return 'Impossible d\'ouvrir $url';
+  }
+
+  @override
   String changeRejected(String message) {
     return 'Modification refusée par le serveur : $message';
   }
@@ -470,6 +475,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get halfDay => 'Demi-journée';
+
+  @override
+  String get help => 'Aide';
 
   @override
   String get hideSimilarEntries => 'Masquer le détail';
@@ -1391,6 +1399,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get user => 'Utilisateur';
+
+  @override
+  String get userGuide => 'Guide d\'utilisation';
+
+  @override
+  String get userGuideHelp =>
+      'Comment utiliser Clockifai selon votre rôle, avec des vidéos de démonstration.';
 
   @override
   String get users => 'Utilisateurs';

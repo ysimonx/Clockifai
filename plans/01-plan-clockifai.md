@@ -1,5 +1,8 @@
 # Clockifai — clone libre et auto-hébergé de Clockify (web + mobile)
 
+> Statut : **fait** (lots 0 à 4c, 11 octobre 2026). Pistes restantes : « Reste à faire », en fin de plan.
+> Index de tous les plans et de leur statut : [README.md](README.md).
+
 ## Contexte
 
 Objectif : disposer d'un équivalent de Clockify (suivi du temps, projets, rapports, équipe,
@@ -211,18 +214,7 @@ Chaque lot se termine par un état déployable.
 
 ## Plans liés
 
-| Plan | Objet | État (23 octobre 2026) |
-|---|---|---|
-| [02-integration-fidwork.md](02-integration-fidwork.md) | Saisie des temps des échafaudeurs et calorifugeurs depuis Fidwork | En attente |
-| [03-saisie-pour-autrui.md](03-saisie-pour-autrui.md) | Chef d'équipe (groupes, périmètre), saisie du temps pour autrui et pointage d'équipe | Fait |
-| [04-tickets.md](04-tickets.md) | Tâches comme tickets ; lot 0 : numéro de tâche `CLK-42` | Lot 0 à faire, le reste en réflexion |
-| [05-chronometres-paralleles.md](05-chronometres-paralleles.md) | Plusieurs chronomètres en même temps, limite réglable par workspace | Fait |
-| [05-hebergement-maison.md](05-hebergement-maison.md) | Production à la maison (clockifai.kysoe.com) | Fait |
-| [06-macos-barre-de-menus.md](06-macos-barre-de-menus.md) | Version macOS et icône de la barre de menus | Fait |
-| [07-ios-android.md](07-ios-android.md) | Versions iOS et Android, TestFlight, Google Play | Fait |
-| [08-regroupement-entrees.md](08-regroupement-entrees.md) | Regroupement des entrées similaires | Fait |
-| [09-forges-git.md](09-forges-git.md) | Branches, commits et demandes de fusion rattachés aux tâches | À faire (après 04 lot 0 et 10 lot 1) |
-| [10-suivi-claude-code.md](10-suivi-claude-code.md) | Temps de Claude (agents membres de l'équipe) et mon temps (suggestions) | À faire |
+Tous les plans, leur objet et leur statut sont dans l'index [README.md](README.md).
 
 ## État d'avancement (11 octobre 2026)
 

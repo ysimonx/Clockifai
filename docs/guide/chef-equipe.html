@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chef d’équipe · Guide de Clockifai</title>
+  <meta name="description" content="Encadrer une équipe dans Clockifai : pointage d’équipe, saisie pour un collègue, approbation des feuilles de temps et des absences, rapports de l’équipe.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%230369a1' stroke-width='4'/%3E%3Cpath d='M16 9v8' stroke='%230369a1' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="guide.css">
+  <script src="guide.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="inner">
+      <a class="brand" href="index.html">Clockifai <span>Guide</span></a>
+      <nav class="site-nav" aria-label="Pages du guide">
+        <ul>
+          <li><a href="index.html">Accueil</a></li>
+          <li><a href="membre.html">Membre</a></li>
+          <li><a href="chef-equipe.html" aria-current="page">Chef d’équipe</a></li>
+          <li><a href="manager.html">Manager</a></li>
+          <li><a href="proprietaire.html">Propriétaire et admin</a></li>
+          <li><a href="administrateur.html">Installation</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-labelledby="toc-titre">
+      <h2 id="toc-titre">Sur cette page</h2>
+      <ol>
+        <li><a href="#video">La vidéo</a></li>
+        <li><a href="#perimetre">Votre périmètre</a></li>
+        <li><a href="#pointage">Pointer toute l’équipe</a></li>
+        <li><a href="#pour-un-collegue">Saisir ou corriger pour un collègue</a></li>
+        <li><a href="#approbations">Approuver les feuilles de temps</a></li>
+        <li><a href="#absences">Les absences de l’équipe</a></li>
+        <li><a href="#rapports">Les rapports de l’équipe</a></li>
+        <li><a href="#equipe">La page Équipe</a></li>
+        <li><a href="#limites">Ce qui reste hors de votre portée</a></li>
+      </ol>
+    </nav>
+
+    <main id="contenu">
+      <p class="eyebrow">Chef d’équipe</p>
+      <h1>Encadrer une équipe</h1>
+      <p class="lead">Vous êtes chargé d’un groupe de personnes : vous voyez leur temps, vous le validez et, si la règle
+        de l’entreprise le permet, vous le saisissez pour elles. Pour votre propre temps, tout se passe comme pour un
+        <a href="membre.html">membre</a>.</p>
+
+      <figure class="video" id="video">
+        <video data-video="2-karim-chef-equipe" src="videos/2-karim-chef-equipe.mp4" controls preload="metadata" playsinline aria-describedby="video-texte"></video>
+        <p class="video-missing">La vidéo n’est pas encore publiée sur cette installation. Le guide ci-dessous reste
+          valable sans elle.</p>
+        <figcaption id="video-texte">Vidéo sans son, avec bandeaux explicatifs : Karim, chef de l’équipe « Unité 4 »
+          (Camille, Léo, Hugo), pointe son équipe en fin de journée, corrige la feuille d’une collègue, approuve une
+          semaine et une demande de congés, puis consulte les rapports et la page Équipe, limités à son équipe.</figcaption>
+        <ol class="chapters" aria-label="Chapitres de la vidéo">
+          <li><a class="scene" data-video="2-karim-chef-equipe" data-scene="connexion" href="videos/2-karim-chef-equipe.mp4">Son menu</a></li>
+          <li><a class="scene" data-video="2-karim-chef-equipe" data-scene="pointage d’équipe" href="videos/2-karim-chef-equipe.mp4">Pointage d’équipe</a></li>
+          <li><a class="scene" data-video="2-karim-chef-equipe" data-scene="saisie pour une collègue" href="videos/2-karim-chef-equipe.mp4">Saisie pour une collègue</a></li>
+          <li><a class="scene" data-video="2-karim-chef-equipe" data-scene="approbations" href="videos/2-karim-chef-equipe.mp4">Approbations</a></li>
+          <li><a class="scene" data-video="2-karim-chef-equipe" data-scene="absences" href="videos/2-karim-chef-equipe.mp4">Absences</a></li>
+          <li><a class="scene" data-video="2-karim-chef-equipe" data-scene="rapports" href="videos/2-karim-chef-equipe.mp4">Rapports</a></li>
+          <li><a class="scene" data-video="2-karim-chef-equipe" data-scene="équipe" href="videos/2-karim-chef-equipe.mp4">Équipe</a></li>
+        </ol>
+      </figure>
+
+      <section aria-labelledby="perimetre">
+        <h2 id="perimetre">Votre périmètre</h2>
+        <p>Chef d’équipe n’est pas un rôle mais une mission : le propriétaire ou un administrateur vous confie un ou
+          plusieurs groupes (« Équipe Unité 4 », un chantier, un sous-traitant), ou des personnes une à une. Vous restez
+          membre pour tout le reste. Dans la page <span class="ui">Équipe</span>, votre fiche indique « Encadre : … » et
+          celle de chaque collaborateur « Chef d’équipe : … ».</p>
+        <p>Votre menu gagne <span class="ui">Approbations</span> et, si la règle de l’entreprise vous permet de saisir
+          pour les autres, <span class="ui">Pointage d’équipe</span>. Dans les rapports, les absences, la feuille de
+          temps, le calendrier et la page Équipe, vous voyez votre équipe en plus de vous-même, jamais au-delà.</p>
+        <p class="watch"><a class="scene" data-video="2-karim-chef-equipe" data-scene="connexion" href="videos/2-karim-chef-equipe.mp4">Voir le menu d’un chef d’équipe</a></p>
+      </section>
+
+      <section aria-labelledby="pointage">
+        <h2 id="pointage">Pointer toute l’équipe</h2>
+        <p>En fin de journée, déclarez en une fois les heures de ceux qui étaient présents. Le
+          <span class="ui">Pointage d’équipe</span> n’apparaît que si l’entreprise a choisi « Administrateurs et chefs
+          d’équipe » pour la <span class="ui">Saisie du temps pour autrui</span>.</p>
+        <ol class="steps">
+          <li>Ouvrez <span class="ui">Pointage d’équipe</span>.</li>
+          <li>Renseignez la <span class="ui">Description</span>, le projet et la tâche, éventuellement des tags et
+            <span class="ui">Facturable</span>, puis les <span class="ui">Horaires par défaut</span>
+            (<span class="ui">Début</span>, <span class="ui">Fin</span>).</li>
+          <li>Cochez les présents (<span class="ui">Tout cocher</span> pour aller vite). Touchez les horaires d’une
+            personne pour les ajuster : arrivée plus tardive, départ plus tôt.</li>
+          <li>Touchez <span class="ui">Créer les entrées</span> : une entrée est créée pour chacun, même hors ligne.</li>
+        </ol>
+        <p>Chez vos collaborateurs, ces heures apparaissent avec la mention « saisi par » suivie de votre nom. Elles leur
+          appartiennent : ils peuvent les corriger.</p>
+        <p class="watch"><a class="scene" data-video="2-karim-chef-equipe" data-scene="pointage d’équipe" href="videos/2-karim-chef-equipe.mp4">Voir le pointage d’équipe</a></p>
+      </section>
+
+      <section aria-labelledby="pour-un-collegue">
+        <h2 id="pour-un-collegue">Saisir ou corriger pour un collègue</h2>
+        <p>Sur la <span class="ui">Feuille de temps</span> et le <span class="ui">Calendrier</span>, un sélecteur en
+          haut (<span class="ui">Collaborateur</span>) affiche le temps d’une personne de votre équipe. Un bandeau
+          rappelle pour qui vous travaillez :</p>
+        <ul>
+          <li>« Vous saisissez le temps de Camille Martin. » : vous pouvez saisir et corriger comme sur votre propre
+            feuille ;</li>
+          <li>« Temps de … : consultation seulement. » : la règle de l’entreprise ne vous permet pas de saisir pour les
+            autres, ou la personne n’est plus active.</li>
+        </ul>
+        <p>Pour ajouter la même entrée à plusieurs personnes, touchez <span class="ui">Ajouter du temps pour
+          d’autres</span> dans les <span class="ui">Rapports</span>, ou <span class="ui">Choisir les
+          collaborateurs</span> dans la fenêtre <span class="ui">Ajouter une entrée</span>.</p>
+        <p class="note">Vous ne pouvez pas lancer un chronomètre pour quelqu’un d’autre : le chronomètre reste
+          personnel. Une semaine déjà approuvée reste verrouillée (« Période déjà approuvée pour … »).</p>
+        <p class="watch"><a class="scene" data-video="2-karim-chef-equipe" data-scene="saisie pour une collègue" href="videos/2-karim-chef-equipe.mp4">Voir la saisie pour une collègue</a></p>
+      </section>
+
+      <section aria-labelledby="approbations">
+        <h2 id="approbations">Approuver les feuilles de temps</h2>
+        <p>Quand un collaborateur soumet sa semaine, elle apparaît dans <span class="ui">Approbations</span>, onglet
+          <span class="ui">En attente</span>. Vous ne voyez que les feuilles de votre équipe.</p>
+        <ol class="steps">
+          <li>Ouvrez la semaine pour voir ses entrées, jour par jour et projet par projet.</li>
+          <li><span class="ui">Approuver</span> : la semaine est verrouillée, plus personne ne la modifie sauf un
+            administrateur.</li>
+          <li>Un souci ? <span class="ui">Refuser</span>, avec un commentaire : la semaine revient au collaborateur, qui
+            corrige et soumet à nouveau.</li>
+        </ol>
+        <p>L’onglet <span class="ui">Historique</span> garde les décisions passées ; <span class="ui">Rouvrir</span> y
+          déverrouille une semaine approuvée pour la faire corriger. Votre propre feuille, elle, est validée par un
+          manager.</p>
+        <p class="watch"><a class="scene" data-video="2-karim-chef-equipe" data-scene="approbations" href="videos/2-karim-chef-equipe.mp4">Voir une approbation</a></p>
+      </section>
+
+      <section aria-labelledby="absences">
+        <h2 id="absences">Les absences de l’équipe</h2>
+        <p>Dans <span class="ui">Absences</span>, la rubrique <span class="ui">À valider</span> liste les demandes de
+          votre équipe que vous pouvez décider : celles des types d’absence pour lesquels l’entreprise a choisi
+          « Managers et chefs d’équipe » comme approbateurs. Les autres sont validées par un manager. Touchez
+          <span class="ui">Approuver</span> ou <span class="ui">Refuser</span> (un commentaire est facultatif).</p>
+        <p>Une absence approuvée apparaît dans le planning de la personne et se décompte de son solde.
+          <span class="ui">Demandes de l’équipe</span> rappelle les demandes déjà traitées.</p>
+        <p class="watch"><a class="scene" data-video="2-karim-chef-equipe" data-scene="absences" href="videos/2-karim-chef-equipe.mp4">Voir la validation d’une absence</a></p>
+      </section>
+
+      <section aria-labelledby="rapports">
+        <h2 id="rapports">Les rapports de l’équipe</h2>
+        <p>Vos <span class="ui">Rapports</span> couvrent votre équipe et vous-même. Le filtre <span class="ui">Tous les
+          membres</span> permet de n’en garder qu’une personne ; <span class="ui">Grouper par</span> utilisateur donne
+          les heures par personne sur la période. Les exports (CSV, Excel, PDF) suivent le même périmètre. Le
+          fonctionnement général est décrit dans la page <a href="membre.html#rapports">Membre</a>.</p>
+        <p class="watch"><a class="scene" data-video="2-karim-chef-equipe" data-scene="rapports" href="videos/2-karim-chef-equipe.mp4">Voir les rapports d’un chef d’équipe</a></p>
+      </section>
+
+      <section aria-labelledby="equipe">
+        <h2 id="equipe">La page Équipe</h2>
+        <p>Tout le monde figure dans l’annuaire, mais vous ne voyez les heures de la semaine et les chronomètres en
+          cours que pour votre équipe.</p>
+        <p class="watch"><a class="scene" data-video="2-karim-chef-equipe" data-scene="équipe" href="videos/2-karim-chef-equipe.mp4">Voir la page Équipe</a></p>
+      </section>
+
+      <section aria-labelledby="limites">
+        <h2 id="limites">Ce qui reste hors de votre portée</h2>
+        <ul>
+          <li>Le temps des personnes hors de votre équipe.</li>
+          <li>Les chronomètres des autres.</li>
+          <li>Les factures, le planning (affectations), les projets, les clients et les tags : réservés aux
+            <a href="manager.html">managers</a>.</li>
+          <li>Les rôles, les groupes et les règles de l’entreprise : réservés au
+            <a href="proprietaire.html">propriétaire et aux administrateurs</a>.</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="inner">Clockifai, suivi du temps libre et auto-hébergé · <a href="index.html">Accueil du guide</a></div>
+  </footer>
+</body>
+</html>

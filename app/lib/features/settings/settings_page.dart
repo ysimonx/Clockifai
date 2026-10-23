@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Supabase, UserAttri
 
 import '../../core/di.dart';
 import '../../core/display_prefs.dart';
+import '../../core/guide.dart';
 import '../../core/launch_at_login.dart';
 import '../../core/l10n.dart';
 import '../../core/locale_controller.dart';
@@ -116,6 +117,16 @@ class SettingsPage extends StatelessWidget {
             ),
           ]),
         ],
+        const SizedBox(height: 16),
+        _Section(title: l.help, children: [
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: Text(l.userGuide),
+            subtitle: Text(l.userGuideHelp),
+            trailing: const Icon(Icons.open_in_new),
+            onTap: () => openGuide(context),
+          ),
+        ]),
         const SizedBox(height: 16),
         _Section(title: l.account, children: [
           ListTile(

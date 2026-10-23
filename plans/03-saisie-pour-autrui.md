@@ -1,5 +1,7 @@
 # Saisie du temps pour autrui (chef d'équipe) — plan
 
+> Statut : **fait** (lots 1 à 5, 11 octobre 2026). Pistes : « Reste à faire », en fin de plan.
+>
 > Objectif : qu'un **chef d'équipe** puisse saisir, corriger et pointer le temps des
 > collaborateurs qu'il encadre, comme le « Team Manager » de Clockify, avec en plus un
 > **pointage d'équipe** (cocher les présents → une entrée par personne) pour les chantiers.

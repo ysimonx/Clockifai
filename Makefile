@@ -134,8 +134,8 @@ app-android-emulator: ## Démarre l'émulateur Android (ANDROID_AVD=…)
 
 app-android: ## Lance « Clockifai Dev » sur Android (émulateur ou téléphone branché), pile locale via adb reverse
 	@$(ADB) get-state >/dev/null 2>&1 || (echo "Aucun appareil : make app-android-emulator, ou branchez un téléphone" && exit 1)
-	@# localhost:8000/8080/5050 de l'appareil = ceux du Mac : la même config locale que le web et macOS.
-	for p in 8000 8080 5050; do $(ADB) reverse tcp:$$p tcp:$$p; done
+	@# localhost:8000/8080/5050 (et 3200, guide de make docs-serve) de l'appareil = ceux du Mac : la même config locale que le web et macOS.
+	for p in 8000 8080 5050 3200; do $(ADB) reverse tcp:$$p tcp:$$p; done
 	cd app && fvm flutter run -d $$($(ADB) get-serialno) $(DEFINES)
 
 app-android-keystore: ## Crée la clé d'envoi Google Play (une fois, hors dépôt ; à sauvegarder)
@@ -157,3 +157,22 @@ app-test: ## Tests Flutter
 
 app-analyze: ## Analyse statique Dart
 	cd app && fvm flutter analyze
+
+# ---------------------------------------------------------------- documentation
+docs-check: ## Contrôle la doc : routes Flask ↔ docs/api/openapi.yaml, liens et scènes vidéo du guide, statuts des plans
+	cd services && uv run pytest -q tests/test_openapi.py
+	uv run --no-project python docs/check.py
+
+docs-serve: ## Sert le guide comme en prod (Caddy, saut dans les vidéos) : http://localhost:3200/guide/
+	docker run --rm -p 3200:80 -v "$(CURDIR)/docs/guide:/srv/guide:ro" caddy:2-alpine caddy file-server --root /srv --listen :80
+
+guide-videos: ## Copie les vidéos tournées (demo/out) et leurs chapitres dans docs/guide/videos
+	mkdir -p docs/guide/videos
+	cp demo/out/*.mp4 docs/guide/videos/
+	for f in demo/out/*.chapters.json; do [ ! -e "$$f" ] || cp "$$f" docs/guide/videos/; done
+
+guide-publish: ## Envoie les vidéos du guide sur le serveur : make guide-publish HOST=user@ip
+	@test -n "$(HOST)" || (echo "Usage : make guide-publish HOST=user@ip [DEPLOY_DIR=Clockifai]" && exit 1)
+	@ls docs/guide/videos/*.mp4 >/dev/null 2>&1 || (echo "Aucune vidéo dans docs/guide/videos : make guide-videos d'abord" && exit 1)
+	ssh $(HOST) 'mkdir -p $(DEPLOY_DIR)/docs/guide/videos'
+	rsync -az --delete docs/guide/videos/ $(HOST):$(DEPLOY_DIR)/docs/guide/videos/

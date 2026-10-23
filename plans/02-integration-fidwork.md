@@ -1,5 +1,9 @@
 # Interfaçage Fidwork ↔ Clockifai — plan
 
+> Statut : **en attente** (23 octobre 2026). Les autres plans ne doivent pas en dépendre : ce qu'ils
+> partagent avec lui (`time_entries.source`, `external_source` / `external_id`, `identity_links`) est créé
+> par le premier lot livré qui en a besoin.
+>
 > Objectif : que les échafaudeurs et calorifugeurs saisissent leur temps de travail
 > **sur les interventions Fidwork**, que ce temps soit tenu dans Clockifai (feuilles de
 > temps, rapports, approbations, export paie / facturation), et que Fidwork récupère en
@@ -36,7 +40,7 @@
 | Phase (montage, démontage, modification, visite, pose, dépose, réception) | **Tag** | permet de remplir séparément « heures montage » et « heures démontage » |
 | Utilisateur avec rôle `échafaudeur` / `calorifugeur` sur un site lié | **Membre** (rôle `member`) | rapprochement par email ; invitation automatique si absent |
 | Coordinateur, chef de chantier, responsable organisation | **Manager** | liste de rôles configurable par lien |
-| Entreprise (`companies`) | Groupe d'utilisateurs (filtre de rapport) | groupes du plan [03-saisie-pour-autrui.md](03-saisie-pour-autrui.md) ; d'ici là, champ `company` sur le membre |
+| Entreprise (`companies`) | Groupe d'utilisateurs (filtre de rapport) | groupes du plan [03-saisie-pour-autrui.md](03-saisie-pour-autrui.md), livrés (`user_groups`) |
 
 ## 4. Architecture des flux
 
@@ -93,7 +97,7 @@ L'app envoie son jeton Fidwork à `POST /api/integrations/fidwork/session` ; Clo
 |---|---|---|
 | Migration `integration_links` | workspace, source `fidwork`, `fidwork_tenant_id`, URL de l'API, hash de la clé, compte de service (Vault/env), correspondance rôles → rôles, sites activés | S |
 | Colonnes de rapprochement | `external_source`, `external_id`, `external_meta jsonb` sur `clients`, `projects`, `tasks` (+ index unique) ; `identity_links(workspace_id, source, external_user_id, user_id)` | S |
-| Entrées de temps | `source` (`app`, `kiosk`, `fidwork`), `external_id` unique, `start_lat/lng/accuracy`, `stop_lat/lng/accuracy` | S |
+| Entrées de temps | `source` (créée par le plan 10 ; valeur `fidwork` à ajouter), `external_id` unique, `start_lat/lng/accuracy`, `stop_lat/lng/accuracy` (voir §9 : pas dans `time_entries`) | S |
 | Inbox | `integration_inbox(source, external_event_id unique, payload, received_at, processed_at, error)` | S |
 | Flask : blueprint `integrations/fidwork` | `sync`, `events`, `labour`, `session` ; auth par clé d'intégration ; tests d'intégration | M |
 | Jobs | réconciliation horaire, traitement de l'inbox en échec, relance des invitations | S |
@@ -113,7 +117,7 @@ L'app envoie son jeton Fidwork à `POST /api/integrations/fidwork/session` ; Clo
 | Lot | Résultat visible | Prérequis |
 |---|---|---|
 | **F0** Cadrage | Choix du tenant pilote, liste des phases, rôles → managers, information des salariés (géolocalisation) | — |
-| **F1** Référentiel | Les interventions d'un site pilote apparaissent comme tâches dans Clockifai ; les compagnons sont invités et peuvent déjà pointer depuis l'app Clockifai | Clockifai lot 3 (invitations) |
+| **F1** Référentiel | Les interventions d'un site pilote apparaissent comme tâches dans Clockifai ; les compagnons sont invités et peuvent déjà pointer depuis l'app Clockifai | Clockifai lot 3 (invitations) : fait |
 | **F2** Pointage terrain | Scan QR → départ/arrêt du pointage dans Fidwork, y compris hors ligne et en équipe | F1 + correctif heure des événements |
 | **F3** Retour Fidwork | Heures par intervention visibles dans Fidwork, pré-remplissage des formulaires nucléaires | F2 |
 | **F4** SSO | « Continuer avec Fidwork » dans l'app Clockifai | facultatif |
@@ -133,3 +137,28 @@ L'app envoie son jeton Fidwork à `POST /api/integrations/fidwork/session` ; Clo
 3. Granularité souhaitée : par intervention (recommandé), ou aussi par phase et par repère ?
 4. Le pointage d'équipe par le chef d'équipe est-il la règle, ou chacun pointe-t-il pour lui-même ? (Côté Clockifai, voir [03-saisie-pour-autrui.md](03-saisie-pour-autrui.md).)
 5. Faut-il remplir automatiquement les champs d'heures des formulaires nucléaires, ou seulement les proposer ?
+
+## 9. À reprendre avant la relance (revue du 23 octobre 2026)
+
+Points bloquants relevés depuis, à traiter quand le plan reprendra :
+1. **Gardes contournées** : sans JWT, `time_entries_guard` ne contrôle rien (0009). Un pointage rejoué ou en
+   retard peut atterrir dans une période verrouillée, approuvée ou facturée. Écrire par une fonction qui
+   reprend les contrôles, comme `agent_entry_write` du plan 10, et envoyer les refus dans « pointages à
+   vérifier ».
+2. **Limite de chronomètres** : avec `max_running_timers = 1` (défaut), un `work_start` arrête le chronomètre
+   de l'app ou du kiosque ; un `work_start` en retard est enregistré déjà clos (0011), puis `work_stop`
+   écraserait cette fin. La sortie du kiosque arrête aussi les pointages Fidwork. Ne jamais prolonger une
+   entrée déjà close, et décider comment les pointages Fidwork se combinent à la limite et au kiosque.
+3. **Identifiant déterministe** : un pointage d'équipe porte la liste des compagnons, donc
+   `uuid5(event_on_site_uuid)` donnerait le même `id` à N entrées. Utiliser
+   `uuid5(lien, event_uuid:fidwork_user_id)`.
+4. **Compagnons sans compte** : ils ne se connectent jamais, la production n'a pas de SMTP, et chaque compte
+   créé reçoit un espace personnel. S'inspirer des comptes techniques des agents (plan 10, D14) et de
+   `identity_links` (créée par le plan 09, lot 3).
+5. **Secrets et données personnelles** : `integration_links`, `integration_inbox` et `identity_links` vont dans
+   `clockifai_private` (migration `*.admin.sql`) ; toute table de `public` est publiée vers PowerSync.
+6. **Géolocalisation** : sur `time_entries`, elle partirait vers tous les managers par les flux `SELECT *`,
+   contrairement à §7. Table séparée, non synchronisée, lisible par l'intéressé et les admins, avec une durée
+   de conservation.
+7. **Rejeux** : la purge supprime les entrées effacées après 30 jours. Garder l'inbox plus longtemps que la
+   fenêtre de rejeu de Fidwork, sinon un rejeu recrée un pointage supprimé.

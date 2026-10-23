@@ -60,6 +60,6 @@ Le temps cumulé peut dépasser le temps réel, puisque deux projets comptent ch
 
 ## 6. Plus tard
 
-- **Chronomètres pilotés par les agents IA** : jeton d'API personnel (`clockifai_private`), endpoints Flask `POST /api/timers/start|stop`, association dépôt → projet, exemple de hooks Claude Code `SessionStart` / `SessionEnd`.
-- Étiquette d'appareil ou de source sur chaque entrée (`source`, déjà esquissée dans le plan 02).
+- **Chronomètres pilotés par les agents IA** : repris et remplacé par le plan 10 (`10-suivi-claude-code.md`). Les agents y sont des membres de l'équipe, avec leurs propres chronomètres, hors de la limite `max_running_timers`.
+- Étiquette d'appareil ou de source sur chaque entrée : la colonne `source` est créée par le plan 10.
 - Rapports : distinguer temps de présence (union des intervalles) et temps cumulé.

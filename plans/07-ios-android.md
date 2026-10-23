@@ -2,7 +2,7 @@
 
 ## Besoin
 
-Comme pour macOS (plan 06) : une version de développement branchée sur la pile locale et une version de production
+Comme pour macOS (`06-macos-barre-de-menus.md`) : une version de développement branchée sur la pile locale et une version de production
 (clockifai.kysoe.com), distribuée par **TestFlight** sur iPhone et par **Google Play** (app bundle) sur Android.
 
 ## Décisions

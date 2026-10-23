@@ -108,7 +108,8 @@ alter table public.time_entries
 
 Fonctions (`security definer`, mêmes droits d'exécution que `is_manager`) :
 - `manages(wid, uid)` : `is_admin(wid)` **ou** rôle `manager` **ou** ligne `team_scope (wid, auth.uid(), uid)`.
-- `can_edit_time_of(wid, uid)` : `uid = auth.uid() and is_member(wid)`
+- `can_edit_time_of(wid, uid)` (livrée sous le nom `can_edit_others_time`, sans le cas « soi-même », traité
+  directement dans les politiques) : `uid = auth.uid() and is_member(wid)`
   **ou** `is_admin(wid)`
   **ou** (`workspaces.time_for_others = 'admins_and_team_managers'` **et** `manages(wid, uid)` **et** `uid` membre actif).
 - `refresh_team_scope(wid)` : recalcul différentiel, appelé par les triggers de
@@ -140,6 +141,7 @@ La publication `powersync` couvre déjà tout le schéma `public`.
 **Session et référentiel**
 - `CatalogController` : groupes, affectations, périmètre.
 - `SessionController` : `managedUserIds`, `isTeamManager`, `canEditTimeOf(userId)`, qui reproduit la règle serveur.
+  Livré dans `TeamRights` (`core/team_rights.dart`) plutôt que dans `SessionController`.
   Ce n'est qu'un affichage : la RLS reste la barrière.
 
 **Administration (admin)**
@@ -242,5 +244,9 @@ Ajustements décidés pendant la réalisation :
   `created_by` / `updated_by` tels qu'écrits : supprimer le compte d'un chef d'équipe conserve les entrées
   qu'il a saisies, avec un auteur vide (test d'intégration dédié).
 
-Reste à faire (hors périmètre) : approbateurs nominatifs, approbation multiniveau, notifications au chef d'équipe,
-rôle Project Manager.
+Reste à faire (hors périmètre, toujours à faire au 23 octobre 2026) : approbateurs nominatifs, approbation
+multiniveau, notifications au chef d'équipe, rôle Project Manager.
+
+Évolution prévue par le plan 10 (`10-suivi-claude-code.md`, D15) : `team_scope` reçoit aussi les couples
+(pilote, agent) et (chef du pilote, agent), pour la lecture du temps des agents Claude. Ces lignes ne font pas
+du pilote un chef d'équipe : `TeamRights` les ignore pour les approbations et la saisie pour autrui.

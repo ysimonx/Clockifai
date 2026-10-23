@@ -19,7 +19,7 @@ Flutter + Drift + go_router + GetIt + Provider, Python/Flask + uv + gunicorn + D
 | Multi-tenant | `workspace_id` sur toutes les tables + **Row Level Security** | Flutter parle directement à Supabase sans API intermédiaire |
 | Offline-first | **PowerSync Open Edition auto-hébergé** (`journeyapps/powersync-service`, licence FSL, gratuit) + SDK Flutter `powersync` (Apache-2) + `drift_sqlite_async` | Moteur de sync éprouvé (sync rules YAML, file d'upload, reprise, web/iOS/Android) au lieu d'une file maison |
 | Logique « hors Supabase » | **Flask léger** (`services/`) : exports PDF/Excel/CSV, factures PDF, jobs planifiés, endpoints kiosque | Python, ce que vous maîtrisez ; reste optionnel pour la phase 1 |
-| Client | **Flutter 3.41** (fvm), une seule base web + iOS + Android | Habitude fidwork/coinalert |
+| Client | **Flutter** (fvm ; 3.41 au départ, 3.47 aujourd'hui), une seule base web + iOS + Android | Habitude fidwork/coinalert |
 | Reverse proxy | **Caddy** (HTTPS automatique) | Un fichier de config, zéro certbot |
 | Hébergement | **Indifférent** : VPS OVH, Scaleway, ou machine chez vous (mini-PC, NAS, Raspberry 5 8 Go). Prérequis : Linux x86_64 ou arm64, 4 vCPU / 8 Go RAM mini, Docker Compose v2 | Tout tourne dans un seul `docker compose` ; aucun service cloud propriétaire |
 
@@ -80,7 +80,7 @@ pour que PowerSync propage les suppressions proprement).
 - `tasks` (project_id, name, estimate_seconds, status, created_by)
 - `tags` (name, color, archived)
 - `time_entries` (user_id, project_id?, task_id?, description, start_at timestamptz, end_at timestamptz NULL = timer en cours, duration_seconds généré, billable, hourly_rate_cents snapshot, locked bool)
-  - index partiel unique : **un seul timer en cours par (workspace_id, user_id)** `WHERE end_at IS NULL AND deleted_at IS NULL`
+  - index partiel unique : **un seul timer en cours par (workspace_id, user_id)** `WHERE end_at IS NULL AND deleted_at IS NULL` (remplacé depuis par les triggers 0004 puis 0011, voir « Ajustements »)
 - `time_entry_tags` (time_entry_id, tag_id)
 
 **Phase 3 – équipe** : `invitations` (email, role, token, expires_at, accepted_at), `workspace_settings` (lock_entries_before date, require_project, require_description, allowed_ips…), `project_members` (accès projets privés, taux par projet/membre).
@@ -107,7 +107,7 @@ pour que PowerSync propage les suppressions proprement).
 - **Sync Streams** (`sync-config.yaml`, édition 3) : flux `workspace_core` filtré par `workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.user_id())` → projets, clients, tags, tâches, membres, settings, et les `time_entries` visibles (propres entrées pour tous + toutes les entrées pour manager+ via un second bucket `team_entries[]` conditionné au rôle). Filtre `deleted_at IS NULL` côté bucket, ou on synchronise la colonne et on filtre dans l'app (recommandé : synchroniser, filtrer localement, purger via job Flask).
 - **Client Flutter** : `PowerSyncDatabase` + `Schema` Dart miroir des tables, Drift branché dessus via `drift_sqlite_async` (DAOs typés, streams réactifs pour l'UI). `SupabaseConnector implements PowerSyncBackendConnector` : `fetchCredentials()` renvoie le JWT Supabase, `uploadData()` rejoue chaque transaction CRUD en `upsert/update/delete` PostgREST ; erreurs fatales (RLS 42501, contraintes 23xxx, 22xxx) → transaction abandonnée + toast à l'utilisateur ; erreurs réseau → retry automatique.
 - **Conflits** : dernier écrit gagne côté serveur ; le `updated_at` serveur est la vérité (PowerSync renvoie la ligne finale).
-- **Timer** : un timer = `time_entry` avec `end_at NULL`. L'UI compte à partir de `start_at` (pas de compteur accumulé). Démarrer un timer = `INSERT` ; l'index partiel unique refuse un second timer : le connecteur gère `23505` en arrêtant l'ancien (règle « le plus récent gagne ») — ou mieux, avant tout start, l'app ferme localement tout timer ouvert. Stop sur un autre appareil = `UPDATE end_at`, propagé par la sync.
+- **Timer** : un timer = `time_entry` avec `end_at NULL`. L'UI compte à partir de `start_at` (pas de compteur accumulé). Démarrer un timer = `INSERT` ; l'index partiel unique refuse un second timer : le connecteur gère `23505` en arrêtant l'ancien (règle « le plus récent gagne ») — ou mieux, avant tout start, l'app ferme localement tout timer ouvert. (Dépassé : la règle est appliquée par un trigger serveur, migrations 0004 puis 0011.) Stop sur un autre appareil = `UPDATE end_at`, propagé par la sync.
 - **Web** : `powersync` supporte Flutter web ; copier `sqlite3.wasm` + workers PowerSync dans `app/web/` (script `app/tool/setup_web.sh`).
 - **Rapports hors ligne** : calculés depuis la base locale pour ses propres entrées ; rapports équipe/exports exigent le réseau.
 
@@ -129,7 +129,7 @@ pour que PowerSync propage les suppressions proprement).
 - App factory, blueprints : `health`, `exports` (`POST /api/exports/report` → CSV/XLSX/PDF), `invoices` (`POST /api/invoices/{id}/pdf`), `kiosk` (`POST /api/kiosk/clock` : token appareil + PIN → start/stop d'entrée via service role), `jobs` (déclenchement manuel).
 - Auth : vérification du JWT Supabase (PyJWT, HS256, secret partagé) ; vérification explicite de l'appartenance au workspace demandé puis accès Postgres en service role (psycopg 3) en appelant les RPC de rapport.
 - Exports : `openpyxl` (Excel), `csv`, **WeasyPrint** (PDF depuis templates Jinja2 HTML ; image Docker un peu plus lourde mais rendu propre pour rapports et factures).
-- Jobs APScheduler : auto-stop des timers > N heures (setting workspace), rappels de saisie (SMTP partagé avec GoTrue), verrouillage périodique, purge des `deleted_at` anciens, rappel d'approbation.
+- Jobs APScheduler : auto-stop des timers > N heures (setting workspace), rappels de saisie (SMTP partagé avec GoTrue), verrouillage périodique, purge des `deleted_at` anciens, rappel d'approbation. Seuls l'auto-stop et la purge existent ; les autres sont dans « Reste à faire ».
 - Dockerfile Python 3.12 slim, gunicorn, config par variables d'environnement.
 
 ## Déploiement : 100 % conteneurs Docker
@@ -194,7 +194,8 @@ Chaque lot se termine par un état déployable.
 
 - Cible d'hébergement (OVH, Scaleway ou chez vous) et nom de domaine choisis par vous au moment du lot 2 ; le compose ne change pas.
 - SMTP (OVH, Brevo…) pour les emails d'invitation/magic link.
-- Pas de publication sur les stores dans ce plan (builds TestFlight/APK internes seulement).
+- Pas de publication sur les stores dans ce plan (builds TestFlight/APK internes seulement). Dépassé : macOS signé et notarisé, TestFlight et Google Play sont faits (plans `06-macos-barre-de-menus.md` et `07-ios-android.md`).
+- Hébergement : la production tourne à la maison derrière un reverse proxy partagé, voir `05-hebergement-maison.md`. Les options d'hébergement ci-dessus restent valables pour une autre installation.
 
 ## Ajustements décidés pendant la réalisation
 
@@ -210,9 +211,18 @@ Chaque lot se termine par un état déployable.
 
 ## Plans liés
 
-- [02-integration-fidwork.md](02-integration-fidwork.md) : saisie des temps des échafaudeurs et calorifugeurs depuis Fidwork.
-- [03-saisie-pour-autrui.md](03-saisie-pour-autrui.md) : chef d'équipe (groupes, périmètre), saisie du temps pour autrui et pointage d'équipe.
-- [05-chronometres-paralleles.md](05-chronometres-paralleles.md) : plusieurs chronomètres en même temps, limite réglable par workspace.
+| Plan | Objet | État (23 octobre 2026) |
+|---|---|---|
+| [02-integration-fidwork.md](02-integration-fidwork.md) | Saisie des temps des échafaudeurs et calorifugeurs depuis Fidwork | En attente |
+| [03-saisie-pour-autrui.md](03-saisie-pour-autrui.md) | Chef d'équipe (groupes, périmètre), saisie du temps pour autrui et pointage d'équipe | Fait |
+| [04-tickets.md](04-tickets.md) | Tâches comme tickets ; lot 0 : numéro de tâche `CLK-42` | Lot 0 à faire, le reste en réflexion |
+| [05-chronometres-paralleles.md](05-chronometres-paralleles.md) | Plusieurs chronomètres en même temps, limite réglable par workspace | Fait |
+| [05-hebergement-maison.md](05-hebergement-maison.md) | Production à la maison (clockifai.kysoe.com) | Fait |
+| [06-macos-barre-de-menus.md](06-macos-barre-de-menus.md) | Version macOS et icône de la barre de menus | Fait |
+| [07-ios-android.md](07-ios-android.md) | Versions iOS et Android, TestFlight, Google Play | Fait |
+| [08-regroupement-entrees.md](08-regroupement-entrees.md) | Regroupement des entrées similaires | Fait |
+| [09-forges-git.md](09-forges-git.md) | Branches, commits et demandes de fusion rattachés aux tâches | À faire (après 04 lot 0 et 10 lot 1) |
+| [10-suivi-claude-code.md](10-suivi-claude-code.md) | Temps de Claude (agents membres de l'équipe) et mon temps (suggestions) | À faire |
 
 ## État d'avancement (11 octobre 2026)
 
@@ -233,8 +243,11 @@ Chaque lot se termine par un état déployable.
 - `supabase/seed.sql` remplacé par `deploy/seed-demo.sql` (`make seed EMAIL=…`), qui cible un compte existant.
 - PIN kiosque et compteurs de facture rangés dans un schéma privé `clockifai_private` (jamais exposés à l'API ni à la réplication).
 
-Reste à faire (hors périmètre de cette itération) :
-- Publication sur les stores (signature Android, TestFlight), icônes et écran de démarrage.
-- Fuseau horaire modifiable par l'utilisateur (Europe/Paris par défaut côté serveur).
+Reste à faire (hors périmètre de cette itération ; revu le 23 octobre 2026) :
+- Icônes et écran de démarrage (la publication sur les stores est faite : plans 06-macos et 07).
+- Fuseau horaire modifiable par l'utilisateur (`profiles.timezone`, Europe/Paris par défaut, sans écran). Le
+  plan 10 recopie ce fuseau dans le profil des agents.
 - Connexion OAuth (Google, Microsoft) : prête côté GoTrue, à activer dans `.env` et dans l'app.
-- Interfaçage Fidwork : voir [02-integration-fidwork.md](02-integration-fidwork.md).
+- Jobs prévus mais jamais construits : rappels de saisie, verrouillage périodique, rappel d'approbation (SMTP
+  pas encore configuré en production).
+- Interfaçage Fidwork : en attente, voir [02-integration-fidwork.md](02-integration-fidwork.md).

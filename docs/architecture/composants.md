@@ -54,7 +54,7 @@ flowchart TB
   db -->|"réplication logique<br/>publication powersync"| ps
   ps --> psdb
   flask -->|"psycopg, rôle postgres<br/>hors RLS"| db
-  flask -->|"API admin GoTrue<br/>invitations"| kong
+  flask -->|"API admin GoTrue<br/>invitations, agents"| kong
   flask -->|"emails d'invitation"| smtp
   auth -->|"emails de connexion"| smtp
   migrate -->|"supabase/migrations/*.sql"| db
@@ -92,7 +92,7 @@ L'app web appelle Flask sur sa propre origine (`SERVICES_URL` vide dans l'image)
 | Postgres | `supabase-db` | `supabase/postgres:17.6.1.136` | bases `postgres` (schéma, RLS, triggers) et `powersync_storage` ; `wal_level = logical` | 5432 | non publié |
 | Supavisor | `supabase-pooler` | `supabase/supavisor:2.9.5` | pool pour les connexions depuis l'hôte (session 5432, transaction 6543) | 5432, 6543 | local : 5432, 6543 |
 | PowerSync | `clockifai-powersync` | `journeyapps/powersync-service:1.26.1` (`POWERSYNC_VERSION`) | réplication logique → buckets → clients ; Sync Streams de `powersync/sync-config.yaml` | 8080 | local : 8080 ; prod : `SYNC_DOMAIN` |
-| Flask | `clockifai-services` | construite par `services/Dockerfile` (`python:3.12-slim-bookworm`, uv, gunicorn) | exports, factures PDF (WeasyPrint), invitations, kiosque, tâches planifiées | 5000 | local : 5050 ; prod : `APP_DOMAIN/api` |
+| Flask | `clockifai-services` | construite par `services/Dockerfile` (`python:3.12-slim-bookworm`, uv, gunicorn) | exports, factures PDF (WeasyPrint), invitations, kiosque, jetons personnels et temps des agents Claude, tâches planifiées | 5000 | local : 5050 ; prod : `APP_DOMAIN/api` |
 | migrate | `clockifai-migrate` | `postgres:17-alpine` | rejoue `supabase/migrations/` (suivi `clockifai_meta.schema_migrations`) avant PowerSync et Flask | — | — |
 | backup | `clockifai-backup` | `postgres:17-alpine` | profil prod : `pg_dump` quotidien à `BACKUP_HOUR`, rétention `BACKUP_KEEP_DAYS` (14 j), dans `deploy/backups/` | — | — |
 
@@ -105,7 +105,10 @@ Tâches planifiées de Flask (`services/app/jobs/`, un seul worker donc un seul 
   les chronomètres qui dépassent la limite du workspace (0 = jamais) ;
 - `purge_soft_deleted` chaque jour à 04:15 UTC : supprime physiquement les lignes soft-deleted depuis plus de
   `JOB_PURGE_DELETED_AFTER_DAYS` jours (30) dans `time_entries`, `tasks`, `projects`, `clients`, `tags`,
-  `workspace_members`, `workspaces`.
+  `workspace_members`, `workspaces` ;
+- `close_idle_agent_entries` chaque minute : recalcule les sessions Claude Code dont une entrée d'agent tourne
+  sans activité depuis 10 minutes, ce qui la ferme à sa dernière activité ;
+- `purge_activity_events` chaque jour à 04:30 UTC : supprime les événements bruts reçus il y a plus de 30 jours.
 
 ## Chemin d'une écriture
 
@@ -153,7 +156,11 @@ calcul des durées, numérotation) s'appliquent quand même.
   le couple (appareil, membre) 5 minutes.
 - **Studio** : basic auth (`DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD`), par Kong en local, par Caddy en prod,
   où il n'est en plus accessible que depuis le réseau local (`STUDIO_ALLOWED_IPS`).
-- **Service** : Flask appelle l'API admin GoTrue avec la clé `service_role` (invitations) ; la route
-  `POST /api/jobs/purge-deleted` n'accepte qu'un JWT `service_role`.
+- **Jeton personnel** : `Authorization: Bearer clk_…`, créé par un membre pour un poste (`POST /api/tokens`),
+  utilisé par les hooks Claude Code, l'extension VSCode et le MCP. Seul son SHA-256 est stocké
+  (`clockifai_private.api_tokens`) ; il porte un workspace, et il est refusé s'il est révoqué ou si son
+  propriétaire n'est plus membre actif. Les routes `/api/activity/*` acceptent aussi le JWT de l'app.
+- **Service** : Flask appelle l'API admin GoTrue avec la clé `service_role` (invitations, comptes des agents
+  Claude) ; la route `POST /api/jobs/purge-deleted` n'accepte qu'un JWT `service_role`.
 - **Barre de menus macOS** : le panneau natif SwiftUI n'a accès à aucune donnée ni à aucun jeton ; il reçoit l'état
   et renvoie ses commandes par le canal `clockifai/menu_bar`, exécutées par l'app Flutter sur la base locale.

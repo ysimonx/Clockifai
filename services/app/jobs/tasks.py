@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import logging
 
-from ..db import execute, fetch_all
+from ..db import connection, execute, fetch_all
+from ..services.activity import process_session
+from ..services.agent_clock import IDLE_TIMEOUT
 
 log = logging.getLogger(__name__)
 
@@ -57,3 +59,41 @@ def running_timers_summary() -> list[dict]:
          order by te.start_at
         """
     )
+
+
+def close_idle_agent_entries() -> int:
+    """Recalcule les sessions dont une entrée d'agent tourne sans activité depuis le délai (plan 10, D7.4) :
+    le chronomètre la ferme à sa dernière activité."""
+    sessions = fetch_all(
+        """
+        select distinct ae.workspace_id::text as workspace_id, ae.session_id, m.agent_owner_id::text as pilot_id
+          from clockifai_private.agent_entries ae
+          join public.time_entries te on te.id = ae.time_entry_id
+          join public.workspace_members m on m.workspace_id = ae.workspace_id and m.user_id = ae.agent_user_id
+         where te.end_at is null and te.deleted_at is null
+           and ae.last_activity_at < now() - make_interval(secs => %(idle)s)
+        """,
+        {"idle": IDLE_TIMEOUT.total_seconds()},
+    )
+    closed = 0
+    for s in sessions:
+        try:
+            with connection() as conn:
+                closed += process_session(conn, s["workspace_id"], s["pilot_id"], s["session_id"])
+                conn.commit()
+        except Exception:
+            log.exception("session %s : fermeture impossible", s["session_id"])
+    if closed:
+        log.info("agents : %s entrée(s) fermée(s) après inactivité", closed)
+    return closed
+
+
+def purge_activity_events(older_than_days: int = 30) -> int:
+    """Événements bruts des hooks et de l'extension : gardés 30 jours (plan 10, D6)."""
+    count = execute(
+        "delete from clockifai_private.activity_events where received_at < now() - make_interval(days => %(d)s)",
+        {"d": older_than_days},
+    )
+    if count:
+        log.info("purge des événements d'activité : %s ligne(s)", count)
+    return count

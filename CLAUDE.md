@@ -74,7 +74,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 ### Flask
 - Authentifie le JWT Supabase (`auth.py`), puis vérifie explicitement l'appartenance au workspace (`require_workspace`) : la connexion psycopg contourne la RLS.
 - Un seul worker gunicorn (le scheduler APScheduler tourne dans le process).
-- Blueprints : `exports`, `invitations` (lien renvoyé si pas de SMTP), `kiosk` (jeton d'appareil `X-Kiosk-Token`, anti force brute en mémoire), `invoices` (PDF), `jobs`.
+- Blueprints : `exports`, `invitations` (lien renvoyé si pas de SMTP), `kiosk` (jeton d'appareil `X-Kiosk-Token`, anti force brute en mémoire), `invoices` (PDF), `jobs`, `tokens` (jetons personnels `clk_…`), `activity` (événements des hooks Claude Code, temps des agents : `services/agent_clock.py` recalcule, `agent_entry_write` écrit).
 
 ### Flutter
 - Organisation par fonctionnalité dans `lib/features/<feature>/` ; transverse dans `lib/core/`.
@@ -100,7 +100,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - Clé d'envoi Google Play hors dépôt (`~/.config/clockifai/android/`) ; numéro de build = minutes depuis le 2026-01-01.
 
 ## Tests
-- `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètres simultanés, verrouillage, upsert du connecteur, exports, chefs d'équipe).
+- `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètres simultanés, verrouillage, upsert du connecteur, exports, chefs d'équipe, agents Claude, jetons et événements d'activité).
 - `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, pont de la barre de menus macOS (canal simulé), regroupement des entrées similaires (dont la ligne dépliable), sur base Drift en mémoire.
 - Parcours navigateur (Playwright, hors dépôt) : activer l'arbre d'accessibilité Flutter en cliquant `flt-semantics-placeholder`, puis cliquer un champ et taper au clavier (`fill` ne suffit pas).
 

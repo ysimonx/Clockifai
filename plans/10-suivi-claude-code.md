@@ -785,8 +785,9 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 - **Horloge client** : `occurred_at` est fourni par le poste et `received_at` est conservé ; on rejette les écarts aberrants (§5).
 - **Confidentialité** : les événements bruts ne sont visibles de personne dans l'app. Les suggestions sont personnelles. Le temps de Claude est visible des managers comme celui de tout membre.
-- **E-mail technique de l'agent** : vérifier que GoTrue v1.26.08 l'accepte en création admin (pas de contrôle
-  MX). Sinon, une fonction `*.admin.sql` insère dans `auth.users`.
+- **E-mail technique de l'agent** : vérifié, GoTrue v1.26.08 accepte `agent-<pilote>@agents.clockifai.invalid`
+  en création admin. Il pose `app_metadata` après l'insertion : `handle_new_user` lit aussi `user_metadata.kind`
+  (D14).
 - **Installation du plugin depuis VSCode** : faute de `/plugin` dans l'extension, elle passe par un terminal.
   L'écran Intégrations doit le dire clairement, et le guide utilisateur aussi.
 - **Factures** : `createInvoiceFromTime` regroupe les lignes par (projet, taux). Les heures de Claude se

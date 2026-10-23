@@ -47,3 +47,6 @@ docs/guide/videos/
 .idea/
 .vscode/
 app/config/*.json
+
+# Réglages Claude Code personnels (non partagés)
+.claude/settings.local.json

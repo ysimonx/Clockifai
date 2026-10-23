@@ -66,8 +66,9 @@
     et `required`). `"sensitive": true` masque la saisie et range la valeur dans le magasin sécurisé du
     système. Les hooks lisent les valeurs dans `CLAUDE_PLUGIN_OPTION_<KEY>` (une commande en forme shell
     refuse `${user_config.*}`), et `.mcp.json` par `${user_config.KEY}` ;
-  - les outils d'un serveur MCP fourni par un plugin portent un nom préfixé, d'après la doc
-    `mcp__plugin_clockifai_clockifai__set_current_task`. Le hook les reconnaît donc par leur suffixe (§6.1).
+  - les outils d'un serveur MCP fourni par un plugin portent le nom `mcp__plugin_<plugin>_<serveur>__<outil>`
+    (vérifié, voir ci-dessous), soit `mcp__plugin_clockifai_clockifai__set_current_task`. Le hook les reconnaît
+    par leur suffixe (§6.1).
 - **Marketplace** : `/plugin marketplace add` accepte un dépôt GitHub, une URL git sur n'importe quel hôte,
   un chemin local, ou **l'URL HTTPS d'un `marketplace.json`**. Dans ce dernier cas, le plugin y est référencé
   par une source non relative (archive, git…). Un dépôt peut proposer une marketplace et un plugin dans son
@@ -84,9 +85,20 @@
     réseau**, que le proxy ajoute aux requêtes vers les hôtes listés sans qu'ils entrent dans la machine.
 - **Connecteurs claude.ai** : OAuth 2.0 avec enregistrement dynamique des clients. Ils sont visibles dans
   Claude Code seulement avec une connexion par abonnement claude.ai.
-- **À tester au lot 1** : le déclenchement réel des hooks dans l'extension VSCode, et si `session_id` change
-  à la reprise d'une session (`--resume`), ce que la doc ne dit pas. D7 tient dans les deux cas : l'entrée
-  continue, ou une nouvelle commence.
+- **Essai du 23 octobre 2026** (Claude Code 2.1.309, extension VSCode, hooks d'un `.claude/settings.local.json`
+  journalisant les seuls noms d'événements et de champs, plugin jetable avec un serveur MCP `ping`) :
+  - les hooks se déclenchent dans l'extension : `SessionStart`, `UserPromptSubmit`, `PostToolUse`, `Stop`,
+    `SessionEnd`. Ajoutés en cours de session, ils sont actifs aussitôt ;
+  - une conversation reprise depuis l'historique **garde son `session_id`** (`SessionStart` de source `resume`) ;
+  - une nouvelle conversation envoie `SessionStart` (`startup`) à son premier prompt, dans la même seconde ;
+  - nom vu par `PostToolUse` : `mcp__plugin_essai_essai__ping` ;
+  - `PostToolUse` porte aussi `duration_ms` (durée de l'outil), `prompt_id`, `tool_use_id` et `effort` ;
+  - une commande `claude plugin …` lancée dans le dossier du projet déclenche les hooks du projet
+    (`SessionEnd`, raison `other`, sans prompt) : une session sans prompt ne produit rien (D7.1) ;
+  - **`/plugin` n'existe pas dans l'extension VSCode** (« isn't available in this environment ») : le plugin
+    s'installe depuis un terminal (§6.1), et un plugin installé n'est chargé qu'au démarrage d'une session ;
+  - non observés, faute d'occasion : `SubagentStop`, `Notification` (aucune demande d'autorisation en mode
+    automatique).
 
 **API des extensions VSCode** (vérifié dans `vscode.d.ts`, octobre 2026) :
 - `window.state.focused` : la fenêtre a le focus.
@@ -191,7 +203,8 @@ hors API et hors PowerSync, et sont purgés après 30 jours. Les données sont r
 5. `SessionEnd` ferme l'entrée à l'heure de l'événement.
 6. **Commande longue** : un `PostToolUse` ou un `Stop` qui arrive après une clôture par le job prolonge
    l'entrée jusqu'à lui, car Claude travaillait. Exception : une attente d'autorisation (`agent_wait`) reçue
-   entre-temps ; la reprise ouvre alors une nouvelle entrée.
+   entre-temps ; la reprise ouvre alors une nouvelle entrée. `PostToolUse` porte `duration_ms` : le début
+   d'une commande longue est donc connu, pas seulement sa fin.
 7. **Recalcul, pas machine à états.** `agent_clock` (fonction pure, testée sans base) recalcule les
    intervalles d'une session à partir de tous ses événements bruts (7 jours au plus). Le serveur applique
    ensuite la différence avec les entrées existantes. Un événement en retard ou en double donne donc le même
@@ -493,14 +506,20 @@ envoie ce qu'on écrit.
 
 **Connexion d'un poste**, une fois par poste :
 1. Dans l'app, Réglages › Intégrations › « Connecter Claude Code ». On nomme le poste ; l'app affiche le
-   jeton `clk_…` une seule fois, avec deux commandes à copier :
+   jeton `clk_…` une seule fois, avec deux commandes à lancer **dans un terminal** (`/plugin` n'existe pas
+   dans l'extension VSCode, §2) :
    ```
-   /plugin marketplace add https://clockifai.kysoe.com/api/claude/marketplace.json
-   /plugin install clockifai@clockifai
+   claude plugin marketplace add https://clockifai.kysoe.com/api/claude/marketplace.json
+   claude plugin install clockifai@clockifai
    ```
-2. Claude Code demande l'URL, déjà remplie, puis le jeton (saisie masquée, magasin sécurisé du système).
-   L'installation au niveau utilisateur couvre tous les projets du poste, dans le terminal, VSCode et l'app
-   desktop.
+   Il faut la commande `claude` à jour sur le poste : le binaire embarqué par l'extension VSCode n'est pas sur
+   le `PATH`. Dans Claude Code en terminal, `/plugin marketplace add …` et `/plugin install …` font la même
+   chose.
+2. Le plugin demande l'URL, déjà remplie, puis le jeton (saisie masquée, magasin sécurisé du système). À
+   vérifier au lot 1 : où se fait cette saisie quand l'installation passe par `claude plugin install`, et sinon
+   `claude plugin configure clockifai@clockifai --values-stdin`. L'installation au niveau utilisateur couvre
+   tous les projets du poste, dans le terminal, VSCode et l'app desktop ; le plugin se charge à la session
+   suivante.
 3. Au prompt suivant, l'agent démarre un chronomètre. Intégrations affiche « dernier événement reçu il y a
    3 s » (`last_used_at`).
 
@@ -764,8 +783,8 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 - **Confidentialité** : les événements bruts ne sont visibles de personne dans l'app. Les suggestions sont personnelles. Le temps de Claude est visible des managers comme celui de tout membre.
 - **E-mail technique de l'agent** : vérifier que GoTrue v1.26.08 l'accepte en création admin (pas de contrôle
   MX). Sinon, une fonction `*.admin.sql` insère dans `auth.users`.
-- **Noms des outils MCP d'un plugin** : le préfixe `mcp__plugin_clockifai_clockifai__` vient de la doc, à
-  confirmer au lot 3. La reconnaissance par suffixe y résiste.
+- **Installation du plugin depuis VSCode** : faute de `/plugin` dans l'extension, elle passe par un terminal.
+  L'écran Intégrations doit le dire clairement, et le guide utilisateur aussi.
 - **Factures** : `createInvoiceFromTime` regroupe les lignes par (projet, taux). Les heures de Claude se
   mêlent donc à celles des humains au même taux. Un taux « IA » par projet, distinct du taux du projet,
   serait un ajout ultérieur.

@@ -75,6 +75,12 @@ cd ~/edge && docker compose up -d
   `up -d auth`. Les invitations restent possibles : dans GoTrue v2.189.0, seul `POST /signup` teste `DisableSignup`
   (`internal/api/signup.go`), pas `admin/generate_link` ni `verify`. `ENABLE_EMAIL_AUTOCONFIRM=true` faute de SMTP.
 - **SMTP** : sans lui, pas d'email de récupération de mot de passe ; les invitations renvoient le lien à l'admin.
-- **Studio** exposé sur Internet (protégé par mot de passe) : le restreindre au LAN si inutile à distance.
+  Réglé le 23 octobre 2026 : Mailjet (`in-v3.mailjet.com:587`, expéditeur `clockifai@kysoe.com`, alias de la
+  boîte Google Workspace), emails de Flask et d'Auth reçus, puis `ENABLE_EMAIL_AUTOCONFIRM=false`.
+- ~~**Studio** exposé sur Internet (protégé par mot de passe)~~ : restreint au réseau local le 23 octobre 2026
+  (`STUDIO_ALLOWED_IPS`, défaut `private_ranges`). Docker garde l'adresse d'origine des connexions externes
+  (pas de `daemon.json`, IPv4 seulement) et `~/edge` la transmet dans `X-Forwarded-For`. Sur le serveur :
+  `STUDIO_ALLOWED_IPS=private_ranges 82.96.171.69/32` (IP publique de la box, pour le NAT en boucle). Le Mac de
+  développement sort par un VPN (84.16.74.153) : il est vu comme extérieur.
 - Applications mobiles : construire avec `SUPABASE_URL=https://supabase.clockifai.kysoe.com`,
   `POWERSYNC_URL=https://sync.clockifai.kysoe.com`, `SERVICES_URL=https://clockifai.kysoe.com`.

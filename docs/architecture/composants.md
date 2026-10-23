@@ -71,7 +71,7 @@ selon l'hôte (`deploy/Caddyfile`) :
 | `APP_DOMAIN` | `/guide/*` | guide utilisateur (`docs/guide` monté en lecture seule sur `/srv/guide`, vidéos comprises) |
 | `APP_DOMAIN` | le reste | build Flutter web (`/srv/web`, repli sur `index.html`) |
 | `SUPABASE_DOMAIN` | `/auth/v1/*`, `/rest/v1/*`, `/graphql/v1`, `/realtime/v1/*`, `/storage/v1/*`, `/functions/v1/*`, `/mcp`, `/sso/*` | Kong (`kong:8000`) |
-| `SUPABASE_DOMAIN` | le reste | Studio (`studio:3000`), basic auth `DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD` |
+| `SUPABASE_DOMAIN` | le reste | Studio (`studio:3000`), réseau local seulement (`STUDIO_ALLOWED_IPS`, sinon 403), puis basic auth `DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD` |
 | `SYNC_DOMAIN` | tout | PowerSync (`powersync:8080`) |
 
 L'app web appelle Flask sur sa propre origine (`SERVICES_URL` vide dans l'image) ; les apps natives utilisent
@@ -151,7 +151,8 @@ calcul des durées, numérotation) s'appliquent quand même.
   `X-Kiosk-Token` ; chaque pointage exige le PIN du membre (4 à 8 chiffres, haché bcrypt dans
   `clockifai_private.member_pins`, posé par la RPC `set_kiosk_pin`). Anti force brute en mémoire : 5 échecs bloquent
   le couple (appareil, membre) 5 minutes.
-- **Studio** : basic auth (`DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD`), par Kong en local, par Caddy en prod.
+- **Studio** : basic auth (`DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD`), par Kong en local, par Caddy en prod,
+  où il n'est en plus accessible que depuis le réseau local (`STUDIO_ALLOWED_IPS`).
 - **Service** : Flask appelle l'API admin GoTrue avec la clé `service_role` (invitations) ; la route
   `POST /api/jobs/purge-deleted` n'accepte qu'un JWT `service_role`.
 - **Barre de menus macOS** : le panneau natif SwiftUI n'a accès à aucune donnée ni à aucun jeton ; il reçoit l'état

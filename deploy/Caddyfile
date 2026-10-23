@@ -49,6 +49,13 @@
 		reverse_proxy kong:8000
 	}
 
+	# Studio : réseau local seulement. Derrière le proxy partagé, l'adresse du visiteur vient de
+	# X-Forwarded-For (trusted_proxies ci-dessus). STUDIO_ALLOWED_IPS élargit la liste (VPN…).
+	@studio_ailleurs not client_ip {$STUDIO_ALLOWED_IPS:private_ranges}
+	handle @studio_ailleurs {
+		respond "Supabase Studio : accessible depuis le réseau local seulement (adresse vue : {client_ip}, voir STUDIO_ALLOWED_IPS)." 403
+	}
+
 	handle {
 		basic_auth {
 			# DASHBOARD_PASSWORD_HASH est calculé au démarrage du conteneur (voir docker-compose.yml)

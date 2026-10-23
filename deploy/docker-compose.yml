@@ -144,6 +144,7 @@ services:
       ACME_EMAIL: ${ACME_EMAIL}
       DASHBOARD_USERNAME: ${DASHBOARD_USERNAME}
       DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD}
+      STUDIO_ALLOWED_IPS: ${STUDIO_ALLOWED_IPS:-private_ranges}
     command:
       - /bin/sh
       - -c

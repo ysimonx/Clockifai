@@ -77,6 +77,7 @@ CHANGELOG.md                notes de version (« Non publié » puis versions)
   entrées similaires ni les chronomètres simultanés : à ajouter (vidéo 1), avec les sections du guide correspondantes.
 - Les coupes de temps morts reposent encore sur l'horloge, donc sur le même décalage que les anciens chapitres :
   les repérer de la même façon (repère filmé au début et à la fin de l'attente).
-- Restauration de sauvegarde (`docs/exploitation.md`) à répéter une fois sur une machine de test.
+- ~~Restauration de sauvegarde à répéter une fois sur une machine de test~~ : faite le 23 octobre 2026 (sauvegarde
+  de production restaurée sur la pile locale, retour arrière compris).
 - Politique de confidentialité hébergée à côté du guide (exigée par l'App Store et Google Play).
 - Guide en anglais, si des utilisateurs anglophones arrivent (l'app est déjà bilingue).

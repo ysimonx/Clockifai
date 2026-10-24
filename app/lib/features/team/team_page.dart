@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/catalog.dart';
@@ -103,6 +104,12 @@ class _TeamPageState extends State<TeamPage> {
                     highlighted: m.userId == focus,
                   ),
                 ),
+            if (session.isAdmin)
+              _RemovedAgents(
+                key: ValueKey('removed-agents-${ws.id}'),
+                workspaceId: ws.id,
+                agentIds: [for (final a in agents) a.userId].join(','),
+              ),
           ]),
         );
       },
@@ -195,6 +202,87 @@ class _TeamPageState extends State<TeamPage> {
     } catch (e) {
       if (context.mounted) showSnack(context, l.invitationFailed('$e'));
     }
+  }
+}
+
+/// Agents retirés (admins) : les membres retirés ne descendent pas vers l'appareil, le serveur les liste, et un
+/// nouveau jeton ne les recrée pas (plan 10, D14). Hors ligne, la rubrique n'apparaît pas.
+class _RemovedAgents extends StatefulWidget {
+  const _RemovedAgents({super.key, required this.workspaceId, required this.agentIds});
+  final String workspaceId;
+
+  /// Agents présents sur l'appareil : quand la liste change (retrait, restauration), la rubrique se recharge.
+  final String agentIds;
+
+  @override
+  State<_RemovedAgents> createState() => _RemovedAgentsState();
+}
+
+class _RemovedAgentsState extends State<_RemovedAgents> {
+  List<Map<String, dynamic>> _agents = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(_RemovedAgents old) {
+    super.didUpdateWidget(old);
+    if (old.agentIds == widget.agentIds) return;
+    // Un retrait fait dans l'app part au serveur un peu après (file PowerSync) : on relit aussi plus tard.
+    _load();
+    Future<void>.delayed(const Duration(seconds: 3), _load);
+  }
+
+  Future<void> _load() async {
+    if (!mounted) return;
+    try {
+      final res = await ServicesApi.get('/api/agents/removed', {'workspace_id': widget.workspaceId});
+      if (mounted) setState(() => _agents = (res['agents'] as List).cast<Map<String, dynamic>>());
+    } catch (_) {
+      // Hors ligne : rien à proposer.
+    }
+  }
+
+  Future<void> _restore(Map<String, dynamic> agent) async {
+    final l = context.l10n;
+    try {
+      await ServicesApi.post('/api/agents/${agent['user_id']}/restore', {'workspace_id': widget.workspaceId});
+      if (mounted) showSnack(context, l.agentRestored);
+      await _load();
+    } catch (_) {
+      if (mounted) showSnack(context, l.onlineOnly);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    if (_agents.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l.removedAgents, style: theme.textTheme.titleMedium),
+          Text(l.removedAgentsHelp, style: theme.textTheme.bodySmall),
+        ]),
+      ),
+      for (final a in _agents)
+        Card(
+          child: ListTile(
+            leading: CircleAvatar(child: Icon(Icons.smart_toy_outlined, color: theme.colorScheme.outline)),
+            title: Text(a['display_name'] as String, style: TextStyle(color: theme.colorScheme.outline)),
+            subtitle: Text(l.removedAgentOf(
+              a['pilot_name'] as String? ?? '?',
+              DateFormat.yMMMd(context.localeTag).format(DateTime.parse(a['removed_at'] as String).toLocal()),
+            )),
+            trailing: TextButton(onPressed: () => _restore(a), child: Text(l.restore)),
+          ),
+        ),
+    ]);
   }
 }
 
@@ -309,7 +397,14 @@ class _AdminMenu extends StatelessWidget {
           case 'toggle':
             await workspaceRepo.updateMember(member.id, WorkspaceMembersCompanion(status: Value(member.status == 'active' ? 'inactive' : 'active')));
           case 'remove':
-            if (await confirm(context, title: l.removeMember, message: l.removeMemberMessage, confirmLabel: l.remove)) {
+            final catalog = context.read<CatalogController>();
+            final ok = await confirm(
+              context,
+              title: agent ? l.removeAgent : l.removeMember,
+              message: agent ? l.removeAgentMessage(memberName(catalog.memberOf(member.agentOwnerId ?? ''))) : l.removeMemberMessage,
+              confirmLabel: l.remove,
+            );
+            if (ok) {
               await workspaceRepo.updateMember(member.id, WorkspaceMembersCompanion(deletedAt: Value(nowUtc())));
             }
         }

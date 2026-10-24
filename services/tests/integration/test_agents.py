@@ -257,6 +257,43 @@ def test_agent_follows_its_pilot_out_but_not_back(squad):
     assert agent_status() == "inactive"
 
 
+def test_admin_restores_a_removed_agent(squad):
+    """Un agent retiré n'est pas recréé par un jeton : un admin le retrouve et le restaure (/api/agents)."""
+    owner_t, _ = squad["people"]["owner"]
+    pilot_t, pilot = signup("pilote3")
+    member = _add_member(owner_t, squad["wid"], pilot, "pilote3")
+    agent = _create_agent(squad["wid"], pilot)
+    wid = squad["wid"]
+
+    def removed(token: str = owner_t):
+        return _call("GET", f"{SERVICES}/api/agents/removed?workspace_id={wid}", token)
+
+    def restore(token: str = owner_t):
+        return _call("POST", f"{SERVICES}/api/agents/{agent}/restore", token, {"workspace_id": wid})
+
+    def scope() -> set[str]:
+        _, rows = rest("GET", f"team_scope?manager_id=eq.{pilot}&select=user_id", pilot_t)
+        return {r["user_id"] for r in rows}
+
+    # Retiré depuis l'app (Équipe) : le pilote ne voit plus son temps, et le retrait est listé.
+    assert rest("PATCH", f"workspace_members?user_id=eq.{agent}&workspace_id=eq.{wid}", owner_t,
+                {"deleted_at": iso(_now())})[0] == 200
+    assert agent not in scope()
+    status, body = removed()
+    assert status == 200 and [a["user_id"] for a in body["agents"]] == [agent]
+    assert body["agents"][0]["pilot_name"] == "pilote3"
+    assert removed(pilot_t)[0] == 403 and restore(pilot_t)[0] == 403, "admin seulement, pilote compris"
+
+    status, body = restore()
+    assert status == 200 and body == {"agent_id": agent, "status": "active"}
+    assert agent in scope()
+    assert removed()[1]["agents"] == [] and restore()[0] == 404, "déjà restauré"
+
+    # Pilote retiré : son agent part avec lui, et n'est plus proposé à la restauration.
+    assert rest("PATCH", f"workspace_members?id=eq.{member}", owner_t, {"deleted_at": iso(_now())})[0] == 200
+    assert removed()[1]["agents"] == [] and restore()[0] == 404
+
+
 def test_activity_rules_are_only_removed_by_their_owner(squad):
     pilote_t, pilote = squad["people"]["pilote"]
     project = str(uuid.uuid4())

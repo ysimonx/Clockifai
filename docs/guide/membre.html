@@ -305,9 +305,10 @@
             VSCode embarque sa propre copie de Claude Code, que le terminal ne voit pas : elle ne suffit pas ici.</li>
           <li>Dans un terminal, lancez les deux commandes affichées : elles installent le plugin Clockifai. Le panneau
             Claude Code de VSCode ne sait pas installer de plugin : passez par un terminal.</li>
-          <li>Touchez <span class="ui">Copier le jeton</span>, puis lancez la commande affichée en dessous : elle
-            enregistre le jeton dans le plugin. Le jeton n’est affiché qu’une fois ; s’il se perd, connectez le poste
-            à nouveau.</li>
+          <li>Collez la commande suivante dans le terminal <strong>sans appuyer sur Entrée</strong>, touchez
+            <span class="ui">Copier le jeton</span>, puis appuyez sur Entrée : la commande lit le jeton dans le
+            presse-papiers et l’enregistre dans le plugin. Dans l’autre ordre, copier la commande remplacerait le
+            jeton. Le jeton n’est affiché qu’une fois ; s’il se perd, connectez le poste à nouveau.</li>
           <li>Ouvrez une nouvelle conversation Claude Code.</li>
         </ol>
         <p>Il faut aussi Python 3 (sur Mac, les outils de développement : <code>xcode-select --install</code>).</p>
@@ -340,8 +341,8 @@
             peut révoquer leurs jetons. Une fois le premier poste connecté, <span class="ui">Voir sa fiche dans
             l’équipe</span> ouvre la fiche de votre agent dans <span class="ui">Équipe</span> : ses sessions en cours
             et son total de la semaine.</li>
-          <li>Si un administrateur désactive votre agent, l’écran le signale : vos sessions ne produisent plus de
-            temps.</li>
+          <li>Si un administrateur désactive ou retire votre agent, l’écran le signale : vos sessions ne produisent plus
+            de temps. Un administrateur peut le réactiver ou le restaurer depuis <span class="ui">Équipe</span>.</li>
         </ul>
       </section>
 

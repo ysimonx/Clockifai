@@ -172,7 +172,14 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
             if (!_agentActive && (_tokens?.any((t) => t['user_id'] == session.userId) ?? false))
               Card(
                 color: theme.colorScheme.errorContainer,
-                child: ListTile(leading: const Icon(Icons.block), title: Text(l.agentInactive)),
+                child: ListTile(
+                  leading: const Icon(Icons.block),
+                  title: Text(l.agentInactive),
+                  // Un admin le réactive (menu de sa fiche) ou le restaure (Agents retirés) dans Équipe.
+                  trailing: session.isAdmin
+                      ? TextButton(onPressed: () => Navigator.pop(context, '/team'), child: Text(l.team))
+                      : null,
+                ),
               ),
             if (_error != null) Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
             Padding(
@@ -225,7 +232,10 @@ class _Steps extends StatelessWidget {
           _CommandBox(setup.install),
           if (setup.local) Text(l.claudeCodeLocalInstance, style: theme.textTheme.bodySmall),
           const SizedBox(height: 12),
+          // La commande d'abord : la copier remplace le presse-papiers, que pbpaste ne lit qu'au lancement.
           Text(l.claudeCodeStepToken),
+          _CommandBox(setup.configure),
+          Text(l.claudeCodeStepTokenThen),
           const SizedBox(height: 4),
           FilledButton.tonalIcon(
             icon: const Icon(Icons.key),
@@ -235,7 +245,6 @@ class _Steps extends StatelessWidget {
               if (context.mounted) showSnack(context, l.copied);
             },
           ),
-          _CommandBox(setup.configure),
           const SizedBox(height: 12),
           Text(l.claudeCodeStepStart),
           const SizedBox(height: 8),

@@ -212,6 +212,12 @@ abstract class AppLocalizations {
   /// **'Votre agent a été désactivé ou retiré par un administrateur : vos sessions Claude Code ne produisent plus de temps.'**
   String get agentInactive;
 
+  /// No description provided for @agentRestored.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agent restauré : les sessions Claude Code de son pilote produisent de nouveau du temps.'**
+  String get agentRestored;
+
   /// No description provided for @agents.
   ///
   /// In fr, this message translates to:
@@ -527,8 +533,14 @@ abstract class AppLocalizations {
   /// No description provided for @claudeCodeStepToken.
   ///
   /// In fr, this message translates to:
-  /// **'3. Copiez le jeton, puis enregistrez-le dans le plugin :'**
+  /// **'3. Collez cette commande dans le terminal, sans appuyer sur Entrée :'**
   String get claudeCodeStepToken;
+
+  /// No description provided for @claudeCodeStepTokenThen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Touchez Copier le jeton, puis appuyez sur Entrée dans le terminal : la commande lit le jeton dans le presse-papiers. Dans l\'autre ordre, copier la commande remplacerait le jeton.'**
+  String get claudeCodeStepTokenThen;
 
   /// No description provided for @client.
   ///
@@ -2143,6 +2155,36 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Retirer'**
   String get remove;
+
+  /// No description provided for @removeAgent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer cet agent ?'**
+  String get removeAgent;
+
+  /// No description provided for @removeAgentMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les sessions Claude Code de {pilot} ne produiront plus de temps, même avec un nouveau poste connecté. Ses entrées passées sont conservées. Pour une simple pause, choisissez plutôt Désactiver. Un administrateur peut le restaurer depuis Équipe, rubrique Agents retirés.'**
+  String removeAgentMessage(String pilot);
+
+  /// No description provided for @removedAgentOf.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agent de {name} · retiré le {date}'**
+  String removedAgentOf(String name, String date);
+
+  /// No description provided for @removedAgents.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agents retirés'**
+  String get removedAgents;
+
+  /// No description provided for @removedAgentsHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Leur temps n\'est plus enregistré, même si leur pilote connecte un nouveau poste.'**
+  String get removedAgentsHelp;
 
   /// No description provided for @removeMember.
   ///

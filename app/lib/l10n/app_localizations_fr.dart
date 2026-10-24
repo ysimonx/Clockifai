@@ -72,6 +72,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Votre agent a été désactivé ou retiré par un administrateur : vos sessions Claude Code ne produisent plus de temps.';
 
   @override
+  String get agentRestored =>
+      'Agent restauré : les sessions Claude Code de son pilote produisent de nouveau du temps.';
+
+  @override
   String get agents => 'Agents';
 
   @override
@@ -262,7 +266,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get claudeCodeStepToken =>
-      '3. Copiez le jeton, puis enregistrez-le dans le plugin :';
+      '3. Collez cette commande dans le terminal, sans appuyer sur Entrée :';
+
+  @override
+  String get claudeCodeStepTokenThen =>
+      'Touchez Copier le jeton, puis appuyez sur Entrée dans le terminal : la commande lit le jeton dans le presse-papiers. Dans l\'autre ordre, copier la commande remplacerait le jeton.';
 
   @override
   String get client => 'Client';
@@ -1185,6 +1193,26 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get remove => 'Retirer';
+
+  @override
+  String get removeAgent => 'Retirer cet agent ?';
+
+  @override
+  String removeAgentMessage(String pilot) {
+    return 'Les sessions Claude Code de $pilot ne produiront plus de temps, même avec un nouveau poste connecté. Ses entrées passées sont conservées. Pour une simple pause, choisissez plutôt Désactiver. Un administrateur peut le restaurer depuis Équipe, rubrique Agents retirés.';
+  }
+
+  @override
+  String removedAgentOf(String name, String date) {
+    return 'Agent de $name · retiré le $date';
+  }
+
+  @override
+  String get removedAgents => 'Agents retirés';
+
+  @override
+  String get removedAgentsHelp =>
+      'Leur temps n\'est plus enregistré, même si leur pilote connecte un nouveau poste.';
 
   @override
   String get removeMember => 'Retirer ce membre ?';

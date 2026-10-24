@@ -70,6 +70,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your agent was deactivated or removed by an administrator: your Claude Code sessions no longer record time.';
 
   @override
+  String get agentRestored =>
+      'Agent restored: its pilot\'s Claude Code sessions record time again.';
+
+  @override
   String get agents => 'Agents';
 
   @override
@@ -259,7 +263,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get claudeCodeStepToken =>
-      '3. Copy the token, then save it in the plugin:';
+      '3. Paste this command into the terminal, without pressing Enter:';
+
+  @override
+  String get claudeCodeStepTokenThen =>
+      'Tap Copy token, then press Enter in the terminal: the command reads the token from the clipboard. In the other order, copying the command would replace the token.';
 
   @override
   String get client => 'Client';
@@ -1178,6 +1186,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remove => 'Remove';
+
+  @override
+  String get removeAgent => 'Remove this agent?';
+
+  @override
+  String removeAgentMessage(String pilot) {
+    return '$pilot\'s Claude Code sessions will no longer record time, even from a newly connected computer. Past entries are kept. For a pause, choose Deactivate instead. An admin can restore it from Team, under Removed agents.';
+  }
+
+  @override
+  String removedAgentOf(String name, String date) {
+    return '$name\'s agent · removed on $date';
+  }
+
+  @override
+  String get removedAgents => 'Removed agents';
+
+  @override
+  String get removedAgentsHelp =>
+      'Their time is no longer recorded, even if their pilot connects a new computer.';
 
   @override
   String get removeMember => 'Remove this member?';

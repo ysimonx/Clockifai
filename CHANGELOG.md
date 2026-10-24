@@ -68,7 +68,8 @@ la date d'arrivée de chaque évolution.
   décide si le temps des agents est facturable (Paramètres, « Temps des agents Claude »), avec une exception
   possible par projet. Depuis Paramètres › Intégrations › Claude Code, « Voir sa fiche dans l'équipe » mène à
   la fiche de son agent. La connexion d'un poste commence par l'installation de la commande `claude`, que
-  l'extension VSCode n'installe pas.
+  l'extension VSCode n'installe pas, et indique l'ordre pour enregistrer le jeton (coller la commande, copier le
+  jeton, puis Entrée). Un agent retiré par erreur se restaure depuis Équipe, rubrique « Agents retirés ».
 
 ### Modifié
 

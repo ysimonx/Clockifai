@@ -47,8 +47,9 @@ class ClaudeCodeSetup {
         _ => 'pbpaste',
       }} | claude plugin configure $plugin --values-stdin';
 
-  /// Ce que « Copier le jeton » met dans le presse-papiers : l'objet JSON attendu par `--values-stdin`.
-  static String clipboardValue(String token) => jsonEncode({'token': token});
+  /// Ce que « Copier le jeton » met dans le presse-papiers : l'objet JSON attendu par `--values-stdin`. L'adresse
+  /// en fait partie : Claude Code ne compte pas la valeur par défaut du plugin comme réglée (« url … not set »).
+  String clipboardValue(String token) => jsonEncode({'url': base, 'token': token});
 }
 
 String lastEventLabel(AppLocalizations l, String locale, DateTime? at, DateTime now) {
@@ -279,7 +280,7 @@ class _Steps extends StatelessWidget {
               icon: const Icon(Icons.key),
               label: Text(l.copyToken),
               onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: ClaudeCodeSetup.clipboardValue(token!)));
+                await Clipboard.setData(ClipboardData(text: setup.clipboardValue(token!)));
                 if (context.mounted) showSnack(context, l.copied);
               },
             ),

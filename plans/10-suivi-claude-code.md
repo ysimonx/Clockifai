@@ -583,11 +583,14 @@ envoie ce qu'on écrit.
    ajoutée le 24 octobre 2026. Dans Claude Code en terminal, `/plugin marketplace add …` et `/plugin install …` font la même
    chose.
 2. `claude plugin install` **ne demande rien** (vérifié le 23 octobre 2026, v2.1.309) : il signale l'option
-   requise manquante. L'URL est déjà remplie (valeur par défaut de l'archive) ; le jeton se donne par
+   requise manquante. L'URL a une valeur par défaut dans l'archive, mais Claude Code la montre « not set » et
+   ne la transmet pas au hook (constaté le 24 octobre 2026 : un poste configuré avec son seul jeton n'envoyait
+   rien). Le presse-papiers porte donc `{"url": …, "token": …}`, et le script relit la valeur par défaut dans
+   `plugin.json` si l'adresse manque, en notant tout réglage manquant dans `hook.log`. Le jeton se donne par
    `claude plugin configure clockifai@clockifai --values-stdin` (v2.1.285 et plus), qui lit un objet JSON sur
    l'entrée standard et le range dans le magasin sécurisé du système. L'écran Intégrations copie donc une
    commande qui lit le presse-papiers, par exemple
-   `pbpaste | claude plugin configure clockifai@clockifai --values-stdin` avec `{"token": "clk_…"}` copié,
+   `pbpaste | claude plugin configure clockifai@clockifai --values-stdin` avec `{"url": "https://…", "token": "clk_…"}` copié,
    ce qui garde le jeton hors de l'historique du shell, contrairement à `--config token=…`. Copier la
    commande remplace le presse-papiers : l'écran fait donc coller la commande sans la lancer, puis copier le
    jeton, puis appuyer sur Entrée (`pbpaste` lit au lancement). Dans Claude Code

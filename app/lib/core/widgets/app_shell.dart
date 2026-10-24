@@ -142,6 +142,9 @@ class _AppShellState extends State<AppShell> {
           SizedBox(
             width: 232,
             child: NavigationDrawer(
+              // Recréé à chaque changement de page : la sélection ne dépend pas de son animation, restée figée
+              // sur l'ancienne entrée après une navigation lancée depuis le contenu (lien vers la fiche d'un agent).
+              key: ValueKey(index),
               selectedIndex: index,
               onDestinationSelected: (i) => context.go(destinations[i].path),
               children: [

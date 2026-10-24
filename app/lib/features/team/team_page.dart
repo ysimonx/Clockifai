@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/catalog.dart';
@@ -27,9 +28,24 @@ class TeamPage extends StatefulWidget {
 }
 
 class _TeamPageState extends State<TeamPage> {
+  /// Fiche à montrer (`/team?member=…`, par exemple l'agent depuis Paramètres › Intégrations › Claude Code).
+  final _focusKey = GlobalKey();
+  String? _revealed;
+
+  void _reveal(String? userId) {
+    if (userId == null || userId == _revealed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final card = _focusKey.currentContext;
+      if (!mounted || card == null) return; // référentiel pas encore chargé : au prochain rendu
+      _revealed = userId;
+      Scrollable.ensureVisible(card, alignment: 0.3);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    final focus = GoRouterState.of(context).uri.queryParameters['member'];
     final session = context.watch<SessionController>();
     final catalog = context.watch<CatalogController>();
     final rights = TeamRights.of(context);
@@ -56,32 +72,39 @@ class _TeamPageState extends State<TeamPage> {
           weekByUser[r.entry.userId] = (weekByUser[r.entry.userId] ?? 0) + r.seconds;
           if (r.entry.endAt == null) (runningByUser[r.entry.userId] ??= []).add(r);
         }
-        return ListView(padding: const EdgeInsets.all(16), children: [
-          if (!rights.seesTeam)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(l.teamMemberHint, style: Theme.of(context).textTheme.bodySmall),
-            ),
-          for (final m in [...humans, if (agents.isNotEmpty) null, ...agents])
-            if (m == null)
+        _reveal(focus);
+        // Toutes les fiches construites (pas de ListView paresseuse), pour pouvoir amener [focus] à l'écran.
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            if (!rights.seesTeam)
               Padding(
-                padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(l.agents, style: Theme.of(context).textTheme.titleMedium),
-                  Text(l.agentsHelp, style: Theme.of(context).textTheme.bodySmall),
-                ]),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _MemberCard(
-                  member: m,
-                  weekSeconds: weekByUser[m.userId] ?? 0,
-                  running: runningByUser[m.userId] ?? const [],
-                  showActivity: m.userId == session.userId || rights.manages(m.userId),
-                ),
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(l.teamMemberHint, style: Theme.of(context).textTheme.bodySmall),
               ),
-        ]);
+            for (final m in [...humans, if (agents.isNotEmpty) null, ...agents])
+              if (m == null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(l.agents, style: Theme.of(context).textTheme.titleMedium),
+                    Text(l.agentsHelp, style: Theme.of(context).textTheme.bodySmall),
+                  ]),
+                )
+              else
+                Padding(
+                  key: m.userId == focus ? _focusKey : null,
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _MemberCard(
+                    member: m,
+                    weekSeconds: weekByUser[m.userId] ?? 0,
+                    running: runningByUser[m.userId] ?? const [],
+                    showActivity: m.userId == session.userId || rights.manages(m.userId),
+                    highlighted: m.userId == focus,
+                  ),
+                ),
+          ]),
+        );
       },
     );
 
@@ -176,11 +199,18 @@ class _TeamPageState extends State<TeamPage> {
 }
 
 class _MemberCard extends StatelessWidget {
-  const _MemberCard({required this.member, required this.weekSeconds, required this.running, required this.showActivity});
+  const _MemberCard({
+    required this.member,
+    required this.weekSeconds,
+    required this.running,
+    required this.showActivity,
+    this.highlighted = false,
+  });
   final WorkspaceMember member;
   final int weekSeconds;
   final List<EntryRow> running;
   final bool showActivity;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
@@ -204,6 +234,7 @@ class _MemberCard extends StatelessWidget {
     final managers = [for (final m in catalog.managersOf(member.userId)) memberName(m)];
 
     return Card(
+      color: highlighted ? theme.colorScheme.secondaryContainer : null,
       child: ListTile(
         leading: Badge(
           isLabelVisible: running.isNotEmpty,

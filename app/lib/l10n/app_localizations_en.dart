@@ -40,6 +40,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminOnlySettings => 'Only admins can change these settings.';
 
   @override
+  String get agentInactive =>
+      'Your agent was deactivated or removed by an administrator: your Claude Code sessions no longer record time.';
+
+  @override
   String get allClients => 'All clients';
 
   @override
@@ -61,6 +65,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get annualAllowance => 'Annual allowance';
+
+  @override
+  String apiTokenCreated(String name) {
+    return 'Token created for “$name”. It won\'t be shown again: follow these three steps now.';
+  }
 
   @override
   String get apply => 'Apply';
@@ -166,6 +175,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkYourEmail => 'Check your inbox to confirm your account.';
 
   @override
+  String claudeCodeHelp(String agent) {
+    return 'Time spent by your Claude Code sessions, under your agent “$agent”';
+  }
+
+  @override
+  String claudeCodeIntro(String agent) {
+    return 'Each Claude Code session becomes time of your agent “$agent”, a member of the team: a timer starts at the first prompt and stops after 10 minutes without activity, at the time of the last activity. Connect every computer where you use Claude Code (terminal, VSCode, desktop app).';
+  }
+
+  @override
+  String get claudeCodeLocalInstance =>
+      'Local instance: Claude Code only accepts a marketplace over https, so this one is the integrations/ folder of your copy of the repository.';
+
+  @override
+  String get claudeCodeRequirements =>
+      'You need an up-to-date claude command in the terminal, and python3 (on a Mac, the developer tools: xcode-select --install).';
+
+  @override
+  String get claudeCodeStepInstall =>
+      '1. In a terminal (the Claude Code panel in VSCode has no /plugin):';
+
+  @override
+  String get claudeCodeStepStart =>
+      '3. Open a new Claude Code conversation: Claude\'s timer starts at the first prompt.';
+
+  @override
+  String get claudeCodeStepToken =>
+      '2. Copy the token, then save it in the plugin:';
+
+  @override
   String get client => 'Client';
 
   @override
@@ -187,7 +226,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get companyName => 'Company name';
 
   @override
+  String get computerName => 'Computer name';
+
+  @override
   String get confirm => 'Confirm';
+
+  @override
+  String get connectComputer => 'Connect a computer';
+
+  @override
+  String get connectedComputers => 'Connected computers';
 
   @override
   String get connection => 'Connection';
@@ -196,7 +244,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueEntry => 'Continue';
 
   @override
+  String get copied => 'Copied.';
+
+  @override
   String get copy => 'Copy';
+
+  @override
+  String get copyToken => 'Copy token';
 
   @override
   String get costRate => 'Cost rate (per hour)';
@@ -496,6 +550,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hoursRequested => 'Number of hours';
 
   @override
+  String get integrations => 'Integrations';
+
+  @override
   String get invalidDuration => 'Invalid duration (e.g. 1:30, 1.5, 90m).';
 
   @override
@@ -648,6 +705,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get language => 'Language';
 
   @override
+  String lastEventHoursAgo(int hours) {
+    return 'Last event $hours h ago';
+  }
+
+  @override
+  String get lastEventJustNow => 'Last event just now';
+
+  @override
+  String lastEventMinutesAgo(int minutes) {
+    return 'Last event $minutes min ago';
+  }
+
+  @override
+  String get lastEventNever => 'No event received yet';
+
+  @override
+  String lastEventOn(String date) {
+    return 'Last event on $date';
+  }
+
+  @override
   String get lastMonth => 'Last month';
 
   @override
@@ -797,6 +875,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noClients => 'No clients';
+
+  @override
+  String get noConnectedComputers => 'No computer connected yet.';
 
   @override
   String get noDataForPeriod => 'No data for this period';
@@ -1075,6 +1156,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get revoke => 'Revoke';
+
+  @override
+  String revokeTokenConfirm(String name) {
+    return 'Revoke the token of “$name”? This computer will no longer send Claude\'s time.';
+  }
 
   @override
   String get role => 'Role';

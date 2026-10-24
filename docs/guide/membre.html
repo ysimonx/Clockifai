@@ -44,6 +44,7 @@
         <li><a href="#hors-ligne">Travailler sans réseau</a></li>
         <li><a href="#telephone">Sur téléphone</a></li>
         <li><a href="#mac">Sur Mac</a></li>
+        <li><a href="#claude-code">Le temps de Claude Code</a></li>
         <li><a href="#kiosque">Pointer sur une tablette</a></li>
         <li><a href="#parametres">Ses paramètres</a></li>
         <li><a href="#messages">Messages fréquents</a></li>
@@ -289,6 +290,39 @@
         </ul>
       </section>
 
+      <section aria-labelledby="claude-code">
+        <h2 id="claude-code">Le temps de Claude Code</h2>
+        <p>Si vous travaillez avec Claude Code (dans un terminal, dans VSCode ou dans l’app de bureau), le temps de ses
+          sessions s’enregistre tout seul, au nom de votre agent <span class="ui">Claude · votre nom</span>, membre de
+          l’équipe. Une fois par ordinateur :</p>
+        <ol class="steps">
+          <li><span class="ui">Paramètres</span> &gt; <span class="ui">Intégrations</span> &gt;
+            <span class="ui">Claude Code</span> &gt; <span class="ui">Connecter un poste</span>, puis nommez
+            l’ordinateur.</li>
+          <li>Dans un terminal, lancez les deux commandes affichées : elles installent le plugin Clockifai. Le panneau
+            Claude Code de VSCode ne sait pas installer de plugin : passez par un terminal.</li>
+          <li>Touchez <span class="ui">Copier le jeton</span>, puis lancez la commande affichée en dessous : elle
+            enregistre le jeton dans le plugin. Le jeton n’est affiché qu’une fois ; s’il se perd, connectez le poste
+            à nouveau.</li>
+          <li>Ouvrez une nouvelle conversation Claude Code.</li>
+        </ol>
+        <p>Il faut la commande <code>claude</code> à jour dans le terminal et Python 3 (sur Mac, les outils de
+          développement : <code>xcode-select --install</code>).</p>
+        <ul>
+          <li>Un chronomètre démarre au premier message de chaque session. L’attente entre deux échanges compte ; après
+            10 minutes sans activité, l’entrée s’arrête à l’heure de la dernière activité. Deux sessions en même temps
+            font deux chronomètres.</li>
+          <li>L’entrée est décrite par les messages des commits faits pendant la session, sinon par le dépôt et la
+            branche. Seuls le dépôt, la branche, le dossier et la durée des outils partent vers Clockifai : jamais vos
+            messages, ni le contenu des fichiers.</li>
+          <li><span class="ui">Postes connectés</span> indique le dernier événement reçu de chaque ordinateur ;
+            <span class="ui">Révoquer</span> le déconnecte. Un administrateur voit les postes de tous les membres et
+            peut révoquer leurs jetons.</li>
+          <li>Si un administrateur désactive votre agent, l’écran le signale : vos sessions ne produisent plus de
+            temps.</li>
+        </ul>
+      </section>
+
       <section aria-labelledby="kiosque">
         <h2 id="kiosque">Pointer sur une tablette</h2>
         <p>Votre entreprise a peut-être installé une tablette partagée (mode kiosque), à l’entrée du chantier par
@@ -312,6 +346,9 @@
             <span class="ui">Code PIN kiosque</span>, <span class="ui">Langue</span> (français, anglais ou langue du
             système), <span class="ui">Regrouper les entrées similaires</span> et, sur Mac,
             <span class="ui">Démarrer à l’ouverture de session</span>.</dd>
+          <dt>Intégrations</dt>
+          <dd><span class="ui">Claude Code</span> : connecter vos ordinateurs pour enregistrer le temps de Claude (voir
+            <a href="#claude-code">Le temps de Claude Code</a>).</dd>
           <dt>Workspaces</dt>
           <dd>Vos workspaces et votre rôle dans chacun ; touchez-en un pour y basculer.
             <span class="ui">Créer un workspace</span> ouvre un nouvel espace dont vous êtes propriétaire.</dd>

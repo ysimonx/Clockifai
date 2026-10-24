@@ -158,6 +158,12 @@ abstract class AppLocalizations {
   /// **'Seuls les administrateurs peuvent modifier ces réglages.'**
   String get adminOnlySettings;
 
+  /// No description provided for @agentInactive.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre agent a été désactivé ou retiré par un administrateur : vos sessions Claude Code ne produisent plus de temps.'**
+  String get agentInactive;
+
   /// No description provided for @allClients.
   ///
   /// In fr, this message translates to:
@@ -199,6 +205,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Droit annuel'**
   String get annualAllowance;
+
+  /// No description provided for @apiTokenCreated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jeton créé pour « {name} ». Il ne sera plus affiché : suivez ces trois étapes maintenant.'**
+  String apiTokenCreated(String name);
 
   /// No description provided for @apply.
   ///
@@ -380,6 +392,48 @@ abstract class AppLocalizations {
   /// **'Vérifiez votre boîte mail pour confirmer votre compte.'**
   String get checkYourEmail;
 
+  /// No description provided for @claudeCodeHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le temps de vos sessions Claude Code, au nom de votre agent « {agent} »'**
+  String claudeCodeHelp(String agent);
+
+  /// No description provided for @claudeCodeIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque session de Claude Code devient du temps de votre agent « {agent} », membre de l\'équipe : un chronomètre démarre au premier prompt et s\'arrête après 10 minutes sans activité, à l\'heure de la dernière activité. Connectez chaque poste où vous utilisez Claude Code (terminal, VSCode, app de bureau).'**
+  String claudeCodeIntro(String agent);
+
+  /// No description provided for @claudeCodeLocalInstance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Instance locale : Claude Code n\'accepte une marketplace qu\'en https, celle-ci est donc le dossier integrations/ de votre copie du dépôt.'**
+  String get claudeCodeLocalInstance;
+
+  /// No description provided for @claudeCodeRequirements.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il faut la commande claude à jour dans le terminal, et python3 (sur Mac, les outils de développement : xcode-select --install).'**
+  String get claudeCodeRequirements;
+
+  /// No description provided for @claudeCodeStepInstall.
+  ///
+  /// In fr, this message translates to:
+  /// **'1. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :'**
+  String get claudeCodeStepInstall;
+
+  /// No description provided for @claudeCodeStepStart.
+  ///
+  /// In fr, this message translates to:
+  /// **'3. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.'**
+  String get claudeCodeStepStart;
+
+  /// No description provided for @claudeCodeStepToken.
+  ///
+  /// In fr, this message translates to:
+  /// **'2. Copiez le jeton, puis enregistrez-le dans le plugin :'**
+  String get claudeCodeStepToken;
+
   /// No description provided for @client.
   ///
   /// In fr, this message translates to:
@@ -422,11 +476,29 @@ abstract class AppLocalizations {
   /// **'Raison sociale'**
   String get companyName;
 
+  /// No description provided for @computerName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom du poste'**
+  String get computerName;
+
   /// No description provided for @confirm.
   ///
   /// In fr, this message translates to:
   /// **'Confirmer'**
   String get confirm;
+
+  /// No description provided for @connectComputer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecter un poste'**
+  String get connectComputer;
+
+  /// No description provided for @connectedComputers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Postes connectés'**
+  String get connectedComputers;
 
   /// No description provided for @connection.
   ///
@@ -440,11 +512,23 @@ abstract class AppLocalizations {
   /// **'Continuer'**
   String get continueEntry;
 
+  /// No description provided for @copied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copié.'**
+  String get copied;
+
   /// No description provided for @copy.
   ///
   /// In fr, this message translates to:
   /// **'Copier'**
   String get copy;
+
+  /// No description provided for @copyToken.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier le jeton'**
+  String get copyToken;
 
   /// No description provided for @costRate.
   ///
@@ -980,6 +1064,12 @@ abstract class AppLocalizations {
   /// **'Nombre d\'heures'**
   String get hoursRequested;
 
+  /// No description provided for @integrations.
+  ///
+  /// In fr, this message translates to:
+  /// **'Intégrations'**
+  String get integrations;
+
   /// No description provided for @invalidDuration.
   ///
   /// In fr, this message translates to:
@@ -1250,6 +1340,36 @@ abstract class AppLocalizations {
   /// **'Langue'**
   String get language;
 
+  /// No description provided for @lastEventHoursAgo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernier événement il y a {hours} h'**
+  String lastEventHoursAgo(int hours);
+
+  /// No description provided for @lastEventJustNow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernier événement à l\'instant'**
+  String get lastEventJustNow;
+
+  /// No description provided for @lastEventMinutesAgo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernier événement il y a {minutes} min'**
+  String lastEventMinutesAgo(int minutes);
+
+  /// No description provided for @lastEventNever.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun événement reçu'**
+  String get lastEventNever;
+
+  /// No description provided for @lastEventOn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernier événement le {date}'**
+  String lastEventOn(String date);
+
   /// No description provided for @lastMonth.
   ///
   /// In fr, this message translates to:
@@ -1513,6 +1633,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucun client'**
   String get noClients;
+
+  /// No description provided for @noConnectedComputers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun poste connecté.'**
+  String get noConnectedComputers;
 
   /// No description provided for @noDataForPeriod.
   ///
@@ -1993,6 +2119,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Révoquer'**
   String get revoke;
+
+  /// No description provided for @revokeTokenConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Révoquer le jeton de « {name} » ? Ce poste n\'enverra plus le temps de Claude.'**
+  String revokeTokenConfirm(String name);
 
   /// No description provided for @role.
   ///

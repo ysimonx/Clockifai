@@ -670,11 +670,16 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 ## 8. Application Flutter
 
-- **Réglages → Intégrations** :
-  - créer un jeton (nom), affiché une seule fois avec deux blocs à copier : l'installation du plugin Claude Code et celle de l'extension VSCode (jeton à coller dans « Clockifai : se connecter ») ;
-  - lister et révoquer ses jetons (via Flask) ;
-  - « Votre agent : Claude · Yannick », avec un lien vers sa fiche dans l'équipe, ou « désactivé par un
-    admin » (D14).
+- **Paramètres → Intégrations → Claude Code** (fait le 24 octobre 2026, `features/integrations/claude_code.dart`) :
+  - créer un jeton (nom du poste), affiché une seule fois avec les trois étapes : installation du plugin (marketplace
+    de l'instance, ou `clockifai-dev` pour une instance en http), « Copier le jeton » qui met
+    `{"token": "clk_…"}` dans le presse-papiers, et `pbpaste | claude plugin configure … --values-stdin`
+    (`Get-Clipboard` sous Windows, `wl-paste` sous Linux) ;
+  - lister (tous ceux du workspace pour un admin) et révoquer les jetons, avec le dernier événement reçu ;
+  - « Votre agent : Claude · Yannick » dans le texte d'introduction, et un avertissement quand un admin l'a
+    désactivé ou retiré (`agent_id` nul dans `GET /api/activity/today`, D7.10). Reste à faire : le lien vers
+    sa fiche dans l'équipe ;
+  - lot 2 : le bloc de l'extension VSCode (jeton à coller dans « Clockifai : se connecter »).
 - **Paramètres du workspace** (admins) : « Temps des agents IA : facturable comme un humain / non
   facturable » (D16).
 - **Fiche projet** : « Temps des agents : comme le workspace / facturable / non facturable » (D16).
@@ -806,7 +811,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (écran des jetons, section Agents, droits D15, exclusions, bandeau « Claude travaille », « toujours rattacher », filtre des rapports, réglages de facturation des agents) ; vérifier les hooks dans l'extension VSCode | M/L | en cours |
+| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (écran des jetons : fait, section Agents, droits D15, exclusions, bandeau « Claude travaille », « toujours rattacher », filtre des rapports, réglages de facturation des agents) ; vérifier les hooks dans l'extension VSCode | M/L | en cours |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
 | 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |

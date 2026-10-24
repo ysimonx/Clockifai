@@ -1,6 +1,6 @@
 # Données, synchronisation et droits
 
-Schéma Postgres issu de `supabase/migrations/` (0000 à 0011), Sync Streams de `powersync/sync-config.yaml`, droits
+Schéma Postgres issu de `supabase/migrations/` (0000 à 0013), Sync Streams de `powersync/sync-config.yaml`, droits
 appliqués par la RLS et les triggers. `app/lib/core/team_rights.dart` (`TeamRights`) reproduit les règles d'équipe
 pour l'affichage ; la RLS reste la seule vraie barrière. Composants : [composants.md](composants.md).
 
@@ -56,6 +56,7 @@ erDiagram
     text time_for_others "admins | admins_and_team_managers"
     text task_creation "everyone | managers"
     smallint max_running_timers "1 ; 0 = illimité"
+    text agent_billing "like_humans | never"
     uuid created_by
   }
   workspace_members {
@@ -64,6 +65,8 @@ erDiagram
     uuid user_id FK
     text role "owner | admin | manager | member"
     text status "active | inactive"
+    text kind "human | agent"
+    uuid agent_owner_id "pilote d'un agent"
     int hourly_rate_cents
     int cost_rate_cents
   }
@@ -80,6 +83,7 @@ erDiagram
     text name
     int hourly_rate_cents
     int budget_hours
+    bool agent_billable "NULL = comme le workspace"
     bool archived
   }
   tasks {
@@ -105,6 +109,7 @@ erDiagram
     timestamptz end_at "NULL = chronomètre en cours"
     int duration_seconds "calculée par trigger"
     bool locked
+    text source "NULL = app | kiosk | activity | agent"
     uuid created_by "posé depuis le JWT"
     uuid updated_by "posé depuis le JWT"
   }
@@ -232,16 +237,65 @@ erDiagram
   }
 ```
 
+### Agents Claude et activité de code (0012, 0013)
+
+Le temps de Claude est celui d'un membre `kind = 'agent'`, un par pilote (`agent_owner_id`), dont les entrées sont
+des `time_entries` ordinaires (`source = 'agent'`) écrites par le serveur seulement
+([plan 10](../../plans/10-suivi-claude-code.md)).
+
+```mermaid
+erDiagram
+  workspaces ||--o{ code_repositories : ""
+  code_repositories ||--o{ code_commits : "commits"
+  projects |o--o{ code_repositories : "projet du dépôt"
+  time_entries |o--o{ code_commits : "entrée d'agent"
+  auth_users ||--o{ activity_rules : "règles de"
+  projects ||--o{ activity_rules : "mène à"
+
+  code_repositories {
+    uuid id PK
+    text remote_key "hôte/chemin, ou local:dossier ; unique par workspace"
+    text name
+    uuid project_id "règle de workspace"
+  }
+  code_commits {
+    uuid id PK
+    uuid repository_id FK
+    text sha "unique par dépôt"
+    text branch
+    text subject "première ligne"
+    text session_id "ou window_id"
+    uuid time_entry_id "SET NULL à la purge"
+  }
+  activity_rules {
+    uuid id PK
+    uuid user_id FK
+    text match_kind "repo | path_prefix"
+    text pattern
+    uuid project_id FK
+    uuid task_id FK
+  }
+```
+
+`code_repositories` et `code_commits` sont lisibles par les membres, écrites par le serveur seulement.
+`activity_rules` sont personnelles : créées par le serveur, le client ne peut que les retirer (`deleted_at`).
+
 ### Hors du schéma `public`
 
 | Schéma | Table | Contenu | Accès |
 |---|---|---|---|
 | `clockifai_private` | `member_pins` | PIN kiosque haché (bcrypt) par `(workspace_id, user_id)` | RPC `set_kiosk_pin` / `has_kiosk_pin` (security definer) et Flask ; ni PostgREST, ni réplication |
 | `clockifai_private` | `invoice_counters` | dernier numéro de facture par `(workspace_id, year)` | trigger `invoices_before_write` |
+| `clockifai_private` | `api_tokens` | jetons personnels `clk_…` hachés (SHA-256), un par poste, pour un utilisateur et un workspace | Flask |
+| `clockifai_private` | `activity_events` | événements bruts des hooks Claude Code et de l'extension VSCode, sans contenu de prompt ni de fichier ; purgés après 30 jours | Flask |
+| `clockifai_private` | `agent_entries` | par entrée d'agent : session, dépôt, dernière activité, et valeurs écrites par le serveur (pour repérer ce qu'un humain a retouché) | Flask |
 | `clockifai_meta` | `schema_migrations` | migrations appliquées | `deploy/migrate.sh` |
 
+Les tables privées se créent par une migration `*.admin.sql` : `postgres` n'a que `usage` sur `clockifai_private`.
+
 `profiles` est créé par trigger à l'inscription (`handle_new_user` sur `auth.users`), avec un workspace personnel
-« Espace de <nom> » dont l'utilisateur devient propriétaire (`workspaces_after_insert`). Un changement de nom ou
+« Espace de <nom> » dont l'utilisateur devient propriétaire (`workspaces_after_insert`). Un compte d'agent
+(`kind = 'agent'` dans ses métadonnées) n'a qu'un profil, pas de workspace personnel. Un changement de nom ou
 d'email du profil est recopié dans ses adhésions (`profiles_after_update`).
 
 ## Sync Streams
@@ -258,7 +312,8 @@ Ce que chaque utilisateur connecté reçoit dans sa base locale. Toutes les requ
 | `team_data` | à la demande, paramètre `workspace_id` | 3 | `time_entries`, `time_entry_tags`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments`, `invoices`, `invoice_items`, `invoice_entries` | tout le workspace demandé, si l'on y a un rôle autre que `member` |
 
 `SessionController` souscrit `team_data` pour le workspace courant quand le rôle est owner, admin ou manager, et
-change de souscription avec le workspace. Ne sont jamais synchronisés : `kiosk_devices` (géré par Flask), les schémas
+change de souscription avec le workspace. Ne sont jamais synchronisés : `kiosk_devices` (géré par Flask),
+`code_repositories` et `code_commits` (lus en ligne), les schémas
 `clockifai_private` et `clockifai_meta`, `auth.*`.
 
 ## Matrice des droits
@@ -298,6 +353,12 @@ La colonne « Chef d'équipe » décrit ce qu'il gagne sur son périmètre en pl
 ² Verrous : entrée `locked`, date antérieure à `lock_entries_before`, période approuvée, entrée facturée.
 ³ Trigger `time_entries_guard` : refusé pour tout utilisateur connecté, admins compris.
 
+**Agents Claude.** Un agent est un membre de rôle `member`, créé par le serveur seulement, qui ne se connecte
+jamais. `team_scope` contient aussi (pilote, agent) et (chef d'équipe du pilote, agent) : le pilote et ses chefs
+lisent le temps de l'agent. Le pilote le corrige et le supprime (`pilots_agent`), même si
+`time_for_others = admins`, mais personne ne crée d'entrée d'agent depuis l'app, admins compris. L'agent suit son
+pilote quand celui-ci est désactivé ou retiré, jamais dans l'autre sens.
+
 `TeamRights` reproduit `manages` (`manages`), `can_edit_others_time` (`canEditTimeOf`), l'approbation des feuilles
 (`canApproveTimesheetOf` = `manages`) et `can_decide_time_off` (`canDecideTimeOff`) ; les autres droits affichés
 suivent `session.isManager` / `isAdmin`.
@@ -310,10 +371,12 @@ non nul) : Flask, connecté en rôle `postgres`, et les triggers internes qui po
 
 | Table | Trigger | Règle |
 |---|---|---|
-| `time_entries` | `time_entries_a_running_limit` (0011) | au plus `max_running_timers` chronomètres en cours par `(workspace, user)` (0 = illimité) ; « le plus récent gagne » : les plus anciens sont arrêtés au début du nouveau, un chronomètre arrivé en retard et plus ancien est enregistré déjà terminé ; verrou consultatif par `(workspace, user)`. S'applique aussi sans JWT (kiosque). Un seul chronomètre par tâche : contrôlé côté app (`sameTimerTarget`) |
+| `time_entries` | `time_entries_a_running_limit` (0011, 0013) | au plus `max_running_timers` chronomètres en cours par `(workspace, user)` (0 = illimité) ; « le plus récent gagne » : les plus anciens sont arrêtés au début du nouveau, un chronomètre arrivé en retard et plus ancien est enregistré déjà terminé ; verrou consultatif par `(workspace, user)`. S'applique aussi sans JWT (kiosque), mais pas aux agents (une session, un chronomètre). Un seul chronomètre par tâche : contrôlé côté app (`sameTimerTarget`) |
 | `time_entries` | `time_entries_before_write` | `duration_seconds` recalculée ; `created_by` / `updated_by` pris dans le JWT, `created_by` immuable |
-| `time_entries` | `time_entries_guard` | pas de chronomètre pour autrui ; hors admins : entrée `locked` intouchable, verrou réservé aux admins, rien avant `lock_entries_before` (date locale dans le fuseau du profil), rien dans une période approuvée, entrée d'une facture non annulée intouchable |
-| `workspace_members` | `workspace_members_guard` | hors admins, sur sa propre ligne : ni rôle, ni statut, ni taux, ni rattachement, ni `deleted_at` ; le dernier propriétaire actif ne peut pas être rétrogradé |
+| `time_entries` | `time_entries_guard` (0013) | personne et workspace d'une entrée immuables ; aucune entrée créée pour un agent ; `source` limitée à nul, `app` ou `activity` à la création, puis immuable ; pas de chronomètre pour autrui ; hors admins : entrée `locked` intouchable, verrou réservé aux admins, rien avant `lock_entries_before` (date locale dans le fuseau du profil), rien dans une période approuvée, entrée d'une facture non annulée intouchable |
+| `workspace_members` | `workspace_members_guard` (0013) | à l'insertion comme à la modification : aucun agent créé avec un JWT, `kind` et `agent_owner_id` immuables ; hors admins, sur sa propre ligne : ni rôle, ni statut, ni taux, ni rattachement, ni `deleted_at` ; le dernier propriétaire actif ne peut pas être rétrogradé |
+| `workspace_members` | `workspace_members_agents_follow` | un pilote désactivé ou retiré entraîne ses agents ; jamais l'inverse |
+| `activity_rules` | `activity_rules_guard` | avec un JWT, seul `deleted_at` change |
 | `tasks` | `tasks_guard` (0010) | hors managers : création d'une tâche active sans estimation, puis renommage seulement |
 | `timesheet_submissions` | `timesheet_submissions_guard` | une feuille commence `submitted` ; période et propriétaire immuables ; sans `manages()`, seulement `submitted` / `withdrawn` et pas de retour sur une feuille approuvée ; `decided_by` / `decided_at` posés |
 | `timesheet_submissions` | `timesheet_submissions_apply` | approuver verrouille les entrées de la période (date locale), rouvrir les déverrouille (avec `bypass_guard`) |
@@ -322,7 +385,12 @@ non nul) : Flask, connecté en rôle `postgres`, et les triggers internes qui po
 | `invoice_items` | `invoice_items_before_write` / `_after_write` | montant = quantité × prix unitaire ; toute modification de ligne recalcule la facture |
 | `user_group_members`, `team_manager_assignments` | `team_rows_check` | le groupe appartient au même workspace |
 | `team_manager_assignments`, `user_group_members`, `user_groups`, `workspace_members` | `*_scope` | `refresh_team_scope()` : recalcul différentiel de `team_scope` (lignes inchangées conservées), un recalcul à la fois par workspace |
-| `auth.users` | `on_auth_user_created` | profil + workspace personnel ; le créateur d'un workspace en devient propriétaire |
+| `auth.users` | `on_auth_user_created` | profil + workspace personnel (profil seul pour un agent) ; le créateur d'un workspace en devient propriétaire |
+
+Écritures du serveur sur les entrées d'agent : la fonction `agent_entry_write` (exécutable par `service_role` et
+Flask seulement) reprend les contrôles de `time_entries_guard`, que Flask contourne faute de JWT. Elle refuse
+d'écrire dans une entrée supprimée, verrouillée, facturée, antérieure à `lock_entries_before` ou dans une période
+approuvée, et renvoie la raison.
 
 Les écritures client passant par upsert, la politique SELECT doit accepter la nouvelle ligne : c'est pourquoi le
 créateur d'un workspace peut le lire avant que son adhésion de propriétaire existe (migration 0005).

@@ -10,39 +10,19 @@ POST /api/invitations  {"workspace_id", "email", "role"?: "member"|"manager"|"ad
 
 from __future__ import annotations
 
-import json
 import logging
-import urllib.error
-import urllib.request
 
 from flask import Blueprint, abort, current_app, g, jsonify, request
 
 from ..auth import require_user, require_workspace
 from ..db import connection
+from ..services.gotrue import gotrue_admin
 from ..services.mailer import send_mail
 
 log = logging.getLogger(__name__)
 bp = Blueprint("invitations", __name__)
 
 _ROLES = ("member", "manager", "admin")
-
-
-def _gotrue_admin(path: str, body: dict) -> dict:
-    cfg = current_app.config
-    key = cfg["SUPABASE_SERVICE_ROLE_KEY"]
-    req = urllib.request.Request(
-        f"{cfg['SUPABASE_URL']}/auth/v1/{path}",
-        data=json.dumps(body).encode(),
-        method="POST",
-        headers={"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            return json.loads(resp.read() or b"{}")
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode(errors="replace")
-        log.error("GoTrue %s → %s %s", path, e.code, detail)
-        abort(502, f"auth service error: {detail}")
 
 
 @bp.post("")
@@ -65,7 +45,7 @@ def invite():
     link = None
     created = False
     if user is None:
-        res = _gotrue_admin("admin/generate_link", {
+        res = gotrue_admin("admin/generate_link", {
             "type": "invite",
             "email": email,
             "data": {"display_name": display_name},

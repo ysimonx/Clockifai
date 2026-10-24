@@ -36,6 +36,15 @@ def start_scheduler(app: Flask) -> BackgroundScheduler:
         kwargs={"older_than_days": app.config["JOB_PURGE_DELETED_AFTER_DAYS"]},
         max_instances=1,
     )
+    sched.add_job(
+        tasks.close_idle_agent_entries,
+        "interval",
+        minutes=1,
+        id="close_idle_agent_entries",
+        max_instances=1,
+        coalesce=True,
+    )
+    sched.add_job(tasks.purge_activity_events, "cron", hour=4, minute=30, id="purge_activity_events", max_instances=1)
     sched.start()
     log.info("scheduler démarré (%s jobs)", len(sched.get_jobs()))
     _scheduler = sched

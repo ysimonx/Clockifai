@@ -22,6 +22,7 @@ from flask import Blueprint, abort, g, jsonify, request
 
 from ..auth import require_user, require_workspace
 from ..db import connection, fetch_all
+from ..services.entry_defaults import UnknownProject, entry_defaults
 
 bp = Blueprint("kiosk", __name__)
 
@@ -118,7 +119,7 @@ def state():
                    and t.end_at is null and t.deleted_at is null
                  order by t.start_at desc limit 1) te on true
           left join public.projects pr on pr.id = te.project_id
-         where m.workspace_id = %s and m.status = 'active' and m.deleted_at is null
+         where m.workspace_id = %s and m.status = 'active' and m.deleted_at is null and m.kind = 'human'
          order by lower(m.display_name)
         """,
         (g.workspace_id,),
@@ -177,26 +178,15 @@ def punch():
             conn.execute("update public.time_entries set end_at = now() where id = any(%s)", ([r["id"] for r in running],))
             action, entry_id = "out", running[0]["id"]
         else:
-            rate = None
-            billable = True
-            if project_id:
-                proj = conn.execute(
-                    "select billable_default, hourly_rate_cents from public.projects where id = %s and workspace_id = %s",
-                    (project_id, g.workspace_id),
-                ).fetchone()
-                if proj is None:
-                    abort(400, "unknown project")
-                billable, rate = proj["billable_default"], proj["hourly_rate_cents"]
-            if rate is None:
-                m = conn.execute(
-                    "select hourly_rate_cents from public.workspace_members where workspace_id = %s and user_id = %s",
-                    (g.workspace_id, user_id),
-                ).fetchone()
-                rate = m["hourly_rate_cents"] if m else None
+            try:
+                billable, rate = entry_defaults(conn, g.workspace_id, user_id, project_id)
+            except UnknownProject:
+                abort(400, "unknown project")
             entry_id = conn.execute(
                 """
-                insert into public.time_entries (workspace_id, user_id, project_id, description, start_at, billable, hourly_rate_cents)
-                values (%s, %s, %s, '', now(), %s, %s) returning id
+                insert into public.time_entries (workspace_id, user_id, project_id, description, start_at, billable,
+                                                 hourly_rate_cents, source)
+                values (%s, %s, %s, '', now(), %s, %s, 'kiosk') returning id
                 """,
                 (g.workspace_id, user_id, project_id, billable, rate),
             ).fetchone()["id"]

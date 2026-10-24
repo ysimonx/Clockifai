@@ -1,0 +1,3 @@
+# Le script tourne avec le python3 de macOS (3.9) : règles du service, version cible 3.9.
+extend = "../../services/pyproject.toml"
+target-version = "py39"

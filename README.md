@@ -206,6 +206,7 @@ sauvegardes **et restauration**, surveillance : [docs/exploitation.md](docs/expl
 | [powersync/](powersync/) | Configuration du service et des Sync Streams |
 | [deploy/](deploy/) | Compose, Caddyfile, génération des secrets, sauvegardes |
 | [demo/](demo/) | Tournage automatique des vidéos de démonstration (un scénario par rôle) |
+| [integrations/](integrations/) | Plugin Claude Code (hooks) servi par chaque instance sur `/api/claude/marketplace.json` |
 | [docs/](docs/) | Documentation : guide utilisateur (HTML), exploitation, architecture, API ; notes de version dans [CHANGELOG.md](CHANGELOG.md) |
 | [plans/](plans/) | Plans validés : projet (avec état d'avancement et liste des plans), Fidwork (en attente), saisie pour autrui, tickets, chronomètres simultanés, hébergement, macOS, iOS et Android, regroupement des entrées, forges git, suivi de Claude Code |
 

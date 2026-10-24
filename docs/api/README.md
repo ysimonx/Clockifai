@@ -18,6 +18,8 @@ locales remontent par PostgREST ([écriture hors ligne](sequences/ecriture-hors-
   Flask vérifie la signature (`SUPABASE_JWT_SECRET`, ou le JWKS de GoTrue s'il est vide), `exp`, `sub` et
   `aud = authenticated`, puis l'appartenance active au workspace et le rôle (`services/app/auth.py`).
 - **Kiosque** : `X-Kiosk-Token: kio_…`, jeton d'appareil créé par un admin ; la tablette n'a pas de compte.
+- **Jeton personnel** : `Authorization: Bearer clk_…`, créé par un membre pour un poste ; utilisé par les hooks
+  Claude Code, l'extension VSCode et le MCP (`/api/activity/*`).
 - **Rôle service** : la clé `SERVICE_ROLE_KEY` sert à Flask pour l'API admin de GoTrue (invitations). Elle ne
   doit jamais quitter le serveur.
 
@@ -94,6 +96,7 @@ Les écritures client passent par **upsert** : la politique SELECT doit accepter
 | Export d'un rapport | [export.md](sequences/export.md) |
 | Facture et PDF | [facture-pdf.md](sequences/facture-pdf.md) |
 | Barre de menus macOS | [barre-de-menus-macos.md](sequences/barre-de-menus-macos.md) |
+| Suivi de Claude Code : jeton, hooks, entrées de l'agent | [claude-code.md](sequences/claude-code.md) |
 | Fidwork (prévu, non implémenté) | [fidwork.md](sequences/fidwork.md) |
 
 ## Tenir à jour

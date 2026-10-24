@@ -37,6 +37,19 @@ tags:
     description: Gestion des appareils de pointage, par un admin du workspace (JWT utilisateur).
   - name: kiosque — appareil
     description: Appels de la tablette, authentifiés par le jeton de l'appareil, sans compte utilisateur.
+  - name: jetons personnels
+    description: |
+      Jetons `clk_…` d'un poste, pour les hooks Claude Code, l'extension VSCode et le serveur MCP
+      (plan 10, D5). Gérés avec le JWT de l'utilisateur.
+  - name: activité
+    description: |
+      Événements des hooks Claude Code et de l'extension VSCode, temps des agents Claude (plan 10). Accepte
+      un jeton personnel (`apiToken`) ou le JWT de l'app (`supabaseJwt` avec `workspace_id`).
+  - name: plugin Claude Code
+    description: |
+      Marketplace Claude Code de l'instance, publique (le plugin ne contient aucun secret). Un poste l'ajoute
+      par `claude plugin marketplace add https://<instance>/api/claude/marketplace.json`, puis
+      `claude plugin install clockifai@clockifai` (plan 10, §6.1).
   - name: tâches planifiées
     description: |
       Déclenchement manuel. En temps normal APScheduler les exécute dans le process Flask
@@ -365,6 +378,235 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
 
+  /api/tokens:
+    post:
+      tags: [jetons personnels]
+      operationId: createApiToken
+      summary: Créer un jeton personnel pour un poste
+      description: |
+        Génère un jeton `clk_` + 32 caractères hexadécimaux et n'en stocke que le hachage SHA-256
+        (`clockifai_private.api_tokens`). Le jeton n'est renvoyé **qu'une fois**. Crée aussi, s'il manque,
+        l'agent Claude du pilote dans ce workspace (compte technique sans connexion possible) ; un agent
+        désactivé ou retiré par un admin n'est jamais réactivé.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspace_id]
+              properties:
+                workspace_id: { type: string, format: uuid }
+                name:
+                  type: string
+                  description: Nom du poste ; tronqué à 80 caractères. Défaut « Poste ».
+      responses:
+        "201":
+          description: Jeton créé.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiTokenCreated" }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/MemberRequired" }
+        "502":
+          description: "Supabase Auth a refusé la création du compte de l'agent (`auth service error: …`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    get:
+      tags: [jetons personnels]
+      operationId: listApiTokens
+      summary: Jetons actifs (les siens ; tous ceux du workspace pour un admin+)
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+      responses:
+        "200":
+          description: Jetons non révoqués, du plus ancien au plus récent.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tokens]
+                properties:
+                  tokens:
+                    type: array
+                    items: { $ref: "#/components/schemas/ApiToken" }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/MemberRequired" }
+
+  /api/tokens/{token_id}:
+    delete:
+      tags: [jetons personnels]
+      operationId: revokeApiToken
+      summary: Révoquer un jeton (le sien ; n'importe lequel du workspace pour un admin+)
+      parameters:
+        - name: token_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+      responses:
+        "200":
+          description: Jeton révoqué ; refusé dès l'appel suivant.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [revoked]
+                properties:
+                  revoked: { type: boolean, const: true }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/MemberRequired" }
+        "404":
+          description: Jeton inconnu, déjà révoqué, ou d'un autre membre (`token not found`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/activity/events:
+    post:
+      tags: [activité]
+      operationId: postActivityEvents
+      summary: Recevoir un lot d'événements (hooks, extension)
+      description: |
+        Au plus 200 événements, enregistrés dans `clockifai_private.activity_events` (idempotence par `id`).
+        Un événement daté de plus de 7 jours ou de plus de 5 minutes dans le futur est refusé, comme un `kind`
+        inconnu ou un événement d'agent sans `session_id` ; les autres sont acceptés.
+
+        Pour chaque session d'agent du lot, le chronomètre (plan 10, D7) recalcule les entrées de l'agent
+        Claude du pilote à partir des événements de la session, et les écrit par `agent_entry_write`. Les
+        commits revendiqués par la session sont rattachés à son entrée. Rien n'est écrit pour un agent
+        désactivé ou retiré.
+      security:
+        - apiToken: []
+        - supabaseJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [events]
+              properties:
+                workspace_id:
+                  type: string
+                  format: uuid
+                  description: Avec un JWT seulement ; un jeton porte son workspace.
+                events:
+                  type: array
+                  maxItems: 200
+                  items: { $ref: "#/components/schemas/ActivityEvent" }
+      responses:
+        "202":
+          description: Lot traité.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActivityEventsResult" }
+        "400":
+          description: "`events must be a list`, `at most 200 events per request`, ou `workspace_id is required` (JWT)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/TokenUnauthorized" }
+        "403": { $ref: "#/components/responses/MemberRequired" }
+
+  /api/activity/today:
+    get:
+      tags: [activité]
+      operationId: activityToday
+      summary: Mon temps, celui de Claude et la durée calendaire aujourd'hui
+      description: |
+        Journée dans le fuseau du profil. « Mon temps » = mes entrées ; « Claude » = celles de mon agent ;
+        durée calendaire = union des deux. Sert à la barre d'état de l'extension VSCode et au MCP.
+      security:
+        - apiToken: []
+        - supabaseJwt: []
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          description: Avec un JWT seulement.
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Résumé du jour.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActivityToday" }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/TokenUnauthorized" }
+        "403": { $ref: "#/components/responses/MemberRequired" }
+
+  /api/activity/projects:
+    get:
+      tags: [activité]
+      operationId: activityProjects
+      summary: Projets actifs et leurs tâches actives
+      description: Pour choisir le projet d'un dépôt depuis l'extension VSCode ou le MCP.
+      security:
+        - apiToken: []
+        - supabaseJwt: []
+      parameters:
+        - name: workspace_id
+          in: query
+          required: false
+          description: Avec un JWT seulement.
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Projets non archivés, par nom.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [projects]
+                properties:
+                  projects:
+                    type: array
+                    items: { $ref: "#/components/schemas/ActivityProject" }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/TokenUnauthorized" }
+        "403": { $ref: "#/components/responses/MemberRequired" }
+
+  /api/activity/rules:
+    post:
+      tags: [activité]
+      operationId: createActivityRule
+      summary: Rattacher un dépôt ou un dossier à un projet
+      description: |
+        Crée une règle personnelle (`activity_rules`) : un dépôt (`remote_key`), un préfixe de chemin, ou le
+        dépôt d'une entrée de mon agent (`time_entry_id`). Les entrées de mon agent sans projet de ce dépôt ou
+        de ce dossier, sur 7 jours, reçoivent le projet (facturable et taux recalculés).
+      security:
+        - apiToken: []
+        - supabaseJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActivityRuleRequest" }
+      responses:
+        "201":
+          description: Règle créée.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActivityRuleResult" }
+        "400":
+          description: "`project_id is required`, `unknown project`, `unknown task for this project`, ou cible manquante."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/TokenUnauthorized" }
+        "403": { $ref: "#/components/responses/MemberRequired" }
+        "404":
+          description: "`time_entry_id` qui n'est pas une entrée de mon agent, ou sans dépôt connu."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
   /api/jobs/auto-stop:
     post:
       tags: [tâches planifiées]
@@ -400,6 +642,70 @@ paths:
         "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/AdminRequired" }
+
+  /api/claude/marketplace.json:
+    get:
+      tags: [plugin Claude Code]
+      operationId: claudeMarketplace
+      summary: Marketplace « clockifai » de l'instance
+      description: |
+        Référence l'archive du plugin par une source `archive` : son adresse (protocole et hôte de la requête,
+        tels que transmis par Caddy) et son empreinte SHA-256. Claude Code exige une archive servie en HTTPS ;
+        l'empreinte sert de version du plugin, donc un plugin modifié par une mise à jour est proposé aux postes.
+      security: []
+      responses:
+        "200":
+          description: Marketplace Claude Code.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClaudeMarketplace" }
+              example:
+                name: clockifai
+                owner: { name: Clockifai }
+                description: Plugin Clockifai de cette instance
+                plugins:
+                  - name: clockifai
+                    description: "Temps de Claude Code dans Clockifai : un chronomètre par session…"
+                    source:
+                      source: archive
+                      url: https://clockifai.example.com/api/claude/clockifai-plugin.zip
+                      sha256: 6bfa50e3d2e00c052b46abe51fff89346ac803e45771f76dcf6df1ab74cca5e1
+        "400":
+          description: "En-tête `Host` invalide (`invalid host`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404":
+          description: "Fichiers du plugin absents de l'image (`plugin not available on this instance`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/claude/clockifai-plugin.zip:
+    get:
+      tags: [plugin Claude Code]
+      operationId: claudePluginArchive
+      summary: Archive du plugin clockifai
+      description: |
+        Zip reproductible de `integrations/claude-code/` (manifeste, hooks, script), l'adresse de l'instance
+        posée comme valeur par défaut de `userConfig.url`.
+      security: []
+      responses:
+        "200":
+          description: Archive zip du plugin.
+          content:
+            application/zip:
+              schema: { type: string, format: binary }
+        "400":
+          description: "En-tête `Host` invalide (`invalid host`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404":
+          description: Fichiers du plugin absents de l'image.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
 
   /api/jobs/purge-deleted:
     post:
@@ -441,6 +747,12 @@ components:
         `Authorization: Bearer <access_token>` de la session Supabase de l'utilisateur.
         Vérifié avec `SUPABASE_JWT_SECRET` (HS256) ou, s'il est vide, avec le JWKS de GoTrue
         (ES256 / RS256 / EdDSA). Claims exigés : `exp`, `sub`, `aud = authenticated`.
+    apiToken:
+      type: http
+      scheme: bearer
+      description: |
+        `Authorization: Bearer clk_…` : jeton personnel d'un poste (`POST /api/tokens`). Il porte son workspace ;
+        refusé s'il est révoqué ou si son propriétaire n'est plus membre actif du workspace.
     kioskToken:
       type: apiKey
       in: header
@@ -473,6 +785,16 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
+    MemberRequired:
+      description: Pas membre actif du workspace (`not a member of this workspace`).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    TokenUnauthorized:
+      description: "En-tête absent, JWT invalide, ou jeton `clk_…` inconnu, révoqué ou d'un ancien membre (`invalid or revoked token`)."
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
     KioskUnauthorized:
       description: "`missing kiosk token`, ou jeton inconnu ou révoqué (`invalid kiosk token`)."
       content:
@@ -480,6 +802,32 @@ components:
           schema: { $ref: "#/components/schemas/Error" }
 
   schemas:
+    ClaudeMarketplace:
+      type: object
+      required: [name, owner, plugins]
+      properties:
+        name: { type: string, const: clockifai }
+        owner:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string }
+        description: { type: string }
+        plugins:
+          type: array
+          items:
+            type: object
+            required: [name, source]
+            properties:
+              name: { type: string }
+              description: { type: string }
+              source:
+                type: object
+                required: [source, url, sha256]
+                properties:
+                  source: { type: string, const: archive }
+                  url: { type: string, format: uri }
+                  sha256: { type: string, pattern: "^[0-9a-f]{64}$" }
     Error:
       type: object
       required: [error]
@@ -603,3 +951,144 @@ components:
           enum: [in, out]
           description: "`in` : arrivée (entrée créée) ; `out` : départ (chronomètres arrêtés)."
         entry_id: { type: string, format: uuid }
+
+    ApiTokenCreated:
+      type: object
+      required: [id, name, token, agent_id]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        token:
+          type: string
+          description: À coller dans la configuration du plugin Claude Code et de l'extension VSCode ; non récupérable ensuite.
+          examples: ["clk_9f86d081884c7d659a2feaa0c55ad015"]
+        agent_id:
+          type: string
+          format: uuid
+          description: Utilisateur de l'agent Claude du pilote (« Claude · <nom> »).
+
+    ApiToken:
+      type: object
+      required: [id, name, user_id, user_name, created_at, last_used_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        user_id: { type: string, format: uuid }
+        user_name: { type: [string, "null"] }
+        created_at: { type: string, format: date-time }
+        last_used_at: { type: [string, "null"], format: date-time }
+
+    ActivityEvent:
+      type: object
+      required: [id, kind, occurred_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Clé d'idempotence (uuid4 du hook, ou uuid5(remote_key, sha) pour un commit).
+        kind:
+          type: string
+          enum: [prompt, agent_tool, agent_stop, agent_wait, session_start, session_end, session_task,
+                 session_description, focus_start, focus_alive, focus_end, edit, terminal, commit, presence]
+        occurred_at: { type: string, format: date-time, description: "Avec fuseau (ex. `Z`)." }
+        session_id: { type: string, description: Requis pour un événement d'agent. }
+        window_id: { type: string, description: Fenêtre VSCode (extension). }
+        remote_key: { type: string, description: "URL distante normalisée (`hôte/chemin`), ou `local:<dossier>`." }
+        cwd: { type: string }
+        git_branch: { type: string }
+        sha: { type: string }
+        subject: { type: string, description: Première ligne du message de commit (200 caractères). }
+        author_email: { type: string }
+        authored_at: { type: string, format: date-time }
+        duration_ms: { type: integer, minimum: 0, description: "`agent_tool` : durée de l'outil." }
+        payload:
+          type: object
+          description: "`session_task` : `{task_id, project_id}` ; `session_description` : `{description}`. 2000 caractères JSON au plus."
+        editor: { type: string }
+        machine: { type: string }
+        active: { type: boolean }
+        excerpt: { type: string }
+
+    ActivityEventsResult:
+      type: object
+      required: [accepted, duplicates, rejected]
+      properties:
+        accepted: { type: integer, minimum: 0, description: Nouveaux événements enregistrés. }
+        duplicates: { type: integer, minimum: 0, description: Événements valides déjà reçus. }
+        rejected:
+          type: array
+          items:
+            type: object
+            required: [index, reason]
+            properties:
+              index: { type: integer }
+              reason: { type: string }
+
+    ActivityToday:
+      type: object
+      required: [day, my_seconds, claude_seconds, calendar_seconds, agent_id, projects, running]
+      properties:
+        day: { type: string, format: date }
+        my_seconds: { type: integer }
+        claude_seconds: { type: integer }
+        calendar_seconds: { type: integer, description: Union de mon temps et de celui de Claude. }
+        agent_id: { type: [string, "null"], format: uuid }
+        projects:
+          type: array
+          items:
+            type: object
+            required: [project_id, name, my_seconds, claude_seconds]
+            properties:
+              project_id: { type: [string, "null"], format: uuid }
+              name: { type: [string, "null"] }
+              my_seconds: { type: integer }
+              claude_seconds: { type: integer }
+        running:
+          type: array
+          description: Entrées de mon agent en cours (une par session active).
+          items:
+            type: object
+            required: [entry_id, project_id, project_name, repository, since]
+            properties:
+              entry_id: { type: string, format: uuid }
+              project_id: { type: [string, "null"], format: uuid }
+              project_name: { type: [string, "null"] }
+              repository: { type: [string, "null"] }
+              since: { type: string, format: date-time }
+
+    ActivityProject:
+      type: object
+      required: [id, name, color, client_name, tasks]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        color: { type: [string, "null"] }
+        client_name: { type: [string, "null"] }
+        tasks:
+          type: array
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+
+    ActivityRuleRequest:
+      type: object
+      required: [project_id]
+      properties:
+        workspace_id: { type: string, format: uuid, description: Avec un JWT seulement. }
+        project_id: { type: string, format: uuid }
+        task_id: { type: [string, "null"], format: uuid }
+        remote_key: { type: string, description: "Dépôt (`hôte/chemin`)." }
+        path_prefix: { type: string, description: "Dossier ; prime sur une règle de dépôt." }
+        time_entry_id: { type: string, format: uuid, description: "Une entrée de mon agent, dont on prend le dépôt." }
+
+    ActivityRuleResult:
+      type: object
+      required: [id, match_kind, pattern, reattributed]
+      properties:
+        id: { type: string, format: uuid }
+        match_kind: { type: string, enum: [repo, path_prefix] }
+        pattern: { type: string }
+        reattributed: { type: integer, description: Entrées de mon agent qui ont reçu le projet. }

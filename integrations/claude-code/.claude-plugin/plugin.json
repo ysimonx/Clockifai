@@ -1,0 +1,21 @@
+{
+  "name": "clockifai",
+  "description": "Temps de Claude Code dans Clockifai : un chronomètre par session, au nom de votre agent « Claude · vous ».",
+  "author": { "name": "Clockifai" },
+  "userConfig": {
+    "url": {
+      "type": "string",
+      "title": "Adresse de Clockifai",
+      "description": "Adresse de votre instance, par exemple https://clockifai.example.com",
+      "default": "http://localhost:5050",
+      "required": true
+    },
+    "token": {
+      "type": "string",
+      "title": "Jeton personnel",
+      "description": "Jeton clk_… créé dans Clockifai : Paramètres › Intégrations › Connecter Claude Code",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}

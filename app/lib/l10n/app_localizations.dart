@@ -182,6 +182,18 @@ abstract class AppLocalizations {
   /// **'Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).'**
   String get agentsHelp;
 
+  /// No description provided for @agentsWorking.
+  ///
+  /// In fr, this message translates to:
+  /// **'Claude travaille'**
+  String get agentsWorking;
+
+  /// No description provided for @agentsWorkingHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sessions Claude Code en cours de votre agent. Sans activité pendant 10 minutes, une session se clôt à l\'heure de sa dernière action. Touchez une session pour changer son projet ou sa description.'**
+  String get agentsWorkingHelp;
+
   /// No description provided for @agentTimeOf.
   ///
   /// In fr, this message translates to:

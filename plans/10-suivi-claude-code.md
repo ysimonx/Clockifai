@@ -736,7 +736,9 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
   planning (`schedule_page.dart`). La feuille de temps d'un agent est en lecture seule, sans bandeau de soumission ;
   son calendrier ne crée pas d'entrée ; « Dupliquer » n'est pas proposé sur ses entrées.
 - **Page des entrées du jour** :
-  - un bandeau « Claude travaille : clockifai (12 min), fidwork (3 min) » = entrées en cours de mes agents ;
+  - bandeau « Claude travaille » = entrées en cours de mes agents (`AgentsWorkingBanner`, `watchRunningOf`), fait le
+    24 octobre 2026 : une ligne par session (description, projet, durée qui tourne), qui ouvre le dialogue de l'entrée
+    (projet, « toujours rattacher ») ; absent sans session en cours ; un manager n'y voit que ses propres agents ;
   - un bandeau « N suggestions » qui mène à la liste des suggestions.
 - **Temps de Claude** : il se consulte et se corrige comme celui d'un collaborateur encadré. On passe par le
   sélecteur de personne (`TeammateBar`) de la feuille de temps et du calendrier, puis par les rapports.
@@ -850,7 +852,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher » ; reste : bandeau « Claude travaille », filtre des rapports, réglages de facturation des agents, colonne « Type » des exports) ; hooks vérifiés dans l'extension VSCode | M/L | en cours |
+| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille » ; reste : filtre des rapports, réglages de facturation des agents, colonne « Type » des exports) ; hooks vérifiés dans l'extension VSCode | M/L | en cours |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
 | 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |

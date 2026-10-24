@@ -78,6 +78,17 @@ class TimeEntryRepository {
     return q.watch();
   }
 
+  /// Chronomètres en cours de plusieurs membres (les agents d'un pilote : bandeau « Claude travaille »),
+  /// les plus anciens d'abord.
+  Stream<List<TimeEntry>> watchRunningOf(String workspaceId, List<String> userIds) {
+    if (userIds.isEmpty) return Stream.value(const []);
+    final q = db.select(db.timeEntries)
+      ..where((t) =>
+          t.workspaceId.equals(workspaceId) & t.userId.isIn(userIds) & t.endAt.isNull() & t.deletedAt.isNull())
+      ..orderBy([(t) => OrderingTerm.asc(epoch(t.startAt))]);
+    return q.watch();
+  }
+
   /// Entrées démarrées dans [from, to[ (UTC), les plus récentes d'abord.
   /// [userId] null = toute l'équipe (selon ce que la sync a fourni).
   Stream<List<EntryRow>> watchEntries({

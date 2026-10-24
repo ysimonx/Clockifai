@@ -14,6 +14,8 @@
   "agentInactive": "Votre agent a été désactivé ou retiré par un administrateur : vos sessions Claude Code ne produisent plus de temps.",
   "agents": "Agents",
   "agentsHelp": "Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).",
+  "agentsWorking": "Claude travaille",
+  "agentsWorkingHelp": "Sessions Claude Code en cours de votre agent. Sans activité pendant 10 minutes, une session se clôt à l'heure de sa dernière action. Touchez une session pour changer son projet ou sa description.",
   "agentTimeOf": "Temps de {name} : vous pouvez corriger ses entrées, pas en ajouter.",
   "@agentTimeOf": {
     "placeholders": {

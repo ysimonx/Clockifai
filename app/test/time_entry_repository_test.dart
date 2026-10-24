@@ -102,6 +102,19 @@ void main() {
     expect(sameTimerTarget(running, description: 'Revue', projectId: 'p1', taskId: 't2'), isFalse);
   });
 
+  test('chronomètres en cours de plusieurs membres (bandeau « Claude travaille »)', () async {
+    const agent = 'agent-1';
+    final a = await repo.start(workspaceId: ws, userId: agent, draft: EntryDraft(description: 'clockifai (main)'), at: DateTime.utc(2026, 10, 11, 8), maxRunning: 0);
+    final b = await repo.start(workspaceId: ws, userId: agent, draft: EntryDraft(description: 'fidwork (main)'), at: DateTime.utc(2026, 10, 11, 9), maxRunning: 0);
+    final done = await repo.start(workspaceId: ws, userId: agent, draft: EntryDraft(), at: DateTime.utc(2026, 10, 11, 7), maxRunning: 0);
+    await repo.stop(done, at: DateTime.utc(2026, 10, 11, 7, 30));
+    await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'Moi'), at: DateTime.utc(2026, 10, 11, 8));
+    expect((await repo.watchRunningOf(ws, [agent]).first).map((e) => e.id), [a, b]);
+    expect(await repo.watchRunningOf(ws, [agent, me]).first, hasLength(3));
+    expect(await repo.watchRunningOf('ws-2', [agent]).first, isEmpty);
+    expect(await repo.watchRunningOf(ws, const []).first, isEmpty);
+  });
+
   test('arrêt avec horloge en retard : fin jamais avant le début', () async {
     final id = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(), at: DateTime.utc(2026, 10, 11, 10));
     await repo.stop(id, at: DateTime.utc(2026, 10, 11, 9, 59));

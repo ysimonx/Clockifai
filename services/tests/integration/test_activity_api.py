@@ -216,6 +216,33 @@ def test_agent_billing_never(team):
         rest("PATCH", f"workspaces?id=eq.{team['wid']}", owner_t, {"agent_billing": "like_humans"})
 
 
+def test_agent_billable_project_overrides_workspace(team):
+    """L'exception du projet (`agent_billable`) l'emporte sur le réglage du workspace, dans les deux sens (D16)."""
+    owner_t, _ = team["people"]["owner"]
+
+    def billable_of_session(at: int) -> bool:
+        session = str(uuid.uuid4())
+        assert api("POST", "/api/activity/events", team["token"], {"events": [
+            _event("prompt", _ago(at), session, payload=None),
+            _event("session_task", _ago(at - 1), session, payload={"task_id": team["task"]}),
+            _event("agent_stop", _ago(at - 5), session)]})[0] == 202
+        entry = next(e for e in _agent_entries(team["agent"]) if e["start_at"].startswith(iso(_ago(at))[:16]))
+        assert entry["project_id"] == team["project"]
+        return entry["billable"]
+
+    def settings(agent_billing: str, agent_billable: bool | None) -> None:
+        assert rest("PATCH", f"workspaces?id=eq.{team['wid']}", owner_t, {"agent_billing": agent_billing})[0] == 200
+        assert rest("PATCH", f"projects?id=eq.{team['project']}", owner_t, {"agent_billable": agent_billable})[0] == 200
+
+    try:
+        settings("never", True)
+        assert billable_of_session(220) is True, "le client accepte qu'on lui facture Claude"
+        settings("like_humans", False)
+        assert billable_of_session(250) is False, "le client refuse"
+    finally:
+        settings("like_humans", None)
+
+
 def test_today_summary(team):
     status, today = api("GET", "/api/activity/today", team["token"])
     assert status == 200 and today["agent_id"] == team["agent"]

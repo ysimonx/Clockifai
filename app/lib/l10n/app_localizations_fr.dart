@@ -44,6 +44,27 @@ class AppLocalizationsFr extends AppLocalizations {
   String get agentBadge => 'Agent';
 
   @override
+  String get agentBillableHelp =>
+      'Pour les sessions de Claude Code rattachées à ce projet';
+
+  @override
+  String get agentBillableWorkspace => 'Comme le réglage du workspace';
+
+  @override
+  String get agentBilling => 'Temps des agents Claude';
+
+  @override
+  String get agentBillingHelp =>
+      'Facturable ou non quand Claude Code enregistre une session ; un projet peut faire exception. Les entrées déjà enregistrées ne changent pas';
+
+  @override
+  String get agentBillingLikeHumans =>
+      'Facturable comme le temps des personnes';
+
+  @override
+  String get agentBillingNever => 'Jamais facturable';
+
+  @override
   String get agentInactive =>
       'Votre agent a été désactivé ou retiré par un administrateur : vos sessions Claude Code ne produisent plus de temps.';
 

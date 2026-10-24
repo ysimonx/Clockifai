@@ -201,6 +201,8 @@ class _ProjectDialogState extends State<_ProjectDialog> {
   late String _color = widget.project?.color ?? projectPalette[DateTime.now().millisecond % projectPalette.length];
   late bool _billable = widget.project?.billableDefault ?? true;
   late bool _public = widget.project?.isPublic ?? true;
+  /// Temps des agents Claude sur ce projet : nul = comme le workspace (plan 10, D16).
+  late bool? _agentBillable = widget.project?.agentBillable;
 
   static String _centsToText(int? c) => c == null ? '' : (c / 100).toStringAsFixed(2);
   static int? _textToCents(String t) {
@@ -226,6 +228,7 @@ class _ProjectDialogState extends State<_ProjectDialog> {
       color: Value(_color),
       billableDefault: Value(_billable),
       isPublic: Value(_public),
+      agentBillable: Value(_agentBillable),
       hourlyRateCents: Value(_textToCents(_rate.text)),
       budgetHours: Value(int.tryParse(_budget.text.trim())),
       note: Value(_note.text.trim().isEmpty ? null : _note.text.trim()),
@@ -298,6 +301,17 @@ class _ProjectDialogState extends State<_ProjectDialog> {
               ),
             ]),
             SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(l.billableByDefault), value: _billable, onChanged: (v) => setState(() => _billable = v)),
+            if (catalog.agents.isNotEmpty || _agentBillable != null)
+              DropdownButtonFormField<bool?>(
+                initialValue: _agentBillable,
+                decoration: InputDecoration(labelText: l.agentBilling, helperText: l.agentBillableHelp, helperMaxLines: 3),
+                items: [
+                  DropdownMenuItem(value: null, child: Text(l.agentBillableWorkspace)),
+                  DropdownMenuItem(value: true, child: Text(l.billable)),
+                  DropdownMenuItem(value: false, child: Text(l.nonBillable)),
+                ],
+                onChanged: (v) => setState(() => _agentBillable = v),
+              ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(l.publicProject),

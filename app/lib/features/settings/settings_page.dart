@@ -390,6 +390,21 @@ class _WorkspaceSettingsState extends State<_WorkspaceSettings> {
         ),
       ),
       ListTile(
+        title: Text(l.agentBilling),
+        subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l.agentBillingHelp),
+          DropdownButton<String>(
+            value: ws.agentBilling ?? 'like_humans',
+            isExpanded: true,
+            items: [
+              DropdownMenuItem(value: 'like_humans', child: Text(l.agentBillingLikeHumans)),
+              DropdownMenuItem(value: 'never', child: Text(l.agentBillingNever)),
+            ],
+            onChanged: !e ? null : (v) => _update(WorkspacesCompanion(agentBilling: Value(v))),
+          ),
+        ]),
+      ),
+      ListTile(
         title: Text(l.lockEntriesBefore),
         subtitle: Text(lock == null ? l.lockEntriesNone : DateFormat.yMMMMd(context.localeTag).format(lock)),
         trailing: !e

@@ -47,7 +47,7 @@
   "alwaysAttachRepoHelp": "Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, et ses entrées sans projet de la semaine aussi.",
   "amount": "Montant",
   "annualAllowance": "Droit annuel",
-  "apiTokenCreated": "Jeton créé pour « {name} ». Il ne sera plus affiché : suivez ces trois étapes maintenant.",
+  "apiTokenCreated": "Jeton créé pour « {name} ». Il ne sera plus affiché : suivez ces étapes maintenant.",
   "@apiTokenCreated": {
     "placeholders": {
       "name": {
@@ -147,10 +147,11 @@
     }
   },
   "claudeCodeLocalInstance": "Instance locale : Claude Code n'accepte une marketplace qu'en https, celle-ci est donc le dossier integrations/ de votre copie du dépôt.",
-  "claudeCodeRequirements": "Il faut la commande claude à jour dans le terminal, et python3 (sur Mac, les outils de développement : xcode-select --install).",
-  "claudeCodeStepInstall": "1. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :",
-  "claudeCodeStepStart": "3. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.",
-  "claudeCodeStepToken": "2. Copiez le jeton, puis enregistrez-le dans le plugin :",
+  "claudeCodeRequirements": "Il faut aussi python3 (sur Mac, les outils de développement : xcode-select --install).",
+  "claudeCodeStepCli": "1. Dans un terminal, claude --version doit afficher un numéro de version. Sinon, installez Claude Code en ligne de commande (l'extension VSCode embarque sa propre copie, absente du terminal), puis ouvrez un nouveau terminal :",
+  "claudeCodeStepInstall": "2. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :",
+  "claudeCodeStepStart": "4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.",
+  "claudeCodeStepToken": "3. Copiez le jeton, puis enregistrez-le dans le plugin :",
   "client": "Client",
   "clients": "Clients",
   "close": "Fermer",

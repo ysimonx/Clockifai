@@ -299,7 +299,7 @@ abstract class AppLocalizations {
   /// No description provided for @apiTokenCreated.
   ///
   /// In fr, this message translates to:
-  /// **'Jeton créé pour « {name} ». Il ne sera plus affiché : suivez ces trois étapes maintenant.'**
+  /// **'Jeton créé pour « {name} ». Il ne sera plus affiché : suivez ces étapes maintenant.'**
   String apiTokenCreated(String name);
 
   /// No description provided for @apply.
@@ -503,25 +503,31 @@ abstract class AppLocalizations {
   /// No description provided for @claudeCodeRequirements.
   ///
   /// In fr, this message translates to:
-  /// **'Il faut la commande claude à jour dans le terminal, et python3 (sur Mac, les outils de développement : xcode-select --install).'**
+  /// **'Il faut aussi python3 (sur Mac, les outils de développement : xcode-select --install).'**
   String get claudeCodeRequirements;
+
+  /// No description provided for @claudeCodeStepCli.
+  ///
+  /// In fr, this message translates to:
+  /// **'1. Dans un terminal, claude --version doit afficher un numéro de version. Sinon, installez Claude Code en ligne de commande (l\'extension VSCode embarque sa propre copie, absente du terminal), puis ouvrez un nouveau terminal :'**
+  String get claudeCodeStepCli;
 
   /// No description provided for @claudeCodeStepInstall.
   ///
   /// In fr, this message translates to:
-  /// **'1. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :'**
+  /// **'2. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :'**
   String get claudeCodeStepInstall;
 
   /// No description provided for @claudeCodeStepStart.
   ///
   /// In fr, this message translates to:
-  /// **'3. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.'**
+  /// **'4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.'**
   String get claudeCodeStepStart;
 
   /// No description provided for @claudeCodeStepToken.
   ///
   /// In fr, this message translates to:
-  /// **'2. Copiez le jeton, puis enregistrez-le dans le plugin :'**
+  /// **'3. Copiez le jeton, puis enregistrez-le dans le plugin :'**
   String get claudeCodeStepToken;
 
   /// No description provided for @client.

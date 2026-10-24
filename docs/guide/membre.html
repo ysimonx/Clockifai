@@ -299,6 +299,10 @@
           <li><span class="ui">Paramètres</span> &gt; <span class="ui">Intégrations</span> &gt;
             <span class="ui">Claude Code</span> &gt; <span class="ui">Connecter un poste</span>, puis nommez
             l’ordinateur.</li>
+          <li>Dans un terminal, <code>claude --version</code> doit afficher un numéro de version. Sinon, installez
+            Claude Code en ligne de commande avec la commande affichée (sur Mac et Linux,
+            <code>curl -fsSL https://claude.ai/install.sh | bash</code>), puis ouvrez un nouveau terminal. L’extension
+            VSCode embarque sa propre copie de Claude Code, que le terminal ne voit pas : elle ne suffit pas ici.</li>
           <li>Dans un terminal, lancez les deux commandes affichées : elles installent le plugin Clockifai. Le panneau
             Claude Code de VSCode ne sait pas installer de plugin : passez par un terminal.</li>
           <li>Touchez <span class="ui">Copier le jeton</span>, puis lancez la commande affichée en dessous : elle
@@ -306,8 +310,7 @@
             à nouveau.</li>
           <li>Ouvrez une nouvelle conversation Claude Code.</li>
         </ol>
-        <p>Il faut la commande <code>claude</code> à jour dans le terminal et Python 3 (sur Mac, les outils de
-          développement : <code>xcode-select --install</code>).</p>
+        <p>Il faut aussi Python 3 (sur Mac, les outils de développement : <code>xcode-select --install</code>).</p>
         <ul>
           <li>Un chronomètre démarre au premier message de chaque session. L’attente entre deux échanges compte ; après
             10 minutes sans activité, l’entrée s’arrête à l’heure de la dernière activité. Deux sessions en même temps

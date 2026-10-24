@@ -164,6 +164,42 @@ abstract class AppLocalizations {
   /// **'Agent'**
   String get agentBadge;
 
+  /// No description provided for @agentBillableHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour les sessions de Claude Code rattachées à ce projet'**
+  String get agentBillableHelp;
+
+  /// No description provided for @agentBillableWorkspace.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comme le réglage du workspace'**
+  String get agentBillableWorkspace;
+
+  /// No description provided for @agentBilling.
+  ///
+  /// In fr, this message translates to:
+  /// **'Temps des agents Claude'**
+  String get agentBilling;
+
+  /// No description provided for @agentBillingHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Facturable ou non quand Claude Code enregistre une session ; un projet peut faire exception. Les entrées déjà enregistrées ne changent pas'**
+  String get agentBillingHelp;
+
+  /// No description provided for @agentBillingLikeHumans.
+  ///
+  /// In fr, this message translates to:
+  /// **'Facturable comme le temps des personnes'**
+  String get agentBillingLikeHumans;
+
+  /// No description provided for @agentBillingNever.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jamais facturable'**
+  String get agentBillingNever;
+
   /// No description provided for @agentInactive.
   ///
   /// In fr, this message translates to:

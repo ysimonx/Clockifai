@@ -716,13 +716,15 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
     désactivé ou retiré (`agent_id` nul dans `GET /api/activity/today`, D7.10). Reste à faire : le lien vers
     sa fiche dans l'équipe ;
   - lot 2 : le bloc de l'extension VSCode (jeton à coller dans « Clockifai : se connecter »).
-- **Paramètres du workspace** (admins) : « Temps des agents IA : facturable comme un humain / non
-  facturable » (D16).
-- **Fiche projet** : « Temps des agents : comme le workspace / facturable / non facturable » (D16).
-- **Droits** (`core/catalog.dart`, `core/team_rights.dart`), faits le 24 octobre 2026 sauf `billableFor` :
+- **Paramètres du workspace** (admins) : « Temps des agents Claude : facturable comme le temps des personnes /
+  jamais facturable » (D16). Fait le 24 octobre 2026, toujours affiché, pour régler avant de connecter un poste.
+- **Fiche projet** : « Temps des agents Claude : comme le réglage du workspace / facturable / non facturable »
+  (D16). Fait le 24 octobre 2026, affiché quand le workspace compte un agent ou que le projet a une exception.
+- **Droits** (`core/catalog.dart`, `core/team_rights.dart`), faits le 24 octobre 2026 :
   - getters `humans`, `agents` et `agentsOf(pilote)` ;
   - `billableFor(projet, membre)` à côté de `rateFor` : D16 pour un agent, `billable_default` sinon. Il est
-    recalculé quand le pilote choisit le projet d'une entrée d'agent ;
+    recalculé quand le pilote choisit un autre projet pour une entrée d'agent (`entry_dialog.dart`), et reste
+    modifiable à la main ;
   - `managed` et `catalog.managersOf` ignorent les agents ; `agentsSeen` donne les agents du périmètre, que
     `visibleMembers` inclut (D15) ;
   - `canEditTimeOf` (modifier, supprimer) inclut le pilote de l'agent ;
@@ -814,7 +816,8 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
       admin → un nouveau jeton ne le recrée pas, ses événements ne produisent rien ;
     - un admin ne peut ni insérer un membre `kind = 'agent'` ni changer `kind` ;
     - `kiosk/state` sans agents ; facture créée avec les entrées facturables de l'agent, et sans elles quand
-      `agent_billing = 'never'` ou `agent_billable = false` sur le projet ;
+      `agent_billing = 'never'` ou `agent_billable = false` sur le projet ; `agent_billable` du projet l'emporte
+      sur le réglage du workspace, dans les deux sens ;
   - `agent_entry_write` refuse une écriture dans une entrée verrouillée, avant `lock_entries_before`, dans une
     période approuvée ou facturée ;
   - envoi d'événements idempotent ; deux lots simultanés d'une même session → une seule entrée ; entrée
@@ -855,7 +858,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille », filtre des rapports, colonne « Type » des exports ; reste : réglages de facturation des agents) ; hooks vérifiés dans l'extension VSCode | M/L | en cours |
+| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille », filtre des rapports, colonne « Type » des exports, réglages de facturation des agents ; reste : lien de l'écran Intégrations vers la fiche de l'agent) ; hooks vérifiés dans l'extension VSCode | M/L | en cours |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
 | 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |

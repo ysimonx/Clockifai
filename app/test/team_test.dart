@@ -159,6 +159,35 @@ void main() {
         (false, true, 'agent'),
       ]);
     });
+
+    test('facturable par défaut : projet, puis réglage des agents (D16, miroir d\'entry_defaults)', () async {
+      final db = TestDb();
+      addTearDown(db.close);
+      await db.into(db.workspaces).insert(WorkspacesCompanion.insert(id: const Value(ws), name: 'Atelier'));
+      for (final m in [member('pilote'), member('claude-p', pilot: 'pilote')]) {
+        await db.into(db.workspaceMembers).insert(m);
+      }
+      final repo = CatalogRepository(db);
+      Future<String> project(String name, {required bool billable, bool? agents}) => repo.createProject(
+          ws, ProjectsCompanion.insert(workspaceId: ws, name: name, billableDefault: Value(billable), agentBillable: Value(agents)));
+      final projects = [
+        null,
+        await project('Interne', billable: false),
+        await project('Client', billable: true),
+        await project('Claude accepté', billable: false, agents: true),
+        await project('Claude refusé', billable: true, agents: false),
+      ];
+      final catalog = CatalogController(repo, WorkspaceRepository(db), TeamRepository(db))..bind(ws);
+      addTearDown(catalog.dispose);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      List<bool> billable(String userId, String? agentBilling) =>
+          [for (final p in projects) catalog.billableFor(projectId: p, userId: userId, agentBilling: agentBilling)];
+      expect(billable('pilote', 'never'), [true, false, true, false, true], reason: 'une personne : le projet seul');
+      expect(billable('claude-p', 'like_humans'), [true, false, true, true, false]);
+      expect(billable('claude-p', null), [true, false, true, true, false], reason: 'colonne pas encore synchronisée');
+      expect(billable('claude-p', 'never'), [false, false, false, true, false], reason: 'jamais, sauf exception du projet');
+    });
   });
 
   group('TeamRepository', () {

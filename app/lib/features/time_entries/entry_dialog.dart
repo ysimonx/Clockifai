@@ -355,11 +355,21 @@ class _EntryDialogState extends State<_EntryDialog> {
                   : () async {
                       final pick = await showProjectPicker(context, projectId: _projectId, taskId: _taskId);
                       if (pick == null || !context.mounted) return;
-                      final project = context.read<CatalogController>().project(pick.projectId);
+                      final catalog = context.read<CatalogController>();
+                      final project = catalog.project(pick.projectId);
+                      final agent = widget.entry != null && catalog.isAgent(widget.entry!.userId);
                       setState(() {
                         _projectId = pick.projectId;
                         _taskId = pick.taskId;
                         if (project != null && widget.entry == null) _billable = project.billableDefault;
+                        // Entrée de Claude : facturable selon le réglage des agents (D16), corrigeable ensuite.
+                        if (agent && pick.projectId != widget.entry!.projectId) {
+                          _billable = catalog.billableFor(
+                            projectId: pick.projectId,
+                            userId: widget.entry!.userId,
+                            agentBilling: context.read<SessionController>().workspace?.agentBilling,
+                          );
+                        }
                       });
                     },
               child: Align(

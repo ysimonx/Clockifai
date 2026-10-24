@@ -129,6 +129,15 @@ class CatalogController extends ChangeNotifier {
   int? rateFor({required String? projectId, required String userId}) =>
       project(projectId)?.hourlyRateCents ?? memberOf(userId)?.hourlyRateCents;
 
+  /// Facturable par défaut : selon le projet. Pour un agent Claude, l'exception du projet, sinon le réglage
+  /// du workspace ([agentBilling] `never` : jamais), comme `entry_defaults` côté serveur (plan 10, D16).
+  bool billableFor({required String? projectId, required String userId, String? agentBilling}) {
+    final p = project(projectId);
+    if (isAgent(userId) && p?.agentBillable != null) return p!.agentBillable!;
+    if (isAgent(userId) && agentBilling == 'never') return false;
+    return p?.billableDefault ?? true;
+  }
+
   @override
   void dispose() {
     for (final s in _subs) {

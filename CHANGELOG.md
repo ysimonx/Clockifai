@@ -84,5 +84,7 @@ la date d'arrivée de chaque évolution.
 
 ### Corrigé
 
+- Claude Code : un poste configuré avec son seul jeton n'envoyait rien, faute d'adresse transmise au plugin.
+  « Copier le jeton » copie aussi l'adresse, et le plugin retrouve celle de son instance (24 octobre).
 - `make backup` ne rendait jamais la main : la sauvegarde immédiate partait en boucle (22 octobre).
 - macOS : l'envoi vers TestFlight était refusé par Apple (ITMS-90284) (14 octobre).

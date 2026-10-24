@@ -295,8 +295,26 @@ def test_script_posts_and_never_writes_on_stdout(tmp_path):
         for junk in ("pas du json", "[]"):
             out = run_hook(junk, server.url, tmp_path / "cache")
             assert out.returncode == 0 and out.stdout == ""
-        out = run_hook(ev("Stop", tmp_path), "", tmp_path / "cache")  # plugin non configuré
-        assert out.returncode == 0 and len(server.received) == 1
+        out = run_hook(ev("Stop", tmp_path), server.url, tmp_path / "cache", token="")  # jeton non réglé
+        assert out.returncode == 0 and out.stdout == "" and len(server.received) == 1
+        assert "réglage manquant : token" in (tmp_path / "cache" / "hook.log").read_text()
+    finally:
+        server.close()
+
+
+def test_url_not_set_falls_back_to_the_instance_default(tmp_path):
+    """Claude Code ne transmet pas la valeur par défaut d'un userConfig (« not set ») : le script la relit dans le
+    plugin.json que l'instance a écrit, sans quoi un poste configuré avec son seul jeton n'enverrait rien."""
+    server = _Server()
+    try:
+        root = tmp_path / "plugin"
+        (root / ".claude-plugin").mkdir(parents=True)
+        manifest = json.loads((PLUGIN / ".claude-plugin" / "plugin.json").read_text())
+        manifest["userConfig"]["url"]["default"] = server.url
+        (root / ".claude-plugin" / "plugin.json").write_text(json.dumps(manifest))
+        out = run_hook(ev("UserPromptSubmit", tmp_path), "", tmp_path / "cache", CLAUDE_PLUGIN_ROOT=str(root))
+        assert out.returncode == 0 and out.stdout == ""
+        assert [path for path, _, _ in server.received] == ["/api/activity/events"]
     finally:
         server.close()
 

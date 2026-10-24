@@ -6,7 +6,8 @@ durée de l'outil. Jamais le prompt, les entrées ou sorties des outils, ni la t
 outil Bash est lue sur le poste pour y repérer un `git commit` (D13), jamais envoyée.
 
 N'écrit jamais sur stdout (Claude Code l'ajouterait au contexte) et sort toujours avec le code 0.
-Réglages : CLAUDE_PLUGIN_OPTION_URL et CLAUDE_PLUGIN_OPTION_TOKEN (userConfig du plugin).
+Réglages : CLAUDE_PLUGIN_OPTION_URL et CLAUDE_PLUGIN_OPTION_TOKEN (userConfig du plugin). Sans adresse réglée,
+celle que l'instance a posée par défaut dans plugin.json : Claude Code ne transmet pas une valeur par défaut.
 Python 3.9 et bibliothèque standard seulement : c'est le python3 livré avec macOS.
 """
 
@@ -68,6 +69,18 @@ def log_error(message: str) -> None:
             f.write(f"{datetime.now(timezone.utc).isoformat(timespec='seconds')} {message}\n")
     except OSError:
         pass
+
+
+def default_url() -> str | None:
+    """Adresse par défaut du plugin, que l'instance qui le distribue écrit dans plugin.json. Claude Code la montre
+    « not set » et ne la passe pas au hook tant qu'elle n'est pas réglée (vérifié avec la v2.1.309)."""
+    root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    base = Path(root) if root else Path(__file__).resolve().parent.parent
+    try:
+        manifest = json.loads((base / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+        return manifest["userConfig"]["url"].get("default") or None
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
 
 
 def iso(ts: float) -> str:
@@ -387,9 +400,13 @@ def main() -> None:
         data = json.loads(sys.stdin.buffer.read())  # octets : un prompt accentué ne dépend pas de la locale
     except ValueError:
         return
-    url = os.environ.get("CLAUDE_PLUGIN_OPTION_URL") or os.environ.get("CLOCKIFAI_URL")
+    url = os.environ.get("CLAUDE_PLUGIN_OPTION_URL") or os.environ.get("CLOCKIFAI_URL") or default_url()
     token = os.environ.get("CLAUDE_PLUGIN_OPTION_TOKEN") or os.environ.get("CLOCKIFAI_TOKEN")
-    if not url or not token or not isinstance(data, dict):
+    if not isinstance(data, dict):
+        return
+    if not url or not token:
+        # Sinon le poste n'envoie rien sans laisser de trace : `claude plugin configure clockifai@…` le corrige.
+        log_error("réglage manquant : " + ", ".join(n for n, v in (("url", url), ("token", token)) if not v))
         return
     now = time.time()
     deliver(url, token, collect(data, now), now)

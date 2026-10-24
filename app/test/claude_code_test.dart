@@ -30,8 +30,9 @@ void main() {
     expect(ClaudeCodeSetup('https://x', platform: TargetPlatform.windows).installCli, 'irm https://claude.ai/install.ps1 | iex');
   });
 
-  test('le presse-papiers reçoit l\'objet JSON attendu par --values-stdin', () {
-    expect(jsonDecode(ClaudeCodeSetup.clipboardValue('clk_0123')), {'token': 'clk_0123'});
+  test('le presse-papiers reçoit l\'adresse et le jeton, attendus par --values-stdin', () {
+    expect(jsonDecode(ClaudeCodeSetup('https://clockifai.kysoe.com/').clipboardValue('clk_0123')),
+        {'url': 'https://clockifai.kysoe.com', 'token': 'clk_0123'});
   });
 
   test('dernier événement reçu', () async {

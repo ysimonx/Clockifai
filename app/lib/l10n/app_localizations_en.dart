@@ -40,8 +40,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminOnlySettings => 'Only admins can change these settings.';
 
   @override
+  String get agentBadge => 'Agent';
+
+  @override
   String get agentInactive =>
       'Your agent was deactivated or removed by an administrator: your Claude Code sessions no longer record time.';
+
+  @override
+  String get agents => 'Agents';
+
+  @override
+  String get agentsHelp =>
+      'Claude agents: their time is recorded by Claude Code, one agent per person who connected a computer (Settings › Integrations).';
+
+  @override
+  String agentTimeOf(String name) {
+    return 'Time of $name: you can correct its entries, not add new ones.';
+  }
 
   @override
   String get allClients => 'All clients';
@@ -1051,6 +1066,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get perHour => '/h';
+
+  @override
+  String pilotedBy(String name) {
+    return 'Agent of $name';
+  }
 
   @override
   String get policies => 'Time-off policies';

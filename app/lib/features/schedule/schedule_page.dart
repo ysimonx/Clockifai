@@ -35,7 +35,7 @@ class _SchedulePageState extends State<SchedulePage> {
     final start = _weekStart ??= startOfWeek(DateTime.now(), ws.weekStart);
     final days = [for (var i = 0; i < 7 * _weeks; i++) DateTime(start.year, start.month, start.day + i)];
     final members = session.isManager
-        ? catalog.members.where((m) => m.status == 'active').toList()
+        ? catalog.humans.where((m) => m.status == 'active').toList()
         : catalog.members.where((m) => m.userId == session.userId).toList();
     final locale = context.localeTag;
 
@@ -248,7 +248,7 @@ Future<void> showAssignmentDialog(BuildContext context, {ScheduleAssignment? ass
   final session = context.read<SessionController>();
   final catalog = context.read<CatalogController>();
   final a = assignment;
-  var user = a?.userId ?? userId ?? (catalog.members.isNotEmpty ? catalog.members.first.userId : session.userId!);
+  var user = a?.userId ?? userId ?? (catalog.humans.isNotEmpty ? catalog.humans.first.userId : session.userId!);
   var projectId = a?.projectId;
   var range = DateTimeRange(
     start: a == null ? (initialDay ?? DateTime.now()) : parseDay(a.startDate),
@@ -268,7 +268,7 @@ Future<void> showAssignmentDialog(BuildContext context, {ScheduleAssignment? ass
             DropdownButtonFormField<String>(
               initialValue: user,
               decoration: InputDecoration(labelText: l.member),
-              items: [for (final m in catalog.members.where((m) => m.status == 'active')) DropdownMenuItem(value: m.userId, child: Text(m.displayName))],
+              items: [for (final m in catalog.humans.where((m) => m.status == 'active')) DropdownMenuItem(value: m.userId, child: Text(m.displayName))],
               onChanged: (v) => setState(() => user = v!),
             ),
             const SizedBox(height: 12),

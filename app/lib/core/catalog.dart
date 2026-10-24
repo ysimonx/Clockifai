@@ -88,6 +88,13 @@ class CatalogController extends ChangeNotifier {
   WorkspaceMember? memberOf(String userId) => _memberByUser[userId];
   ClientItem? clientOfProject(String? projectId) => client(project(projectId)?.clientId);
 
+  /// Agents Claude (plan 10) : membres techniques, un par pilote, qui ne pointent pas.
+  bool isAgent(String? userId) => userId != null && memberOf(userId)?.kind == 'agent';
+  List<WorkspaceMember> get humans => members.where((m) => m.kind != 'agent').toList();
+  List<WorkspaceMember> get agents => members.where((m) => m.kind == 'agent').toList();
+  List<WorkspaceMember> agentsOf(String? pilotId) =>
+      pilotId == null ? const [] : members.where((m) => m.kind == 'agent' && m.agentOwnerId == pilotId).toList();
+
   List<Project> get activeProjects => projects.where((p) => !p.archived).toList();
   List<Tag> get activeTags => tags.where((t) => !t.archived).toList();
   List<Task> tasksOf(String? projectId) =>
@@ -99,15 +106,24 @@ class CatalogController extends ChangeNotifier {
           if (gm.groupId == groupId) ?memberOf(gm.userId),
       ];
 
-  /// Collaborateurs encadrés par [managerId] (périmètre calculé par le serveur).
-  Set<String> managedBy(String? managerId) =>
-      managerId == null ? const {} : {for (final s in scope) if (s.managerId == managerId) s.userId};
+  /// Collaborateurs (humains) encadrés par [managerId] (périmètre calculé par le serveur).
+  /// Les lignes qui visent un agent (pilote, ou chef du pilote) n'en font pas un chef d'équipe (plan 10, D15).
+  Set<String> managedBy(String? managerId) => managerId == null
+      ? const {}
+      : {for (final s in scope) if (s.managerId == managerId && !isAgent(s.userId)) s.userId};
 
-  /// Chefs d'équipe de [userId].
-  List<WorkspaceMember> managersOf(String userId) => [
-        for (final s in scope)
-          if (s.userId == userId) ?memberOf(s.managerId),
-      ];
+  /// Agents dont [userId] voit le temps : le sien, et ceux des personnes qu'il encadre (D15).
+  Set<String> agentsSeenBy(String? userId) => userId == null
+      ? const {}
+      : {for (final s in scope) if (s.managerId == userId && isAgent(s.userId)) s.userId};
+
+  /// Chefs d'équipe de [userId] (aucun pour un agent : il suit son pilote).
+  List<WorkspaceMember> managersOf(String userId) => isAgent(userId)
+      ? const []
+      : [
+          for (final s in scope)
+            if (s.userId == userId) ?memberOf(s.managerId),
+        ];
 
   /// Taux horaire applicable : projet, sinon membre.
   int? rateFor({required String? projectId, required String userId}) =>

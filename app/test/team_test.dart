@@ -12,7 +12,8 @@ import 'time_entry_repository_test.dart' show TestDb;
 
 const ws = 'ws-1';
 
-WorkspaceMember member(String userId, {String role = 'member', String status = 'active'}) => WorkspaceMember(
+WorkspaceMember member(String userId, {String role = 'member', String status = 'active', String? pilot}) =>
+    WorkspaceMember(
       id: 'm-$userId',
       workspaceId: ws,
       userId: userId,
@@ -20,6 +21,8 @@ WorkspaceMember member(String userId, {String role = 'member', String status = '
       status: status,
       displayName: userId,
       capacityHoursPerDay: 7,
+      kind: pilot == null ? 'human' : 'agent',
+      agentOwnerId: pilot,
     );
 
 TeamRights rights({
@@ -96,6 +99,59 @@ void main() {
     });
   });
 
+  group('Agents Claude (plan 10, D15)', () {
+    // « pilote » a son agent « claude-p » ; « chef » encadre « pilote », donc voit aussi son agent.
+    TeamRights agentRights(String me, {String role = 'member', String timeForOthers = 'admins',
+        Set<String> managed = const {}, Set<String> agentsSeen = const {}}) =>
+        TeamRights(
+          me: me,
+          role: role,
+          timeForOthers: timeForOthers,
+          members: [member('chef'), member('pilote'), member('autre'), member('claude-p', pilot: 'pilote')],
+          managed: managed,
+          agentsSeen: agentsSeen,
+        );
+
+    test('le pilote corrige le temps de son agent sans en créer, et n\'est pas chef d\'équipe', () {
+      final r = agentRights('pilote', agentsSeen: {'claude-p'});
+      expect(r.isTeamManager, isFalse);
+      expect(r.seesTeam, isFalse);
+      expect(r.seesOthers, isTrue);
+      expect(r.visibleMembers.map((m) => m.userId), ['pilote', 'claude-p']);
+      expect(r.pilots('claude-p'), isTrue);
+      expect(r.canEditTimeOf('claude-p'), isTrue);
+      expect(r.canCreateTimeFor('claude-p'), isFalse);
+      expect(r.editableMembers.map((m) => m.userId), ['pilote']);
+      expect(r.canEditOthers, isFalse, reason: 'pas de « Pointage d\'équipe » pour son seul agent');
+      expect(r.canApproveTimesheetOf('claude-p'), isFalse);
+    });
+
+    test('le chef du pilote lit le temps de l\'agent ; un autre membre non', () {
+      final chef = agentRights('chef', managed: {'pilote'}, agentsSeen: {'claude-p'});
+      expect(chef.manages('claude-p'), isTrue);
+      expect(chef.visibleMembers.map((m) => m.userId), ['chef', 'claude-p', 'pilote']);
+      expect(chef.canEditTimeOf('claude-p'), isFalse);
+      expect(chef.canApproveTimesheetOf('claude-p'), isFalse);
+      // Saisie pour autrui ouverte aux chefs : le serveur (can_edit_others_time) laisse corriger, jamais créer.
+      final open = agentRights('chef', timeForOthers: 'admins_and_team_managers', managed: {'pilote'}, agentsSeen: {'claude-p'});
+      expect(open.canEditTimeOf('claude-p'), isTrue);
+      expect(open.canCreateTimeFor('claude-p'), isFalse);
+      expect(open.editableMembers.map((m) => m.userId), ['chef', 'pilote']);
+
+      final autre = agentRights('autre');
+      expect(autre.manages('claude-p'), isFalse);
+      expect(autre.canEditTimeOf('claude-p'), isFalse);
+      expect(autre.visibleMembers.map((m) => m.userId), ['autre']);
+    });
+
+    test('un admin corrige les entrées d\'un agent mais n\'en crée pas', () {
+      final admin = agentRights('chef', role: 'admin');
+      expect(admin.canEditTimeOf('claude-p'), isTrue);
+      expect(admin.canCreateTimeFor('claude-p'), isFalse);
+      expect(admin.editableMembers.map((m) => m.userId), ['chef', 'autre', 'pilote']);
+    });
+  });
+
   group('TeamRepository', () {
     late TestDb db;
     late TeamRepository repo;
@@ -152,6 +208,31 @@ void main() {
       expect(catalog.managedBy('chef'), {'o1'});
       expect(catalog.managersOf('o1').map((m) => m.displayName), ['Chef']);
       expect(catalog.membersOfGroup(g).map((m) => m.displayName), ['Ouvrier 1']);
+      catalog.dispose();
+    });
+
+    test('les lignes du périmètre qui visent un agent ne font pas de chef d\'équipe (D15)', () async {
+      for (final (manager, user) in [('chef', 'pilote'), ('pilote', 'claude-p'), ('chef', 'claude-p')]) {
+        await db.into(db.teamScope).insert(TeamScopeCompanion.insert(workspaceId: ws, managerId: manager, userId: user));
+      }
+      for (final (user, name) in [('chef', 'Chef'), ('pilote', 'Pilote')]) {
+        await db.into(db.workspaceMembers).insert(
+            WorkspaceMembersCompanion.insert(workspaceId: ws, userId: user, displayName: Value(name), kind: const Value('human')));
+      }
+      await db.into(db.workspaceMembers).insert(WorkspaceMembersCompanion.insert(
+          workspaceId: ws, userId: 'claude-p', displayName: const Value('Claude · Pilote'),
+          kind: const Value('agent'), agentOwnerId: const Value('pilote')));
+      final catalog = CatalogController(CatalogRepository(db), WorkspaceRepository(db), repo)..bind(ws);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(catalog.humans.map((m) => m.userId), unorderedEquals(['chef', 'pilote']));
+      expect(catalog.agents.map((m) => m.userId), ['claude-p']);
+      expect(catalog.agentsOf('pilote').map((m) => m.userId), ['claude-p']);
+      expect(catalog.managedBy('pilote'), isEmpty);
+      expect(catalog.managedBy('chef'), {'pilote'});
+      expect(catalog.agentsSeenBy('pilote'), {'claude-p'});
+      expect(catalog.agentsSeenBy('chef'), {'claude-p'});
+      expect(catalog.managersOf('claude-p'), isEmpty);
+      expect(catalog.managersOf('pilote').map((m) => m.displayName), ['Chef']);
       catalog.dispose();
     });
   });

@@ -31,7 +31,11 @@ class TeammateBar extends StatelessWidget {
     final selected = members.where((m) => m.userId == userId).firstOrNull;
     final name = memberName(selected);
     final editable = rights.canEditTimeOf(userId);
-    final hint = userId == rights.me ? null : (editable ? l.enteringFor(name) : l.readOnlyTimeOf(name));
+    final hint = userId == rights.me
+        ? null
+        : rights.isAgent(userId) && editable
+            ? l.agentTimeOf(name)
+            : (editable ? l.enteringFor(name) : l.readOnlyTimeOf(name));
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

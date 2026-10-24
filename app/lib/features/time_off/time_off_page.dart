@@ -446,7 +446,7 @@ class _PoliciesAdmin extends StatelessWidget {
     final year = DateTime.now().year;
     final existing = await modulesRepo.watchAllowances(p.workspaceId).first;
     final controllers = {
-      for (final m in catalog.members)
+      for (final m in catalog.humans)
         m.userId: TextEditingController(
           text: existing.where((a) => a.userId == m.userId && a.policyId == p.id && a.year == year).firstOrNull?.allowance.toString() ?? '',
         ),
@@ -460,7 +460,7 @@ class _PoliciesAdmin extends StatelessWidget {
           width: 420,
           child: ListView(shrinkWrap: true, children: [
             Text(l.allowanceOverrideHelp(p.annualAllowance?.toString() ?? l.unlimited), style: Theme.of(ctx).textTheme.bodySmall),
-            for (final m in catalog.members)
+            for (final m in catalog.humans)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: TextField(

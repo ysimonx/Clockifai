@@ -683,7 +683,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 - **Paramètres du workspace** (admins) : « Temps des agents IA : facturable comme un humain / non
   facturable » (D16).
 - **Fiche projet** : « Temps des agents : comme le workspace / facturable / non facturable » (D16).
-- **Droits** (`core/catalog.dart`, `core/team_rights.dart`) :
+- **Droits** (`core/catalog.dart`, `core/team_rights.dart`), faits le 24 octobre 2026 sauf `billableFor` :
   - getters `humans`, `agents` et `agentsOf(pilote)` ;
   - `billableFor(projet, membre)` à côté de `rateFor` : D16 pour un agent, `billable_default` sinon. Il est
     recalculé quand le pilote choisit le projet d'une entrée d'agent ;
@@ -693,12 +693,13 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
   - `canCreateTimeFor` (créer) exclut toujours les agents. Il sert à `editableMembers` (saisie pour autrui,
     `team_entry_page.dart`, `entry_dialog.dart`) et à la création depuis `TeammateBar`, la feuille de temps
     et le calendrier.
-- **Équipe** (`features/team/team_page.dart`) :
+- **Équipe** (`features/team/team_page.dart`), fait le 24 octobre 2026 :
   - section « Agents » : icône robot, pilote, chronomètres en cours, total de la semaine ; e-mail technique masqué ;
   - menu admin limité aux taux, au nom, à la désactivation ou réactivation et au retrait (ni rôle, ni chef d'équipe, ni PIN) ;
   - agents exclus des choix de chef d'équipe et de groupe (D15 les rattache par leur pilote).
-- **Absences et planning** : agents exclus des droits à congés (`time_off_page.dart`) et des lignes du planning
-  (`schedule_page.dart`).
+- **Absences et planning** (faits) : agents exclus des droits à congés (`time_off_page.dart`) et des lignes du
+  planning (`schedule_page.dart`). La feuille de temps d'un agent est en lecture seule, sans bandeau de soumission ;
+  son calendrier ne crée pas d'entrée ; « Dupliquer » n'est pas proposé sur ses entrées.
 - **Page des entrées du jour** :
   - un bandeau « Claude travaille : clockifai (12 min), fidwork (3 min) » = entrées en cours de mes agents ;
   - un bandeau « N suggestions » qui mène à la liste des suggestions.
@@ -811,7 +812,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (écran des jetons : fait, section Agents, droits D15, exclusions, bandeau « Claude travaille », « toujours rattacher », filtre des rapports, réglages de facturation des agents) ; vérifier les hooks dans l'extension VSCode | M/L | en cours |
+| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents ; reste : droits D15, exclusions, bandeau « Claude travaille », « toujours rattacher », filtre des rapports, réglages de facturation des agents) ; vérifier les hooks dans l'extension VSCode | M/L | en cours |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
 | 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |

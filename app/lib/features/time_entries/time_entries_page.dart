@@ -205,7 +205,9 @@ class EntryTile extends StatelessWidget {
     final wide = MediaQuery.sizeOf(context).width >= 700;
     final times = '${timeLabel(context, e.startAt)} – ${e.endAt == null ? '…' : timeLabel(context, e.endAt!)}';
     final isMine = e.userId == session.userId;
-    final canEdit = TeamRights.of(context).canEditTimeOf(e.userId);
+    final rights = TeamRights.of(context);
+    final canEdit = rights.canEditTimeOf(e.userId);
+    final canDuplicate = rights.canCreateTimeFor(e.userId);
     final author = e.createdBy;
 
     final description = Text(
@@ -265,10 +267,8 @@ class EntryTile extends StatelessWidget {
         },
         itemBuilder: (_) => [
           PopupMenuItem(value: 'edit', child: Text(canEdit ? l.edit : l.view)),
-          if (canEdit) ...[
-            PopupMenuItem(value: 'duplicate', child: Text(l.duplicate)),
-            PopupMenuItem(value: 'delete', child: Text(l.delete)),
-          ],
+          if (canDuplicate) PopupMenuItem(value: 'duplicate', child: Text(l.duplicate)),
+          if (canEdit) PopupMenuItem(value: 'delete', child: Text(l.delete)),
         ],
       ),
     ]);

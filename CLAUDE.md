@@ -86,6 +86,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - État : `SessionController` (utilisateur, workspace courant, rôle, statut de sync) et `CatalogController` (référentiel en mémoire) fournis par Provider ; dépôts et `SyncService` via GetIt (`core/di.dart`).
 - Tous les textes passent par l'ARB (`lib/l10n/app_fr.arb` = modèle, `app_en.arb`) ; `context.l10n`.
 - Les droits affichés suivent `session.isManager` / `isAdmin`, mais la RLS reste la seule vraie barrière.
+- Agents Claude (`workspace_members.kind = 'agent'`, plan 10) : `catalog.humans` / `agents` pour toute liste de personnes ; créer du temps passe par `TeamRights.canCreateTimeFor` (jamais pour un agent, seul le serveur écrit ses entrées), modifier par `canEditTimeOf` (le pilote compris).
 - Libellés : ajouter les clés directement dans les deux ARB (`tool/gen_arb.py` est en retard et en supprimerait).
 
 ### macOS (`plans/06-macos-barre-de-menus.md`)

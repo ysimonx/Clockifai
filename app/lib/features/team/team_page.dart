@@ -35,13 +35,14 @@ class _TeamPageState extends State<TeamPage> {
     final rights = TeamRights.of(context);
     final ws = session.workspace!;
     final weekStart = startOfWeek(DateTime.now(), ws.weekStart);
-    final members = catalog.members;
+    final humans = catalog.humans;
+    final agents = catalog.agents;
 
     final membersTab = StreamBuilder<List<EntryRow>>(
       // Base locale : un chef d'équipe n'a reçu que son temps et celui de son périmètre.
       stream: entriesRepo.watchEntries(
         workspaceId: ws.id,
-        userId: rights.seesTeam ? null : session.userId,
+        userId: rights.seesOthers ? null : session.userId,
         from: weekStart,
         to: weekStart.add(const Duration(days: 7)),
         includeRunning: true,
@@ -61,16 +62,25 @@ class _TeamPageState extends State<TeamPage> {
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(l.teamMemberHint, style: Theme.of(context).textTheme.bodySmall),
             ),
-          for (final m in members)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _MemberCard(
-                member: m,
-                weekSeconds: weekByUser[m.userId] ?? 0,
-                running: runningByUser[m.userId] ?? const [],
-                showActivity: m.userId == session.userId || rights.manages(m.userId),
+          for (final m in [...humans, if (agents.isNotEmpty) null, ...agents])
+            if (m == null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(l.agents, style: Theme.of(context).textTheme.titleMedium),
+                  Text(l.agentsHelp, style: Theme.of(context).textTheme.bodySmall),
+                ]),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _MemberCard(
+                  member: m,
+                  weekSeconds: weekByUser[m.userId] ?? 0,
+                  running: runningByUser[m.userId] ?? const [],
+                  showActivity: m.userId == session.userId || rights.manages(m.userId),
+                ),
               ),
-            ),
         ]);
       },
     );
@@ -180,6 +190,8 @@ class _MemberCard extends StatelessWidget {
     final catalog = context.watch<CatalogController>();
     final name = member.displayName.isEmpty ? (member.email ?? '?') : member.displayName;
     final inactive = member.status != 'active';
+    // Agent Claude (plan 10) : ni rôle à choisir, ni e-mail (technique) à montrer, ni chef d'équipe.
+    final agent = member.kind == 'agent';
     final ws = session.workspace!;
     final locale = context.localeTag;
     // Ce que le membre encadre : groupes entiers, puis personnes affectées directement.
@@ -198,15 +210,18 @@ class _MemberCard extends StatelessWidget {
           backgroundColor: Colors.green,
           smallSize: 10,
           label: running.length > 1 ? Text('${running.length}') : null,
-          child: CircleAvatar(child: Text(name[0].toUpperCase())),
+          child: CircleAvatar(child: agent ? const Icon(Icons.smart_toy_outlined) : Text(name[0].toUpperCase())),
         ),
         title: Row(children: [
           Flexible(child: Text(name, style: inactive ? TextStyle(color: theme.colorScheme.outline, decoration: TextDecoration.lineThrough) : null)),
           const SizedBox(width: 8),
-          Chip(label: Text(roleLabel(context, member.role)), visualDensity: VisualDensity.compact),
+          Chip(label: Text(agent ? l.agentBadge : roleLabel(context, member.role)), visualDensity: VisualDensity.compact),
         ]),
         subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          if (member.email != null) Text(member.email!),
+          if (agent)
+            Text(l.pilotedBy(memberName(catalog.memberOf(member.agentOwnerId ?? ''))))
+          else if (member.email != null)
+            Text(member.email!),
           if (showActivity) ...[
             for (final run in running)
               Row(children: [
@@ -241,6 +256,8 @@ class _AdminMenu extends StatelessWidget {
   const _AdminMenu({required this.member});
   final WorkspaceMember member;
 
+  bool get agent => member.kind == 'agent';
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -251,6 +268,11 @@ class _AdminMenu extends StatelessWidget {
             await workspaceRepo.updateMember(member.id, WorkspaceMembersCompanion(role: Value(v)));
           case 'rate':
             await _editRates(context);
+          case 'rename':
+            final name = await promptText(context, title: l.rename, label: l.name, initial: member.displayName);
+            if (name != null && name.trim().isNotEmpty) {
+              await workspaceRepo.updateMember(member.id, WorkspaceMembersCompanion(displayName: Value(name.trim())));
+            }
           case 'teamManager':
             await showDialog<void>(context: context, builder: (_) => _TeamManagerDialog(manager: member));
           case 'toggle':
@@ -262,13 +284,16 @@ class _AdminMenu extends StatelessWidget {
         }
       },
       itemBuilder: (_) => [
-        if (member.role != 'owner') ...[
+        if (member.role != 'owner' && !agent) ...[
           for (final r in const ['member', 'manager', 'admin'])
             CheckedPopupMenuItem(value: r, checked: member.role == r, child: Text(roleLabel(context, r))),
           const PopupMenuDivider(),
         ],
         PopupMenuItem(value: 'rate', child: Text(l.editRates)),
-        PopupMenuItem(value: 'teamManager', child: Text(l.teamManagerOf)),
+        if (agent)
+          PopupMenuItem(value: 'rename', child: Text(l.rename))
+        else
+          PopupMenuItem(value: 'teamManager', child: Text(l.teamManagerOf)),
         if (member.role != 'owner') ...[
           PopupMenuItem(value: 'toggle', child: Text(member.status == 'active' ? l.deactivate : l.activate)),
           PopupMenuItem(value: 'remove', child: Text(l.remove)),
@@ -339,7 +364,7 @@ class _TeamManagerDialogState extends State<_TeamManagerDialog> {
     final l = context.l10n;
     final theme = Theme.of(context);
     final catalog = context.watch<CatalogController>();
-    final others = catalog.members.where((m) => m.userId != widget.manager.userId && m.status == 'active').toList();
+    final others = catalog.humans.where((m) => m.userId != widget.manager.userId && m.status == 'active').toList();
     return AlertDialog(
       title: Text('${l.teamManagerOf} ${memberName(widget.manager)}'),
       contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
@@ -478,7 +503,7 @@ class _GroupsTab extends StatelessWidget {
     final picked = await showMembersPicker(
       context,
       title: l.groupMembers,
-      members: catalog.members.where((m) => m.status == 'active').toList(),
+      members: catalog.humans.where((m) => m.status == 'active').toList(),
       selected: const {},
     );
     if (picked != null) {
@@ -492,7 +517,7 @@ class _GroupsTab extends StatelessWidget {
     final picked = await showMembersPicker(
       context,
       title: '${l.groupMembers} · ${group.name}',
-      members: catalog.members.where((m) => m.status == 'active').toList(),
+      members: catalog.humans.where((m) => m.status == 'active').toList(),
       selected: {for (final m in catalog.membersOfGroup(group.id)) m.userId},
     );
     if (picked != null) {

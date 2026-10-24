@@ -1,7 +1,7 @@
 """Exports de rapports : CSV, XLSX, PDF.
 
 GET /api/exports/report?workspace_id=&from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|pdf
-    [&user_id=][&project_id=][&client_id=][&billable=true|false]
+    [&user_id=][&project_id=][&client_id=][&billable=true|false][&member_kind=human|agent]
 
 Un membre n'exporte que ses propres entrées ; un chef d'équipe, les siennes et celles de son
 périmètre ; manager+ peut exporter toute l'équipe.
@@ -63,6 +63,9 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
     if filters.get("billable") in ("true", "false"):
         sql += " and te.billable = %(billable)s"
         params["billable"] = filters["billable"] == "true"
+    if filters.get("member_kind") in ("human", "agent"):
+        sql += " and wm.kind = %(member_kind)s"
+        params["member_kind"] = filters["member_kind"]
     sql += " group by te.id, wm.display_name, wm.email, p.name, c.name, t.name order by te.start_at"
     return fetch_all(sql, params)
 
@@ -75,7 +78,7 @@ def export_report():
     start = _parse_date(request.args.get("from"), today.replace(day=1))
     end = _parse_date(request.args.get("to"), today)
     fmt = request.args.get("format", "csv").lower()
-    filters = {k: request.args.get(k) for k in ("user_id", "project_id", "client_id", "billable")}
+    filters = {k: request.args.get(k) for k in ("user_id", "project_id", "client_id", "billable", "member_kind")}
 
     # Un membre ne voit que ses entrées ; un chef d'équipe, aussi celles de son périmètre.
     if g.workspace_role not in _MANAGER_ROLES:

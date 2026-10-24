@@ -34,6 +34,7 @@ class _ReportsPageState extends State<ReportsPage> {
   DateTimeRange? _custom;
   GroupBy _groupBy = GroupBy.project;
   String? _userId; // null = toute l'équipe (managers) ; membres : forcé à soi
+  MemberKind _kind = MemberKind.all;
   String? _projectId;
   String? _clientId;
   bool? _billable;
@@ -88,6 +89,7 @@ class _ReportsPageState extends State<ReportsPage> {
         if (_projectId != null && e.projectId != _projectId) return false;
         if (_clientId != null && catalog.project(e.projectId)?.clientId != _clientId) return false;
         if (_billable != null && e.billable != _billable) return false;
+        if (!_kind.accepts(catalog.isAgent(e.userId))) return false;
         return true;
       }).toList();
 
@@ -217,6 +219,7 @@ class _ReportsPageState extends State<ReportsPage> {
     final locale = context.localeTag;
     final fmt = DateFormat.yMMMd(locale);
     final rights = TeamRights.of(context);
+    final members = [for (final m in rights.visibleMembers) if (_kind.accepts(catalog.isAgent(m.userId))) m];
     return Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
       DropdownButton<RangePreset>(
         value: _preset,
@@ -236,14 +239,28 @@ class _ReportsPageState extends State<ReportsPage> {
         },
       ),
       Text('${fmt.format(range.start)} – ${fmt.format(range.end.subtract(const Duration(days: 1)))}', style: Theme.of(context).textTheme.bodySmall),
+      // Humains / agents : quand des agents Claude sont visibles (ou si le filtre est posé, pour pouvoir le retirer).
+      if (rights.seesOthers && (_kind != MemberKind.all || rights.visibleMembers.any((m) => catalog.isAgent(m.userId))))
+        DropdownButton<MemberKind>(
+          value: _kind,
+          items: [
+            DropdownMenuItem(value: MemberKind.all, child: Text(l.humansAndAgents)),
+            DropdownMenuItem(value: MemberKind.humans, child: Text(l.humans)),
+            DropdownMenuItem(value: MemberKind.agents, child: Text(l.agents)),
+          ],
+          onChanged: (v) => setState(() {
+            _kind = v!;
+            if (_userId != null && !_kind.accepts(catalog.isAgent(_userId))) _userId = null;
+          }),
+        ),
       if (rights.seesOthers)
         DropdownButton<String?>(
           // La personne choisie peut sortir du périmètre entre-temps : on retombe sur « tous ».
-          value: rights.visibleMembers.any((m) => m.userId == _userId) ? _userId : null,
+          value: members.any((m) => m.userId == _userId) ? _userId : null,
           hint: Text(l.allMembers),
           items: [
             DropdownMenuItem(value: null, child: Text(l.allMembers)),
-            for (final m in rights.visibleMembers) DropdownMenuItem(value: m.userId, child: Text(memberName(m))),
+            for (final m in members) DropdownMenuItem(value: m.userId, child: Text(memberName(m))),
           ],
           onChanged: (v) => setState(() => _userId = v),
         ),
@@ -322,6 +339,7 @@ class _ReportsPageState extends State<ReportsPage> {
           'project_id': ?_projectId,
           'client_id': ?_clientId,
           if (_billable != null) 'billable': '$_billable',
+          'member_kind': ?_kind.param,
         });
         final mime = switch (fmt) { 'xlsx' => MimeType.microsoftExcel, 'pdf' => MimeType.pdf, _ => MimeType.csv };
         await FileSaver.instance.saveFile(name: name, bytes: bytes, fileExtension: fmt, mimeType: mime);

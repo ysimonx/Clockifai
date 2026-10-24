@@ -134,7 +134,7 @@
 Pour un projet et une période, on affiche **mon temps**, **le temps de Claude** et la **durée calendaire**
 (union des deux). Pendant qu'un agent travaille et que je relis, les deux pistes avancent ensemble.
 Mon temps et celui de mon agent sont ceux de **deux membres** : ils ne s'additionnent jamais pour moi. Au
-niveau de l'équipe, les rapports les séparent par un filtre « Humains / Agents / Tous ».
+niveau de l'équipe, les rapports les séparent par un filtre « Humains et agents / Humains / Agents ».
 
 **D2. Le temps de Claude est celui d'un membre agent.**
 - **Un agent par pilote** : « Claude · Yannick », membre de chaque workspace où le pilote a créé un jeton
@@ -751,8 +751,10 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
   - chaque ligne montre le projet (ou le dépôt inconnu → choix du projet et règle), la plage, la durée, le temps de Claude sur la même plage et une description modifiable ;
   - actions : accepter, ignorer, tout accepter ;
   - l'acceptation crée l'entrée (`source = 'activity'`, taux et facturable selon les règles actuelles) et met à jour la suggestion, en une transaction locale.
-- **Rapports** : filtre « Humains / Agents / Tous » (défaut : Tous) à côté du filtre par membre ; le
-  regroupement par membre montre l'agent comme une personne.
+- **Rapports** : filtre « Humains et agents / Humains / Agents » (défaut : les deux) à côté du filtre par membre,
+  affiché dès qu'un agent est visible ; il restreint aussi la liste des personnes et passe `member_kind` à l'export
+  serveur (`/api/exports/report`). Le regroupement par membre montre l'agent comme une personne. Fait le
+  24 octobre 2026.
 - **Calendrier** (lot 4) : les entrées de mon agent dans une voie à part, à côté des miennes ; les
   suggestions en blocs en pointillés.
 - **Barre de menus macOS** (lot 4) : nombre de sessions en cours, et signal de présence (D4.3).
@@ -852,7 +854,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille » ; reste : filtre des rapports, réglages de facturation des agents, colonne « Type » des exports) ; hooks vérifiés dans l'extension VSCode | M/L | en cours |
+| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille », filtre des rapports ; reste : réglages de facturation des agents, colonne « Type » des exports) ; hooks vérifiés dans l'extension VSCode | M/L | en cours |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
 | 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |

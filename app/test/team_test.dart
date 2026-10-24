@@ -5,6 +5,7 @@ import 'package:clockifai/data/repositories/catalog_repository.dart';
 import 'package:clockifai/data/repositories/team_repository.dart';
 import 'package:clockifai/data/repositories/time_entry_repository.dart';
 import 'package:clockifai/data/repositories/workspace_repository.dart';
+import 'package:clockifai/features/reports/report_model.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -149,6 +150,14 @@ void main() {
       expect(admin.canEditTimeOf('claude-p'), isTrue);
       expect(admin.canCreateTimeFor('claude-p'), isFalse);
       expect(admin.editableMembers.map((m) => m.userId), ['chef', 'autre', 'pilote']);
+    });
+
+    test('rapports : filtre « Humains / Agents » et paramètre de l\'export', () {
+      expect([for (final k in MemberKind.values) (k.accepts(false), k.accepts(true), k.param)], [
+        (true, true, null),
+        (true, false, 'human'),
+        (false, true, 'agent'),
+      ]);
     });
   });
 

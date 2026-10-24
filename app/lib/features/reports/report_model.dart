@@ -5,6 +5,18 @@ enum GroupBy { project, client, user, tag, day, description }
 
 enum RangePreset { thisWeek, lastWeek, thisMonth, lastMonth, thisYear, custom }
 
+/// Filtre « Humains / Agents » des rapports (agents Claude, plans/10-suivi-claude-code.md §8).
+enum MemberKind {
+  all,
+  humans,
+  agents;
+
+  bool accepts(bool isAgent) => switch (this) { all => true, humans => !isAgent, agents => isAgent };
+
+  /// Valeur du paramètre `member_kind` de l'export serveur.
+  String? get param => switch (this) { all => null, humans => 'human', agents => 'agent' };
+}
+
 /// Ligne de rapport agrégée.
 class ReportGroup {
   ReportGroup(this.key, this.label, {this.color});

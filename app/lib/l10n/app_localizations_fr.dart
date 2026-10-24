@@ -262,7 +262,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get claudeCodeStepStart =>
-      '4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.';
+      '4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt. Claude nomme la tâche de chaque sujet : à la première demande, autorisez l\'outil Clockifai.';
 
   @override
   String get claudeCodeStepToken =>

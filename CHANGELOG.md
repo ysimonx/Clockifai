@@ -73,6 +73,9 @@ la date d'arrivée de chaque évolution.
   postes connectés, « Reconnecter » redonne un jeton à un poste, et « Afficher les commandes d'installation »
   rappelle les commandes. « Nouvelle tâche », dans la fenêtre d'une entrée, crée une tâche pour la session de
   Claude, que la session garde quand elle reprend ; « Toujours rattacher ce dépôt » ne retient plus que le projet.
+  Claude nomme lui-même la tâche de chaque nouveau sujet (outil Clockifai du plugin, à autoriser la première
+  fois) : la tâche est reprise ou créée dans le projet de la session, et un changement de sujet ouvre une
+  nouvelle entrée.
 
 ### Modifié
 

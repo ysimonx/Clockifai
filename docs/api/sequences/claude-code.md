@@ -36,10 +36,14 @@ sequenceDiagram
     rect rgba(127, 127, 127, 0.1)
     Note over P,PS: Une session de travail
     P->>CC: prompt
-    CC->>F: POST /api/activity/events (Bearer clk_…) : prompt, outils (1 par minute), Stop, commits
+    opt nouveau sujet (D18)
+        CC->>CC: Claude appelle set_current_task(nom), serveur MCP local du plugin, sans réseau
+    end
+    CC->>F: POST /api/activity/events (Bearer clk_…) : prompt, session_task {task_name}, outils (1 par minute), Stop, commits
     F->>PG: activity_events (idempotent par id)
     F->>PG: verrou de la session, événements des 7 derniers jours, entrées existantes
-    F->>F: agent_clock : intervalles de travail, plages figées par un humain
+    F->>F: agent_clock : intervalles de travail, coupés au changement de sujet, plages figées par un humain
+    F->>PG: tâche du sujet : reprise par son nom, ou créée (named_task)
     F->>PG: agent_entry_write (contrôles de la garde) puis agent_entries
     F->>PG: commits de la session → code_repositories, code_commits
     PG->>PS: réplication logique
@@ -60,6 +64,9 @@ sequenceDiagram
   antérieures à `lock_entries_before` ou dans une période approuvée.
 - Projet d'une entrée : tâche donnée dans la session (`session_task`), sinon projet de l'entrée précédente de la
   session, sinon règle personnelle (`POST /api/activity/rules`), sinon projet du dépôt.
+- Tâche nommée par Claude (D18) : Claude appelle l'outil `set_current_task` du serveur MCP local du plugin ; le
+  hook relaie `session_task` `{task_name}` ; le serveur reprend ou crée la tâche de ce nom dans le projet de
+  l'entrée, et coupe l'entrée quand le sujet change en cours de route.
 - Un agent désactivé ou retiré par un admin : les événements sont gardés, aucune entrée n'est écrite.
 - Le script du plugin n'envoie ni prompt, ni contenu des outils, ni transcription : session, dépôt, branche,
   dossier, durée de l'outil. Il lit la commande d'un outil `Bash` sur le poste pour repérer un `git commit` ; la

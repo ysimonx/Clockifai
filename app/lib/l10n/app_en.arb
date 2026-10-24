@@ -71,7 +71,7 @@
   "claudeCodeRequirements": "You also need python3 (on a Mac, the developer tools: xcode-select --install).",
   "claudeCodeStepCli": "1. In a terminal, claude --version should print a version number. Otherwise, install the Claude Code command line (the VSCode extension ships its own copy, which the terminal can't see), then open a new terminal:",
   "claudeCodeStepInstall": "2. In a terminal (the Claude Code panel in VSCode has no /plugin):",
-  "claudeCodeStepStart": "4. Open a new Claude Code conversation: Claude's timer starts at the first prompt.",
+  "claudeCodeStepStart": "4. Open a new Claude Code conversation: Claude's timer starts at the first prompt. Claude names the task of each subject: allow the Clockifai tool when asked the first time.",
   "claudeCodeStepToken": "3. Paste this command into the terminal, without pressing Enter:",
   "claudeCodeStepTokenReconnect": "3. The token is only shown when a computer is connected: if this computer lacks it, tap Reconnect on its row in the list below.",
   "claudeCodeStepTokenThen": "Tap Copy token, then press Enter in the terminal: the command reads the token from the clipboard. In the other order, copying the command would replace the token.",

@@ -24,7 +24,8 @@ AGENT_KINDS = {"prompt", "agent_tool", "agent_stop", "agent_wait", "session_star
                "session_task", "session_description"}
 HUMAN_KINDS = {"focus_start", "focus_alive", "focus_end", "edit", "terminal", "presence"}
 KINDS = AGENT_KINDS | HUMAN_KINDS | {"commit"}
-CLOCK_KINDS = {"prompt", "agent_tool", "agent_stop", "agent_wait", "session_start", "session_end"}
+CLOCK_KINDS = {"prompt", "agent_tool", "agent_stop", "agent_wait", "session_start", "session_end", "session_task"}
+TASK_NAME_MAX = 80
 
 MAX_BATCH = 200
 MAX_AGE = timedelta(days=7)          # événements plus anciens refusés, et fenêtre du recalcul
@@ -185,6 +186,38 @@ def project_for(conn, workspace_id: str, rules: list[Rule], ctx: dict) -> tuple[
     return None, None
 
 
+def task_name(payload: dict) -> str | None:
+    """Nom de tâche donné par Claude (`session_task`, D18), espaces réduits et longueur bornée."""
+    name = " ".join(str(payload.get("task_name") or "").split())[:TASK_NAME_MAX]
+    return name or None
+
+
+def named_task(conn, workspace_id: str, project_id: str | None, name: str | None) -> str | None:
+    """Tâche nommée par Claude dans le projet de l'entrée (D18) : la tâche active de ce nom, sinon une nouvelle si le
+    workspace laisse tout le monde créer des tâches. None sans projet, sans nom ou sans ce droit."""
+    if not project_id or not name:
+        return None
+    # Deux sessions qui nomment le même sujet en même temps ne font qu'une tâche.
+    conn.execute("select pg_advisory_xact_lock(hashtextextended('task:' || %s || ':' || lower(%s), 0))",
+                 (project_id, name))
+    row = conn.execute(
+        "select id from public.tasks where workspace_id = %s and project_id = %s and lower(name) = lower(%s) "
+        "and status = 'active' and deleted_at is null order by created_at limit 1",
+        (workspace_id, project_id, name),
+    ).fetchone()
+    if row:
+        return str(row["id"])
+    ws = conn.execute("select task_creation from public.workspaces where id = %s", (workspace_id,)).fetchone()
+    if not ws or (ws["task_creation"] or "everyone") != "everyone":
+        return None
+    row = conn.execute(
+        "insert into public.tasks (workspace_id, project_id, name) select %s, id, %s from public.projects "
+        "where id = %s and workspace_id = %s and deleted_at is null returning id",
+        (workspace_id, name, project_id, workspace_id),
+    ).fetchone()
+    return str(row["id"]) if row else None
+
+
 def _valid_task(conn, workspace_id: str, project_id: str | None, task_id: str | None) -> tuple[str | None, str | None]:
     """Tâche donnée par la session (set_current_task) : le projet se déduit de la tâche ; un id inconnu est ignoré."""
     if task_id:
@@ -242,7 +275,8 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
         (workspace_id, session_id, now - MAX_AGE),
     ).fetchall()
     by_id = {str(r["id"]): r for r in existing_rows}
-    events = [Event(r["kind"], r["occurred_at"], _payload(r).get("duration_ms"), str(r["id"]))
+    events = [Event(r["kind"], r["occurred_at"], _payload(r).get("duration_ms"), str(r["id"]),
+                    task_name(_payload(r)) if r["kind"] == "session_task" else None)
               for r in rows if r["kind"] in CLOCK_KINDS]
     existing = [Existing(str(r["id"]), r["start_at"], r["end_at"], r["deleted_at"], r["server_start_at"],
                          r["server_end_at"]) for r in existing_rows]
@@ -267,6 +301,8 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                     task_id = str(prev[-1]["task_id"]) if prev[-1]["task_id"] else None
                 else:
                     project_id, task_id = project_for(conn, workspace_id, rules, ctx)
+            # Sujet nommé par Claude pendant cette entrée : il prime sur la tâche reprise de la précédente (D18).
+            task_id = named_task(conn, workspace_id, project_id, iv.subject) or task_id
             cur = None
             server_project = (project_id, task_id)
         else:
@@ -286,6 +322,11 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                 elif project_id is None:
                     project_id, task_id = project_for(conn, workspace_id, rules, ctx)
                 server_project = (project_id, task_id)
+            # Sujet nommé par Claude (D18), y compris dans un projet choisi à la main, sauf tâche choisie à la main.
+            human_task = cur["task_id"] is not None and cur["task_id"] != cur["server_task_id"]
+            named = None if human_task else named_task(conn, workspace_id, project_id, iv.subject)
+            if named:
+                task_id, server_project = named, (server_project[0], named)
 
         # Description (D10) : saisie humaine > Claude > commits > dépôt et branche.
         if cur is not None and cur["description"] != cur["server_description"]:
@@ -294,6 +335,9 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
         else:
             if desc_ev.get("description"):
                 description, desc_source = str(desc_ev["description"])[:DESCRIPTION_MAX], "claude"
+            elif iv.subject and task_id is None:
+                # Sujet nommé sans tâche possible (pas de projet, ou création réservée) : il décrit l'entrée.
+                description, desc_source = iv.subject, "claude"
             else:
                 subjects = [r["subject"] for r in rows if r["kind"] == "commit" and r["subject"]
                             and iv.start <= r["occurred_at"] <= until]

@@ -11,6 +11,8 @@ session (7 jours au plus) et ses entrées existantes, puis applique les opérati
 - Recalcul complet : un événement en retard ou en double donne le même résultat qu'à l'heure (D7.7).
 - Une entrée qu'un humain a supprimée, arrêtée ou dont il a changé la fin est figée : sa plage est retirée du
   calcul, elle n'est jamais recréée ni modifiée (D7.8). Un début changé à la main est gardé ; la fin suit encore.
+- Claude nomme le sujet de son travail (`session_task` avec un nom, D18) : un nom donné en début d'entrée vaut
+  pour toute l'entrée ; un nouveau nom plus tard la coupe, au dernier prompt s'il est récent, sinon à l'appel.
 """
 
 from __future__ import annotations
@@ -19,9 +21,12 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 IDLE_TIMEOUT = timedelta(minutes=10)
+# Un sujet nommé dans ce délai après le début de l'entrée (ou après son dernier prompt) vaut depuis ce début (D18).
+NAMING_GRACE = timedelta(minutes=2)
 
 # Ordre des événements d'un même instant.
-_ORDER = {"session_start": 0, "prompt": 1, "agent_tool": 2, "agent_stop": 3, "agent_wait": 4, "session_end": 5}
+_ORDER = {"session_start": 0, "prompt": 1, "session_task": 2, "agent_tool": 2, "agent_stop": 3, "agent_wait": 4,
+          "session_end": 5}
 
 
 @dataclass(frozen=True)
@@ -30,6 +35,7 @@ class Event:
     at: datetime
     duration_ms: int | None = None  # agent_tool : durée de l'outil
     id: str | None = None
+    subject: str | None = None      # session_task : nom de tâche donné par Claude (D18)
 
 
 @dataclass(frozen=True)
@@ -51,6 +57,8 @@ class Interval:
     end: datetime | None = None         # None : en cours
     waiting_since: datetime | None = None
     closed_by_idle: bool = False
+    subject: str | None = None          # sujet nommé par Claude pendant cette entrée (D18)
+    last_prompt: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -125,6 +133,13 @@ def compute_intervals(events: list[Event], frozen: list[_Span], now: datetime,
 
     out: list[Interval] = []
     cur: Interval | None = None
+    pending: str | None = None  # sujet nommé hors de toute entrée : il vaut pour la suivante
+
+    def start(at: datetime, last: datetime, prompt: datetime | None = None) -> Interval:
+        nonlocal pending
+        iv = Interval(start=at, last=last, subject=pending, last_prompt=prompt)
+        pending = None
+        return iv
 
     def close(at: datetime, by_idle: bool) -> None:
         nonlocal cur
@@ -135,7 +150,7 @@ def compute_intervals(events: list[Event], frozen: list[_Span], now: datetime,
         cur = None
 
     for e in evs:
-        if e.kind not in _ORDER or e.kind == "session_start":
+        if e.kind not in _ORDER or e.kind == "session_start" or (e.kind == "session_task" and not e.subject):
             continue
         # Une plage figée commence avant cet événement : l'entrée en cours s'arrête là.
         if cur is not None:
@@ -148,11 +163,29 @@ def compute_intervals(events: list[Event], frozen: list[_Span], now: datetime,
         gap = e.at - cur.last if cur is not None else None
         if e.kind == "prompt":
             if cur is not None and gap <= idle:
-                cur.last, cur.waiting_since = e.at, None
+                cur.last, cur.waiting_since, cur.last_prompt = e.at, None, e.at
             else:
                 if cur is not None:
                     close(cur.last, by_idle=True)
-                cur = Interval(start=e.at, last=e.at)
+                cur = start(e.at, e.at, prompt=e.at)
+        elif e.kind == "session_task":
+            if cur is not None and gap > idle:
+                close(cur.last, by_idle=True)
+            if cur is None:
+                pending = e.subject
+                continue
+            if cur.subject is not None and cur.subject.casefold() == e.subject.casefold():
+                cur.last = e.at
+                continue
+            # Nouveau sujet : il commence au dernier prompt s'il vient d'être envoyé, sinon maintenant.
+            recent = cur.last_prompt is not None and e.at - cur.last_prompt <= NAMING_GRACE
+            since = cur.last_prompt if recent else e.at
+            if since - cur.start <= NAMING_GRACE:
+                cur.subject, cur.last = e.subject, e.at  # entrée qui commence : le nom vaut pour elle
+            else:
+                last = max(cur.last, e.at)
+                close(since, by_idle=False)
+                cur = Interval(start=since, last=last, subject=e.subject, last_prompt=since if recent else None)
         elif e.kind in ("agent_tool", "agent_stop"):
             work_start = e.at
             if e.kind == "agent_tool" and e.duration_ms:
@@ -161,7 +194,7 @@ def compute_intervals(events: list[Event], frozen: list[_Span], now: datetime,
                     work_start = max(work_start, out[-1].end)
             if cur is None:
                 if e.kind == "agent_tool":  # un « Stop » seul ne prouve pas de travail
-                    cur = Interval(start=work_start, last=e.at)
+                    cur = start(work_start, e.at)
                 continue
             if gap <= idle:
                 cur.last, cur.waiting_since = e.at, None
@@ -170,7 +203,7 @@ def compute_intervals(events: list[Event], frozen: list[_Span], now: datetime,
             else:
                 close(cur.last, by_idle=True)
                 if e.kind == "agent_tool":
-                    cur = Interval(start=work_start, last=e.at)
+                    cur = start(work_start, e.at)
         elif e.kind == "agent_wait":
             if cur is not None:
                 cur.waiting_since = e.at

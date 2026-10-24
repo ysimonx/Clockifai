@@ -21,7 +21,8 @@ from flask import Blueprint, Response, abort, current_app, jsonify, request
 
 bp = Blueprint("claude", __name__)
 
-PLUGIN_FILES = (".claude-plugin/plugin.json", "hooks/hooks.json", "scripts/clockifai_hook.py")
+PLUGIN_FILES = (".claude-plugin/plugin.json", ".mcp.json", "hooks/hooks.json", "scripts/clockifai_hook.py",
+                "scripts/clockifai_mcp.py")
 ARCHIVE = "clockifai-plugin.zip"
 _HOST = re.compile(r"^(?:[A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])(?::\d{1,5})?$")
 _CACHE_MAX = 8

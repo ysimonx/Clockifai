@@ -343,6 +343,54 @@ def test_spool_when_the_server_is_down(tmp_path):
         server.close()
 
 
+# ---------------------------------------------------------------- tâche nommée par Claude (D18)
+TASK_TOOL = "mcp__plugin_clockifai_clockifai__set_current_task"
+
+
+def test_mcp_server_names_the_task_without_any_network():
+    lines = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize",
+         "params": {"protocolVersion": "2025-11-25", "capabilities": {}, "clientInfo": {"name": "claude-code"}}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+         "params": {"name": "set_current_task", "arguments": {"name": "  Export   PDF  "}}},
+        {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "set_current_task", "arguments": {}}},
+        {"jsonrpc": "2.0", "id": 5, "method": "resources/list"},
+    ]
+    stdin = "\n".join(json.dumps(x) for x in lines) + "\npas du json\n"
+    out = subprocess.run([PYTHON, str(PLUGIN / "scripts" / "clockifai_mcp.py")], input=stdin, capture_output=True,
+                         text=True, check=True, timeout=20, env={"PATH": os.environ.get("PATH", "")})
+    replies = {r["id"]: r for r in map(json.loads, out.stdout.splitlines())}
+    assert sorted(replies) == [1, 2, 3, 4, 5] and out.stderr == "", "une réponse par requête, rien d'autre"
+    init = replies[1]["result"]
+    assert init["protocolVersion"] == "2025-11-25" and init["capabilities"] == {"tools": {}}
+    assert "set_current_task" in init["instructions"]
+    [tool] = replies[2]["result"]["tools"]
+    assert tool["name"] == "set_current_task" and tool["inputSchema"]["required"] == ["name"]
+    assert replies[3]["result"]["content"][0]["text"].startswith("Tâche « Export PDF »")
+    assert replies[3]["result"]["isError"] is False and replies[4]["result"]["isError"] is True
+    assert replies[5]["error"]["code"] == -32601
+
+
+def test_hook_relays_the_task_name_and_nothing_else(tmp_path):
+    server = _Server()
+    try:
+        call = ev("PostToolUse", tmp_path, tool_name=TASK_TOOL, tool_input={"name": " Export  PDF ", "autre": "secret"},
+                  tool_response={"content": [{"type": "text", "text": "secret"}]})
+        for _ in range(2):  # le second appel tombe dans la minute des outils : le nom part quand même
+            assert run_hook(call, server.url, tmp_path / "cache").returncode == 0
+        named = [e for _, _, body in server.received for e in body["events"] if e["kind"] == "session_task"]
+        assert [e["payload"] for e in named] == [{"task_name": "Export PDF"}] * 2
+        assert "secret" not in json.dumps([body for _, _, body in server.received])
+        other = ev("PostToolUse", tmp_path, tool_name="mcp__autre__set_current_task", tool_input={"name": "X"})
+        run_hook(other, server.url, tmp_path / "cache")
+        kinds = [e["kind"] for _, _, body in server.received for e in body["events"]]
+        assert kinds.count("session_task") == 2, "seul l'outil du plugin Clockifai nomme la tâche"
+    finally:
+        server.close()
+
+
 # ---------------------------------------------------------------- marketplace de l'instance
 @pytest.fixture
 def client():
@@ -369,6 +417,9 @@ def test_marketplace_points_to_a_reproducible_archive(client):
         assert manifest["userConfig"]["url"]["default"] == "https://clockifai.example.com"
         assert manifest["userConfig"]["token"]["sensitive"] is True
         assert z.getinfo("scripts/clockifai_hook.py").external_attr >> 16 & 0o111
+        assert z.getinfo("scripts/clockifai_mcp.py").external_attr >> 16 & 0o111
+        server = json.loads(z.read(".mcp.json"))["mcpServers"]["clockifai"]
+        assert server["args"] == ["${CLAUDE_PLUGIN_ROOT}/scripts/clockifai_mcp.py"]
         assert json.loads(z.read("hooks/hooks.json"))["hooks"]["Notification"][0]["matcher"] == "permission_prompt"
     assert build_plugin_zip(PLUGIN, "https://a") == build_plugin_zip(PLUGIN, "https://a") != \
         build_plugin_zip(PLUGIN, "https://b")

@@ -2,8 +2,9 @@
 """Hook Claude Code → Clockifai (plans/10-suivi-claude-code.md, §6.1, D6, D7, D13).
 
 Lit l'événement du hook sur stdin et n'en garde que la liste blanche (D6) : session, dépôt, branche, dossier,
-durée de l'outil. Jamais le prompt, les entrées ou sorties des outils, ni la transcription. La commande d'un
-outil Bash est lue sur le poste pour y repérer un `git commit` (D13), jamais envoyée.
+durée de l'outil. Jamais le prompt, les entrées ou sorties des outils, ni la transcription, sauf le nom de tâche
+que Claude passe à l'outil `set_current_task` du plugin (D18). La commande d'un outil Bash est lue sur le poste pour
+y repérer un `git commit` (D13), jamais envoyée.
 
 N'écrit jamais sur stdout (Claude Code l'ajouterait au contexte) et sort toujours avec le code 0.
 Réglages : CLAUDE_PLUGIN_OPTION_URL et CLAUDE_PLUGIN_OPTION_TOKEN (userConfig du plugin). Sans adresse réglée,
@@ -42,6 +43,11 @@ SPOOL_MAX = 5000                 # lignes
 SPOOL_MAX_AGE = 6.5 * 86400      # le serveur refuse au-delà de 7 jours
 BATCH = 200
 COMMIT_NS = uuid.NAMESPACE_URL   # id d'un commit : uuid5(NAMESPACE_URL, "clockifai:commit:<remote_key>:<sha>")
+
+# Outil du serveur MCP du plugin (clockifai_mcp.py) : Claude y nomme la tâche du sujet en cours (D18).
+# Claude Code le nomme mcp__plugin_<plugin>_<serveur>__set_current_task.
+TASK_TOOL = re.compile(r"^mcp__plugin_clockifai_[\w-]+__set_current_task$")
+TASK_NAME_MAX = 80
 
 KINDS = {"SessionStart": "session_start", "UserPromptSubmit": "prompt", "PostToolUse": "agent_tool",
          "Stop": "agent_stop", "SubagentStop": "agent_stop", "Notification": "agent_wait",
@@ -271,7 +277,9 @@ def collect(data: dict, now: float) -> list[dict]:
     else:
         duration_ms = int(duration_ms)
     tool_due = hook == "PostToolUse" and _tool_due(session_id, duration_ms, now)
-    if hook == "PostToolUse" and not tool_due and data.get("tool_name") != "Bash":
+    task_tool = hook == "PostToolUse" and isinstance(data.get("tool_name"), str) and bool(
+        TASK_TOOL.match(data["tool_name"]))
+    if hook == "PostToolUse" and not tool_due and not task_tool and data.get("tool_name") != "Bash":
         return []  # outil fréquent (Read, Edit…) déjà signalé dans la minute : pas même un appel à git
 
     cwd = data.get("cwd") or os.getcwd()
@@ -284,6 +292,12 @@ def collect(data: dict, now: float) -> list[dict]:
             if duration_ms is not None:
                 event["duration_ms"] = duration_ms
             events.append(event)
+        if task_tool:
+            # Seule exception à la liste blanche pour tool_input : le nom de tâche que Claude a choisi d'envoyer.
+            name = " ".join(str((data.get("tool_input") or {}).get("name") or "").split())[:TASK_NAME_MAX]
+            if name:
+                events.append(dict(base, id=str(uuid.uuid4()), kind="session_task", occurred_at=iso(now),
+                                   payload={"task_name": name}))
     else:
         event = dict(base, id=str(uuid.uuid4()), kind=kind, occurred_at=iso(now))
         if hook == "SessionStart" and data.get("source"):

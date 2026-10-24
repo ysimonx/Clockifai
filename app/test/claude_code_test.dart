@@ -24,6 +24,12 @@ void main() {
     expect(ClaudeCodeSetup('https://x', platform: TargetPlatform.windows).configure, startsWith('Get-Clipboard | '));
   });
 
+  test('installation de la commande claude selon le système', () {
+    expect(ClaudeCodeSetup('https://x').installCli, 'curl -fsSL https://claude.ai/install.sh | bash');
+    expect(ClaudeCodeSetup('https://x', platform: TargetPlatform.linux).installCli, 'curl -fsSL https://claude.ai/install.sh | bash');
+    expect(ClaudeCodeSetup('https://x', platform: TargetPlatform.windows).installCli, 'irm https://claude.ai/install.ps1 | iex');
+  });
+
   test('le presse-papiers reçoit l\'objet JSON attendu par --values-stdin', () {
     expect(jsonDecode(ClaudeCodeSetup.clipboardValue('clk_0123')), {'token': 'clk_0123'});
   });

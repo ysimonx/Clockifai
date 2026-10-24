@@ -27,6 +27,12 @@ class ClaudeCodeSetup {
   final TargetPlatform platform;
 
   bool get local => !base.startsWith('https://');
+
+  /// Installation de la commande `claude` (installeur natif, code.claude.com/docs/en/setup). L'extension VSCode embarque
+  /// sa propre copie de Claude Code, hors du `PATH` : elle marche sans la commande, qui sert à installer le plugin.
+  String get installCli => platform == TargetPlatform.windows
+      ? 'irm https://claude.ai/install.ps1 | iex'
+      : 'curl -fsSL https://claude.ai/install.sh | bash';
   String get plugin => local ? 'clockifai@clockifai-dev' : 'clockifai@clockifai';
 
   String get install => [
@@ -194,7 +200,7 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
   }
 }
 
-/// Les trois étapes, affichées une seule fois avec le jeton qui vient d'être créé.
+/// Les étapes de connexion, affichées une seule fois avec le jeton qui vient d'être créé.
 class _Steps extends StatelessWidget {
   const _Steps({required this.name, required this.token});
   final String name;
@@ -211,6 +217,9 @@ class _Steps extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(l.apiTokenCreated(name), style: theme.textTheme.titleSmall),
+          const SizedBox(height: 12),
+          Text(l.claudeCodeStepCli),
+          _CommandBox(setup.installCli),
           const SizedBox(height: 12),
           Text(l.claudeCodeStepInstall),
           _CommandBox(setup.install),

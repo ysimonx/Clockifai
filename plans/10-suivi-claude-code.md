@@ -574,7 +574,9 @@ envoie ce qu'on écrit.
    claude plugin install clockifai@clockifai
    ```
    Il faut la commande `claude` à jour sur le poste : le binaire embarqué par l'extension VSCode n'est pas sur
-   le `PATH`. Dans Claude Code en terminal, `/plugin marketplace add …` et `/plugin install …` font la même
+   le `PATH`. L'écran commence donc par `claude --version` et, à défaut, la commande d'installation officielle
+   (`curl -fsSL https://claude.ai/install.sh | bash`, ou `irm https://claude.ai/install.ps1 | iex` sous Windows),
+   ajoutée le 24 octobre 2026. Dans Claude Code en terminal, `/plugin marketplace add …` et `/plugin install …` font la même
    chose.
 2. `claude plugin install` **ne demande rien** (vérifié le 23 octobre 2026, v2.1.309) : il signale l'option
    requise manquante. L'URL est déjà remplie (valeur par défaut de l'archive) ; le jeton se donne par
@@ -707,7 +709,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 ## 8. Application Flutter
 
 - **Paramètres → Intégrations → Claude Code** (fait le 24 octobre 2026, `features/integrations/claude_code.dart`) :
-  - créer un jeton (nom du poste), affiché une seule fois avec les trois étapes : installation du plugin (marketplace
+  - créer un jeton (nom du poste), affiché une seule fois avec les étapes : commande `claude` (`claude --version`, sinon son installation), installation du plugin (marketplace
     de l'instance, ou `clockifai-dev` pour une instance en http), « Copier le jeton » qui met
     `{"token": "clk_…"}` dans le presse-papiers, et `pbpaste | claude plugin configure … --values-stdin`
     (`Get-Clipboard` sous Windows, `wl-paste` sous Linux) ;

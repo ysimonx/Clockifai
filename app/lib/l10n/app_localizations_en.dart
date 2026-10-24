@@ -121,7 +121,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String apiTokenCreated(String name) {
-    return 'Token created for “$name”. It won\'t be shown again: follow these three steps now.';
+    return 'Token created for “$name”. It won\'t be shown again: follow these steps now.';
   }
 
   @override
@@ -243,19 +243,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get claudeCodeRequirements =>
-      'You need an up-to-date claude command in the terminal, and python3 (on a Mac, the developer tools: xcode-select --install).';
+      'You also need python3 (on a Mac, the developer tools: xcode-select --install).';
+
+  @override
+  String get claudeCodeStepCli =>
+      '1. In a terminal, claude --version should print a version number. Otherwise, install the Claude Code command line (the VSCode extension ships its own copy, which the terminal can\'t see), then open a new terminal:';
 
   @override
   String get claudeCodeStepInstall =>
-      '1. In a terminal (the Claude Code panel in VSCode has no /plugin):';
+      '2. In a terminal (the Claude Code panel in VSCode has no /plugin):';
 
   @override
   String get claudeCodeStepStart =>
-      '3. Open a new Claude Code conversation: Claude\'s timer starts at the first prompt.';
+      '4. Open a new Claude Code conversation: Claude\'s timer starts at the first prompt.';
 
   @override
   String get claudeCodeStepToken =>
-      '2. Copy the token, then save it in the plugin:';
+      '3. Copy the token, then save it in the plugin:';
 
   @override
   String get client => 'Client';

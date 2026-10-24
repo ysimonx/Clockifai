@@ -122,7 +122,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String apiTokenCreated(String name) {
-    return 'Jeton créé pour « $name ». Il ne sera plus affiché : suivez ces trois étapes maintenant.';
+    return 'Jeton créé pour « $name ». Il ne sera plus affiché : suivez ces étapes maintenant.';
   }
 
   @override
@@ -246,19 +246,23 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get claudeCodeRequirements =>
-      'Il faut la commande claude à jour dans le terminal, et python3 (sur Mac, les outils de développement : xcode-select --install).';
+      'Il faut aussi python3 (sur Mac, les outils de développement : xcode-select --install).';
+
+  @override
+  String get claudeCodeStepCli =>
+      '1. Dans un terminal, claude --version doit afficher un numéro de version. Sinon, installez Claude Code en ligne de commande (l\'extension VSCode embarque sa propre copie, absente du terminal), puis ouvrez un nouveau terminal :';
 
   @override
   String get claudeCodeStepInstall =>
-      '1. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :';
+      '2. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :';
 
   @override
   String get claudeCodeStepStart =>
-      '3. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.';
+      '4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.';
 
   @override
   String get claudeCodeStepToken =>
-      '2. Copiez le jeton, puis enregistrez-le dans le plugin :';
+      '3. Copiez le jeton, puis enregistrez-le dans le plugin :';
 
   @override
   String get client => 'Client';

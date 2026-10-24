@@ -42,10 +42,17 @@ cat > "$OUT/ExportOptions.plist" <<PLIST
 </dict>
 </plist>
 PLIST
-xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportPath "$OUT" \
-  -exportOptionsPlist "$OUT/ExportOptions.plist" -allowProvisioningUpdates || {
-  echo "Envoi refusé. « App record … not found » : créez l'app dans App Store Connect" >&2
-  echo "(Apps > + > Nouvelle app, identifiant de bundle com.kysoe.clockifai), puis relancez." >&2
+if ! xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportPath "$OUT" \
+  -exportOptionsPlist "$OUT/ExportOptions.plist" -allowProvisioningUpdates > "$OUT/export.log" 2>&1; then
+  tail -5 "$OUT/export.log" >&2
+  if grep -q "Failed to Use Accounts" "$OUT/export.log"; then
+    # « Invalid credentials in keychain … missing Xcode-Token » : la session du compte dans Xcode a expiré.
+    echo "Envoi refusé : la connexion de Xcode au compte Apple a expiré. Xcode > Réglages > Comptes :" >&2
+    echo "reconnectez le compte (ou retirez-le et rajoutez-le), puis relancez." >&2
+  else
+    echo "Envoi refusé. « App record … not found » : créez l'app dans App Store Connect" >&2
+    echo "(Apps > + > Nouvelle app, identifiant de bundle com.kysoe.clockifai), puis relancez." >&2
+  fi
   exit 1
-}
+fi
 echo "[ios] envoyé : $VERSION ($BUILD) apparaîtra dans TestFlight après traitement par Apple (5 à 30 min)."

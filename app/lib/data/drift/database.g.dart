@@ -82,6 +82,17 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _claudeTasksMeta = const VerificationMeta(
+    'claudeTasks',
+  );
+  @override
+  late final GeneratedColumn<String> claudeTasks = GeneratedColumn<String>(
+    'claude_tasks',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -114,6 +125,7 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     timezone,
     locale,
     defaultWorkspaceId,
+    claudeTasks,
     createdAt,
     updatedAt,
   ];
@@ -176,6 +188,15 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         ),
       );
     }
+    if (data.containsKey('claude_tasks')) {
+      context.handle(
+        _claudeTasksMeta,
+        claudeTasks.isAcceptableOrUnknown(
+          data['claude_tasks']!,
+          _claudeTasksMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -225,6 +246,10 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         DriftSqlType.string,
         data['${effectivePrefix}default_workspace_id'],
       ),
+      claudeTasks: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}claude_tasks'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -250,6 +275,9 @@ class Profile extends DataClass implements Insertable<Profile> {
   final String timezone;
   final String locale;
   final String? defaultWorkspaceId;
+
+  /// Tâches de Claude (plan 10, D18) : `subject`, `session` ou `off` ; nul tant que la colonne n'est pas synchronisée.
+  final String? claudeTasks;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   const Profile({
@@ -260,6 +288,7 @@ class Profile extends DataClass implements Insertable<Profile> {
     required this.timezone,
     required this.locale,
     this.defaultWorkspaceId,
+    this.claudeTasks,
     this.createdAt,
     this.updatedAt,
   });
@@ -278,6 +307,9 @@ class Profile extends DataClass implements Insertable<Profile> {
     map['locale'] = Variable<String>(locale);
     if (!nullToAbsent || defaultWorkspaceId != null) {
       map['default_workspace_id'] = Variable<String>(defaultWorkspaceId);
+    }
+    if (!nullToAbsent || claudeTasks != null) {
+      map['claude_tasks'] = Variable<String>(claudeTasks);
     }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
@@ -303,6 +335,9 @@ class Profile extends DataClass implements Insertable<Profile> {
       defaultWorkspaceId: defaultWorkspaceId == null && nullToAbsent
           ? const Value.absent()
           : Value(defaultWorkspaceId),
+      claudeTasks: claudeTasks == null && nullToAbsent
+          ? const Value.absent()
+          : Value(claudeTasks),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -327,6 +362,7 @@ class Profile extends DataClass implements Insertable<Profile> {
       defaultWorkspaceId: serializer.fromJson<String?>(
         json['defaultWorkspaceId'],
       ),
+      claudeTasks: serializer.fromJson<String?>(json['claudeTasks']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
     );
@@ -342,6 +378,7 @@ class Profile extends DataClass implements Insertable<Profile> {
       'timezone': serializer.toJson<String>(timezone),
       'locale': serializer.toJson<String>(locale),
       'defaultWorkspaceId': serializer.toJson<String?>(defaultWorkspaceId),
+      'claudeTasks': serializer.toJson<String?>(claudeTasks),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
     };
@@ -355,6 +392,7 @@ class Profile extends DataClass implements Insertable<Profile> {
     String? timezone,
     String? locale,
     Value<String?> defaultWorkspaceId = const Value.absent(),
+    Value<String?> claudeTasks = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
   }) => Profile(
@@ -367,6 +405,7 @@ class Profile extends DataClass implements Insertable<Profile> {
     defaultWorkspaceId: defaultWorkspaceId.present
         ? defaultWorkspaceId.value
         : this.defaultWorkspaceId,
+    claudeTasks: claudeTasks.present ? claudeTasks.value : this.claudeTasks,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
   );
@@ -383,6 +422,9 @@ class Profile extends DataClass implements Insertable<Profile> {
       defaultWorkspaceId: data.defaultWorkspaceId.present
           ? data.defaultWorkspaceId.value
           : this.defaultWorkspaceId,
+      claudeTasks: data.claudeTasks.present
+          ? data.claudeTasks.value
+          : this.claudeTasks,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -398,6 +440,7 @@ class Profile extends DataClass implements Insertable<Profile> {
           ..write('timezone: $timezone, ')
           ..write('locale: $locale, ')
           ..write('defaultWorkspaceId: $defaultWorkspaceId, ')
+          ..write('claudeTasks: $claudeTasks, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -413,6 +456,7 @@ class Profile extends DataClass implements Insertable<Profile> {
     timezone,
     locale,
     defaultWorkspaceId,
+    claudeTasks,
     createdAt,
     updatedAt,
   );
@@ -427,6 +471,7 @@ class Profile extends DataClass implements Insertable<Profile> {
           other.timezone == this.timezone &&
           other.locale == this.locale &&
           other.defaultWorkspaceId == this.defaultWorkspaceId &&
+          other.claudeTasks == this.claudeTasks &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -439,6 +484,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
   final Value<String> timezone;
   final Value<String> locale;
   final Value<String?> defaultWorkspaceId;
+  final Value<String?> claudeTasks;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
   final Value<int> rowid;
@@ -450,6 +496,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     this.timezone = const Value.absent(),
     this.locale = const Value.absent(),
     this.defaultWorkspaceId = const Value.absent(),
+    this.claudeTasks = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -462,6 +509,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     this.timezone = const Value.absent(),
     this.locale = const Value.absent(),
     this.defaultWorkspaceId = const Value.absent(),
+    this.claudeTasks = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -474,6 +522,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Expression<String>? timezone,
     Expression<String>? locale,
     Expression<String>? defaultWorkspaceId,
+    Expression<String>? claudeTasks,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -487,6 +536,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
       if (locale != null) 'locale': locale,
       if (defaultWorkspaceId != null)
         'default_workspace_id': defaultWorkspaceId,
+      if (claudeTasks != null) 'claude_tasks': claudeTasks,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -501,6 +551,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Value<String>? timezone,
     Value<String>? locale,
     Value<String?>? defaultWorkspaceId,
+    Value<String?>? claudeTasks,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
     Value<int>? rowid,
@@ -513,6 +564,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
       timezone: timezone ?? this.timezone,
       locale: locale ?? this.locale,
       defaultWorkspaceId: defaultWorkspaceId ?? this.defaultWorkspaceId,
+      claudeTasks: claudeTasks ?? this.claudeTasks,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -543,6 +595,9 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     if (defaultWorkspaceId.present) {
       map['default_workspace_id'] = Variable<String>(defaultWorkspaceId.value);
     }
+    if (claudeTasks.present) {
+      map['claude_tasks'] = Variable<String>(claudeTasks.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -565,6 +620,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
           ..write('timezone: $timezone, ')
           ..write('locale: $locale, ')
           ..write('defaultWorkspaceId: $defaultWorkspaceId, ')
+          ..write('claudeTasks: $claudeTasks, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -15206,6 +15262,7 @@ typedef $$ProfilesTableCreateCompanionBuilder = ProfilesCompanion Function({
   Value<String> timezone,
   Value<String> locale,
   Value<String?> defaultWorkspaceId,
+  Value<String?> claudeTasks,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
   Value<int> rowid,
@@ -15218,6 +15275,7 @@ typedef $$ProfilesTableUpdateCompanionBuilder = ProfilesCompanion Function({
   Value<String> timezone,
   Value<String> locale,
   Value<String?> defaultWorkspaceId,
+  Value<String?> claudeTasks,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
   Value<int> rowid,
@@ -15264,6 +15322,11 @@ class $$ProfilesTableFilterComposer
 
   ColumnFilters<String> get defaultWorkspaceId => $composableBuilder(
     column: $table.defaultWorkspaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get claudeTasks => $composableBuilder(
+    column: $table.claudeTasks,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15322,6 +15385,11 @@ class $$ProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get claudeTasks => $composableBuilder(
+    column: $table.claudeTasks,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -15367,6 +15435,11 @@ class $$ProfilesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get claudeTasks => $composableBuilder(
+    column: $table.claudeTasks,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -15409,6 +15482,7 @@ class $$ProfilesTableTableManager
                 Value<String> timezone = const Value.absent(),
                 Value<String> locale = const Value.absent(),
                 Value<String?> defaultWorkspaceId = const Value.absent(),
+                Value<String?> claudeTasks = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -15420,6 +15494,7 @@ class $$ProfilesTableTableManager
                 timezone: timezone,
                 locale: locale,
                 defaultWorkspaceId: defaultWorkspaceId,
+                claudeTasks: claudeTasks,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -15433,6 +15508,7 @@ class $$ProfilesTableTableManager
                 Value<String> timezone = const Value.absent(),
                 Value<String> locale = const Value.absent(),
                 Value<String?> defaultWorkspaceId = const Value.absent(),
+                Value<String?> claudeTasks = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -15444,6 +15520,7 @@ class $$ProfilesTableTableManager
                 timezone: timezone,
                 locale: locale,
                 defaultWorkspaceId: defaultWorkspaceId,
+                claudeTasks: claudeTasks,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

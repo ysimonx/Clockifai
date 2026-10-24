@@ -274,6 +274,23 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap Copy token, then press Enter in the terminal: the command reads the token from the clipboard. In the other order, copying the command would replace the token.';
 
   @override
+  String get claudeTasks => 'Claude\'s tasks';
+
+  @override
+  String get claudeTasksHelp =>
+      'Claude names the task of its work, and your sessions\' time goes there, in the repository\'s project. A more precise name renames the task instead of creating another; a task you choose stays.';
+
+  @override
+  String get claudeTasksOff => 'No task: project only';
+
+  @override
+  String get claudeTasksSession => 'One task per Claude Code session';
+
+  @override
+  String get claudeTasksSubject =>
+      'One task per subject (same name, same task)';
+
+  @override
   String get client => 'Client';
 
   @override

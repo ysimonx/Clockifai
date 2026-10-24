@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,12 +9,14 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/catalog.dart';
+import '../../core/di.dart';
 import '../../core/l10n.dart';
 import '../../core/services_api.dart';
 import '../../core/session.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../core/widgets/teammates.dart';
+import '../../data/drift/database.dart';
 
 /// Commandes de connexion d'un poste au plugin Claude Code (plans/10-suivi-claude-code.md, §6.1).
 ///
@@ -194,6 +197,22 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
                   onPressed: () => setState(() => _showCommands = !_showCommands),
                 ),
             ]),
+            // Réglage personnel (profiles.claude_tasks, plan 10, D18) : appliqué par le serveur au calcul des sessions.
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(l.claudeTasks, style: theme.textTheme.titleSmall),
+            ),
+            Text(l.claudeTasksHelp, style: theme.textTheme.bodySmall),
+            DropdownButton<String>(
+              value: session.profile?.claudeTasks ?? 'subject',
+              isExpanded: true,
+              items: [
+                DropdownMenuItem(value: 'subject', child: Text(l.claudeTasksSubject)),
+                DropdownMenuItem(value: 'session', child: Text(l.claudeTasksSession)),
+                DropdownMenuItem(value: 'off', child: Text(l.claudeTasksOff)),
+              ],
+              onChanged: (v) => workspaceRepo.updateProfile(session.userId!, ProfilesCompanion(claudeTasks: Value(v))),
+            ),
             const SizedBox(height: 12),
             if (_created != null)
               _Steps(name: _created!.name, token: _created!.token)

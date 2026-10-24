@@ -336,11 +336,16 @@
             directement dans ce projet, et ses entrées sans projet de la semaine aussi. Le choix du projet règle aussi
             <span class="ui">Facturable</span>, selon le réglage de votre entreprise pour le temps des agents ; vous
             pouvez le changer ensuite. La règle ne retient que le projet, jamais la tâche.</li>
-          <li>Claude nomme lui-même la tâche de chaque nouveau sujet (« Relecture du README », « Export PDF »…) : la
-            tâche est reprise si elle existe dans le projet de la session, sinon créée, et un changement de sujet en
-            cours de route ouvre une nouvelle entrée. À la première fois, Claude Code demande d’autoriser l’outil
-            Clockifai : acceptez-le, de préférence sans redemande. Sans projet, le nom sert de description en
-            attendant ; une tâche que vous choisissez vous-même n’est jamais remplacée.</li>
+          <li>Claude nomme lui-même la tâche de son travail dès qu’il sait sur quoi il porte (« Relecture du README »,
+            « Export PDF »…), mais pas pour une simple salutation. À la première fois, Claude Code demande d’autoriser l’outil Clockifai : acceptez-le, de
+            préférence sans redemande. Le réglage <span class="ui">Tâches de Claude</span> de l’écran Claude Code
+            choisit comment ce temps est rangé :
+            <span class="ui">Une tâche par sujet</span> (un même nom retombe sur la même tâche, et un changement de
+            sujet en cours de route ouvre une nouvelle entrée), <span class="ui">Une tâche par session Claude
+            Code</span> (chaque conversation a sa tâche, datée si le nom existe déjà, reprises comprises) ou
+            <span class="ui">Pas de tâche</span> (le projet seulement). Si Claude précise le nom juste après l’avoir
+            donné, la tâche est renommée au lieu d’en créer une autre. Sans projet, le nom sert de description en
+            attendant ; une tâche que vous choisissez, ou que vous renommez, n’est jamais remplacée.</li>
           <li>Vous pouvez aussi donner une tâche à la session : dans la fenêtre de l’entrée, une fois le
             projet choisi, <span class="ui">Nouvelle tâche</span> la crée et la sélectionne. Si la session reprend plus
             tard, même le lendemain, son temps continue dans cette tâche, tant que la branche git ne change pas.</li>

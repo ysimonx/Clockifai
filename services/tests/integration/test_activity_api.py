@@ -257,6 +257,120 @@ def test_claude_names_the_task_of_its_subject(team):
         rest("PATCH", f"workspaces?id=eq.{team['wid']}", owner_t, {"task_creation": "everyone"})
 
 
+def test_a_refined_subject_renames_its_task_instead_of_adding_one(team):
+    """Préciser = renommer (D18) : un nom plus précis, en début d'entrée, renomme la tâche créée pour elle ; si le
+    sujet a déjà sa tâche, l'entrée y passe et la tâche vide disparaît ; une tâche renommée à la main ou utilisée
+    par une autre entrée n'est jamais touchée."""
+    pilote_t, _ = team["people"]["pilote"]
+    owner_t, _ = team["people"]["owner"]
+    repo = {"remote_key": "github.com/ysimonx/preciser", "cwd": "/Users/y/dev/preciser"}
+    assert api("POST", "/api/activity/rules", team["token"],
+               {"remote_key": repo["remote_key"], "project_id": team["project"]})[0] == 201
+
+    def at(minutes: float, kind: str, session: str, name: str | None = None) -> dict:
+        return _event(kind, _ago(minutes), session, **repo, **({"payload": {"task_name": name}} if name else {}))
+
+    def send(*events) -> None:
+        assert api("POST", "/api/activity/events", team["token"], {"events": list(events)})[0] == 202
+
+    def entry_at(minutes: float) -> dict:
+        return next(e for e in _agent_entries(team["agent"]) if e["start_at"].startswith(iso(_ago(minutes))[:16]))
+
+    def task_ids(name: str) -> list[str]:
+        _, rows = rest("GET", f"tasks?project_id=eq.{team['project']}&deleted_at=is.null&select=id,name", SERVICE)
+        return [r["id"] for r in rows if r["name"].lower() == name.lower()]
+
+    # Un premier nom vague, précisé une minute plus tard : une seule tâche, renommée.
+    s1 = str(uuid.uuid4())
+    send(at(110, "prompt", s1), at(109.9, "session_task", s1, "Exploration"), at(109.5, "agent_tool", s1))
+    [exploration] = task_ids("Exploration")
+    send(at(109, "prompt", s1), at(108.9, "session_task", s1, "Export Word"), at(108.5, "agent_stop", s1))
+    assert task_ids("Exploration") == [] and task_ids("Export Word") == [exploration]
+    assert entry_at(110)["task_id"] == exploration
+
+    # Le sujet précisé a déjà sa tâche : l'entrée y passe, la tâche vide disparaît.
+    s2 = str(uuid.uuid4())
+    send(at(116, "prompt", s2), at(115.9, "session_task", s2, "Brouillon"), at(115.5, "agent_tool", s2))
+    assert len(task_ids("Brouillon")) == 1
+    send(at(115, "prompt", s2), at(114.9, "session_task", s2, "export word"), at(114.5, "agent_stop", s2))
+    assert task_ids("Brouillon") == [] and entry_at(116)["task_id"] == exploration
+
+    # Tâche renommée à la main : c'est un choix, l'entrée y reste.
+    s3 = str(uuid.uuid4())
+    send(at(122, "prompt", s3), at(121.9, "session_task", s3, "Maquette"), at(121.5, "agent_tool", s3))
+    [maquette] = task_ids("Maquette")
+    assert rest("PATCH", f"tasks?id=eq.{maquette}", owner_t, {"name": "Maquette de l'écran"})[0] == 200
+    send(at(121, "prompt", s3), at(120.9, "session_task", s3, "Maquette mobile"), at(120.5, "agent_stop", s3))
+    assert entry_at(122)["task_id"] == maquette and task_ids("Maquette mobile") == []
+
+    # Tâche déjà utilisée par une autre entrée : jamais renommée, l'entrée passe à une nouvelle tâche.
+    s4 = str(uuid.uuid4())
+    send(at(134, "prompt", s4), at(133.9, "session_task", s4, "Partagée"), at(133.5, "agent_tool", s4))
+    [partagee] = task_ids("Partagée")
+    assert rest("PATCH", f"time_entries?id=eq.{entry_at(110)['id']}", pilote_t, {"task_id": partagee})[0] == 200
+    send(at(133, "prompt", s4), at(132.9, "session_task", s4, "Partagée v2"), at(132.5, "agent_stop", s4))
+    [v2] = task_ids("Partagée v2")
+    assert task_ids("Partagée") == [partagee] and entry_at(134)["task_id"] == v2
+
+
+def test_task_per_session_and_no_task_settings(team):
+    """Réglage « Tâches de Claude » du pilote (profiles.claude_tasks, D18) : une tâche par session, toujours
+    nouvelle (datée si le nom est pris) et renommée quand Claude précise ; « off » : aucune tâche."""
+    pilote_t, pilote = team["people"]["pilote"]
+    repo = {"remote_key": "github.com/ysimonx/session", "cwd": "/Users/y/dev/session"}
+    assert api("POST", "/api/activity/rules", team["token"],
+               {"remote_key": repo["remote_key"], "project_id": team["project"]})[0] == 201
+
+    def at(minutes: float, kind: str, session: str, name: str | None = None) -> dict:
+        return _event(kind, _ago(minutes), session, **repo, **({"payload": {"task_name": name}} if name else {}))
+
+    def send(*events) -> None:
+        assert api("POST", "/api/activity/events", team["token"], {"events": list(events)})[0] == 202
+
+    def entry_at(minutes: float) -> dict:
+        return next(e for e in _agent_entries(team["agent"]) if e["start_at"].startswith(iso(_ago(minutes))[:16]))
+
+    def tasks_like(prefix: str) -> list[dict]:
+        _, rows = rest("GET", f"tasks?project_id=eq.{team['project']}&deleted_at=is.null&select=id,name", SERVICE)
+        return [r for r in rows if r["name"].lower().startswith(prefix.lower())]
+
+    def mode(value: str) -> None:
+        assert rest("PATCH", f"profiles?id=eq.{pilote}", pilote_t, {"claude_tasks": value})[0] == 200
+
+    assert rest("POST", "tasks", team["people"]["owner"][0], {"workspace_id": team["wid"], "project_id": team["project"],
+                                                              "name": "Rapport annuel"})[0] == 201
+    mode("session")
+    try:
+        session = str(uuid.uuid4())
+        send(at(200, "prompt", session), at(199.9, "session_task", session, "Rapport annuel"),
+             at(199, "agent_tool", session), at(198, "agent_stop", session))
+        dated = [t for t in tasks_like("Rapport annuel (")]
+        assert len(dated) == 1, "le nom est pris : une nouvelle tâche, datée"
+        task = dated[0]["id"]
+        assert entry_at(200)["task_id"] == task
+
+        # Claude précise : la tâche de la session est renommée, l'entrée n'est pas coupée.
+        send(at(197, "prompt", session), at(196.9, "session_task", session, "Rapport annuel des ventes"),
+             at(195, "agent_stop", session))
+        assert [t["name"] for t in tasks_like("Rapport annuel des ventes")] == ["Rapport annuel des ventes"]
+        first = entry_at(200)
+        assert first["task_id"] == task and first["end_at"].startswith(iso(_ago(195))[:16])
+
+        # Reprise après la pause : même tâche ; un nouveau recalcul ne crée rien.
+        send(at(180, "prompt", session), at(179, "agent_stop", session))
+        assert entry_at(180)["task_id"] == task
+        send(at(179.5, "agent_tool", session))
+        assert len(tasks_like("Rapport annuel")) == 2  # la tâche d'origine et celle de la session
+
+        mode("off")
+        off = str(uuid.uuid4())
+        send(at(170, "prompt", off), at(169.9, "session_task", off, "Sans tâche voulue"), at(169, "agent_stop", off))
+        entry = entry_at(170)
+        assert entry["task_id"] is None and entry["description"] == "session (main)" and not tasks_like("Sans tâche")
+    finally:
+        mode("subject")
+
+
 def test_rule_from_an_entry_reattributes_entries_without_project(team):
     session = str(uuid.uuid4())
     events = [_event("prompt", _ago(70), session, remote_key="github.com/ysimonx/fidwork"),

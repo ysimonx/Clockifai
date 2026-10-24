@@ -12,7 +12,9 @@ session (7 jours au plus) et ses entrées existantes, puis applique les opérati
 - Une entrée qu'un humain a supprimée, arrêtée ou dont il a changé la fin est figée : sa plage est retirée du
   calcul, elle n'est jamais recréée ni modifiée (D7.8). Un début changé à la main est gardé ; la fin suit encore.
 - Claude nomme le sujet de son travail (`session_task` avec un nom, D18) : un nom donné en début d'entrée vaut
-  pour toute l'entrée ; un nouveau nom plus tard la coupe, au dernier prompt s'il est récent, sinon à l'appel.
+  pour toute l'entrée, comme le premier nom de la première entrée de la session, quel que soit le délai ; un
+  nouveau nom plus tard la coupe, au dernier prompt s'il est récent, sinon à l'appel. Sans coupure
+  (`split_subjects=False`, une tâche par session), un nouveau nom renomme l'entrée.
 """
 
 from __future__ import annotations
@@ -59,6 +61,7 @@ class Interval:
     closed_by_idle: bool = False
     subject: str | None = None          # sujet nommé par Claude pendant cette entrée (D18)
     last_prompt: datetime | None = None
+    first: bool = False                 # première entrée de la session : rien de calculé ni de figé avant
 
 
 @dataclass(frozen=True)
@@ -121,7 +124,7 @@ def _not_inside(spans: list[_Span], at: datetime) -> datetime:
 
 
 def compute_intervals(events: list[Event], frozen: list[_Span], now: datetime,
-                      idle: timedelta = IDLE_TIMEOUT) -> list[Interval]:
+                      idle: timedelta = IDLE_TIMEOUT, split_subjects: bool = True) -> list[Interval]:
     seen: set = set()
     evs = []
     for e in events:
@@ -137,7 +140,8 @@ def compute_intervals(events: list[Event], frozen: list[_Span], now: datetime,
 
     def start(at: datetime, last: datetime, prompt: datetime | None = None) -> Interval:
         nonlocal pending
-        iv = Interval(start=at, last=last, subject=pending, last_prompt=prompt)
+        first = not out and not any(s.start < at for s in frozen)
+        iv = Interval(start=at, last=last, subject=pending, last_prompt=prompt, first=first)
         pending = None
         return iv
 
@@ -180,8 +184,9 @@ def compute_intervals(events: list[Event], frozen: list[_Span], now: datetime,
             # Nouveau sujet : il commence au dernier prompt s'il vient d'être envoyé, sinon maintenant.
             recent = cur.last_prompt is not None and e.at - cur.last_prompt <= NAMING_GRACE
             since = cur.last_prompt if recent else e.at
-            if since - cur.start <= NAMING_GRACE:
-                cur.subject, cur.last = e.subject, e.at  # entrée qui commence : le nom vaut pour elle
+            if not split_subjects or (cur.subject is None and cur.first) or since - cur.start <= NAMING_GRACE:
+                # Entrée qui commence, premier nom de la session, ou une tâche par session : le nom vaut pour elle.
+                cur.subject, cur.last = e.subject, e.at
             else:
                 last = max(cur.last, e.at)
                 close(since, by_idle=False)
@@ -252,6 +257,6 @@ def reconcile(intervals: list[Interval], existing: list[Existing], now: datetime
 
 
 def plan_session(events: list[Event], existing: list[Existing], now: datetime,
-                 idle: timedelta = IDLE_TIMEOUT) -> list[Create | Update]:
+                 idle: timedelta = IDLE_TIMEOUT, split_subjects: bool = True) -> list[Create | Update]:
     """Entrée principale : opérations à appliquer pour une session."""
-    return reconcile(compute_intervals(events, frozen_spans(existing, now), now, idle), existing, now)
+    return reconcile(compute_intervals(events, frozen_spans(existing, now), now, idle, split_subjects), existing, now)

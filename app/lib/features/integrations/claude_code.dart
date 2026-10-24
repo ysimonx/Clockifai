@@ -95,6 +95,8 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
   bool _agentActive = true;
   String? _error;
   ({String name, String token})? _created;
+  /// Les étapes sans jeton (« Afficher les commandes d'installation ») : un jeton ne s'affiche qu'à sa création.
+  bool _showCommands = false;
 
   @override
   void initState() {
@@ -132,6 +134,25 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
     }
   }
 
+  /// Nouveau jeton sous le même nom, puis révocation de l'ancien : le jeton d'un poste ne se réaffiche jamais (le
+  /// serveur n'en garde que l'empreinte). Si la révocation échoue, l'ancien reste listé, à révoquer à la main.
+  Future<void> _reconnect(Map<String, dynamic> t) async {
+    final l = context.l10n;
+    final name = t['name'] as String;
+    if (!await confirm(context, title: l.reconnectComputer, message: l.reconnectComputerMessage(name), confirmLabel: l.reconnect)) return;
+    try {
+      final res = await ServicesApi.post('/api/tokens', {'workspace_id': widget.workspaceId, 'name': name});
+      if (mounted) setState(() => _created = (name: res['name'] as String, token: res['token'] as String));
+    } catch (_) {
+      if (mounted) showSnack(context, l.onlineOnly);
+      return;
+    }
+    try {
+      await ServicesApi.delete('/api/tokens/${t['id']}', {'workspace_id': widget.workspaceId});
+    } catch (_) {}
+    await _load();
+  }
+
   Future<void> _revoke(Map<String, dynamic> t) async {
     final l = context.l10n;
     if (!await confirm(context, title: l.revoke, message: l.revokeTokenConfirm(t['name'] as String), confirmLabel: l.revoke)) return;
@@ -158,17 +179,25 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
         child: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Text(l.claudeCodeIntro(agent == null ? 'Claude · ${session.displayName}' : memberName(agent))),
-            if (agent != null)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
+            Wrap(spacing: 8, children: [
+              if (agent != null)
+                TextButton.icon(
                   icon: const Icon(Icons.smart_toy_outlined, size: 18),
                   label: Text(l.agentCardLink),
                   onPressed: () => Navigator.pop(context, Uri(path: '/team', queryParameters: {'member': agent.userId}).toString()),
                 ),
-              ),
+              if (_created == null)
+                TextButton.icon(
+                  icon: const Icon(Icons.terminal, size: 18),
+                  label: Text(_showCommands ? l.hideInstallCommands : l.showInstallCommands),
+                  onPressed: () => setState(() => _showCommands = !_showCommands),
+                ),
+            ]),
             const SizedBox(height: 12),
-            if (_created != null) _Steps(name: _created!.name, token: _created!.token),
+            if (_created != null)
+              _Steps(name: _created!.name, token: _created!.token)
+            else if (_showCommands)
+              const _Steps(),
             if (!_agentActive && (_tokens?.any((t) => t['user_id'] == session.userId) ?? false))
               Card(
                 color: theme.colorScheme.errorContainer,
@@ -194,7 +223,12 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
                 leading: const Icon(Icons.computer),
                 title: Text(t['user_id'] == session.userId ? t['name'] as String : '${t['name']} · ${t['user_name'] ?? ''}'),
                 subtitle: Text(lastEventLabel(l, context.localeTag, DateTime.tryParse(t['last_used_at'] as String? ?? ''), now)),
-                trailing: IconButton(tooltip: l.revoke, icon: const Icon(Icons.delete_outline), onPressed: () => _revoke(t)),
+                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                  // Un jeton ne se crée que pour soi : un admin révoque ceux des autres, sans les reconnecter.
+                  if (t['user_id'] == session.userId)
+                    IconButton(tooltip: l.reconnect, icon: const Icon(Icons.sync), onPressed: () => _reconnect(t)),
+                  IconButton(tooltip: l.revoke, icon: const Icon(Icons.delete_outline), onPressed: () => _revoke(t)),
+                ]),
               ),
           ]),
         ),
@@ -207,11 +241,12 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
   }
 }
 
-/// Les étapes de connexion, affichées une seule fois avec le jeton qui vient d'être créé.
+/// Les étapes de connexion, affichées une seule fois avec le jeton qui vient d'être créé. Sans jeton, les
+/// commandes seules : l'étape du jeton renvoie à « Reconnecter ».
 class _Steps extends StatelessWidget {
-  const _Steps({required this.name, required this.token});
-  final String name;
-  final String token;
+  const _Steps({this.name, this.token});
+  final String? name;
+  final String? token;
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +258,7 @@ class _Steps extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(l.apiTokenCreated(name), style: theme.textTheme.titleSmall),
+          Text(token == null ? l.installCommandsTitle : l.apiTokenCreated(name!), style: theme.textTheme.titleSmall),
           const SizedBox(height: 12),
           Text(l.claudeCodeStepCli),
           _CommandBox(setup.installCli),
@@ -232,19 +267,23 @@ class _Steps extends StatelessWidget {
           _CommandBox(setup.install),
           if (setup.local) Text(l.claudeCodeLocalInstance, style: theme.textTheme.bodySmall),
           const SizedBox(height: 12),
-          // La commande d'abord : la copier remplace le presse-papiers, que pbpaste ne lit qu'au lancement.
-          Text(l.claudeCodeStepToken),
-          _CommandBox(setup.configure),
-          Text(l.claudeCodeStepTokenThen),
-          const SizedBox(height: 4),
-          FilledButton.tonalIcon(
-            icon: const Icon(Icons.key),
-            label: Text(l.copyToken),
-            onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: ClaudeCodeSetup.clipboardValue(token)));
-              if (context.mounted) showSnack(context, l.copied);
-            },
-          ),
+          if (token == null)
+            Text(l.claudeCodeStepTokenReconnect)
+          else ...[
+            // La commande d'abord : la copier remplace le presse-papiers, que pbpaste ne lit qu'au lancement.
+            Text(l.claudeCodeStepToken),
+            _CommandBox(setup.configure),
+            Text(l.claudeCodeStepTokenThen),
+            const SizedBox(height: 4),
+            FilledButton.tonalIcon(
+              icon: const Icon(Icons.key),
+              label: Text(l.copyToken),
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: ClaudeCodeSetup.clipboardValue(token!)));
+                if (context.mounted) showSnack(context, l.copied);
+              },
+            ),
+          ],
           const SizedBox(height: 12),
           Text(l.claudeCodeStepStart),
           const SizedBox(height: 8),

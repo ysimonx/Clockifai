@@ -269,6 +269,10 @@ class AppLocalizationsFr extends AppLocalizations {
       '3. Collez cette commande dans le terminal, sans appuyer sur Entrée :';
 
   @override
+  String get claudeCodeStepTokenReconnect =>
+      '3. Le jeton ne s\'affiche qu\'à la connexion d\'un poste : s\'il manque sur ce poste, touchez Reconnecter sur sa ligne, dans la liste ci-dessous.';
+
+  @override
   String get claudeCodeStepTokenThen =>
       'Touchez Copier le jeton, puis appuyez sur Entrée dans le terminal : la commande lit le jeton dans le presse-papiers. Dans l\'autre ordre, copier la commande remplacerait le jeton.';
 
@@ -599,6 +603,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get help => 'Aide';
 
   @override
+  String get hideInstallCommands => 'Masquer les commandes d\'installation';
+
+  @override
   String get hideSimilarEntries => 'Masquer le détail';
 
   @override
@@ -624,6 +631,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get humansAndAgents => 'Humains et agents';
+
+  @override
+  String get installCommandsTitle => 'Commandes d\'installation d\'un poste';
 
   @override
   String get integrations => 'Intégrations';
@@ -1186,6 +1196,17 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get reconnect => 'Reconnecter';
+
+  @override
+  String get reconnectComputer => 'Reconnecter ce poste ?';
+
+  @override
+  String reconnectComputerMessage(String name) {
+    return 'Un nouveau jeton remplace celui de « $name », qui cesse de fonctionner. Suivez ensuite les étapes affichées, sur ce poste.';
+  }
+
+  @override
   String get reject => 'Refuser';
 
   @override
@@ -1371,6 +1392,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get showArchived => 'Archivés';
+
+  @override
+  String get showInstallCommands => 'Afficher les commandes d\'installation';
 
   @override
   String showSimilarEntries(int count) {

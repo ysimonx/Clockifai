@@ -88,7 +88,8 @@ paths:
       summary: Rapport détaillé des entrées terminées (CSV, XLSX ou PDF)
       description: |
         Entrées terminées (`end_at` non nul, non supprimées) dont le début tombe dans `[from, to]`,
-        avec utilisateur, client, projet, tâche et tags.
+        avec utilisateur, client, projet, tâche et tags. La colonne « Type » du détail vaut `humain`, ou
+        `agent` pour le temps d'un agent Claude (`workspace_members.kind`).
 
         Périmètre selon le rôle :
         - **manager+** : tout le workspace, filtres libres ;

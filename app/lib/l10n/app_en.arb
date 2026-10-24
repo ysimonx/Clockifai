@@ -17,6 +17,7 @@
   "agentBillingHelp": "Whether a session recorded by Claude Code is billable; a project can override it. Entries already recorded don't change",
   "agentBillingLikeHumans": "Billable like people's time",
   "agentBillingNever": "Never billable",
+  "agentCardLink": "See its card in Team",
   "agentInactive": "Your agent was deactivated or removed by an administrator: your Claude Code sessions no longer record time.",
   "agents": "Agents",
   "agentsHelp": "Claude agents: their time is recorded by Claude Code, one agent per person who connected a computer (Settings › Integrations).",

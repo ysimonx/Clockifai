@@ -65,6 +65,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get agentBillingNever => 'Jamais facturable';
 
   @override
+  String get agentCardLink => 'Voir sa fiche dans l\'équipe';
+
+  @override
   String get agentInactive =>
       'Votre agent a été désactivé ou retiré par un administrateur : vos sessions Claude Code ne produisent plus de temps.';
 

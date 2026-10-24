@@ -63,7 +63,8 @@ Google Play. Aucune version n'a encore été figée : tout ce qui suit est en «
   les sessions en cours. Dans les rapports et leurs exports, le filtre « Humains et agents » met à part le temps
   des agents, et une colonne « Type » (humain ou agent) les distingue dans le détail des exports. Un administrateur
   décide si le temps des agents est facturable (Paramètres, « Temps des agents Claude »), avec une exception
-  possible par projet.
+  possible par projet. Depuis Paramètres › Intégrations › Claude Code, « Voir sa fiche dans l'équipe » mène à
+  la fiche de son agent.
 
 ### Modifié
 

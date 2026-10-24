@@ -200,6 +200,12 @@ abstract class AppLocalizations {
   /// **'Jamais facturable'**
   String get agentBillingNever;
 
+  /// No description provided for @agentCardLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir sa fiche dans l\'équipe'**
+  String get agentCardLink;
+
   /// No description provided for @agentInactive.
   ///
   /// In fr, this message translates to:

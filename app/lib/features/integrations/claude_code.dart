@@ -3,14 +3,17 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/catalog.dart';
 import '../../core/l10n.dart';
 import '../../core/services_api.dart';
 import '../../core/session.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
+import '../../core/widgets/teammates.dart';
 
 /// Commandes de connexion d'un poste au plugin Claude Code (plans/10-suivi-claude-code.md, §6.1).
 ///
@@ -64,7 +67,11 @@ class ClaudeCodeTile extends StatelessWidget {
       title: const Text('Claude Code'),
       subtitle: Text(l.claudeCodeHelp('Claude · ${session.displayName}')),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => showDialog<void>(context: context, builder: (_) => ClaudeCodeDialog(workspaceId: session.workspaceId!)),
+      onTap: () async {
+        // Le dialogue rend l'adresse à ouvrir (« Voir sa fiche dans l'équipe ») : on y va une fois refermé.
+        final target = await showDialog<String>(context: context, builder: (_) => ClaudeCodeDialog(workspaceId: session.workspaceId!));
+        if (target != null && context.mounted) context.go(target);
+      },
     );
   }
 }
@@ -134,6 +141,8 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final session = context.watch<SessionController>();
+    // Créé avec le premier jeton (ensure_agent) ; absent s'il a été retiré par un admin.
+    final agent = context.watch<CatalogController>().agentsOf(session.userId).firstOrNull;
     final theme = Theme.of(context);
     final now = DateTime.now();
     return AlertDialog(
@@ -142,7 +151,16 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
         width: 600,
         child: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text(l.claudeCodeIntro('Claude · ${session.displayName}')),
+            Text(l.claudeCodeIntro(agent == null ? 'Claude · ${session.displayName}' : memberName(agent))),
+            if (agent != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.smart_toy_outlined, size: 18),
+                  label: Text(l.agentCardLink),
+                  onPressed: () => Navigator.pop(context, Uri(path: '/team', queryParameters: {'member': agent.userId}).toString()),
+                ),
+              ),
             const SizedBox(height: 12),
             if (_created != null) _Steps(name: _created!.name, token: _created!.token),
             if (!_agentActive && (_tokens?.any((t) => t['user_id'] == session.userId) ?? false))

@@ -76,6 +76,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get alwaysAttachRepo =>
+      'Always attach this repository to this project';
+
+  @override
+  String get alwaysAttachRepoHelp =>
+      'Claude\'s next sessions in this repository will go to this project, and so will its entries without a project from the past week.';
+
+  @override
   String get amount => 'Amount';
 
   @override
@@ -1145,7 +1153,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reopen => 'Reopen';
 
   @override
+  String repoAttached(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Repository attached to this project, and $count other entries.',
+      one: 'Repository attached to this project, and 1 other entry.',
+      zero: 'Repository attached to this project.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repoAttachOffline =>
+      'Entry saved, but the repository could not be attached: you need to be online.';
+
+  @override
   String get reports => 'Reports';
+
+  @override
+  String get repoUnknown =>
+      'Entry saved, but its repository is unknown: nothing to attach.';
 
   @override
   String get requestSent => 'Request sent.';

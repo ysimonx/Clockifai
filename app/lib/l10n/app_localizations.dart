@@ -218,6 +218,18 @@ abstract class AppLocalizations {
   /// **'Laisser vide pour appliquer le droit de la politique ({value}).'**
   String allowanceOverrideHelp(String value);
 
+  /// No description provided for @alwaysAttachRepo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Toujours rattacher ce dépôt à ce projet'**
+  String get alwaysAttachRepo;
+
+  /// No description provided for @alwaysAttachRepoHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, et ses entrées sans projet de la semaine aussi.'**
+  String get alwaysAttachRepoHelp;
+
   /// No description provided for @amount.
   ///
   /// In fr, this message translates to:
@@ -2084,11 +2096,29 @@ abstract class AppLocalizations {
   /// **'Rouvrir'**
   String get reopen;
 
+  /// No description provided for @repoAttached.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Dépôt rattaché à ce projet.} =1{Dépôt rattaché à ce projet, et 1 autre entrée.} other{Dépôt rattaché à ce projet, et {count} autres entrées.}}'**
+  String repoAttached(int count);
+
+  /// No description provided for @repoAttachOffline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrée enregistrée, mais le dépôt n\'a pas pu être rattaché : il faut être en ligne.'**
+  String get repoAttachOffline;
+
   /// No description provided for @reports.
   ///
   /// In fr, this message translates to:
   /// **'Rapports'**
   String get reports;
+
+  /// No description provided for @repoUnknown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrée enregistrée, mais son dépôt est inconnu : rien à rattacher.'**
+  String get repoUnknown;
 
   /// No description provided for @requestSent.
   ///

@@ -220,7 +220,7 @@ class EntryTile extends StatelessWidget {
       if (showUser) Text(catalog.memberOf(e.userId)?.displayName ?? '?', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
       ProjectLabel(projectId: e.projectId, taskId: e.taskId, dense: true),
       TagChips(row.tagIds),
-      if (author != null && author != e.userId)
+      if (author != null && author != e.userId && e.source != 'agent')
         Text(l.enteredBy(memberName(catalog.memberOf(author))),
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline, fontStyle: FontStyle.italic)),
     ]);

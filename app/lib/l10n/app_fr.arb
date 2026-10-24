@@ -34,6 +34,8 @@
       }
     }
   },
+  "alwaysAttachRepo": "Toujours rattacher ce dépôt à ce projet",
+  "alwaysAttachRepoHelp": "Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, et ses entrées sans projet de la semaine aussi.",
   "amount": "Montant",
   "annualAllowance": "Droit annuel",
   "apiTokenCreated": "Jeton créé pour « {name} ». Il ne sera plus affiché : suivez ces trois étapes maintenant.",
@@ -593,7 +595,17 @@
   "removeMemberMessage": "La personne perd l'accès au workspace. Ses entrées passées sont conservées.",
   "rename": "Renommer",
   "reopen": "Rouvrir",
+  "repoAttached": "{count, plural, =0{Dépôt rattaché à ce projet.} =1{Dépôt rattaché à ce projet, et 1 autre entrée.} other{Dépôt rattaché à ce projet, et {count} autres entrées.}}",
+  "@repoAttached": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repoAttachOffline": "Entrée enregistrée, mais le dépôt n'a pas pu être rattaché : il faut être en ligne.",
   "reports": "Rapports",
+  "repoUnknown": "Entrée enregistrée, mais son dépôt est inconnu : rien à rattacher.",
   "requestSent": "Demande envoyée.",
   "requestTimeOff": "Demander une absence",
   "requireDescription": "Description obligatoire",

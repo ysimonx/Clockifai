@@ -5,9 +5,12 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 La section « Non publié » est complétée au fil des modifications. À chaque envoi en production ou sur les stores,
 elle devient une version datée (numéro de `app/pubspec.yaml`), et son texte sert aux notes de TestFlight et de
-Google Play. Aucune version n'a encore été figée : tout ce qui suit est en « Non publié », avec la date d'arrivée.
+Google Play. La 0.2.0 est la première version figée : elle reprend tout ce qui est arrivé depuis le début, avec
+la date d'arrivée de chaque évolution.
 
 ## [Non publié]
+
+## [0.2.0] — 2026-10-24
 
 ### Ajouté
 

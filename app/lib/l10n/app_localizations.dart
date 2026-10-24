@@ -527,7 +527,7 @@ abstract class AppLocalizations {
   /// No description provided for @claudeCodeStepStart.
   ///
   /// In fr, this message translates to:
-  /// **'4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.'**
+  /// **'4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt. Claude nomme la tâche de chaque sujet : à la première demande, autorisez l\'outil Clockifai.'**
   String get claudeCodeStepStart;
 
   /// No description provided for @claudeCodeStepToken.

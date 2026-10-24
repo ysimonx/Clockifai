@@ -259,7 +259,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get claudeCodeStepStart =>
-      '4. Open a new Claude Code conversation: Claude\'s timer starts at the first prompt.';
+      '4. Open a new Claude Code conversation: Claude\'s timer starts at the first prompt. Claude names the task of each subject: allow the Clockifai tool when asked the first time.';
 
   @override
   String get claudeCodeStepToken =>

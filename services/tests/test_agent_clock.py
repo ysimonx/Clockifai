@@ -141,3 +141,55 @@ def test_start_corrected_by_hand_is_kept_but_the_end_still_follows():
 
 def test_idle_timeout_default():
     assert IDLE_TIMEOUT == timedelta(minutes=10)
+
+
+# ---------------------------------------------------------------- sujets nommés par Claude (D18)
+def named(minute: float, subject: str) -> Event:
+    return Event("session_task", m(minute), subject=subject)
+
+
+def subjects(out):
+    return [(iv.start, iv.end, iv.subject) for iv in out]
+
+
+def test_a_name_given_at_the_start_covers_the_whole_entry():
+    out = intervals([ev("prompt", 0), named(0.2, "Export PDF"), ev("agent_tool", 1), ev("agent_stop", 5)], now=m(30))
+    assert subjects(out) == [(m(0), m(5), "Export PDF")]
+
+
+def test_a_new_subject_starts_at_the_prompt_that_brought_it():
+    out = intervals([ev("prompt", 0), named(0.1, "Export PDF"), ev("agent_stop", 5),
+                     ev("prompt", 8), named(8.2, "Connexion mobile"), ev("agent_stop", 12)], now=m(40))
+    assert subjects(out) == [(m(0), m(8), "Export PDF"), (m(8), m(12), "Connexion mobile")]
+
+
+def test_the_same_name_in_another_case_changes_nothing():
+    out = intervals([ev("prompt", 0), named(0.1, "Export PDF"), ev("prompt", 8), named(8.1, "export pdf"),
+                     ev("agent_stop", 12)], now=m(40))
+    assert subjects(out) == [(m(0), m(12), "Export PDF")]
+
+
+def test_a_subject_named_mid_turn_starts_when_claude_names_it():
+    # Pas de prompt récent : Claude change de sujet en cours de travail.
+    out = intervals([ev("prompt", 0), named(0.1, "A"), ev("agent_tool", 3), named(6, "B"), ev("agent_stop", 9)],
+                    now=m(40))
+    assert subjects(out) == [(m(0), m(6), "A"), (m(6), m(9), "B")]
+
+
+def test_a_first_name_given_late_keeps_the_earlier_minutes_unnamed():
+    # Les 8 premières minutes gardent la tâche reprise de l'entrée précédente (ou aucune) : seule la suite est nommée.
+    out = intervals([ev("prompt", 0), ev("agent_tool", 5), named(8, "Export PDF"), ev("agent_stop", 10)], now=m(40))
+    assert subjects(out) == [(m(0), m(8), None), (m(8), m(10), "Export PDF")]
+
+
+def test_a_name_given_outside_any_entry_goes_to_the_next_one():
+    out = intervals([ev("prompt", 0), ev("agent_stop", 2), named(20, "Export PDF"), ev("prompt", 20.5),
+                     ev("agent_stop", 25)], now=m(60))
+    assert subjects(out) == [(m(0), m(2), None), (m(20.5), m(25), "Export PDF")]
+
+
+def test_a_new_entry_after_a_pause_is_not_named_by_the_clock():
+    # La continuité d'une entrée à l'autre passe par la tâche de l'entrée précédente (Flask), pas par l'horloge.
+    out = intervals([ev("prompt", 0), named(0.1, "A"), ev("agent_stop", 2), ev("prompt", 20), ev("agent_stop", 22)],
+                    now=m(60))
+    assert subjects(out) == [(m(0), m(2), "A"), (m(20), m(22), None)]

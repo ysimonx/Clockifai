@@ -459,6 +459,34 @@ coût de l'IA par projet et par client, et pouvoir le refacturer.
 - **Facturation**, plus tard : proposer le coût IA comme ligne de facture (au coût, ou avec une marge), à côté
   des heures.
 
+**D18. Claude nomme la tâche de son sujet** (lot 1c, demandé et fait le 24 octobre 2026). Un pilote qui travaille
+sur `main` n'a pas de branche pour distinguer ses sujets, et la tâche de D9 ne pouvait être qu'une tâche existante.
+- **Qui nomme** : Claude, qui sait sur quoi il travaille. Le hook ne voit que le prompt brut, qu'il n'envoie
+  jamais (D6) et qu'il ne saurait pas résumer.
+- **Comment** : le plugin fournit un serveur MCP local (`.mcp.json`, `scripts/clockifai_mcp.py`, stdio,
+  bibliothèque standard, sans réseau ni jeton) et son outil `set_current_task(name)`, qui renvoie le nom reçu.
+  Ses `instructions` demandent à Claude de l'appeler au début de chaque nouveau sujet, avec un nom court (3 à
+  6 mots, dans la langue de l'utilisateur), le même nom pour le même sujet, sans nom de personne ni donnée
+  confidentielle. Le hook `PostToolUse` reconnaît l'outil (`mcp__plugin_clockifai_*__set_current_task`), hors de
+  la limite d'un outil par minute, et envoie `session_task` `{task_name}` (80 caractères). C'est la seule valeur de
+  `tool_input` qui quitte le poste. Le serveur MCP ne connaît pas la session : seul le hook la connaît.
+- **Côté serveur** (`named_task`) : dans le projet de l'entrée, la tâche active de ce nom (sans tenir compte de la
+  casse), sinon une nouvelle si `workspaces.task_creation = 'everyone'`, sous verrou par projet et par nom (deux
+  sessions, une seule tâche). Sans projet ou sans ce droit, le nom devient la description de l'entrée. Une tâche
+  choisie à la main n'est jamais remplacée ; dans un projet choisi à la main, la tâche nommée s'ajoute.
+- **Découpage** (`agent_clock`) : un nom donné dans les 2 minutes suivant le début de l'entrée, ou son dernier
+  prompt, vaut pour toute l'entrée ; un nouveau nom plus tard coupe l'entrée au dernier prompt s'il est récent,
+  sinon à l'appel. Une entrée ouverte après une pause n'est pas nommée par l'horloge : elle reprend la tâche de la
+  précédente (D9), qu'un nouveau nom remplace.
+- **Autorisation** : Claude Code demande d'autoriser l'outil à son premier appel ; un plugin ne peut pas
+  s'autoriser lui-même. Règle à poser une fois dans `~/.claude/settings.json` :
+  `"permissions": {"allow": ["mcp__plugin_clockifai_clockifai__set_current_task"]}`.
+- Vérifié le 24 octobre 2026 avec Claude Code 2.1.309 : `claude mcp list` montre
+  `plugin:clockifai:clockifai … Connected`, et une session réelle a nommé et créé « Relecture du README ». Le
+  chargement par l'extension VSCode n'est pas décrit par la documentation : à constater sur un poste.
+- Le lot 3 garde le service MCP distant (projets, résumé, suggestions) ; `set_current_task` y est déjà fait, en
+  local.
+
 ## 4. Modèle de données — migrations `0012_activity_private.admin.sql` et `0013_activity.sql`
 
 `postgres` n'a que `usage` sur `clockifai_private` (0008). Les tables privées se créent donc dans
@@ -880,8 +908,9 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
 | 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille », filtre des rapports, colonne « Type » des exports, réglages de facturation des agents, lien de l'écran Intégrations vers la fiche de l'agent) ; hooks vérifiés dans l'extension VSCode | M/L | fait |
+| 1c Tâche nommée par Claude (D18) | Serveur MCP local du plugin (`set_current_task`), relais `session_task` `{task_name}` par le hook, `named_task` et découpage des entrées par sujet (`agent_clock`), tests unitaires, du plugin et d'intégration, essai réel avec Claude Code | S/M | fait |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
-| 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M | validé |
+| 3 MCP | Service `mcp`, outils (`set_current_task` déjà fait en local, lot 1c), `.mcp.json`, commandes du plugin et relais `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |
 | 5 Connecteur claude.ai | OAuth (selon Supabase Auth auto-hébergé), publication du connecteur | M, conditionnel | envisagé |
 | 6 Sessions cloud | Hook de dépôt, `POST /api/activity/events/raw` avec filtrage à l'arrivée, guide de réglage de l'environnement (réseau, secret réseau) | S, plus tard (§12) | envisagé |

@@ -1088,7 +1088,7 @@ components:
         duration_ms: { type: integer, minimum: 0, description: "`agent_tool` : durée de l'outil." }
         payload:
           type: object
-          description: "`session_task` : `{task_id, project_id}` ; `session_description` : `{description}`. 2000 caractères JSON au plus."
+          description: "`session_task` : `{task_name}` (nom donné par Claude, 80 caractères : tâche reprise ou créée dans le projet de l'entrée) ou `{task_id, project_id}` ; `session_description` : `{description}`. 2000 caractères JSON au plus."
         editor: { type: string }
         machine: { type: string }
         active: { type: boolean }

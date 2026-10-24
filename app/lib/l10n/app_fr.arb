@@ -153,6 +153,7 @@
   "claudeCodeStepInstall": "2. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :",
   "claudeCodeStepStart": "4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.",
   "claudeCodeStepToken": "3. Collez cette commande dans le terminal, sans appuyer sur Entrée :",
+  "claudeCodeStepTokenReconnect": "3. Le jeton ne s'affiche qu'à la connexion d'un poste : s'il manque sur ce poste, touchez Reconnecter sur sa ligne, dans la liste ci-dessous.",
   "claudeCodeStepTokenThen": "Touchez Copier le jeton, puis appuyez sur Entrée dans le terminal : la commande lit le jeton dans le presse-papiers. Dans l'autre ordre, copier la commande remplacerait le jeton.",
   "client": "Client",
   "clients": "Clients",
@@ -315,6 +316,7 @@
   "groups": "Groupes",
   "halfDay": "Demi-journée",
   "help": "Aide",
+  "hideInstallCommands": "Masquer les commandes d'installation",
   "hideSimilarEntries": "Masquer le détail",
   "history": "Historique",
   "holidays": "Jours fériés",
@@ -324,6 +326,7 @@
   "hoursRequested": "Nombre d'heures",
   "humans": "Humains",
   "humansAndAgents": "Humains et agents",
+  "installCommandsTitle": "Commandes d'installation d'un poste",
   "integrations": "Intégrations",
   "invalidDuration": "Durée invalide (exemples : 1:30, 1,5, 90m).",
   "invalidHours": "Nombre d'heures invalide (entre 0 et 24).",
@@ -602,6 +605,16 @@
       }
     }
   },
+  "reconnect": "Reconnecter",
+  "reconnectComputer": "Reconnecter ce poste ?",
+  "reconnectComputerMessage": "Un nouveau jeton remplace celui de « {name} », qui cesse de fonctionner. Suivez ensuite les étapes affichées, sur ce poste.",
+  "@reconnectComputerMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "reject": "Refuser",
   "remaining": "restants",
   "remove": "Retirer",
@@ -693,6 +706,7 @@
   "setPasswordHelp": "Utile après une invitation ou un lien magique",
   "settings": "Paramètres",
   "showArchived": "Archivés",
+  "showInstallCommands": "Afficher les commandes d'installation",
   "showSimilarEntries": "Afficher les {count} entrées",
   "@showSimilarEntries": {
     "placeholders": {

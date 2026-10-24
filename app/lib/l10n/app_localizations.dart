@@ -536,6 +536,12 @@ abstract class AppLocalizations {
   /// **'3. Collez cette commande dans le terminal, sans appuyer sur Entrée :'**
   String get claudeCodeStepToken;
 
+  /// No description provided for @claudeCodeStepTokenReconnect.
+  ///
+  /// In fr, this message translates to:
+  /// **'3. Le jeton ne s\'affiche qu\'à la connexion d\'un poste : s\'il manque sur ce poste, touchez Reconnecter sur sa ligne, dans la liste ci-dessous.'**
+  String get claudeCodeStepTokenReconnect;
+
   /// No description provided for @claudeCodeStepTokenThen.
   ///
   /// In fr, this message translates to:
@@ -1130,6 +1136,12 @@ abstract class AppLocalizations {
   /// **'Aide'**
   String get help;
 
+  /// No description provided for @hideInstallCommands.
+  ///
+  /// In fr, this message translates to:
+  /// **'Masquer les commandes d\'installation'**
+  String get hideInstallCommands;
+
   /// No description provided for @hideSimilarEntries.
   ///
   /// In fr, this message translates to:
@@ -1183,6 +1195,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Humains et agents'**
   String get humansAndAgents;
+
+  /// No description provided for @installCommandsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commandes d\'installation d\'un poste'**
+  String get installCommandsTitle;
 
   /// No description provided for @integrations.
   ///
@@ -2138,6 +2156,24 @@ abstract class AppLocalizations {
   /// **'Temps de {name} : consultation seulement.'**
   String readOnlyTimeOf(String name);
 
+  /// No description provided for @reconnect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reconnecter'**
+  String get reconnect;
+
+  /// No description provided for @reconnectComputer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reconnecter ce poste ?'**
+  String get reconnectComputer;
+
+  /// No description provided for @reconnectComputerMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un nouveau jeton remplace celui de « {name} », qui cesse de fonctionner. Suivez ensuite les étapes affichées, sur ce poste.'**
+  String reconnectComputerMessage(String name);
+
   /// No description provided for @reject.
   ///
   /// In fr, this message translates to:
@@ -2455,6 +2491,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Archivés'**
   String get showArchived;
+
+  /// No description provided for @showInstallCommands.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher les commandes d\'installation'**
+  String get showInstallCommands;
 
   /// No description provided for @showSimilarEntries.
   ///

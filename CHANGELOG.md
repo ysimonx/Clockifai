@@ -69,7 +69,9 @@ la date d'arrivée de chaque évolution.
   possible par projet. Depuis Paramètres › Intégrations › Claude Code, « Voir sa fiche dans l'équipe » mène à
   la fiche de son agent. La connexion d'un poste commence par l'installation de la commande `claude`, que
   l'extension VSCode n'installe pas, et indique l'ordre pour enregistrer le jeton (coller la commande, copier le
-  jeton, puis Entrée). Un agent retiré par erreur se restaure depuis Équipe, rubrique « Agents retirés ».
+  jeton, puis Entrée). Un agent retiré par erreur se restaure depuis Équipe, rubrique « Agents retirés ». Dans la liste des
+  postes connectés, « Reconnecter » redonne un jeton à un poste, et « Afficher les commandes d'installation »
+  rappelle les commandes.
 
 ### Modifié
 

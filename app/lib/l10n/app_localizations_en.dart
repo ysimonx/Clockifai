@@ -266,6 +266,10 @@ class AppLocalizationsEn extends AppLocalizations {
       '3. Paste this command into the terminal, without pressing Enter:';
 
   @override
+  String get claudeCodeStepTokenReconnect =>
+      '3. The token is only shown when a computer is connected: if this computer lacks it, tap Reconnect on its row in the list below.';
+
+  @override
   String get claudeCodeStepTokenThen =>
       'Tap Copy token, then press Enter in the terminal: the command reads the token from the clipboard. In the other order, copying the command would replace the token.';
 
@@ -594,6 +598,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get help => 'Help';
 
   @override
+  String get hideInstallCommands => 'Hide the setup commands';
+
+  @override
   String get hideSimilarEntries => 'Hide details';
 
   @override
@@ -619,6 +626,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get humansAndAgents => 'Humans and agents';
+
+  @override
+  String get installCommandsTitle => 'Setup commands for a computer';
 
   @override
   String get integrations => 'Integrations';
@@ -1179,6 +1189,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get reconnect => 'Reconnect';
+
+  @override
+  String get reconnectComputer => 'Reconnect this computer?';
+
+  @override
+  String reconnectComputerMessage(String name) {
+    return 'A new token replaces the one of “$name”, which stops working. Then follow the steps shown, on that computer.';
+  }
+
+  @override
   String get reject => 'Reject';
 
   @override
@@ -1363,6 +1384,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get showArchived => 'Archived';
+
+  @override
+  String get showInstallCommands => 'Show the setup commands';
 
   @override
   String showSimilarEntries(int count) {

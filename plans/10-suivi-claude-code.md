@@ -720,6 +720,9 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
     `{"token": "clk_…"}` dans le presse-papiers, et `pbpaste | claude plugin configure … --values-stdin`
     (`Get-Clipboard` sous Windows, `wl-paste` sous Linux) ;
   - lister (tous ceux du workspace pour un admin) et révoquer les jetons, avec le dernier événement reçu ;
+  - « Reconnecter » sur ses propres postes : nouveau jeton du même nom, révocation de l'ancien, étapes affichées
+    (le jeton n'est jamais réaffiché) ; « Afficher les commandes d'installation » montre les étapes sans jeton,
+    l'étape 3 renvoyant à « Reconnecter » (24 octobre 2026) ;
   - « Votre agent : Claude · Yannick » dans le texte d'introduction, et un avertissement quand un admin l'a
     désactivé ou retiré (`agent_id` nul dans `GET /api/activity/today`, D7.10). « Voir sa fiche dans
     l'équipe » ouvre `/team?member=<agent>`, qui amène la fiche à l'écran et la met en évidence (fait le

@@ -17,7 +17,7 @@ from flask import Blueprint, Response, abort, g, request
 
 from ..auth import managed_user_ids, require_user, require_workspace
 from ..db import fetch_all
-from ..services.exporters import build_pdf, build_xlsx
+from ..services.exporters import build_pdf, build_xlsx, member_kind_label
 
 bp = Blueprint("exports", __name__)
 
@@ -37,6 +37,7 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
     sql = """
         select te.id, te.start_at, te.end_at, te.duration_seconds, te.description, te.billable,
                te.hourly_rate_cents, wm.display_name as user_name, wm.email as user_email,
+               wm.kind as user_kind,
                p.name as project_name, c.name as client_name, t.name as task_name,
                coalesce(string_agg(tg.name, ', ' order by tg.name), '') as tags
           from public.time_entries te
@@ -66,7 +67,7 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
     if filters.get("member_kind") in ("human", "agent"):
         sql += " and wm.kind = %(member_kind)s"
         params["member_kind"] = filters["member_kind"]
-    sql += " group by te.id, wm.display_name, wm.email, p.name, c.name, t.name order by te.start_at"
+    sql += " group by te.id, wm.display_name, wm.email, wm.kind, p.name, c.name, t.name order by te.start_at"
     return fetch_all(sql, params)
 
 
@@ -94,11 +95,11 @@ def export_report():
     if fmt == "csv":
         buf = io.StringIO()
         writer = csv.writer(buf, delimiter=";")
-        writer.writerow(["Utilisateur", "Email", "Client", "Projet", "Tâche", "Description", "Tags",
+        writer.writerow(["Utilisateur", "Email", "Type", "Client", "Projet", "Tâche", "Description", "Tags",
                          "Début", "Fin", "Durée (h)", "Facturable", "Taux horaire"])
         for r in rows:
             writer.writerow([
-                r["user_name"], r["user_email"], r["client_name"] or "", r["project_name"] or "",
+                r["user_name"], r["user_email"], member_kind_label(r), r["client_name"] or "", r["project_name"] or "",
                 r["task_name"] or "", r["description"], r["tags"],
                 _fmt_dt(r["start_at"]), _fmt_dt(r["end_at"]),
                 f"{(r['duration_seconds'] or 0) / 3600:.2f}".replace(".", ","),

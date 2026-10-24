@@ -552,7 +552,8 @@ envoie ce qu'on écrit.
   Chaque instance auto-hébergée distribue ainsi la version du plugin qui correspond à son API, sans GitHub.
 - `routes/kiosk.py` : `state` exclut les agents ; `punch` écrit `source = 'kiosk'` et utilise
   `entry_defaults()`.
-- `services/exporters.py` : colonne « Type » (humain ou agent) dans le détail.
+- `services/exporters.py` : colonne « Type » (humain ou agent) dans le détail, après l'utilisateur, en CSV,
+  Excel et PDF, et dans le CSV hors ligne de l'app (`human` / `agent`). Fait le 24 octobre 2026.
 - Jobs :
   - `close_idle_agent_entries` toutes les minutes (D7.4) ;
   - `aggregate_human_activity` toutes les 5 minutes (D8) ;
@@ -854,7 +855,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille », filtre des rapports ; reste : réglages de facturation des agents, colonne « Type » des exports) ; hooks vérifiés dans l'extension VSCode | M/L | en cours |
+| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille », filtre des rapports, colonne « Type » des exports ; reste : réglages de facturation des agents) ; hooks vérifiés dans l'extension VSCode | M/L | en cours |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
 | 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |

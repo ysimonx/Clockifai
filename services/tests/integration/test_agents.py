@@ -5,6 +5,8 @@ Plan : plans/10-suivi-claude-code.md (D2, D7.8, D14, D15)
 
 from __future__ import annotations
 
+import csv
+import io
 import uuid
 from datetime import UTC, date, datetime, timedelta
 
@@ -137,7 +139,7 @@ def test_server_writes_agent_entries(squad):
 
 
 def test_export_filters_humans_and_agents(squad):
-    """Filtre « Humains / Agents » des rapports : `member_kind` de l'export (plan 10, §8)."""
+    """Filtre « Humains / Agents » des rapports (`member_kind`) et colonne « Type » de l'export (plan 10, §8)."""
     pilote_t, pilote = squad["people"]["pilote"]
     start = _now() - timedelta(hours=8)
     assert _write(squad, str(uuid.uuid4()), start, start + timedelta(minutes=30),
@@ -160,6 +162,13 @@ def test_export_filters_humans_and_agents(squad):
     humans = lines("human")
     assert "saisie du pilote" in humans and "session exportée" not in humans
     assert lines("robot") == both, "valeur inconnue ignorée"
+
+    # Colonne « Type » du détail : humain ou agent.
+    rows = list(csv.reader(io.StringIO(both), delimiter=";"))
+    kind = rows[0].index("Type")
+    by_description = {r[rows[0].index("Description")]: r[kind] for r in rows[1:]}
+    assert by_description["session exportée"] == "agent"
+    assert by_description["saisie du pilote"] == "humain"
 
 
 def test_entry_never_changes_person(squad):

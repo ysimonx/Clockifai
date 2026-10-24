@@ -61,7 +61,7 @@ Google Play. Aucune version n'a encore été figée : tout ce qui suit est en «
   approbations. En donnant un projet à une entrée de son agent, « Toujours rattacher ce dépôt à ce projet » y envoie
   aussi les sessions suivantes du même dépôt. Le bandeau « Claude travaille », en haut du suivi du temps, montre
   les sessions en cours. Dans les rapports et leurs exports, le filtre « Humains et agents » met à part le temps
-  des agents.
+  des agents, et une colonne « Type » (humain ou agent) les distingue dans le détail des exports.
 
 ### Modifié
 

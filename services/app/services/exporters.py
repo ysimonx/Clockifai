@@ -11,8 +11,13 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-_HEADERS = ["Utilisateur", "Client", "Projet", "Tâche", "Description", "Tags",
+_HEADERS = ["Utilisateur", "Type", "Client", "Projet", "Tâche", "Description", "Tags",
             "Début", "Fin", "Durée (h)", "Facturable", "Montant"]
+
+
+def member_kind_label(row: dict) -> str:
+    """Colonne « Type » : temps d'un agent Claude ou d'une personne (plans/10-suivi-claude-code.md)."""
+    return "agent" if row.get("user_kind") == "agent" else "humain"
 
 
 def _amount(row: dict) -> float:
@@ -36,7 +41,7 @@ def build_xlsx(rows: list[dict], start: date, end: date) -> bytes:
 
     for r in rows:
         ws.append([
-            r["user_name"], r["client_name"] or "", r["project_name"] or "", r["task_name"] or "",
+            r["user_name"], member_kind_label(r), r["client_name"] or "", r["project_name"] or "", r["task_name"] or "",
             r["description"], r["tags"],
             r["start_at"].astimezone().replace(tzinfo=None) if r["start_at"] else None,
             r["end_at"].astimezone().replace(tzinfo=None) if r["end_at"] else None,
@@ -44,10 +49,10 @@ def build_xlsx(rows: list[dict], start: date, end: date) -> bytes:
             "oui" if r["billable"] else "non",
             _amount(r),
         ])
-    for row in ws.iter_rows(min_row=4, min_col=7, max_col=8):
+    for row in ws.iter_rows(min_row=4, min_col=8, max_col=9):
         for cell in row:
             cell.number_format = "yyyy-mm-dd hh:mm"
-    for col, width in enumerate([22, 18, 22, 18, 40, 18, 17, 17, 10, 10, 12], start=1):
+    for col, width in enumerate([22, 9, 18, 22, 18, 40, 18, 17, 17, 10, 10, 12], start=1):
         ws.column_dimensions[get_column_letter(col)].width = width
     ws.freeze_panes = "A4"
 
@@ -103,13 +108,13 @@ _PDF_TEMPLATE = """
 
 <table>
   <thead><tr>
-    <th>Utilisateur</th><th>Client</th><th>Projet</th><th>Tâche</th><th>Description</th><th>Tags</th>
+    <th>Utilisateur</th><th>Type</th><th>Client</th><th>Projet</th><th>Tâche</th><th>Description</th><th>Tags</th>
     <th>Début</th><th>Fin</th><th class="num">Durée (h)</th><th>Fact.</th><th class="num">Montant</th>
   </tr></thead>
   <tbody>
   {% for r in rows %}
   <tr>
-    <td>{{ r.user_name }}</td><td>{{ r.client_name or '' }}</td><td>{{ r.project_name or '' }}</td><td>{{ r.task_name or '' }}</td>
+    <td>{{ r.user_name }}</td><td>{{ kind(r) }}</td><td>{{ r.client_name or '' }}</td><td>{{ r.project_name or '' }}</td><td>{{ r.task_name or '' }}</td>
     <td>{{ r.description }}</td><td>{{ r.tags }}</td>
     <td>{{ r.start_at.astimezone().strftime('%d/%m %H:%M') }}</td><td>{{ r.end_at.astimezone().strftime('%d/%m %H:%M') if r.end_at else '' }}</td>
     <td class="num">{{ '%.2f' % ((r.duration_seconds or 0) / 3600) }}</td>
@@ -135,7 +140,7 @@ def build_pdf(rows: list[dict], start: date, end: date, workspace_id: str) -> by
         agg[key][1] += r["amount"]
     summary = [{"project": k[0], "client": k[1], "hours": v[0], "amount": v[1]} for k, v in sorted(agg.items())]
     html = render_template_string(
-        _PDF_TEMPLATE, rows=rows, start=start, end=end, summary=summary,
+        _PDF_TEMPLATE, rows=rows, start=start, end=end, summary=summary, kind=member_kind_label,
         total_hours=sum(v[0] for v in agg.values()), total_amount=sum(v[1] for v in agg.values()),
     )
     return HTML(string=html).write_pdf()

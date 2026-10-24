@@ -312,12 +312,13 @@ class _ReportsPageState extends State<ReportsPage> {
           await entriesRepo.watchEntries(workspaceId: session.workspaceId!, userId: userId, from: range.start, to: range.end).first,
           catalog,
         ).where((r) => r.entry.userId == session.userId || rights.manages(r.entry.userId)).toList();
-        final csv = StringBuffer('﻿User;Client;Project;Task;Description;Start;End;Hours;Billable\n');
+        final csv = StringBuffer('﻿User;Type;Client;Project;Task;Description;Start;End;Hours;Billable\n');
         String q(String s) => '"${s.replaceAll('"', '""')}"';
         for (final r in rows) {
           final e = r.entry;
           csv.writeln([
             q(catalog.memberOf(e.userId)?.displayName ?? ''),
+            catalog.isAgent(e.userId) ? 'agent' : 'human',
             q(catalog.clientOfProject(e.projectId)?.name ?? ''),
             q(catalog.project(e.projectId)?.name ?? ''),
             q(catalog.task(e.taskId)?.name ?? ''),

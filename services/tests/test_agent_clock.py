@@ -176,10 +176,25 @@ def test_a_subject_named_mid_turn_starts_when_claude_names_it():
     assert subjects(out) == [(m(0), m(6), "A"), (m(6), m(9), "B")]
 
 
-def test_a_first_name_given_late_keeps_the_earlier_minutes_unnamed():
-    # Les 8 premières minutes gardent la tâche reprise de l'entrée précédente (ou aucune) : seule la suite est nommée.
+def test_the_first_name_of_a_session_covers_its_first_entry_whatever_the_delay():
+    # Un premier prompt vague, le temps de formuler le sujet : la première entrée prend le nom en entier.
     out = intervals([ev("prompt", 0), ev("agent_tool", 5), named(8, "Export PDF"), ev("agent_stop", 10)], now=m(40))
-    assert subjects(out) == [(m(0), m(8), None), (m(8), m(10), "Export PDF")]
+    assert subjects(out) == [(m(0), m(10), "Export PDF")]
+    assert out[0].first
+
+
+def test_a_first_name_given_late_after_a_pause_keeps_the_earlier_minutes_unnamed():
+    # Après une pause, les premières minutes gardent la tâche reprise de l'entrée précédente : seule la suite est nommée.
+    out = intervals([ev("prompt", 0), ev("agent_stop", 2), ev("prompt", 20), ev("agent_tool", 25),
+                     named(28, "Export PDF"), ev("agent_stop", 30)], now=m(60))
+    assert subjects(out) == [(m(0), m(2), None), (m(20), m(28), None), (m(28), m(30), "Export PDF")]
+
+
+def test_one_task_per_session_never_splits_and_keeps_the_latest_name():
+    events = [ev("prompt", 0), named(0.1, "Exploration"), ev("prompt", 8), named(8.2, "Export PDF"),
+              ev("agent_stop", 12)]
+    out = compute_intervals(events, [], m(40), split_subjects=False)
+    assert subjects(out) == [(m(0), m(12), "Export PDF")]
 
 
 def test_a_name_given_outside_any_entry_goes_to_the_next_one():

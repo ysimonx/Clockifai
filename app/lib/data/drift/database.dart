@@ -29,6 +29,8 @@ class Profiles extends Table {
   TextColumn get timezone => text().clientDefault(() => 'Europe/Paris')();
   TextColumn get locale => text().clientDefault(() => 'fr')();
   TextColumn get defaultWorkspaceId => text().nullable()();
+  /// Tâches de Claude (plan 10, D18) : `subject`, `session` ou `off` ; nul tant que la colonne n'est pas synchronisée.
+  TextColumn get claudeTasks => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
 

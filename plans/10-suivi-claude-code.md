@@ -470,7 +470,7 @@ sur `main` n'a pas de branche pour distinguer ses sujets, et la tâche de D9 ne 
   confidentielle. Le hook `PostToolUse` reconnaît l'outil (`mcp__plugin_clockifai_*__set_current_task`), hors de
   la limite d'un outil par minute, et envoie `session_task` `{task_name}` (80 caractères). C'est la seule valeur de
   `tool_input` qui quitte le poste. Le serveur MCP ne connaît pas la session : seul le hook la connaît.
-- **Côté serveur** (`named_task`) : dans le projet de l'entrée, la tâche active de ce nom (sans tenir compte de la
+- **Côté serveur** (`subject_task`) : dans le projet de l'entrée, la tâche active de ce nom (sans tenir compte de la
   casse), sinon une nouvelle si `workspaces.task_creation = 'everyone'`, sous verrou par projet et par nom (deux
   sessions, une seule tâche). Sans projet ou sans ce droit, le nom devient la description de l'entrée. Une tâche
   choisie à la main n'est jamais remplacée ; dans un projet choisi à la main, la tâche nommée s'ajoute.
@@ -486,6 +486,20 @@ sur `main` n'a pas de branche pour distinguer ses sujets, et la tâche de D9 ne 
   chargement par l'extension VSCode n'est pas décrit par la documentation : à constater sur un poste.
 - Le lot 3 garde le service MCP distant (projets, résumé, suggestions) ; `set_current_task` y est déjà fait, en
   local.
+- **Préciser = renommer** (24 octobre 2026, après la question « un premier prompt vague crée-t-il plusieurs
+  tâches ? ») : la consigne demande un nom dès que Claude sait sur quoi porte le travail, même une vérification
+  rapide (pas pour une simple salutation), et de le garder pour préciser le même sujet. Une première version
+  (« une fois le sujet clair, pas pour une question rapide ») laissait des sessions sans tâche, contraire au mode
+  « une tâche par session » (constaté à l'essai réel) ;
+  la première entrée d'une session prend son premier nom en entier, quel que soit le délai ; un nom plus précis
+  en début d'entrée renomme la tâche que le serveur a créée pour elle (`clockifai_private.agent_tasks`, 0014),
+  ou bascule sur la tâche existante de ce nom en supprimant la tâche vide. Une tâche renommée à la main ou
+  utilisée par une autre entrée n'est jamais touchée.
+- **Réglage « Tâches de Claude »** de chaque pilote (`profiles.claude_tasks`, 0015 ; Paramètres › Intégrations ›
+  Claude Code) : « Une tâche par sujet » (défaut, ci-dessus), « Une tâche par session Claude Code » (toujours une
+  nouvelle tâche, datée si le nom est pris, « Export PDF (25 oct.) » ; jamais de coupure ; un nom plus précis la
+  renomme ; une reprise y reste) ou « Pas de tâche » (les noms sont ignorés, comme avant D18). Claude appelle
+  encore l'outil en mode « Pas de tâche » : le serveur MCP local ne connaît pas le réglage.
 
 ## 4. Modèle de données — migrations `0012_activity_private.admin.sql` et `0013_activity.sql`
 
@@ -497,6 +511,8 @@ les droits de `powersync_role`, `anon` et `authenticated`, comme 0008. Le reste 
 |---|---|---|
 | `clockifai_private.api_tokens` (0012) | `id`, `workspace_id`, `user_id`, `name`, `token_hash` (unique), `last_used_at`, `created_at`, `revoked_at` | non |
 | `clockifai_private.activity_events` (0012) | `id` (clé d'idempotence : `event_id` généré par le hook ou l'extension, `uuid5(remote_key, sha)` pour un commit), `workspace_id`, `user_id`, `token_id`, `actor` (`agent`, `human`), `kind` (`prompt`, `agent_tool`, `agent_stop`, `agent_wait`, `session_start`, `session_end`, `session_task`, `session_description`, `focus_start`, `focus_alive`, `focus_end`, `edit`, `terminal`, `commit`, `presence`), `occurred_at`, `received_at`, `session_id` (hook) ou `window_id` (extension), `remote_key`, `cwd`, `git_branch`, `sha`, `subject`, `author_email`, `authored_at`, `editor`, `machine`, `active` (présence), `payload` (jsonb : tâche ou description relayée), `excerpt` ; index `(user_id, occurred_at)` et `(session_id, occurred_at)` | non |
+| `clockifai_private.agent_tasks` (0014, D18) | `task_id` (clé, `on delete cascade`), `workspace_id`, `session_id`, `name` (nom posé par le serveur) ; index `(session_id)` | non |
+| `public.profiles` (0015, D18) | `+ claude_tasks` (`subject`, `session`, `off` ; défaut `subject`) | `my_profile` (existant) |
 | `clockifai_private.agent_entries` (0012) | `time_entry_id` (clé, `on delete cascade`), `workspace_id`, `agent_user_id`, `session_id`, `remote_key`, `git_branch`, `cwd`, `last_activity_at`, `waiting_since`, `closed_by_idle`, `server_start_at`, `server_end_at`, `server_project_id`, `server_task_id`, `server_description`, `description_source` (`auto`, `claude`), `prompt_count`, `commit_count` ; index `(session_id)` | non |
 | `public.code_repositories` | `workspace_id`, `remote_key` (unique par workspace), `name`, `project_id` (facultatif : la règle de workspace de D9), + colonnes standard. Le plan 09 l'étend (forge, URL web, branche par défaut) | non |
 | `public.code_commits` | `workspace_id`, `repository_id`, `sha` (unique par dépôt), `branch`, `subject`, `author_email`, `author_user_id`, `authored_at`, `seen_locally_at`, `session_id` ou `window_id`, `time_entry_id` (entrée d'agent, `on delete set null`), + colonnes standard. Le plan 09 l'étend | non : les messages arrivent dans l'app par les descriptions |
@@ -908,7 +924,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
 | 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille », filtre des rapports, colonne « Type » des exports, réglages de facturation des agents, lien de l'écran Intégrations vers la fiche de l'agent) ; hooks vérifiés dans l'extension VSCode | M/L | fait |
-| 1c Tâche nommée par Claude (D18) | Serveur MCP local du plugin (`set_current_task`), relais `session_task` `{task_name}` par le hook, `named_task` et découpage des entrées par sujet (`agent_clock`), tests unitaires, du plugin et d'intégration, essai réel avec Claude Code | S/M | fait |
+| 1c Tâche nommée par Claude (D18) | Serveur MCP local du plugin (`set_current_task`), relais `session_task` `{task_name}` par le hook, `subject_task` et découpage des entrées par sujet (`agent_clock`), « préciser = renommer » (`agent_tasks`, 0014), réglage « Tâches de Claude » par pilote (`profiles.claude_tasks`, 0015), tests unitaires, du plugin et d'intégration, essai réel avec Claude Code | S/M | fait |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
 | 3 MCP | Service `mcp`, outils (`set_current_task` déjà fait en local, lot 1c), `.mcp.json`, commandes du plugin et relais `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |

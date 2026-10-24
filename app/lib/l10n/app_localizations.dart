@@ -548,6 +548,36 @@ abstract class AppLocalizations {
   /// **'Touchez Copier le jeton, puis appuyez sur Entrée dans le terminal : la commande lit le jeton dans le presse-papiers. Dans l\'autre ordre, copier la commande remplacerait le jeton.'**
   String get claudeCodeStepTokenThen;
 
+  /// No description provided for @claudeTasks.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tâches de Claude'**
+  String get claudeTasks;
+
+  /// No description provided for @claudeTasksHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Claude nomme la tâche de son travail, et le temps de vos sessions y est rangé, dans le projet du dépôt. Un nom plus précis renomme la tâche au lieu d\'en créer une autre ; une tâche que vous choisissez reste.'**
+  String get claudeTasksHelp;
+
+  /// No description provided for @claudeTasksOff.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas de tâche : le projet seulement'**
+  String get claudeTasksOff;
+
+  /// No description provided for @claudeTasksSession.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une tâche par session Claude Code'**
+  String get claudeTasksSession;
+
+  /// No description provided for @claudeTasksSubject.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une tâche par sujet (même nom, même tâche)'**
+  String get claudeTasksSubject;
+
   /// No description provided for @client.
   ///
   /// In fr, this message translates to:

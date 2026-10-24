@@ -16,11 +16,12 @@ NAME_MAX = 80  # comme le serveur (TASK_NAME_MAX)
 TOOL = "set_current_task"
 
 INSTRUCTIONS = (
-    "Clockifai mesure le temps de cette session de Claude Code et le range par tâche. Au début de chaque nouveau "
-    "sujet de travail (premier message de la session, ou quand l'utilisateur passe à autre chose), appelle "
-    f"{TOOL} avec un nom de tâche court (3 à 6 mots, dans la langue de l'utilisateur), avant de commencer le "
-    "travail. Garde le même nom tant que le sujet ne change pas, et reprends exactement le même nom pour un sujet "
-    "déjà nommé. Pas de nom de personne ni de donnée confidentielle. Inutile de le signaler à l'utilisateur."
+    "Clockifai mesure le temps de cette session de Claude Code et le range par tâche. Dès que tu sais sur quoi "
+    f"porte le travail, même une vérification rapide, appelle {TOOL} avec un nom de tâche court (3 à 6 mots, dans "
+    "la langue de l'utilisateur), avant de commencer ; pas pour une simple salutation. Garde ce nom tant que "
+    "l'utilisateur précise ou poursuit le même sujet : un nom plus précis donné juste après renomme la tâche. Ne "
+    "donne un nouveau nom que s'il passe à un autre sujet, et reprends exactement le même nom pour un sujet déjà "
+    "nommé. Pas de nom de personne ni de donnée confidentielle. Inutile de le signaler à l'utilisateur."
 )
 
 TOOLS = [{

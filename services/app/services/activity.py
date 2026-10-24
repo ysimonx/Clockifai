@@ -11,6 +11,7 @@ import logging
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import psycopg
 
@@ -192,21 +193,51 @@ def task_name(payload: dict) -> str | None:
     return name or None
 
 
-def named_task(conn, workspace_id: str, project_id: str | None, name: str | None) -> str | None:
-    """Tâche nommée par Claude dans le projet de l'entrée (D18) : la tâche active de ce nom, sinon une nouvelle si le
-    workspace laisse tout le monde créer des tâches. None sans projet, sans nom ou sans ce droit."""
-    if not project_id or not name:
-        return None
-    # Deux sessions qui nomment le même sujet en même temps ne font qu'une tâche.
+_PARIS = ZoneInfo("Europe/Paris")
+_MONTHS = {"fr": ("janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."),
+           "en": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")}
+
+
+@dataclass(frozen=True)
+class TaskPrefs:
+    """Réglage « Tâches de Claude » du pilote (profiles.claude_tasks : subject, session, off), avec le fuseau et la
+    langue des noms datés (D18)."""
+
+    mode: str = "subject"
+    tz: ZoneInfo = _PARIS
+    locale: str = "fr"
+
+
+def task_prefs(conn, pilot_id: str) -> TaskPrefs:
+    row = conn.execute("select claude_tasks, timezone, locale from public.profiles where id = %s", (pilot_id,)).fetchone()
+    if not row:
+        return TaskPrefs()
+    try:
+        tz = ZoneInfo(row["timezone"]) if row["timezone"] else _PARIS
+    except (ZoneInfoNotFoundError, ValueError):
+        tz = _PARIS
+    return TaskPrefs(row["claude_tasks"] or "subject", tz, "en" if (row["locale"] or "").startswith("en") else "fr")
+
+
+def _lock_name(conn, project_id: str, name: str) -> None:
+    """Deux sessions qui nomment le même sujet en même temps ne font qu'une tâche."""
     conn.execute("select pg_advisory_xact_lock(hashtextextended('task:' || %s || ':' || lower(%s), 0))",
                  (project_id, name))
+
+
+def _task_named(conn, workspace_id: str, project_id: str, name: str, *, active_only: bool = True,
+                exclude: str | None = None) -> str | None:
     row = conn.execute(
         "select id from public.tasks where workspace_id = %s and project_id = %s and lower(name) = lower(%s) "
-        "and status = 'active' and deleted_at is null order by created_at limit 1",
-        (workspace_id, project_id, name),
+        "and deleted_at is null and (not %s or status = 'active') and id is distinct from %s::uuid "
+        "order by created_at limit 1",
+        (workspace_id, project_id, name, active_only, exclude),
     ).fetchone()
-    if row:
-        return str(row["id"])
+    return str(row["id"]) if row else None
+
+
+def _create_task(conn, workspace_id: str, project_id: str, session_id: str, name: str) -> str | None:
+    """Nouvelle tâche, si le workspace laisse tout le monde en créer ; notée dans agent_tasks pour la session."""
     ws = conn.execute("select task_creation from public.workspaces where id = %s", (workspace_id,)).fetchone()
     if not ws or (ws["task_creation"] or "everyone") != "everyone":
         return None
@@ -215,7 +246,102 @@ def named_task(conn, workspace_id: str, project_id: str | None, name: str | None
         "where id = %s and workspace_id = %s and deleted_at is null returning id",
         (workspace_id, name, project_id, workspace_id),
     ).fetchone()
-    return str(row["id"]) if row else None
+    if row is None:
+        return None
+    conn.execute("insert into clockifai_private.agent_tasks (task_id, workspace_id, session_id, name) "
+                 "values (%s, %s, %s, %s)", (row["id"], workspace_id, session_id, name))
+    return str(row["id"])
+
+
+def _own_task(conn, workspace_id: str, session_id: str, task_id: str | None, *, entry_id: str | None,
+              whole_session: bool) -> dict | None:
+    """La tâche [task_id] si le serveur l'a créée pour cette session, que personne ne l'a renommée, et qu'aucune autre
+    entrée ne l'utilise (aucune entrée d'une autre session, en mode « une tâche par session »)."""
+    if not task_id:
+        return None
+    row = conn.execute(
+        "select t.id, t.project_id, a.name from clockifai_private.agent_tasks a join public.tasks t on t.id = a.task_id "
+        "where a.task_id = %s and a.session_id = %s and a.workspace_id = %s and t.deleted_at is null and t.name = a.name",
+        (task_id, session_id, workspace_id),
+    ).fetchone()
+    if row is None:
+        return None
+    if whole_session:
+        used = conn.execute(
+            "select 1 from public.time_entries te left join clockifai_private.agent_entries ae on ae.time_entry_id = te.id "
+            "where te.task_id = %s and te.deleted_at is null and ae.session_id is distinct from %s limit 1",
+            (task_id, session_id),
+        ).fetchone()
+    else:
+        used = conn.execute(
+            "select 1 from public.time_entries where task_id = %s and deleted_at is null and id is distinct from %s::uuid "
+            "limit 1", (task_id, entry_id),
+        ).fetchone()
+    return None if used else row
+
+
+def _rename(conn, task_id: str, name: str) -> None:
+    conn.execute("update public.tasks set name = %s where id = %s", (name, task_id))
+    conn.execute("update clockifai_private.agent_tasks set name = %s where task_id = %s", (name, task_id))
+
+
+def _dated(conn, workspace_id: str, project_id: str, name: str, started_at: datetime, prefs: TaskPrefs,
+           exclude: str | None = None) -> str:
+    """Nom libre dans le projet : « Export PDF », sinon « Export PDF (25 oct.) », puis « Export PDF (25 oct., 2) »…"""
+    if not _task_named(conn, workspace_id, project_id, name, active_only=False, exclude=exclude):
+        return name
+    day = started_at.astimezone(prefs.tz)
+    month = _MONTHS[prefs.locale][day.month - 1]
+    label = f"{month} {day.day}" if prefs.locale == "en" else f"{day.day} {month}"
+    candidate, n = f"{name} ({label})", 2
+    while _task_named(conn, workspace_id, project_id, candidate, active_only=False, exclude=exclude):
+        candidate, n = f"{name} ({label}, {n})", n + 1
+    return candidate
+
+
+def subject_task(conn, workspace_id: str, session_id: str, project_id: str | None, name: str | None,
+                 current_task_id: str | None, prefs: TaskPrefs, started_at: datetime, *,
+                 entry_id: str | None = None) -> tuple[str | None, str | None]:
+    """Tâche de l'entrée pour le sujet [name] nommé par Claude (D18), et tâche devenue vide à supprimer une fois
+    l'entrée écrite. (None, None) sans projet, sans nom, en mode « off » ou sans droit de création : le nom décrit
+    alors l'entrée. [entry_id] : entrée existante, dont la tâche peut être renommée (« préciser = renommer »)."""
+    if not project_id or not name or prefs.mode == "off":
+        return None, None
+    _lock_name(conn, project_id, name)
+    if prefs.mode == "session":
+        # Une tâche par session, toujours nouvelle ; un nom plus précis la renomme.
+        row = conn.execute(
+            "select a.task_id from clockifai_private.agent_tasks a join public.tasks t on t.id = a.task_id "
+            "where a.session_id = %s and a.workspace_id = %s and t.project_id = %s and t.deleted_at is null "
+            "order by a.created_at desc limit 1",
+            (session_id, workspace_id, project_id),
+        ).fetchone()
+        if row:
+            own = _own_task(conn, workspace_id, session_id, str(row["task_id"]), entry_id=entry_id, whole_session=True)
+            if own and own["name"].casefold() != name.casefold():
+                _rename(conn, str(own["id"]), _dated(conn, workspace_id, project_id, name, started_at, prefs,
+                                                     exclude=str(own["id"])))
+            return str(row["task_id"]), None
+        return _create_task(conn, workspace_id, project_id, session_id,
+                            _dated(conn, workspace_id, project_id, name, started_at, prefs)), None
+
+    # Une tâche par sujet : préciser le nom renomme la tâche créée pour cette entrée plutôt que d'en ajouter une.
+    if entry_id and current_task_id and conn.execute(
+        "select 1 from clockifai_private.agent_tasks a join public.tasks t on t.id = a.task_id "
+        "where a.task_id = %s and a.session_id = %s and t.name <> a.name", (current_task_id, session_id),
+    ).fetchone():
+        return current_task_id, None  # tâche de l'entrée renommée à la main : c'est un choix humain, elle reste
+    own = _own_task(conn, workspace_id, session_id, current_task_id, entry_id=entry_id,
+                    whole_session=False) if entry_id else None
+    existing = _task_named(conn, workspace_id, project_id, name)
+    if own and own["name"].casefold() != name.casefold():
+        if existing:
+            return existing, str(own["id"])  # le sujet a déjà sa tâche : celle de l'entrée, vide, disparaît
+        _rename(conn, str(own["id"]), name)
+        return str(own["id"]), None
+    if existing:
+        return existing, None
+    return _create_task(conn, workspace_id, project_id, session_id, name), None
 
 
 def _valid_task(conn, workspace_id: str, project_id: str | None, task_id: str | None) -> tuple[str | None, str | None]:
@@ -275,15 +401,16 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
         (workspace_id, session_id, now - MAX_AGE),
     ).fetchall()
     by_id = {str(r["id"]): r for r in existing_rows}
+    prefs = task_prefs(conn, pilot_id)
     events = [Event(r["kind"], r["occurred_at"], _payload(r).get("duration_ms"), str(r["id"]),
-                    task_name(_payload(r)) if r["kind"] == "session_task" else None)
+                    task_name(_payload(r)) if r["kind"] == "session_task" and prefs.mode != "off" else None)
               for r in rows if r["kind"] in CLOCK_KINDS]
     existing = [Existing(str(r["id"]), r["start_at"], r["end_at"], r["deleted_at"], r["server_start_at"],
                          r["server_end_at"]) for r in existing_rows]
     rules = _rules(conn, workspace_id, pilot_id)
     written = 0
 
-    for op in plan_session(events, existing, now):
+    for op in plan_session(events, existing, now, split_subjects=prefs.mode != "session"):
         iv = op.interval
         until = iv.end or now
         ctx = _context(rows, until)
@@ -302,7 +429,9 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                 else:
                     project_id, task_id = project_for(conn, workspace_id, rules, ctx)
             # Sujet nommé par Claude pendant cette entrée : il prime sur la tâche reprise de la précédente (D18).
-            task_id = named_task(conn, workspace_id, project_id, iv.subject) or task_id
+            named, emptied = subject_task(conn, workspace_id, session_id, project_id, iv.subject, task_id, prefs,
+                                          iv.start)
+            task_id = named or task_id
             cur = None
             server_project = (project_id, task_id)
         else:
@@ -324,7 +453,8 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                 server_project = (project_id, task_id)
             # Sujet nommé par Claude (D18), y compris dans un projet choisi à la main, sauf tâche choisie à la main.
             human_task = cur["task_id"] is not None and cur["task_id"] != cur["server_task_id"]
-            named = None if human_task else named_task(conn, workspace_id, project_id, iv.subject)
+            named, emptied = (None, None) if human_task else subject_task(
+                conn, workspace_id, session_id, project_id, iv.subject, task_id, prefs, start, entry_id=entry_id)
             if named:
                 task_id, server_project = named, (server_project[0], named)
 
@@ -378,6 +508,10 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
             log.info("entrée d'agent %s non écrite : %s", entry_id, status)
             continue
         written += 1
+        if emptied:  # tâche créée pour l'entrée puis remplacée par celle du sujet : vide, elle disparaît
+            conn.execute(
+                "update public.tasks set deleted_at = now() where id = %s and deleted_at is null and not exists "
+                "(select 1 from public.time_entries where task_id = %s and deleted_at is null)", (emptied, emptied))
         _save_state(conn, entry_id, workspace_id, agent_id, session_id, ctx, iv, start=server_start, end=end,
                     project_id=server_project[0], task_id=server_project[1], description=server_description,
                     description_source=desc_source)

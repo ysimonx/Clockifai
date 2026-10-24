@@ -277,6 +277,22 @@ class AppLocalizationsFr extends AppLocalizations {
       'Touchez Copier le jeton, puis appuyez sur Entrée dans le terminal : la commande lit le jeton dans le presse-papiers. Dans l\'autre ordre, copier la commande remplacerait le jeton.';
 
   @override
+  String get claudeTasks => 'Tâches de Claude';
+
+  @override
+  String get claudeTasksHelp =>
+      'Claude nomme la tâche de son travail, et le temps de vos sessions y est rangé, dans le projet du dépôt. Un nom plus précis renomme la tâche au lieu d\'en créer une autre ; une tâche que vous choisissez reste.';
+
+  @override
+  String get claudeTasksOff => 'Pas de tâche : le projet seulement';
+
+  @override
+  String get claudeTasksSession => 'Une tâche par session Claude Code';
+
+  @override
+  String get claudeTasksSubject => 'Une tâche par sujet (même nom, même tâche)';
+
+  @override
   String get client => 'Client';
 
   @override

@@ -365,7 +365,7 @@ def test_mcp_server_names_the_task_without_any_network():
     assert sorted(replies) == [1, 2, 3, 4, 5] and out.stderr == "", "une réponse par requête, rien d'autre"
     init = replies[1]["result"]
     assert init["protocolVersion"] == "2025-11-25" and init["capabilities"] == {"tools": {}}
-    assert "set_current_task" in init["instructions"]
+    assert "set_current_task" in init["instructions"] and "simple salutation" in init["instructions"]
     [tool] = replies[2]["result"]["tools"]
     assert tool["name"] == "set_current_task" and tool["inputSchema"]["required"] == ["name"]
     assert replies[3]["result"]["content"][0]["text"].startswith("Tâche « Export PDF »")

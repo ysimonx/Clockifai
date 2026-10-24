@@ -43,7 +43,7 @@ sequenceDiagram
     F->>PG: activity_events (idempotent par id)
     F->>PG: verrou de la session, événements des 7 derniers jours, entrées existantes
     F->>F: agent_clock : intervalles de travail, coupés au changement de sujet, plages figées par un humain
-    F->>PG: tâche du sujet : reprise par son nom, ou créée (named_task)
+    F->>PG: tâche du sujet selon le réglage du pilote : reprise, renommée ou créée (subject_task)
     F->>PG: agent_entry_write (contrôles de la garde) puis agent_entries
     F->>PG: commits de la session → code_repositories, code_commits
     PG->>PS: réplication logique

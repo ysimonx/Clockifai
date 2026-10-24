@@ -46,6 +46,7 @@ erDiagram
     text display_name
     text timezone "Europe/Paris par défaut"
     uuid default_workspace_id
+    text claude_tasks "subject | session | off"
   }
   workspaces {
     uuid id PK
@@ -289,6 +290,7 @@ erDiagram
 | `clockifai_private` | `api_tokens` | jetons personnels `clk_…` hachés (SHA-256), un par poste, pour un utilisateur et un workspace | Flask |
 | `clockifai_private` | `activity_events` | événements bruts des hooks Claude Code et de l'extension VSCode, sans contenu de prompt ni de fichier ; purgés après 30 jours | Flask |
 | `clockifai_private` | `agent_entries` | par entrée d'agent : session, dépôt, dernière activité, et valeurs écrites par le serveur (pour repérer ce qu'un humain a retouché) | Flask |
+| `clockifai_private` | `agent_tasks` | tâches créées par le serveur pour une session de Claude, avec le nom qu'il leur a donné : un nom plus précis les renomme au lieu d'en créer d'autres ; une tâche renommée à la main n'est plus touchée | Flask |
 | `clockifai_meta` | `schema_migrations` | migrations appliquées | `deploy/migrate.sh` |
 
 Les tables privées se créent par une migration `*.admin.sql` : `postgres` n'a que `usage` sur `clockifai_private`.

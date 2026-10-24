@@ -19,6 +19,7 @@ const schema = Schema([
     Column.text('timezone'),
     Column.text('locale'),
     Column.text('default_workspace_id'),
+    Column.text('claude_tasks'),
     ..._audit,
   ], ignoreEmptyUpdates: true),
   Table('workspaces', [

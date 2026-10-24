@@ -6,6 +6,7 @@ import '../../core/catalog.dart';
 import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
+import '../../core/services_api.dart';
 import '../../core/session.dart';
 import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
@@ -13,6 +14,18 @@ import '../../core/widgets/pickers.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
+
+/// Heure à écrire pour une entrée modifiée : null si l'heure saisie, à la minute près, est celle d'origine.
+/// Le dialogue ne saisit pas les secondes : réécrire une heure inchangée les perdrait, et ferait passer une entrée
+/// d'agent Claude pour corrigée à la main, que le serveur cesserait alors de prolonger (plan 10, D7.8).
+DateTime? changedTime(DateTime? original, DateTime? edited) {
+  if (edited == null) return null;
+  if (original == null) return edited;
+  final o = original.toLocal();
+  final e = edited.toLocal();
+  final same = o.year == e.year && o.month == e.month && o.day == e.day && o.hour == e.hour && o.minute == e.minute;
+  return same ? null : edited;
+}
 
 /// Création (entry == null) ou modification d'une entrée de temps.
 /// À la création, [initialUserIds] préremplit les collaborateurs (chef d'équipe, manager) :
@@ -71,6 +84,8 @@ class _EntryDialogState extends State<_EntryDialog> {
   late bool _billable;
   late Set<String> _userIds;
   bool _saving = false;
+  /// « Toujours rattacher ce dépôt à ce projet » (entrée d'agent sans projet, plan 10, D9).
+  bool _attachRepo = true;
 
   bool get _isRunning => widget.entry != null && widget.entry!.endAt == null;
 
@@ -204,12 +219,38 @@ class _EntryDialogState extends State<_EntryDialog> {
         clearTask: _taskId == null,
         billable: _billable,
         hourlyRateCents: _projectId != e.projectId ? rate : null,
-        start: _startDt,
-        end: _isRunning ? null : _endDt,
+        start: changedTime(e.startAt, _startDt),
+        end: _isRunning ? null : changedTime(e.endAt, _endDt),
         tagIds: _tagIds,
       );
+      if (_offersRepoRule(rights) && _attachRepo) await _createRepoRule(e);
     }
     if (mounted) Navigator.pop(context);
+  }
+
+  /// Le pilote donne un projet à une entrée de son agent qui n'en avait pas : on lui propose d'y rattacher le dépôt.
+  bool _offersRepoRule(TeamRights rights) {
+    final e = widget.entry;
+    return e != null && e.projectId == null && _projectId != null && rights.pilots(e.userId);
+  }
+
+  /// Règle personnelle « ce dépôt → ce projet » (Flask lit le dépôt de l'entrée), qui rattache aussi les autres
+  /// entrées sans projet de l'agent sur 7 jours. En ligne seulement ; l'entrée elle-même est déjà enregistrée.
+  Future<void> _createRepoRule(TimeEntry e) async {
+    final l = context.l10n;
+    try {
+      final res = await ServicesApi.post('/api/activity/rules', {
+        'workspace_id': e.workspaceId,
+        'time_entry_id': e.id,
+        'project_id': _projectId,
+        'task_id': ?_taskId,
+      });
+      if (mounted) showSnack(context, l.repoAttached((res['reattributed'] as num?)?.toInt() ?? 0));
+    } on ServicesException catch (err) {
+      if (mounted) showSnack(context, err.status == 404 ? l.repoUnknown : l.repoAttachOffline);
+    } catch (_) {
+      if (mounted) showSnack(context, l.repoAttachOffline);
+    }
   }
 
   Future<void> _delete() async {
@@ -234,7 +275,8 @@ class _EntryDialogState extends State<_EntryDialog> {
     final notAllowed = owner != null && !rights.canEditTimeOf(owner);
     final readOnly = (locked && !session.isAdmin) || inLockedPeriod || notAllowed;
     final author = widget.entry?.createdBy;
-    final enteredByOther = owner != null && author != null && author != owner;
+    // Une entrée d'agent porte son pilote comme auteur, mais c'est Claude Code qui l'a enregistrée.
+    final enteredByOther = owner != null && author != null && author != owner && widget.entry?.source != 'agent';
 
     return AlertDialog(
       title: Text(widget.entry == null ? l.addManualEntry : (_isRunning ? l.runningTimer : l.editEntry)),
@@ -328,6 +370,15 @@ class _EntryDialogState extends State<_EntryDialog> {
                 ),
               ),
             ),
+            if (!readOnly && _offersRepoRule(rights))
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                value: _attachRepo,
+                onChanged: (v) => setState(() => _attachRepo = v ?? false),
+                title: Text(l.alwaysAttachRepo),
+                subtitle: Text(l.alwaysAttachRepoHelp),
+              ),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(

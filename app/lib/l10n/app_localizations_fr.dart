@@ -77,6 +77,13 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get alwaysAttachRepo => 'Toujours rattacher ce dépôt à ce projet';
+
+  @override
+  String get alwaysAttachRepoHelp =>
+      'Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, et ses entrées sans projet de la semaine aussi.';
+
+  @override
   String get amount => 'Montant';
 
   @override
@@ -1152,7 +1159,27 @@ class AppLocalizationsFr extends AppLocalizations {
   String get reopen => 'Rouvrir';
 
   @override
+  String repoAttached(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Dépôt rattaché à ce projet, et $count autres entrées.',
+      one: 'Dépôt rattaché à ce projet, et 1 autre entrée.',
+      zero: 'Dépôt rattaché à ce projet.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repoAttachOffline =>
+      'Entrée enregistrée, mais le dépôt n\'a pas pu être rattaché : il faut être en ligne.';
+
+  @override
   String get reports => 'Rapports';
+
+  @override
+  String get repoUnknown =>
+      'Entrée enregistrée, mais son dépôt est inconnu : rien à rattacher.';
 
   @override
   String get requestSent => 'Demande envoyée.';

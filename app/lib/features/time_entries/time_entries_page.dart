@@ -13,6 +13,7 @@ import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../timer/timer_rules.dart';
+import 'agents_banner.dart';
 import 'entry_dialog.dart';
 import 'entry_group_dialog.dart';
 import 'entry_groups.dart';
@@ -57,12 +58,20 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
           return const Center(child: CircularProgressIndicator());
         }
         if (rows.isEmpty) {
-          return EmptyState(
-            icon: Icons.timer_outlined,
-            title: l.noEntriesYet,
-            message: l.noEntriesYetMessage,
-            action: FilledButton.tonal(onPressed: () => showEntryDialog(context), child: Text(l.addManualEntry)),
-          );
+          return Column(children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1100),
+              child: const Padding(padding: EdgeInsets.fromLTRB(12, 8, 12, 0), child: AgentsWorkingBanner()),
+            ),
+            Expanded(
+              child: EmptyState(
+                icon: Icons.timer_outlined,
+                title: l.noEntriesYet,
+                message: l.noEntriesYetMessage,
+                action: FilledButton.tonal(onPressed: () => showEntryDialog(context), child: Text(l.addManualEntry)),
+              ),
+            ),
+          ]);
         }
 
         // Regroupement par semaine puis par jour (heure locale).
@@ -82,7 +91,7 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
           initialData: const [],
           builder: (context, runningSnap) {
             final running = runningSnap.data ?? const <TimeEntry>[];
-            final children = <Widget>[];
+            final children = <Widget>[const AgentsWorkingBanner()];
             DateTime? currentWeek;
             for (final d in days) {
               final w = startOfWeek(d, ws.weekStart);

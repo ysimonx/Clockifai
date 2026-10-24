@@ -55,6 +55,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).';
 
   @override
+  String get agentsWorking => 'Claude travaille';
+
+  @override
+  String get agentsWorkingHelp =>
+      'Sessions Claude Code en cours de votre agent. Sans activité pendant 10 minutes, une session se clôt à l\'heure de sa dernière action. Touchez une session pour changer son projet ou sa description.';
+
+  @override
   String agentTimeOf(String name) {
     return 'Temps de $name : vous pouvez corriger ses entrées, pas en ajouter.';
   }

@@ -71,7 +71,8 @@ la date d'arrivée de chaque évolution.
   l'extension VSCode n'installe pas, et indique l'ordre pour enregistrer le jeton (coller la commande, copier le
   jeton, puis Entrée). Un agent retiré par erreur se restaure depuis Équipe, rubrique « Agents retirés ». Dans la liste des
   postes connectés, « Reconnecter » redonne un jeton à un poste, et « Afficher les commandes d'installation »
-  rappelle les commandes.
+  rappelle les commandes. « Nouvelle tâche », dans la fenêtre d'une entrée, crée une tâche pour la session de
+  Claude, que la session garde quand elle reprend ; « Toujours rattacher ce dépôt » ne retient plus que le projet.
 
 ### Modifié
 

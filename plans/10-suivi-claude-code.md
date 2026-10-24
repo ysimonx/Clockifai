@@ -765,6 +765,12 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
   défaut dans le dialogue de l'entrée, pour le pilote seulement. Le dialogue n'écrit plus les heures qu'il n'a
   pas changées (`changedTime`) : il ne saisit pas les secondes, et réécrire une fin inchangée figeait l'entrée
   d'agent (D7.8). Une entrée d'agent n'affiche pas « saisi par » son pilote.
+  La règle créée par l'app ne retient que le projet (24 octobre 2026) : avec la tâche, toutes les sessions
+  suivantes du dépôt seraient allées dans la tâche d'une seule. « Nouvelle tâche », sous le projet dans le
+  dialogue de l'entrée, crée la tâche et la sélectionne (même aide que le « + » du sélecteur,
+  `promptNewTask`) ; une session reprise après la pause garde ce projet et cette tâche, sauf changement de
+  branche (D9, testé par `test_resumed_session_keeps_the_task_chosen_in_the_app`). Un pilote qui travaille sur
+  `main` donne ainsi une tâche à chaque sujet, sans attendre le lot 3.
 - **Suggestions** :
   - chaque ligne montre le projet (ou le dépôt inconnu → choix du projet et règle), la plage, la durée, le temps de Claude sur la même plage et une description modifiable ;
   - actions : accepter, ignorer, tout accepter ;

@@ -87,7 +87,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get agentsWorkingHelp =>
-      'Sessions Claude Code en cours de votre agent. Sans activité pendant 10 minutes, une session se clôt à l\'heure de sa dernière action. Touchez une session pour changer son projet ou sa description.';
+      'Sessions Claude Code en cours de votre agent. Sans activité pendant 10 minutes, une session se clôt à l\'heure de sa dernière action. Touchez une session pour changer son projet, lui créer une tâche ou changer sa description.';
 
   @override
   String agentTimeOf(String name) {
@@ -116,7 +116,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get alwaysAttachRepoHelp =>
-      'Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, et ses entrées sans projet de la semaine aussi.';
+      'Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, sans tâche, et ses entrées sans projet de la semaine aussi.';
 
   @override
   String get amount => 'Montant';

@@ -23,7 +23,7 @@
   "agents": "Agents",
   "agentsHelp": "Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).",
   "agentsWorking": "Claude travaille",
-  "agentsWorkingHelp": "Sessions Claude Code en cours de votre agent. Sans activité pendant 10 minutes, une session se clôt à l'heure de sa dernière action. Touchez une session pour changer son projet ou sa description.",
+  "agentsWorkingHelp": "Sessions Claude Code en cours de votre agent. Sans activité pendant 10 minutes, une session se clôt à l'heure de sa dernière action. Touchez une session pour changer son projet, lui créer une tâche ou changer sa description.",
   "agentTimeOf": "Temps de {name} : vous pouvez corriger ses entrées, pas en ajouter.",
   "@agentTimeOf": {
     "placeholders": {
@@ -45,7 +45,7 @@
     }
   },
   "alwaysAttachRepo": "Toujours rattacher ce dépôt à ce projet",
-  "alwaysAttachRepoHelp": "Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, et ses entrées sans projet de la semaine aussi.",
+  "alwaysAttachRepoHelp": "Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, sans tâche, et ses entrées sans projet de la semaine aussi.",
   "amount": "Montant",
   "annualAllowance": "Droit annuel",
   "apiTokenCreated": "Jeton créé pour « {name} ». Il ne sera plus affiché : suivez ces étapes maintenant.",

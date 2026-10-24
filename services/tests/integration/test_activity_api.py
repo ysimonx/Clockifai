@@ -167,6 +167,35 @@ def test_session_task_rules_and_human_edits(team):
     assert rows == [{"description": "plan 10, étape 3", "end_at": None}]
 
 
+def test_resumed_session_keeps_the_task_chosen_in_the_app(team):
+    """Reprise après la pause de 10 minutes : la nouvelle entrée garde le projet et la tâche choisis dans l'app pour
+    la précédente, tant que la branche ne change pas (D9). La tâche créée pour ce travail se prolonge."""
+    pilote_t, _ = team["people"]["pilote"]
+    session = str(uuid.uuid4())
+    repo = {"remote_key": "github.com/ysimonx/reprise", "cwd": "/Users/y/dev/reprise"}
+
+    def entry_at(minutes: int) -> dict:
+        return next(e for e in _agent_entries(team["agent"]) if e["start_at"].startswith(iso(_ago(minutes))[:16]))
+
+    def send(*events) -> None:
+        assert api("POST", "/api/activity/events", team["token"], {"events": list(events)})[0] == 202
+
+    send(_event("prompt", _ago(76), session, **repo), _event("agent_stop", _ago(74), session, **repo))
+    first = entry_at(76)
+    assert first["project_id"] is None
+    assert rest("PATCH", f"time_entries?id=eq.{first['id']}", pilote_t,
+                {"project_id": team["project"], "task_id": team["task"]})[0] == 200
+
+    send(_event("prompt", _ago(46), session, **repo), _event("agent_stop", _ago(44), session, **repo))
+    resumed = entry_at(46)
+    assert resumed["id"] != first["id"]
+    assert (resumed["project_id"], resumed["task_id"]) == (team["project"], team["task"])
+
+    other = {**repo, "git_branch": "autre-sujet"}
+    send(_event("prompt", _ago(16), session, **other), _event("agent_stop", _ago(14), session, **other))
+    assert entry_at(16)["task_id"] is None, "autre branche, autre sujet"
+
+
 def test_rule_from_an_entry_reattributes_entries_without_project(team):
     session = str(uuid.uuid4())
     events = [_event("prompt", _ago(70), session, remote_key="github.com/ysimonx/fidwork"),

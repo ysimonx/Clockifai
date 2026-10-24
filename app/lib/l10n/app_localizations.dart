@@ -239,7 +239,7 @@ abstract class AppLocalizations {
   /// No description provided for @agentsWorkingHelp.
   ///
   /// In fr, this message translates to:
-  /// **'Sessions Claude Code en cours de votre agent. Sans activité pendant 10 minutes, une session se clôt à l\'heure de sa dernière action. Touchez une session pour changer son projet ou sa description.'**
+  /// **'Sessions Claude Code en cours de votre agent. Sans activité pendant 10 minutes, une session se clôt à l\'heure de sa dernière action. Touchez une session pour changer son projet, lui créer une tâche ou changer sa description.'**
   String get agentsWorkingHelp;
 
   /// No description provided for @agentTimeOf.
@@ -287,7 +287,7 @@ abstract class AppLocalizations {
   /// No description provided for @alwaysAttachRepoHelp.
   ///
   /// In fr, this message translates to:
-  /// **'Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, et ses entrées sans projet de la semaine aussi.'**
+  /// **'Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, sans tâche, et ses entrées sans projet de la semaine aussi.'**
   String get alwaysAttachRepoHelp;
 
   /// No description provided for @amount.

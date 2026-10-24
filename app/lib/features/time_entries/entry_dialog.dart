@@ -242,8 +242,8 @@ class _EntryDialogState extends State<_EntryDialog> {
       final res = await ServicesApi.post('/api/activity/rules', {
         'workspace_id': e.workspaceId,
         'time_entry_id': e.id,
+        // Le projet seulement : la tâche est celle de cette session, pas de toutes les suivantes du dépôt.
         'project_id': _projectId,
-        'task_id': ?_taskId,
       });
       if (mounted) showSnack(context, l.repoAttached((res['reattributed'] as num?)?.toInt() ?? 0));
     } on ServicesException catch (err) {
@@ -268,6 +268,7 @@ class _EntryDialogState extends State<_EntryDialog> {
     final locked = widget.entry?.locked ?? false;
     final session = context.watch<SessionController>();
     final catalog = context.watch<CatalogController>();
+    final project = catalog.project(_projectId);
     final rights = TeamRights.of(context);
     final lockDate = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
     final inLockedPeriod = lockDate != null && _date.isBefore(lockDate) && !session.isAdmin;
@@ -380,6 +381,20 @@ class _EntryDialogState extends State<_EntryDialog> {
                 ),
               ),
             ),
+            // Une tâche pour ce travail, sans passer par le « + » du sélecteur (une session de Claude, par exemple :
+            // ses entrées suivantes la reprennent, plan 10, D9).
+            if (!readOnly && _taskId == null && project != null && session.canCreateTasks)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.add_task, size: 18),
+                  label: Text(l.newTask),
+                  onPressed: () async {
+                    final id = await promptNewTask(context, project);
+                    if (id != null && mounted) setState(() => _taskId = id);
+                  },
+                ),
+              ),
             if (!readOnly && _offersRepoRule(rights))
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,

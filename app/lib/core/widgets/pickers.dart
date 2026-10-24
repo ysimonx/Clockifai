@@ -23,6 +23,25 @@ Future<ProjectPick?> showProjectPicker(BuildContext context, {String? projectId,
   );
 }
 
+/// Demande le nom d'une nouvelle tâche du projet [p] et renvoie son id ; une tâche du même nom est reprise plutôt
+/// que dupliquée. Nul si l'utilisateur annule.
+Future<String?> promptNewTask(BuildContext context, Project p, {String initial = ''}) async {
+  final l = context.l10n;
+  final name = (await promptText(context, title: l.newTaskIn(p.name), label: l.name, initial: initial))?.trim();
+  if (name == null || name.isEmpty || !context.mounted) return null;
+  return pickOrCreateTask(context, p, name);
+}
+
+/// La tâche [name] du projet [p], créée si elle n'existe pas encore.
+Future<String> pickOrCreateTask(BuildContext context, Project p, String name) async {
+  final existing = context
+      .read<CatalogController>()
+      .tasksOf(p.id)
+      .where((t) => t.name.toLowerCase() == name.toLowerCase())
+      .firstOrNull;
+  return existing?.id ?? await catalogRepo.createTask(p.workspaceId, p.id, name);
+}
+
 class _ProjectPickerDialog extends StatefulWidget {
   const _ProjectPickerDialog({this.projectId, this.taskId});
   final String? projectId;
@@ -41,19 +60,13 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
   Future<void> _pickOrCreateTask(Project p, String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
-    final existing = context
-        .read<CatalogController>()
-        .tasksOf(p.id)
-        .where((t) => t.name.toLowerCase() == trimmed.toLowerCase())
-        .firstOrNull;
-    final id = existing?.id ?? await catalogRepo.createTask(p.workspaceId, p.id, trimmed);
+    final id = await pickOrCreateTask(context, p, trimmed);
     if (mounted) Navigator.pop(context, ProjectPick(p.id, id));
   }
 
   Future<void> _promptTask(Project p, String initial) async {
-    final l = context.l10n;
-    final name = await promptText(context, title: l.newTaskIn(p.name), label: l.name, initial: initial);
-    if (name != null && mounted) await _pickOrCreateTask(p, name);
+    final id = await promptNewTask(context, p, initial: initial);
+    if (id != null && mounted) Navigator.pop(context, ProjectPick(p.id, id));
   }
 
   @override

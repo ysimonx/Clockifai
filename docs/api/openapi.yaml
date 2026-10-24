@@ -41,6 +41,10 @@ tags:
     description: |
       Jetons `clk_…` d'un poste, pour les hooks Claude Code, l'extension VSCode et le serveur MCP
       (plan 10, D5). Gérés avec le JWT de l'utilisateur.
+  - name: agents Claude
+    description: |
+      Agents retirés par un admin (plan 10, D14) : un nouveau jeton ne les recrée pas et les membres retirés ne
+      descendent pas vers les appareils, d'où ces routes pour les retrouver et les restaurer (JWT, admin+).
   - name: activité
     description: |
       Événements des hooks Claude Code et de l'extension VSCode, temps des agents Claude (plan 10). Accepte
@@ -469,6 +473,80 @@ paths:
         "403": { $ref: "#/components/responses/MemberRequired" }
         "404":
           description: Jeton inconnu, déjà révoqué, ou d'un autre membre (`token not found`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/agents/removed:
+    get:
+      tags: [agents Claude]
+      operationId: listRemovedAgents
+      summary: Agents retirés dont le pilote est encore membre (admin+)
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+      responses:
+        "200":
+          description: Du plus récemment retiré au plus ancien.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [agents]
+                properties:
+                  agents:
+                    type: array
+                    items:
+                      type: object
+                      required: [user_id, display_name, pilot_id, pilot_name, removed_at]
+                      properties:
+                        user_id: { type: string, format: uuid }
+                        display_name: { type: string }
+                        pilot_id: { type: string, format: uuid }
+                        pilot_name: { type: [string, "null"] }
+                        removed_at: { type: string, format: date-time }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/AdminRequired" }
+
+  /api/agents/{agent_id}/restore:
+    post:
+      tags: [agents Claude]
+      operationId: restoreAgent
+      summary: Restaurer un agent retiré (admin+)
+      description: |
+        Annule le retrait (`deleted_at` remis à nul) et aligne le statut de l'agent sur celui de son pilote.
+        Les triggers recalculent `team_scope` : le pilote et ses chefs d'équipe revoient son temps, et les
+        sessions Claude Code du pilote produisent de nouveau des entrées. Les entrées passées sont intactes.
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspace_id]
+              properties:
+                workspace_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Agent restauré.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [agent_id, status]
+                properties:
+                  agent_id: { type: string, format: uuid }
+                  status: { type: string, enum: [active, inactive], description: Celui du pilote. }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/AdminRequired" }
+        "404":
+          description: Pas un agent retiré de ce workspace, ou pilote lui-même retiré (`removed agent not found`).
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }

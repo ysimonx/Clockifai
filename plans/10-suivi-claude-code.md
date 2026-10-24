@@ -378,7 +378,11 @@ GitLab, Gitea/Forgejo…
   - Créé par le serveur seulement, à la création d'un jeton (D5). `ensure_agent` ne fait que créer : il ne
     réactive ni ne recrée un agent qu'un admin a désactivé ou retiré. Les événements de cet agent sont gardés
     sans produire d'entrée (D7.10), et l'écran Intégrations le signale. Réactiver l'agent reste un geste
-    d'admin.
+    d'admin : « Réactiver » dans le menu de sa fiche, ou, retiré, « Restaurer » sous « Agents retirés » dans
+    Équipe (`GET /api/agents/removed`, `POST /api/agents/<id>/restore`, le statut suit le pilote), ajouté le
+    24 octobre 2026 après un retrait par erreur. Les membres retirés ne descendant pas vers les appareils,
+    c'est Flask qui les liste. Retirer un agent affiche un avertissement propre (pas de recréation, préférer
+    « Désactiver »).
   - `kind` et `agent_owner_id` ne changent jamais.
   - **Le retrait suit le pilote, pas le retour** : pilote désactivé ou retiré → agent désactivé ou retiré
     (trigger). Le pilote réactivé, son agent reste à réactiver par un admin.
@@ -584,7 +588,9 @@ envoie ce qu'on écrit.
    l'entrée standard et le range dans le magasin sécurisé du système. L'écran Intégrations copie donc une
    commande qui lit le presse-papiers, par exemple
    `pbpaste | claude plugin configure clockifai@clockifai --values-stdin` avec `{"token": "clk_…"}` copié,
-   ce qui garde le jeton hors de l'historique du shell, contrairement à `--config token=…`. Dans Claude Code
+   ce qui garde le jeton hors de l'historique du shell, contrairement à `--config token=…`. Copier la
+   commande remplace le presse-papiers : l'écran fait donc coller la commande sans la lancer, puis copier le
+   jeton, puis appuyer sur Entrée (`pbpaste` lit au lancement). Dans Claude Code
    en terminal, `/plugin configure` ouvre la même saisie. L'installation au niveau utilisateur couvre
    tous les projets du poste, dans le terminal, VSCode et l'app desktop ; le plugin se charge à la session
    suivante.

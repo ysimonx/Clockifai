@@ -10,6 +10,7 @@
   "addTask": "Ajouter une tâche",
   "addTimeForOthers": "Ajouter du temps pour d'autres",
   "adminOnlySettings": "Seuls les administrateurs peuvent modifier ces réglages.",
+  "agentInactive": "Votre agent a été désactivé ou retiré par un administrateur : vos sessions Claude Code ne produisent plus de temps.",
   "allClients": "Tous les clients",
   "allMembers": "Tous les membres",
   "allProjects": "Tous les projets",
@@ -24,6 +25,14 @@
   },
   "amount": "Montant",
   "annualAllowance": "Droit annuel",
+  "apiTokenCreated": "Jeton créé pour « {name} ». Il ne sera plus affiché : suivez ces trois étapes maintenant.",
+  "@apiTokenCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "apply": "Appliquer",
   "applyRounding": "Arrondi {minutes} min",
   "@applyRounding": {
@@ -99,6 +108,27 @@
   },
   "changeRejectedPermission": "Modification refusée : droits insuffisants ou période verrouillée. Elle a été annulée.",
   "checkYourEmail": "Vérifiez votre boîte mail pour confirmer votre compte.",
+  "claudeCodeHelp": "Le temps de vos sessions Claude Code, au nom de votre agent « {agent} »",
+  "@claudeCodeHelp": {
+    "placeholders": {
+      "agent": {
+        "type": "String"
+      }
+    }
+  },
+  "claudeCodeIntro": "Chaque session de Claude Code devient du temps de votre agent « {agent} », membre de l'équipe : un chronomètre démarre au premier prompt et s'arrête après 10 minutes sans activité, à l'heure de la dernière activité. Connectez chaque poste où vous utilisez Claude Code (terminal, VSCode, app de bureau).",
+  "@claudeCodeIntro": {
+    "placeholders": {
+      "agent": {
+        "type": "String"
+      }
+    }
+  },
+  "claudeCodeLocalInstance": "Instance locale : Claude Code n'accepte une marketplace qu'en https, celle-ci est donc le dossier integrations/ de votre copie du dépôt.",
+  "claudeCodeRequirements": "Il faut la commande claude à jour dans le terminal, et python3 (sur Mac, les outils de développement : xcode-select --install).",
+  "claudeCodeStepInstall": "1. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :",
+  "claudeCodeStepStart": "3. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.",
+  "claudeCodeStepToken": "2. Copiez le jeton, puis enregistrez-le dans le plugin :",
   "client": "Client",
   "clients": "Clients",
   "close": "Fermer",
@@ -106,10 +136,15 @@
   "companyDetails": "Coordonnées (adresse, SIRET, TVA…)",
   "companyDetailsHint": "Affichées en en-tête des factures",
   "companyName": "Raison sociale",
+  "computerName": "Nom du poste",
   "confirm": "Confirmer",
+  "connectComputer": "Connecter un poste",
+  "connectedComputers": "Postes connectés",
   "connection": "Connexion",
   "continueEntry": "Continuer",
+  "copied": "Copié.",
   "copy": "Copier",
+  "copyToken": "Copier le jeton",
   "costRate": "Coût (par heure)",
   "createAccount": "Créer mon compte",
   "createEntries": "Créer les entrées",
@@ -262,6 +297,7 @@
   "hours": "Heures",
   "hoursPerDay": "Heures par jour",
   "hoursRequested": "Nombre d'heures",
+  "integrations": "Intégrations",
   "invalidDuration": "Durée invalide (exemples : 1:30, 1,5, 90m).",
   "invalidHours": "Nombre d'heures invalide (entre 0 et 24).",
   "invitationFailed": "Invitation impossible : {error}",
@@ -342,6 +378,32 @@
   "kioskTooManyAttempts": "Trop d'essais. Réessayez dans quelques minutes.",
   "kioskWrongPin": "Code PIN incorrect.",
   "language": "Langue",
+  "lastEventHoursAgo": "Dernier événement il y a {hours} h",
+  "@lastEventHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "lastEventJustNow": "Dernier événement à l'instant",
+  "lastEventMinutesAgo": "Dernier événement il y a {minutes} min",
+  "@lastEventMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "lastEventNever": "Aucun événement reçu",
+  "lastEventOn": "Dernier événement le {date}",
+  "@lastEventOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "lastMonth": "Mois dernier",
   "lastSeen": "Dernière activité",
   "lastSync": "Dernière synchronisation",
@@ -414,6 +476,7 @@
   "noApproval": "Sans validation",
   "noClient": "Sans client",
   "noClients": "Aucun client",
+  "noConnectedComputers": "Aucun poste connecté.",
   "noDataForPeriod": "Aucune donnée sur cette période",
   "noDescription": "(sans description)",
   "noEntriesInPeriod": "Aucune entrée sur la période",
@@ -522,6 +585,14 @@
   "restore": "Restaurer",
   "retry": "Réessayer",
   "revoke": "Révoquer",
+  "revokeTokenConfirm": "Révoquer le jeton de « {name} » ? Ce poste n'enverra plus le temps de Claude.",
+  "@revokeTokenConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "role": "Rôle",
   "roleAdmin": "Administrateur",
   "roleManager": "Manager",

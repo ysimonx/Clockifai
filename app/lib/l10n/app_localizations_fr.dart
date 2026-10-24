@@ -41,6 +41,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Seuls les administrateurs peuvent modifier ces réglages.';
 
   @override
+  String get agentInactive =>
+      'Votre agent a été désactivé ou retiré par un administrateur : vos sessions Claude Code ne produisent plus de temps.';
+
+  @override
   String get allClients => 'Tous les clients';
 
   @override
@@ -62,6 +66,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get annualAllowance => 'Droit annuel';
+
+  @override
+  String apiTokenCreated(String name) {
+    return 'Jeton créé pour « $name ». Il ne sera plus affiché : suivez ces trois étapes maintenant.';
+  }
 
   @override
   String get apply => 'Appliquer';
@@ -169,6 +178,36 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vérifiez votre boîte mail pour confirmer votre compte.';
 
   @override
+  String claudeCodeHelp(String agent) {
+    return 'Le temps de vos sessions Claude Code, au nom de votre agent « $agent »';
+  }
+
+  @override
+  String claudeCodeIntro(String agent) {
+    return 'Chaque session de Claude Code devient du temps de votre agent « $agent », membre de l\'équipe : un chronomètre démarre au premier prompt et s\'arrête après 10 minutes sans activité, à l\'heure de la dernière activité. Connectez chaque poste où vous utilisez Claude Code (terminal, VSCode, app de bureau).';
+  }
+
+  @override
+  String get claudeCodeLocalInstance =>
+      'Instance locale : Claude Code n\'accepte une marketplace qu\'en https, celle-ci est donc le dossier integrations/ de votre copie du dépôt.';
+
+  @override
+  String get claudeCodeRequirements =>
+      'Il faut la commande claude à jour dans le terminal, et python3 (sur Mac, les outils de développement : xcode-select --install).';
+
+  @override
+  String get claudeCodeStepInstall =>
+      '1. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :';
+
+  @override
+  String get claudeCodeStepStart =>
+      '3. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt.';
+
+  @override
+  String get claudeCodeStepToken =>
+      '2. Copiez le jeton, puis enregistrez-le dans le plugin :';
+
+  @override
   String get client => 'Client';
 
   @override
@@ -190,7 +229,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get companyName => 'Raison sociale';
 
   @override
+  String get computerName => 'Nom du poste';
+
+  @override
   String get confirm => 'Confirmer';
+
+  @override
+  String get connectComputer => 'Connecter un poste';
+
+  @override
+  String get connectedComputers => 'Postes connectés';
 
   @override
   String get connection => 'Connexion';
@@ -199,7 +247,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get continueEntry => 'Continuer';
 
   @override
+  String get copied => 'Copié.';
+
+  @override
   String get copy => 'Copier';
+
+  @override
+  String get copyToken => 'Copier le jeton';
 
   @override
   String get costRate => 'Coût (par heure)';
@@ -501,6 +555,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hoursRequested => 'Nombre d\'heures';
 
   @override
+  String get integrations => 'Intégrations';
+
+  @override
   String get invalidDuration => 'Durée invalide (exemples : 1:30, 1,5, 90m).';
 
   @override
@@ -654,6 +711,27 @@ class AppLocalizationsFr extends AppLocalizations {
   String get language => 'Langue';
 
   @override
+  String lastEventHoursAgo(int hours) {
+    return 'Dernier événement il y a $hours h';
+  }
+
+  @override
+  String get lastEventJustNow => 'Dernier événement à l\'instant';
+
+  @override
+  String lastEventMinutesAgo(int minutes) {
+    return 'Dernier événement il y a $minutes min';
+  }
+
+  @override
+  String get lastEventNever => 'Aucun événement reçu';
+
+  @override
+  String lastEventOn(String date) {
+    return 'Dernier événement le $date';
+  }
+
+  @override
   String get lastMonth => 'Mois dernier';
 
   @override
@@ -803,6 +881,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noClients => 'Aucun client';
+
+  @override
+  String get noConnectedComputers => 'Aucun poste connecté.';
 
   @override
   String get noDataForPeriod => 'Aucune donnée sur cette période';
@@ -1082,6 +1163,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get revoke => 'Révoquer';
+
+  @override
+  String revokeTokenConfirm(String name) {
+    return 'Révoquer le jeton de « $name » ? Ce poste n\'enverra plus le temps de Claude.';
+  }
 
   @override
   String get role => 'Rôle';

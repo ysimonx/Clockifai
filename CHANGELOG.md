@@ -51,6 +51,11 @@ Google Play. Aucune version n'a encore été figée : tout ce qui suit est en «
 - **Documentation** (23 octobre) : guide utilisateur en ligne avec les vidéos (`/guide/`), guide d'exploitation
   (installation, sauvegarde, restauration), architecture et API ; dans l'application, « Guide d'utilisation »
   (en bas du menu, et Paramètres › Aide) ouvre la page du guide qui correspond à son rôle.
+- **Temps de Claude Code** (24 octobre) : chaque membre connecte ses ordinateurs dans Paramètres › Intégrations ›
+  Claude Code ; les sessions de Claude Code deviennent alors du temps de son agent « Claude · nom », membre de
+  l'équipe, avec un chronomètre par session qui s'arrête à la dernière activité après 10 minutes sans activité,
+  décrit par les messages des commits. Chaque installation distribue le plugin Claude Code
+  (`/api/claude/marketplace.json`).
 
 ### Modifié
 

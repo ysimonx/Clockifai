@@ -106,7 +106,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 
 ## Tests
 - `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètres simultanés, verrouillage, upsert du connecteur, exports, chefs d'équipe, agents Claude, jetons et événements d'activité, script du plugin jusqu'à l'entrée de l'agent) ; `test_claude_plugin.py` : script du plugin (liste blanche, commits par session, file locale, lancé avec le python3 de macOS) et marketplace.
-- `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, pont de la barre de menus macOS (canal simulé), regroupement des entrées similaires (dont la ligne dépliable), sur base Drift en mémoire.
+- `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, pont de la barre de menus macOS (canal simulé), regroupement des entrées similaires (dont la ligne dépliable), commandes de connexion de Claude Code et « dernier événement », sur base Drift en mémoire.
 - Parcours navigateur (Playwright, hors dépôt) : activer l'arbre d'accessibilité Flutter en cliquant `flt-semantics-placeholder`, puis cliquer un champ et taper au clavier (`fill` ne suffit pas).
 
 ## Ports locaux

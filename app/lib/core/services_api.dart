@@ -16,10 +16,11 @@ class ServicesException implements Exception {
 
 /// Client du service Flask (exports, invitations). Nécessite le réseau.
 class ServicesApi {
-  static Uri _uri(String path, [Map<String, String>? query]) {
-    final base = AppConfig.servicesUrl.isEmpty && kIsWeb ? Uri.base.origin : AppConfig.servicesUrl;
-    return Uri.parse('$base$path').replace(queryParameters: query);
-  }
+  /// Adresse de l'instance : celle de la page pour l'app web (même origine), sinon `SERVICES_URL`.
+  static String get baseUrl => AppConfig.servicesUrl.isEmpty && kIsWeb ? Uri.base.origin : AppConfig.servicesUrl;
+
+  static Uri _uri(String path, [Map<String, String>? query]) =>
+      Uri.parse('$baseUrl$path').replace(queryParameters: query);
 
   static Map<String, String> _headers() {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;

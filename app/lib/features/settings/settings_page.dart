@@ -16,6 +16,7 @@ import '../../core/session.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../data/drift/database.dart';
+import '../integrations/claude_code.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -116,6 +117,10 @@ class SettingsPage extends StatelessWidget {
               onTap: () => showDialog<void>(context: context, builder: (_) => _KioskDevicesDialog(workspaceId: session.workspaceId!)),
             ),
           ]),
+        ],
+        if (session.workspace != null) ...[
+          const SizedBox(height: 16),
+          _Section(title: l.integrations, children: const [ClaudeCodeTile()]),
         ],
         const SizedBox(height: 16),
         _Section(title: l.help, children: [

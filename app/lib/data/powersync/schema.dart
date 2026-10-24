@@ -39,6 +39,7 @@ const schema = Schema([
     Column.text('time_for_others'),
     Column.text('task_creation'),
     Column.integer('max_running_timers'),
+    Column.text('agent_billing'),
     Column.text('created_by'),
     ..._audit,
     ..._softDelete,
@@ -53,6 +54,8 @@ const schema = Schema([
     Column.integer('hourly_rate_cents'),
     Column.integer('cost_rate_cents'),
     Column.real('capacity_hours_per_day'),
+    Column.text('kind'),
+    Column.text('agent_owner_id'),
     ..._audit,
     ..._softDelete,
   ], indexes: [
@@ -83,6 +86,7 @@ const schema = Schema([
     Column.integer('is_public'),
     Column.integer('archived'),
     Column.text('note'),
+    Column.integer('agent_billable'),
     ..._audit,
     ..._softDelete,
   ], indexes: [
@@ -123,6 +127,7 @@ const schema = Schema([
     Column.integer('locked'),
     Column.text('created_by'),
     Column.text('updated_by'),
+    Column.text('source'),
     ..._audit,
     ..._softDelete,
   ], indexes: [

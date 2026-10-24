@@ -10,7 +10,18 @@
   "addTask": "Ajouter une tâche",
   "addTimeForOthers": "Ajouter du temps pour d'autres",
   "adminOnlySettings": "Seuls les administrateurs peuvent modifier ces réglages.",
+  "agentBadge": "Agent",
   "agentInactive": "Votre agent a été désactivé ou retiré par un administrateur : vos sessions Claude Code ne produisent plus de temps.",
+  "agents": "Agents",
+  "agentsHelp": "Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).",
+  "agentTimeOf": "Temps de {name} : vous pouvez corriger ses entrées, pas en ajouter.",
+  "@agentTimeOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "allClients": "Tous les clients",
   "allMembers": "Tous les membres",
   "allProjects": "Tous les projets",
@@ -540,6 +551,14 @@
     }
   },
   "perHour": "/h",
+  "pilotedBy": "Agent de {name}",
+  "@pilotedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "policies": "Politiques d'absence",
   "policy": "Type d'absence",
   "policyExample": "Congés payés, RTT, Maladie…",

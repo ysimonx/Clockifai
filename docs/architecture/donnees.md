@@ -359,9 +359,11 @@ lisent le temps de l'agent. Le pilote le corrige et le supprime (`pilots_agent`)
 `time_for_others = admins`, mais personne ne crée d'entrée d'agent depuis l'app, admins compris. L'agent suit son
 pilote quand celui-ci est désactivé ou retiré, jamais dans l'autre sens.
 
-`TeamRights` reproduit `manages` (`manages`), `can_edit_others_time` (`canEditTimeOf`), l'approbation des feuilles
-(`canApproveTimesheetOf` = `manages`) et `can_decide_time_off` (`canDecideTimeOff`) ; les autres droits affichés
-suivent `session.isManager` / `isAdmin`.
+`TeamRights` reproduit `manages` (`manages`), `can_edit_others_time` et `pilots_agent` (`canEditTimeOf`),
+l'approbation des feuilles (`canApproveTimesheetOf` = `manages`, jamais pour un agent) et `can_decide_time_off`
+(`canDecideTimeOff`) ; les autres droits affichés suivent `session.isManager` / `isAdmin`. Pour les agents :
+`canCreateTimeFor` (créer, donc `editableMembers` et la saisie pour autrui) les exclut toujours, et `managed` (qui
+fait le chef d'équipe) ne compte que des humains ; les agents visibles hors rôle de manager sont dans `agentsSeen`.
 
 ## Règles imposées par trigger
 

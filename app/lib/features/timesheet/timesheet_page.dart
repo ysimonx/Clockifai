@@ -59,7 +59,7 @@ class _TimesheetPageState extends State<TimesheetPage> {
     final session = context.watch<SessionController>();
     final rights = TeamRights.of(context);
     final userId = TeammateBar.resolve(rights, _userId);
-    final editable = rights.canEditTimeOf(userId);
+    final editable = rights.canCreateTimeFor(userId); // agent : feuille en lecture seule (D15)
     final ws = session.workspace!;
     final days = [for (var i = 0; i < 7; i++) DateTime(_weekStart.year, _weekStart.month, _weekStart.day + i)];
     final weekEnd = days.last.add(const Duration(days: 1));
@@ -106,7 +106,9 @@ class _TimesheetPageState extends State<TimesheetPage> {
                   _extraRows.clear();
                 }),
               ),
-              SubmissionBar(userId: userId, periodStart: days.first, periodEnd: days.last, totalSeconds: grand),
+              // Un agent Claude ne soumet pas de feuille de temps (plan 10, D15).
+              if (!rights.isAgent(userId))
+                SubmissionBar(userId: userId, periodStart: days.first, periodEnd: days.last, totalSeconds: grand),
               const SizedBox(height: 12),
               Card(
               // Clé par personne : les cellules repartent de zéro quand on change de collaborateur.

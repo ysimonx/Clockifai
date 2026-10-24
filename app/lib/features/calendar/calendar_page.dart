@@ -41,7 +41,7 @@ class _CalendarPageState extends State<CalendarPage> {
     final session = context.watch<SessionController>();
     final rights = TeamRights.of(context);
     final userId = TeammateBar.resolve(rights, _userId);
-    final editable = rights.canEditTimeOf(userId);
+    final editable = rights.canCreateTimeFor(userId); // agent : ses blocs s'ouvrent, on n'en crée pas (D15)
     final ws = session.workspace!;
     final wide = MediaQuery.sizeOf(context).width >= 800;
     final first = wide ? startOfWeek(_anchor, ws.weekStart) : startOfDay(_anchor);

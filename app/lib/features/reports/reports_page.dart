@@ -100,7 +100,7 @@ class _ReportsPageState extends State<ReportsPage> {
     final range = _range(ws.weekStart);
     // Managers : tout le workspace ; chef d'équipe : son périmètre ; membre : soi.
     final rights = TeamRights.of(context);
-    final userFilter = rights.seesTeam ? _userId : session.userId;
+    final userFilter = rights.seesOthers ? _userId : session.userId;
     final locale = context.localeTag;
 
     return PageScaffold(
@@ -111,7 +111,7 @@ class _ReportsPageState extends State<ReportsPage> {
             tooltip: l.addTimeForOthers,
             icon: const Icon(Icons.group_add_outlined),
             onPressed: () => showEntryDialog(context, initialUserIds: {
-              _userId != null && rights.canEditTimeOf(_userId!) ? _userId! : session.userId!,
+              _userId != null && rights.canCreateTimeFor(_userId!) ? _userId! : session.userId!,
             }),
           ),
         PopupMenuButton<String>(
@@ -177,7 +177,7 @@ class _ReportsPageState extends State<ReportsPage> {
                 child: Column(children: [
                   for (var i = 0; i < rows.length; i++) ...[
                     if (i > 0) const Divider(height: 1),
-                    EntryTile(row: rows[i], showUser: rights.seesTeam),
+                    EntryTile(row: rows[i], showUser: rights.seesOthers),
                   ],
                 ]),
               )
@@ -236,7 +236,7 @@ class _ReportsPageState extends State<ReportsPage> {
         },
       ),
       Text('${fmt.format(range.start)} – ${fmt.format(range.end.subtract(const Duration(days: 1)))}', style: Theme.of(context).textTheme.bodySmall),
-      if (rights.seesTeam)
+      if (rights.seesOthers)
         DropdownButton<String?>(
           // La personne choisie peut sortir du périmètre entre-temps : on retombe sur « tous ».
           value: rights.visibleMembers.any((m) => m.userId == _userId) ? _userId : null,

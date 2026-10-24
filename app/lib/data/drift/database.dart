@@ -59,6 +59,8 @@ class Workspaces extends Table {
   TextColumn get taskCreation => text().nullable()();
   /// Chronomètres simultanés par membre : 1 = un seul, 0 = illimité (nullable côté client : rempli par la sync).
   IntColumn get maxRunningTimers => integer().nullable()();
+  /// Temps des agents Claude : 'like_humans' | 'never' (plan 10, D16 ; nullable côté client : rempli par la sync).
+  TextColumn get agentBilling => text().nullable()();
   TextColumn get createdBy => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
@@ -80,6 +82,10 @@ class WorkspaceMembers extends Table {
   IntColumn get hourlyRateCents => integer().nullable()();
   IntColumn get costRateCents => integer().nullable()();
   RealColumn get capacityHoursPerDay => real().clientDefault(() => 7)();
+  /// 'human' | 'agent' (agent Claude d'un pilote, plan 10 ; posé par le serveur, nullable côté client).
+  TextColumn get kind => text().nullable()();
+  /// Pilote d'un agent ; null pour un humain.
+  TextColumn get agentOwnerId => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
@@ -120,6 +126,8 @@ class Projects extends Table {
   BoolColumn get isPublic => boolean().clientDefault(() => true)();
   BoolColumn get archived => boolean().clientDefault(() => false)();
   TextColumn get note => text().nullable()();
+  /// Temps des agents sur ce projet : null = comme le workspace, sinon facturable ou non (plan 10, D16).
+  BoolColumn get agentBillable => boolean().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
@@ -176,6 +184,9 @@ class TimeEntries extends Table {
   /// Auteur de la saisie (posé par le serveur ; null = la personne elle-même).
   TextColumn get createdBy => text().nullable()();
   TextColumn get updatedBy => text().nullable()();
+  /// Origine : null ou 'app' (saisie), 'kiosk', 'agent' (agent Claude), 'activity' (suggestion acceptée) ;
+  /// posée à la création, jamais modifiée (garde serveur).
+  TextColumn get source => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();

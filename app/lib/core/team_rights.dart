@@ -16,6 +16,7 @@ class TeamRights {
     required this.timeForOthers,
     required this.members,
     required this.managed,
+    this.agentsSeen = const {},
   });
 
   /// Dans `build` : se reconstruit quand la session ou le référentiel change.
@@ -32,6 +33,7 @@ class TeamRights {
         timeForOthers: session.workspace?.timeForOthers,
         members: catalog.members,
         managed: catalog.managedBy(session.userId),
+        agentsSeen: catalog.agentsSeenBy(session.userId),
       );
 
   final String me;
@@ -41,8 +43,11 @@ class TeamRights {
   final String? timeForOthers;
   final List<WorkspaceMember> members;
 
-  /// Collaborateurs encadrés en tant que chef d'équipe (jamais soi-même).
+  /// Collaborateurs encadrés en tant que chef d'équipe (jamais soi-même, jamais un agent).
   final Set<String> managed;
+
+  /// Agents Claude visibles hors rôle de manager : le sien, ceux des personnes encadrées (plan 10, D15).
+  final Set<String> agentsSeen;
 
   bool get isAdmin => role == 'owner' || role == 'admin';
   bool get isManager => isAdmin || role == 'manager';
@@ -53,26 +58,41 @@ class TeamRights {
   /// Voit le temps d'autres personnes (manager+ : tout le workspace ; chef d'équipe : son périmètre).
   bool get seesTeam => isManager || isTeamManager;
 
-  bool manages(String userId) => isManager || managed.contains(userId);
+  /// Voit au moins une autre personne : l'équipe, ou seulement son agent Claude (pilote).
+  bool get seesOthers => seesTeam || agentsSeen.isNotEmpty;
+
+  /// Lecture du temps de [userId] (serveur : `manages()`, dont les agents du périmètre).
+  bool manages(String userId) => isManager || managed.contains(userId) || agentsSeen.contains(userId);
 
   bool _active(String userId) => members.any((m) => m.userId == userId && m.status == 'active');
 
+  bool isAgent(String userId) => members.any((m) => m.userId == userId && m.kind == 'agent');
+
+  /// Pilote de l'agent [userId] (serveur : `pilots_agent`).
+  bool pilots(String userId) => members.any((m) => m.userId == userId && m.kind == 'agent' && m.agentOwnerId == me);
+
+  /// Modifier ou supprimer les entrées de [userId]. Le pilote corrige celles de son agent (D15).
   bool canEditTimeOf(String userId) =>
       userId == me ||
       isAdmin ||
+      pilots(userId) ||
       (timeForOthers == 'admins_and_team_managers' && manages(userId) && _active(userId));
 
-  /// Personnes dont on consulte le temps : soi d'abord, puis l'équipe encadrée.
+  /// Créer du temps pour [userId] : jamais pour un agent, dont seul le serveur écrit les entrées (D15).
+  bool canCreateTimeFor(String userId) => !isAgent(userId) && canEditTimeOf(userId);
+
+  /// Personnes dont on consulte le temps : soi d'abord, puis l'équipe encadrée et les agents visibles.
   List<WorkspaceMember> get visibleMembers => _sorted(members.where((m) => m.userId == me || manages(m.userId)));
 
-  /// Personnes pour qui on peut saisir du temps (soi compris).
+  /// Personnes pour qui on peut saisir du temps (soi compris, jamais un agent).
   List<WorkspaceMember> get editableMembers =>
-      _sorted(members.where((m) => m.status == 'active' && canEditTimeOf(m.userId)));
+      _sorted(members.where((m) => m.status == 'active' && canCreateTimeFor(m.userId)));
 
   bool get canEditOthers => editableMembers.any((m) => m.userId != me);
 
   /// Feuilles de temps : manager+ pour tout le monde, chef d'équipe pour son périmètre (jamais la sienne).
-  bool canApproveTimesheetOf(String userId) => manages(userId);
+  /// Un agent n'en soumet pas.
+  bool canApproveTimesheetOf(String userId) => !isAgent(userId) && manages(userId);
 
   /// Absences : manager+, ou chef d'équipe si la politique l'autorise.
   bool canDecideTimeOff(String userId, TimeOffPolicy? policy) =>

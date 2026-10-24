@@ -158,11 +158,35 @@ abstract class AppLocalizations {
   /// **'Seuls les administrateurs peuvent modifier ces réglages.'**
   String get adminOnlySettings;
 
+  /// No description provided for @agentBadge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agent'**
+  String get agentBadge;
+
   /// No description provided for @agentInactive.
   ///
   /// In fr, this message translates to:
   /// **'Votre agent a été désactivé ou retiré par un administrateur : vos sessions Claude Code ne produisent plus de temps.'**
   String get agentInactive;
+
+  /// No description provided for @agents.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agents'**
+  String get agents;
+
+  /// No description provided for @agentsHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).'**
+  String get agentsHelp;
+
+  /// No description provided for @agentTimeOf.
+  ///
+  /// In fr, this message translates to:
+  /// **'Temps de {name} : vous pouvez corriger ses entrées, pas en ajouter.'**
+  String agentTimeOf(String name);
 
   /// No description provided for @allClients.
   ///
@@ -1933,6 +1957,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'/h'**
   String get perHour;
+
+  /// No description provided for @pilotedBy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agent de {name}'**
+  String pilotedBy(String name);
 
   /// No description provided for @policies.
   ///

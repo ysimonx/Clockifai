@@ -55,7 +55,10 @@ Google Play. Aucune version n'a encore été figée : tout ce qui suit est en «
   Claude Code ; les sessions de Claude Code deviennent alors du temps de son agent « Claude · nom », membre de
   l'équipe, avec un chronomètre par session qui s'arrête à la dernière activité après 10 minutes sans activité,
   décrit par les messages des commits. Chaque installation distribue le plugin Claude Code
-  (`/api/claude/marketplace.json`).
+  (`/api/claude/marketplace.json`). Le pilote consulte et corrige le temps de son agent depuis le sélecteur de
+  personne (feuille de temps, calendrier, rapports), sans pouvoir en saisir ; l'équipe affiche les agents à part.
+  Les agents ne comptent ni dans la saisie pour autrui, ni dans les chefs d'équipe, groupes, absences, planning ou
+  approbations.
 
 ### Modifié
 

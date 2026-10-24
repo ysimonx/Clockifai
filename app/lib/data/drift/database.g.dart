@@ -790,6 +790,17 @@ class $WorkspacesTable extends Workspaces
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _agentBillingMeta = const VerificationMeta(
+    'agentBilling',
+  );
+  @override
+  late final GeneratedColumn<String> agentBilling = GeneratedColumn<String>(
+    'agent_billing',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdByMeta = const VerificationMeta(
     'createdBy',
   );
@@ -855,6 +866,7 @@ class $WorkspacesTable extends Workspaces
     timeForOthers,
     taskCreation,
     maxRunningTimers,
+    agentBilling,
     createdBy,
     createdAt,
     updatedAt,
@@ -1018,6 +1030,15 @@ class $WorkspacesTable extends Workspaces
         ),
       );
     }
+    if (data.containsKey('agent_billing')) {
+      context.handle(
+        _agentBillingMeta,
+        agentBilling.isAcceptableOrUnknown(
+          data['agent_billing']!,
+          _agentBillingMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_by')) {
       context.handle(
         _createdByMeta,
@@ -1123,6 +1144,10 @@ class $WorkspacesTable extends Workspaces
         DriftSqlType.int,
         data['${effectivePrefix}max_running_timers'],
       ),
+      agentBilling: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}agent_billing'],
+      ),
       createdBy: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_by'],
@@ -1173,6 +1198,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
 
   /// Chronomètres simultanés par membre : 1 = un seul, 0 = illimité (nullable côté client : rempli par la sync).
   final int? maxRunningTimers;
+
+  /// Temps des agents Claude : 'like_humans' | 'never' (plan 10, D16 ; nullable côté client : rempli par la sync).
+  final String? agentBilling;
   final String? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -1196,6 +1224,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     this.timeForOthers,
     this.taskCreation,
     this.maxRunningTimers,
+    this.agentBilling,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -1233,6 +1262,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     }
     if (!nullToAbsent || maxRunningTimers != null) {
       map['max_running_timers'] = Variable<int>(maxRunningTimers);
+    }
+    if (!nullToAbsent || agentBilling != null) {
+      map['agent_billing'] = Variable<String>(agentBilling);
     }
     if (!nullToAbsent || createdBy != null) {
       map['created_by'] = Variable<String>(createdBy);
@@ -1281,6 +1313,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       maxRunningTimers: maxRunningTimers == null && nullToAbsent
           ? const Value.absent()
           : Value(maxRunningTimers),
+      agentBilling: agentBilling == null && nullToAbsent
+          ? const Value.absent()
+          : Value(agentBilling),
       createdBy: createdBy == null && nullToAbsent
           ? const Value.absent()
           : Value(createdBy),
@@ -1322,6 +1357,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       timeForOthers: serializer.fromJson<String?>(json['timeForOthers']),
       taskCreation: serializer.fromJson<String?>(json['taskCreation']),
       maxRunningTimers: serializer.fromJson<int?>(json['maxRunningTimers']),
+      agentBilling: serializer.fromJson<String?>(json['agentBilling']),
       createdBy: serializer.fromJson<String?>(json['createdBy']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
@@ -1350,6 +1386,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       'timeForOthers': serializer.toJson<String?>(timeForOthers),
       'taskCreation': serializer.toJson<String?>(taskCreation),
       'maxRunningTimers': serializer.toJson<int?>(maxRunningTimers),
+      'agentBilling': serializer.toJson<String?>(agentBilling),
       'createdBy': serializer.toJson<String?>(createdBy),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
@@ -1376,6 +1413,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     Value<String?> timeForOthers = const Value.absent(),
     Value<String?> taskCreation = const Value.absent(),
     Value<int?> maxRunningTimers = const Value.absent(),
+    Value<String?> agentBilling = const Value.absent(),
     Value<String?> createdBy = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
@@ -1407,6 +1445,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     maxRunningTimers: maxRunningTimers.present
         ? maxRunningTimers.value
         : this.maxRunningTimers,
+    agentBilling: agentBilling.present ? agentBilling.value : this.agentBilling,
     createdBy: createdBy.present ? createdBy.value : this.createdBy,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
@@ -1460,6 +1499,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       maxRunningTimers: data.maxRunningTimers.present
           ? data.maxRunningTimers.value
           : this.maxRunningTimers,
+      agentBilling: data.agentBilling.present
+          ? data.agentBilling.value
+          : this.agentBilling,
       createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -1488,6 +1530,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
           ..write('timeForOthers: $timeForOthers, ')
           ..write('taskCreation: $taskCreation, ')
           ..write('maxRunningTimers: $maxRunningTimers, ')
+          ..write('agentBilling: $agentBilling, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1516,6 +1559,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     timeForOthers,
     taskCreation,
     maxRunningTimers,
+    agentBilling,
     createdBy,
     createdAt,
     updatedAt,
@@ -1543,6 +1587,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
           other.timeForOthers == this.timeForOthers &&
           other.taskCreation == this.taskCreation &&
           other.maxRunningTimers == this.maxRunningTimers &&
+          other.agentBilling == this.agentBilling &&
           other.createdBy == this.createdBy &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -1568,6 +1613,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
   final Value<String?> timeForOthers;
   final Value<String?> taskCreation;
   final Value<int?> maxRunningTimers;
+  final Value<String?> agentBilling;
   final Value<String?> createdBy;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
@@ -1592,6 +1638,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     this.timeForOthers = const Value.absent(),
     this.taskCreation = const Value.absent(),
     this.maxRunningTimers = const Value.absent(),
+    this.agentBilling = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1617,6 +1664,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     this.timeForOthers = const Value.absent(),
     this.taskCreation = const Value.absent(),
     this.maxRunningTimers = const Value.absent(),
+    this.agentBilling = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1642,6 +1690,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     Expression<String>? timeForOthers,
     Expression<String>? taskCreation,
     Expression<int>? maxRunningTimers,
+    Expression<String>? agentBilling,
     Expression<String>? createdBy,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1668,6 +1717,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
       if (timeForOthers != null) 'time_for_others': timeForOthers,
       if (taskCreation != null) 'task_creation': taskCreation,
       if (maxRunningTimers != null) 'max_running_timers': maxRunningTimers,
+      if (agentBilling != null) 'agent_billing': agentBilling,
       if (createdBy != null) 'created_by': createdBy,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -1695,6 +1745,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     Value<String?>? timeForOthers,
     Value<String?>? taskCreation,
     Value<int?>? maxRunningTimers,
+    Value<String?>? agentBilling,
     Value<String?>? createdBy,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
@@ -1720,6 +1771,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
       timeForOthers: timeForOthers ?? this.timeForOthers,
       taskCreation: taskCreation ?? this.taskCreation,
       maxRunningTimers: maxRunningTimers ?? this.maxRunningTimers,
+      agentBilling: agentBilling ?? this.agentBilling,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1785,6 +1837,9 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     if (maxRunningTimers.present) {
       map['max_running_timers'] = Variable<int>(maxRunningTimers.value);
     }
+    if (agentBilling.present) {
+      map['agent_billing'] = Variable<String>(agentBilling.value);
+    }
     if (createdBy.present) {
       map['created_by'] = Variable<String>(createdBy.value);
     }
@@ -1824,6 +1879,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
           ..write('timeForOthers: $timeForOthers, ')
           ..write('taskCreation: $taskCreation, ')
           ..write('maxRunningTimers: $maxRunningTimers, ')
+          ..write('agentBilling: $agentBilling, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1945,6 +2001,26 @@ class $WorkspaceMembersTable extends WorkspaceMembers
         requiredDuringInsert: false,
         clientDefault: () => 7,
       );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _agentOwnerIdMeta = const VerificationMeta(
+    'agentOwnerId',
+  );
+  @override
+  late final GeneratedColumn<String> agentOwnerId = GeneratedColumn<String>(
+    'agent_owner_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1991,6 +2067,8 @@ class $WorkspaceMembersTable extends WorkspaceMembers
     hourlyRateCents,
     costRateCents,
     capacityHoursPerDay,
+    kind,
+    agentOwnerId,
     createdAt,
     updatedAt,
     deletedAt,
@@ -2083,6 +2161,21 @@ class $WorkspaceMembersTable extends WorkspaceMembers
         ),
       );
     }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    }
+    if (data.containsKey('agent_owner_id')) {
+      context.handle(
+        _agentOwnerIdMeta,
+        agentOwnerId.isAcceptableOrUnknown(
+          data['agent_owner_id']!,
+          _agentOwnerIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -2150,6 +2243,14 @@ class $WorkspaceMembersTable extends WorkspaceMembers
         DriftSqlType.double,
         data['${effectivePrefix}capacity_hours_per_day'],
       )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      ),
+      agentOwnerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}agent_owner_id'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -2182,6 +2283,12 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
   final int? hourlyRateCents;
   final int? costRateCents;
   final double capacityHoursPerDay;
+
+  /// 'human' | 'agent' (agent Claude d'un pilote, plan 10 ; posé par le serveur, nullable côté client).
+  final String? kind;
+
+  /// Pilote d'un agent ; null pour un humain.
+  final String? agentOwnerId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
@@ -2196,6 +2303,8 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
     this.hourlyRateCents,
     this.costRateCents,
     required this.capacityHoursPerDay,
+    this.kind,
+    this.agentOwnerId,
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
@@ -2219,6 +2328,12 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
       map['cost_rate_cents'] = Variable<int>(costRateCents);
     }
     map['capacity_hours_per_day'] = Variable<double>(capacityHoursPerDay);
+    if (!nullToAbsent || kind != null) {
+      map['kind'] = Variable<String>(kind);
+    }
+    if (!nullToAbsent || agentOwnerId != null) {
+      map['agent_owner_id'] = Variable<String>(agentOwnerId);
+    }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
     }
@@ -2249,6 +2364,10 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
           ? const Value.absent()
           : Value(costRateCents),
       capacityHoursPerDay: Value(capacityHoursPerDay),
+      kind: kind == null && nullToAbsent ? const Value.absent() : Value(kind),
+      agentOwnerId: agentOwnerId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(agentOwnerId),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -2279,6 +2398,8 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
       capacityHoursPerDay: serializer.fromJson<double>(
         json['capacityHoursPerDay'],
       ),
+      kind: serializer.fromJson<String?>(json['kind']),
+      agentOwnerId: serializer.fromJson<String?>(json['agentOwnerId']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
@@ -2298,6 +2419,8 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
       'hourlyRateCents': serializer.toJson<int?>(hourlyRateCents),
       'costRateCents': serializer.toJson<int?>(costRateCents),
       'capacityHoursPerDay': serializer.toJson<double>(capacityHoursPerDay),
+      'kind': serializer.toJson<String?>(kind),
+      'agentOwnerId': serializer.toJson<String?>(agentOwnerId),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
@@ -2315,6 +2438,8 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
     Value<int?> hourlyRateCents = const Value.absent(),
     Value<int?> costRateCents = const Value.absent(),
     double? capacityHoursPerDay,
+    Value<String?> kind = const Value.absent(),
+    Value<String?> agentOwnerId = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
     Value<DateTime?> deletedAt = const Value.absent(),
@@ -2333,6 +2458,8 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
         ? costRateCents.value
         : this.costRateCents,
     capacityHoursPerDay: capacityHoursPerDay ?? this.capacityHoursPerDay,
+    kind: kind.present ? kind.value : this.kind,
+    agentOwnerId: agentOwnerId.present ? agentOwnerId.value : this.agentOwnerId,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
@@ -2359,6 +2486,10 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
       capacityHoursPerDay: data.capacityHoursPerDay.present
           ? data.capacityHoursPerDay.value
           : this.capacityHoursPerDay,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      agentOwnerId: data.agentOwnerId.present
+          ? data.agentOwnerId.value
+          : this.agentOwnerId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
@@ -2378,6 +2509,8 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
           ..write('hourlyRateCents: $hourlyRateCents, ')
           ..write('costRateCents: $costRateCents, ')
           ..write('capacityHoursPerDay: $capacityHoursPerDay, ')
+          ..write('kind: $kind, ')
+          ..write('agentOwnerId: $agentOwnerId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt')
@@ -2397,6 +2530,8 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
     hourlyRateCents,
     costRateCents,
     capacityHoursPerDay,
+    kind,
+    agentOwnerId,
     createdAt,
     updatedAt,
     deletedAt,
@@ -2415,6 +2550,8 @@ class WorkspaceMember extends DataClass implements Insertable<WorkspaceMember> {
           other.hourlyRateCents == this.hourlyRateCents &&
           other.costRateCents == this.costRateCents &&
           other.capacityHoursPerDay == this.capacityHoursPerDay &&
+          other.kind == this.kind &&
+          other.agentOwnerId == this.agentOwnerId &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt);
@@ -2431,6 +2568,8 @@ class WorkspaceMembersCompanion extends UpdateCompanion<WorkspaceMember> {
   final Value<int?> hourlyRateCents;
   final Value<int?> costRateCents;
   final Value<double> capacityHoursPerDay;
+  final Value<String?> kind;
+  final Value<String?> agentOwnerId;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> deletedAt;
@@ -2446,6 +2585,8 @@ class WorkspaceMembersCompanion extends UpdateCompanion<WorkspaceMember> {
     this.hourlyRateCents = const Value.absent(),
     this.costRateCents = const Value.absent(),
     this.capacityHoursPerDay = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.agentOwnerId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -2462,6 +2603,8 @@ class WorkspaceMembersCompanion extends UpdateCompanion<WorkspaceMember> {
     this.hourlyRateCents = const Value.absent(),
     this.costRateCents = const Value.absent(),
     this.capacityHoursPerDay = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.agentOwnerId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -2479,6 +2622,8 @@ class WorkspaceMembersCompanion extends UpdateCompanion<WorkspaceMember> {
     Expression<int>? hourlyRateCents,
     Expression<int>? costRateCents,
     Expression<double>? capacityHoursPerDay,
+    Expression<String>? kind,
+    Expression<String>? agentOwnerId,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
@@ -2496,6 +2641,8 @@ class WorkspaceMembersCompanion extends UpdateCompanion<WorkspaceMember> {
       if (costRateCents != null) 'cost_rate_cents': costRateCents,
       if (capacityHoursPerDay != null)
         'capacity_hours_per_day': capacityHoursPerDay,
+      if (kind != null) 'kind': kind,
+      if (agentOwnerId != null) 'agent_owner_id': agentOwnerId,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
@@ -2514,6 +2661,8 @@ class WorkspaceMembersCompanion extends UpdateCompanion<WorkspaceMember> {
     Value<int?>? hourlyRateCents,
     Value<int?>? costRateCents,
     Value<double>? capacityHoursPerDay,
+    Value<String?>? kind,
+    Value<String?>? agentOwnerId,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
     Value<DateTime?>? deletedAt,
@@ -2530,6 +2679,8 @@ class WorkspaceMembersCompanion extends UpdateCompanion<WorkspaceMember> {
       hourlyRateCents: hourlyRateCents ?? this.hourlyRateCents,
       costRateCents: costRateCents ?? this.costRateCents,
       capacityHoursPerDay: capacityHoursPerDay ?? this.capacityHoursPerDay,
+      kind: kind ?? this.kind,
+      agentOwnerId: agentOwnerId ?? this.agentOwnerId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -2572,6 +2723,12 @@ class WorkspaceMembersCompanion extends UpdateCompanion<WorkspaceMember> {
         capacityHoursPerDay.value,
       );
     }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (agentOwnerId.present) {
+      map['agent_owner_id'] = Variable<String>(agentOwnerId.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -2600,6 +2757,8 @@ class WorkspaceMembersCompanion extends UpdateCompanion<WorkspaceMember> {
           ..write('hourlyRateCents: $hourlyRateCents, ')
           ..write('costRateCents: $costRateCents, ')
           ..write('capacityHoursPerDay: $capacityHoursPerDay, ')
+          ..write('kind: $kind, ')
+          ..write('agentOwnerId: $agentOwnerId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
@@ -3418,6 +3577,20 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _agentBillableMeta = const VerificationMeta(
+    'agentBillable',
+  );
+  @override
+  late final GeneratedColumn<bool> agentBillable = GeneratedColumn<bool>(
+    'agent_billable',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("agent_billable" IN (0, 1))',
+    ),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3466,6 +3639,7 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
     isPublic,
     archived,
     note,
+    agentBillable,
     createdAt,
     updatedAt,
     deletedAt,
@@ -3570,6 +3744,15 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
       );
     }
+    if (data.containsKey('agent_billable')) {
+      context.handle(
+        _agentBillableMeta,
+        agentBillable.isAcceptableOrUnknown(
+          data['agent_billable']!,
+          _agentBillableMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3645,6 +3828,10 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
         DriftSqlType.string,
         data['${effectivePrefix}note'],
       ),
+      agentBillable: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}agent_billable'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -3679,6 +3866,9 @@ class Project extends DataClass implements Insertable<Project> {
   final bool isPublic;
   final bool archived;
   final String? note;
+
+  /// Temps des agents sur ce projet : null = comme le workspace, sinon facturable ou non (plan 10, D16).
+  final bool? agentBillable;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
@@ -3695,6 +3885,7 @@ class Project extends DataClass implements Insertable<Project> {
     required this.isPublic,
     required this.archived,
     this.note,
+    this.agentBillable,
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
@@ -3723,6 +3914,9 @@ class Project extends DataClass implements Insertable<Project> {
     map['archived'] = Variable<bool>(archived);
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
+    }
+    if (!nullToAbsent || agentBillable != null) {
+      map['agent_billable'] = Variable<bool>(agentBillable);
     }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
@@ -3758,6 +3952,9 @@ class Project extends DataClass implements Insertable<Project> {
       isPublic: Value(isPublic),
       archived: Value(archived),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      agentBillable: agentBillable == null && nullToAbsent
+          ? const Value.absent()
+          : Value(agentBillable),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -3788,6 +3985,7 @@ class Project extends DataClass implements Insertable<Project> {
       isPublic: serializer.fromJson<bool>(json['isPublic']),
       archived: serializer.fromJson<bool>(json['archived']),
       note: serializer.fromJson<String?>(json['note']),
+      agentBillable: serializer.fromJson<bool?>(json['agentBillable']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
@@ -3809,6 +4007,7 @@ class Project extends DataClass implements Insertable<Project> {
       'isPublic': serializer.toJson<bool>(isPublic),
       'archived': serializer.toJson<bool>(archived),
       'note': serializer.toJson<String?>(note),
+      'agentBillable': serializer.toJson<bool?>(agentBillable),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
@@ -3828,6 +4027,7 @@ class Project extends DataClass implements Insertable<Project> {
     bool? isPublic,
     bool? archived,
     Value<String?> note = const Value.absent(),
+    Value<bool?> agentBillable = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
     Value<DateTime?> deletedAt = const Value.absent(),
@@ -3848,6 +4048,9 @@ class Project extends DataClass implements Insertable<Project> {
     isPublic: isPublic ?? this.isPublic,
     archived: archived ?? this.archived,
     note: note.present ? note.value : this.note,
+    agentBillable: agentBillable.present
+        ? agentBillable.value
+        : this.agentBillable,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
@@ -3876,6 +4079,9 @@ class Project extends DataClass implements Insertable<Project> {
       isPublic: data.isPublic.present ? data.isPublic.value : this.isPublic,
       archived: data.archived.present ? data.archived.value : this.archived,
       note: data.note.present ? data.note.value : this.note,
+      agentBillable: data.agentBillable.present
+          ? data.agentBillable.value
+          : this.agentBillable,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
@@ -3897,6 +4103,7 @@ class Project extends DataClass implements Insertable<Project> {
           ..write('isPublic: $isPublic, ')
           ..write('archived: $archived, ')
           ..write('note: $note, ')
+          ..write('agentBillable: $agentBillable, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt')
@@ -3918,6 +4125,7 @@ class Project extends DataClass implements Insertable<Project> {
     isPublic,
     archived,
     note,
+    agentBillable,
     createdAt,
     updatedAt,
     deletedAt,
@@ -3938,6 +4146,7 @@ class Project extends DataClass implements Insertable<Project> {
           other.isPublic == this.isPublic &&
           other.archived == this.archived &&
           other.note == this.note &&
+          other.agentBillable == this.agentBillable &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt);
@@ -3956,6 +4165,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
   final Value<bool> isPublic;
   final Value<bool> archived;
   final Value<String?> note;
+  final Value<bool?> agentBillable;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> deletedAt;
@@ -3973,6 +4183,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     this.isPublic = const Value.absent(),
     this.archived = const Value.absent(),
     this.note = const Value.absent(),
+    this.agentBillable = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -3991,6 +4202,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     this.isPublic = const Value.absent(),
     this.archived = const Value.absent(),
     this.note = const Value.absent(),
+    this.agentBillable = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -4010,6 +4222,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     Expression<bool>? isPublic,
     Expression<bool>? archived,
     Expression<String>? note,
+    Expression<bool>? agentBillable,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
@@ -4028,6 +4241,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
       if (isPublic != null) 'is_public': isPublic,
       if (archived != null) 'archived': archived,
       if (note != null) 'note': note,
+      if (agentBillable != null) 'agent_billable': agentBillable,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
@@ -4048,6 +4262,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     Value<bool>? isPublic,
     Value<bool>? archived,
     Value<String?>? note,
+    Value<bool?>? agentBillable,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
     Value<DateTime?>? deletedAt,
@@ -4066,6 +4281,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
       isPublic: isPublic ?? this.isPublic,
       archived: archived ?? this.archived,
       note: note ?? this.note,
+      agentBillable: agentBillable ?? this.agentBillable,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -4112,6 +4328,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (agentBillable.present) {
+      map['agent_billable'] = Variable<bool>(agentBillable.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -4142,6 +4361,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
           ..write('isPublic: $isPublic, ')
           ..write('archived: $archived, ')
           ..write('note: $note, ')
+          ..write('agentBillable: $agentBillable, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
@@ -5392,6 +5612,15 @@ class $TimeEntriesTable extends TimeEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -5442,6 +5671,7 @@ class $TimeEntriesTable extends TimeEntries
     locked,
     createdBy,
     updatedBy,
+    source,
     createdAt,
     updatedAt,
     deletedAt,
@@ -5557,6 +5787,12 @@ class $TimeEntriesTable extends TimeEntries
         updatedBy.isAcceptableOrUnknown(data['updated_by']!, _updatedByMeta),
       );
     }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -5640,6 +5876,10 @@ class $TimeEntriesTable extends TimeEntries
         DriftSqlType.string,
         data['${effectivePrefix}updated_by'],
       ),
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -5678,6 +5918,10 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
   /// Auteur de la saisie (posé par le serveur ; null = la personne elle-même).
   final String? createdBy;
   final String? updatedBy;
+
+  /// Origine : null ou 'app' (saisie), 'kiosk', 'agent' (agent Claude), 'activity' (suggestion acceptée) ;
+  /// posée à la création, jamais modifiée (garde serveur).
+  final String? source;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
@@ -5696,6 +5940,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     required this.locked,
     this.createdBy,
     this.updatedBy,
+    this.source,
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
@@ -5730,6 +5975,9 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     }
     if (!nullToAbsent || updatedBy != null) {
       map['updated_by'] = Variable<String>(updatedBy);
+    }
+    if (!nullToAbsent || source != null) {
+      map['source'] = Variable<String>(source);
     }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
@@ -5773,6 +6021,9 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       updatedBy: updatedBy == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedBy),
+      source: source == null && nullToAbsent
+          ? const Value.absent()
+          : Value(source),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -5805,6 +6056,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       locked: serializer.fromJson<bool>(json['locked']),
       createdBy: serializer.fromJson<String?>(json['createdBy']),
       updatedBy: serializer.fromJson<String?>(json['updatedBy']),
+      source: serializer.fromJson<String?>(json['source']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
@@ -5828,6 +6080,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       'locked': serializer.toJson<bool>(locked),
       'createdBy': serializer.toJson<String?>(createdBy),
       'updatedBy': serializer.toJson<String?>(updatedBy),
+      'source': serializer.toJson<String?>(source),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
@@ -5849,6 +6102,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     bool? locked,
     Value<String?> createdBy = const Value.absent(),
     Value<String?> updatedBy = const Value.absent(),
+    Value<String?> source = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
     Value<DateTime?> deletedAt = const Value.absent(),
@@ -5871,6 +6125,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     locked: locked ?? this.locked,
     createdBy: createdBy.present ? createdBy.value : this.createdBy,
     updatedBy: updatedBy.present ? updatedBy.value : this.updatedBy,
+    source: source.present ? source.value : this.source,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
@@ -5899,6 +6154,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       locked: data.locked.present ? data.locked.value : this.locked,
       createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
       updatedBy: data.updatedBy.present ? data.updatedBy.value : this.updatedBy,
+      source: data.source.present ? data.source.value : this.source,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
@@ -5922,6 +6178,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           ..write('locked: $locked, ')
           ..write('createdBy: $createdBy, ')
           ..write('updatedBy: $updatedBy, ')
+          ..write('source: $source, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt')
@@ -5945,6 +6202,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     locked,
     createdBy,
     updatedBy,
+    source,
     createdAt,
     updatedAt,
     deletedAt,
@@ -5967,6 +6225,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           other.locked == this.locked &&
           other.createdBy == this.createdBy &&
           other.updatedBy == this.updatedBy &&
+          other.source == this.source &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt);
@@ -5987,6 +6246,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
   final Value<bool> locked;
   final Value<String?> createdBy;
   final Value<String?> updatedBy;
+  final Value<String?> source;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> deletedAt;
@@ -6006,6 +6266,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     this.locked = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.updatedBy = const Value.absent(),
+    this.source = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -6026,6 +6287,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     this.locked = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.updatedBy = const Value.absent(),
+    this.source = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -6048,6 +6310,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     Expression<bool>? locked,
     Expression<String>? createdBy,
     Expression<String>? updatedBy,
+    Expression<String>? source,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
@@ -6068,6 +6331,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
       if (locked != null) 'locked': locked,
       if (createdBy != null) 'created_by': createdBy,
       if (updatedBy != null) 'updated_by': updatedBy,
+      if (source != null) 'source': source,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
@@ -6090,6 +6354,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     Value<bool>? locked,
     Value<String?>? createdBy,
     Value<String?>? updatedBy,
+    Value<String?>? source,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
     Value<DateTime?>? deletedAt,
@@ -6110,6 +6375,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
       locked: locked ?? this.locked,
       createdBy: createdBy ?? this.createdBy,
       updatedBy: updatedBy ?? this.updatedBy,
+      source: source ?? this.source,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -6162,6 +6428,9 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     if (updatedBy.present) {
       map['updated_by'] = Variable<String>(updatedBy.value);
     }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -6194,6 +6463,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
           ..write('locked: $locked, ')
           ..write('createdBy: $createdBy, ')
           ..write('updatedBy: $updatedBy, ')
+          ..write('source: $source, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
@@ -15228,6 +15498,7 @@ typedef $$WorkspacesTableCreateCompanionBuilder = WorkspacesCompanion Function({
   Value<String?> timeForOthers,
   Value<String?> taskCreation,
   Value<int?> maxRunningTimers,
+  Value<String?> agentBilling,
   Value<String?> createdBy,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
@@ -15253,6 +15524,7 @@ typedef $$WorkspacesTableUpdateCompanionBuilder = WorkspacesCompanion Function({
   Value<String?> timeForOthers,
   Value<String?> taskCreation,
   Value<int?> maxRunningTimers,
+  Value<String?> agentBilling,
   Value<String?> createdBy,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
@@ -15356,6 +15628,11 @@ class $$WorkspacesTableFilterComposer
 
   ColumnFilters<int> get maxRunningTimers => $composableBuilder(
     column: $table.maxRunningTimers,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get agentBilling => $composableBuilder(
+    column: $table.agentBilling,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15479,6 +15756,11 @@ class $$WorkspacesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get agentBilling => $composableBuilder(
+    column: $table.agentBilling,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdBy => $composableBuilder(
     column: $table.createdBy,
     builder: (column) => ColumnOrderings(column),
@@ -15591,6 +15873,11 @@ class $$WorkspacesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get agentBilling => $composableBuilder(
+    column: $table.agentBilling,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdBy =>
       $composableBuilder(column: $table.createdBy, builder: (column) => column);
 
@@ -15653,6 +15940,7 @@ class $$WorkspacesTableTableManager
                 Value<String?> timeForOthers = const Value.absent(),
                 Value<String?> taskCreation = const Value.absent(),
                 Value<int?> maxRunningTimers = const Value.absent(),
+                Value<String?> agentBilling = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -15677,6 +15965,7 @@ class $$WorkspacesTableTableManager
                 timeForOthers: timeForOthers,
                 taskCreation: taskCreation,
                 maxRunningTimers: maxRunningTimers,
+                agentBilling: agentBilling,
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -15703,6 +15992,7 @@ class $$WorkspacesTableTableManager
                 Value<String?> timeForOthers = const Value.absent(),
                 Value<String?> taskCreation = const Value.absent(),
                 Value<int?> maxRunningTimers = const Value.absent(),
+                Value<String?> agentBilling = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -15727,6 +16017,7 @@ class $$WorkspacesTableTableManager
                 timeForOthers: timeForOthers,
                 taskCreation: taskCreation,
                 maxRunningTimers: maxRunningTimers,
+                agentBilling: agentBilling,
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -15776,6 +16067,8 @@ typedef $$WorkspaceMembersTableCreateCompanionBuilder =
       Value<int?> hourlyRateCents,
       Value<int?> costRateCents,
       Value<double> capacityHoursPerDay,
+      Value<String?> kind,
+      Value<String?> agentOwnerId,
       Value<DateTime?> createdAt,
       Value<DateTime?> updatedAt,
       Value<DateTime?> deletedAt,
@@ -15793,6 +16086,8 @@ typedef $$WorkspaceMembersTableUpdateCompanionBuilder =
       Value<int?> hourlyRateCents,
       Value<int?> costRateCents,
       Value<double> capacityHoursPerDay,
+      Value<String?> kind,
+      Value<String?> agentOwnerId,
       Value<DateTime?> createdAt,
       Value<DateTime?> updatedAt,
       Value<DateTime?> deletedAt,
@@ -15855,6 +16150,16 @@ class $$WorkspaceMembersTableFilterComposer
 
   ColumnFilters<double> get capacityHoursPerDay => $composableBuilder(
     column: $table.capacityHoursPerDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get agentOwnerId => $composableBuilder(
+    column: $table.agentOwnerId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15933,6 +16238,16 @@ class $$WorkspaceMembersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get agentOwnerId => $composableBuilder(
+    column: $table.agentOwnerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -15998,6 +16313,14 @@ class $$WorkspaceMembersTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get agentOwnerId => $composableBuilder(
+    column: $table.agentOwnerId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -16055,6 +16378,8 @@ class $$WorkspaceMembersTableTableManager
                 Value<int?> hourlyRateCents = const Value.absent(),
                 Value<int?> costRateCents = const Value.absent(),
                 Value<double> capacityHoursPerDay = const Value.absent(),
+                Value<String?> kind = const Value.absent(),
+                Value<String?> agentOwnerId = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -16070,6 +16395,8 @@ class $$WorkspaceMembersTableTableManager
                 hourlyRateCents: hourlyRateCents,
                 costRateCents: costRateCents,
                 capacityHoursPerDay: capacityHoursPerDay,
+                kind: kind,
+                agentOwnerId: agentOwnerId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -16087,6 +16414,8 @@ class $$WorkspaceMembersTableTableManager
                 Value<int?> hourlyRateCents = const Value.absent(),
                 Value<int?> costRateCents = const Value.absent(),
                 Value<double> capacityHoursPerDay = const Value.absent(),
+                Value<String?> kind = const Value.absent(),
+                Value<String?> agentOwnerId = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -16102,6 +16431,8 @@ class $$WorkspaceMembersTableTableManager
                 hourlyRateCents: hourlyRateCents,
                 costRateCents: costRateCents,
                 capacityHoursPerDay: capacityHoursPerDay,
+                kind: kind,
+                agentOwnerId: agentOwnerId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -16476,6 +16807,7 @@ typedef $$ProjectsTableCreateCompanionBuilder = ProjectsCompanion Function({
   Value<bool> isPublic,
   Value<bool> archived,
   Value<String?> note,
+  Value<bool?> agentBillable,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> deletedAt,
@@ -16494,6 +16826,7 @@ typedef $$ProjectsTableUpdateCompanionBuilder = ProjectsCompanion Function({
   Value<bool> isPublic,
   Value<bool> archived,
   Value<String?> note,
+  Value<bool?> agentBillable,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> deletedAt,
@@ -16566,6 +16899,11 @@ class $$ProjectsTableFilterComposer
 
   ColumnFilters<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get agentBillable => $composableBuilder(
+    column: $table.agentBillable,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16654,6 +16992,11 @@ class $$ProjectsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get agentBillable => $composableBuilder(
+    column: $table.agentBillable,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -16725,6 +17068,11 @@ class $$ProjectsTableAnnotationComposer
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
 
+  GeneratedColumn<bool> get agentBillable => $composableBuilder(
+    column: $table.agentBillable,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -16775,6 +17123,7 @@ class $$ProjectsTableTableManager
                 Value<bool> isPublic = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<bool?> agentBillable = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -16792,6 +17141,7 @@ class $$ProjectsTableTableManager
                 isPublic: isPublic,
                 archived: archived,
                 note: note,
+                agentBillable: agentBillable,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -16811,6 +17161,7 @@ class $$ProjectsTableTableManager
                 Value<bool> isPublic = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<bool?> agentBillable = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -16828,6 +17179,7 @@ class $$ProjectsTableTableManager
                 isPublic: isPublic,
                 archived: archived,
                 note: note,
+                agentBillable: agentBillable,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -17414,6 +17766,7 @@ typedef $$TimeEntriesTableCreateCompanionBuilder =
       Value<bool> locked,
       Value<String?> createdBy,
       Value<String?> updatedBy,
+      Value<String?> source,
       Value<DateTime?> createdAt,
       Value<DateTime?> updatedAt,
       Value<DateTime?> deletedAt,
@@ -17435,6 +17788,7 @@ typedef $$TimeEntriesTableUpdateCompanionBuilder =
       Value<bool> locked,
       Value<String?> createdBy,
       Value<String?> updatedBy,
+      Value<String?> source,
       Value<DateTime?> createdAt,
       Value<DateTime?> updatedAt,
       Value<DateTime?> deletedAt,
@@ -17517,6 +17871,11 @@ class $$TimeEntriesTableFilterComposer
 
   ColumnFilters<String> get updatedBy => $composableBuilder(
     column: $table.updatedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17615,6 +17974,11 @@ class $$TimeEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -17690,6 +18054,9 @@ class $$TimeEntriesTableAnnotationComposer
   GeneratedColumn<String> get updatedBy =>
       $composableBuilder(column: $table.updatedBy, builder: (column) => column);
 
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -17745,6 +18112,7 @@ class $$TimeEntriesTableTableManager
                 Value<bool> locked = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<String?> updatedBy = const Value.absent(),
+                Value<String?> source = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -17764,6 +18132,7 @@ class $$TimeEntriesTableTableManager
                 locked: locked,
                 createdBy: createdBy,
                 updatedBy: updatedBy,
+                source: source,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -17785,6 +18154,7 @@ class $$TimeEntriesTableTableManager
                 Value<bool> locked = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<String?> updatedBy = const Value.absent(),
+                Value<String?> source = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -17804,6 +18174,7 @@ class $$TimeEntriesTableTableManager
                 locked: locked,
                 createdBy: createdBy,
                 updatedBy: updatedBy,
+                source: source,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,

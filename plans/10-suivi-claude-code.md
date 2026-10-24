@@ -193,7 +193,8 @@ hors API et hors PowerSync, et sont purgés après 30 jours. Les données sont r
   la réponse des outils Clockifai eux-mêmes (`set_current_task`, `describe_current_work`), réduite à l'id de
   tâche ou à la description (D9). Le script lit sur le poste la commande d'un `Bash` pour y repérer une
   opération git qui crée des commits (D13), sans jamais l'envoyer. Des notifications, seules celles de type
-  `permission_prompt` partent (`agent_wait`).
+  `permission_prompt` partent (`agent_wait`). Lot 7 : le script lit aussi la transcription sur le poste pour
+  n'en envoyer que des totaux (modèle, effort, nombres de tokens), jamais son contenu (D17).
 - **Extension VSCode** : dépôt, branche, type de signal, état de la fenêtre, éditeur (VSCode, Cursor…) et
   machine. Jamais le chemin ni le contenu des fichiers, ni les commandes du terminal.
 
@@ -419,6 +420,40 @@ GitLab, Gitea/Forgejo…
   les entrées passées, et le pilote peut toujours corriger une entrée à la main.
 - **Piste, hors v1** : facturer à un même client la durée calendaire de ses sessions parallèles plutôt que
   leur cumul. Il faudrait répartir les heures au moment de la facture.
+
+**D17. Usage IA : tokens, modèle et effort de chaque entrée d'agent** (lot 7, demandé le 24 octobre 2026).
+Le temps ne dit pas tout du travail de Claude : deux heures d'Opus en effort maximal ne coûtent pas deux heures de
+Haiku. On remonte donc, par entrée d'agent, le modèle, le niveau d'effort et les tokens consommés, pour suivre le
+coût de l'IA par projet et par client, et pouvoir le refacturer.
+- **Source** (vérifiée le 24 octobre 2026 sur une transcription de Claude Code 2.1.309) : les hooks ne portent ni
+  tokens ni modèle, mais la transcription que Claude Code écrit sur le poste (`transcript_path`, JSONL) les contient.
+  Chaque ligne `type = "assistant"` porte `message.model` (`claude-opus-5-5`…), `message.usage`
+  (`input_tokens`, `output_tokens`, `cache_creation_input_tokens`, `cache_read_input_tokens`) et `effort`
+  (`xhigh`…). `PostToolUse` porte aussi `effort` (§2).
+- **Lecture sur le poste, envoi de totaux seulement** (D6) : au `Stop`, le script lit la transcription depuis le
+  dernier octet lu (position gardée par session dans `~/.cache/clockifai/`), additionne par (modèle, effort) et
+  envoie un événement `agent_usage` : `{model, effort, input_tokens, output_tokens, cache_creation_tokens,
+  cache_read_tokens, requests}`. Jamais le texte des messages. Les sous-agents écrivent leur propre transcription
+  (`agent_transcript_path` de `SubagentStop`), lue de même à leur fin.
+- **Pièges connus** :
+  - une réponse occupe plusieurs lignes, chacune répétant le même `usage` (1 153 lignes pour 419 appels dans la
+    session vérifiée) : on compte une fois par `message.id` ;
+  - le format n'est pas documenté et change d'une version à l'autre : lecture tolérante, une ligne inconnue est
+    ignorée, et un format méconnaissable ne fait qu'omettre l'usage, jamais échouer le hook ;
+  - une session reprise (`resume`) prolonge la même transcription : la position gardée évite de recompter ;
+  - idempotence : l'id de l'événement est `uuid5(session, message.id du dernier appel compté, modèle, effort)`.
+- **Serveur** : l'usage est rattaché à l'entrée d'agent qui couvre l'heure du `Stop` (comme un commit, D13), puis
+  cumulé dans une table répliquée `agent_usage` (`workspace_id`, `time_entry_id`, `user_id` de l'agent, `model`,
+  `effort`, les quatre compteurs, `requests`), lisible par ceux qui lisent l'entrée et synchronisée avec elle
+  (mêmes flux que `time_entries`).
+- **Coût estimé** : une table `ai_model_prices` (prix par million de tokens en entrée, en sortie, en écriture et en
+  lecture de cache, par modèle), remplie par défaut avec les tarifs publics et modifiable par un admin. Le coût
+  d'une entrée est un instantané, calculé à l'arrivée de l'usage, comme le taux horaire.
+- **Dans l'app** : modèle, effort, tokens et coût sur la ligne et dans le détail d'une entrée d'agent ; colonnes
+  « Tokens » et « Coût IA » dans les rapports et les exports, par projet, client et membre ; total de la semaine
+  sur la carte de l'agent (page Équipe).
+- **Facturation**, plus tard : proposer le coût IA comme ligne de facture (au coût, ou avec une marge), à côté
+  des heures.
 
 ## 4. Modèle de données — migrations `0012_activity_private.admin.sql` et `0013_activity.sql`
 
@@ -683,7 +718,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 - **Paramètres du workspace** (admins) : « Temps des agents IA : facturable comme un humain / non
   facturable » (D16).
 - **Fiche projet** : « Temps des agents : comme le workspace / facturable / non facturable » (D16).
-- **Droits** (`core/catalog.dart`, `core/team_rights.dart`) :
+- **Droits** (`core/catalog.dart`, `core/team_rights.dart`), faits le 24 octobre 2026 sauf `billableFor` :
   - getters `humans`, `agents` et `agentsOf(pilote)` ;
   - `billableFor(projet, membre)` à côté de `rateFor` : D16 pour un agent, `billable_default` sinon. Il est
     recalculé quand le pilote choisit le projet d'une entrée d'agent ;
@@ -693,12 +728,13 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
   - `canCreateTimeFor` (créer) exclut toujours les agents. Il sert à `editableMembers` (saisie pour autrui,
     `team_entry_page.dart`, `entry_dialog.dart`) et à la création depuis `TeammateBar`, la feuille de temps
     et le calendrier.
-- **Équipe** (`features/team/team_page.dart`) :
+- **Équipe** (`features/team/team_page.dart`), fait le 24 octobre 2026 :
   - section « Agents » : icône robot, pilote, chronomètres en cours, total de la semaine ; e-mail technique masqué ;
   - menu admin limité aux taux, au nom, à la désactivation ou réactivation et au retrait (ni rôle, ni chef d'équipe, ni PIN) ;
   - agents exclus des choix de chef d'équipe et de groupe (D15 les rattache par leur pilote).
-- **Absences et planning** : agents exclus des droits à congés (`time_off_page.dart`) et des lignes du planning
-  (`schedule_page.dart`).
+- **Absences et planning** (faits) : agents exclus des droits à congés (`time_off_page.dart`) et des lignes du
+  planning (`schedule_page.dart`). La feuille de temps d'un agent est en lecture seule, sans bandeau de soumission ;
+  son calendrier ne crée pas d'entrée ; « Dupliquer » n'est pas proposé sur ses entrées.
 - **Page des entrées du jour** :
   - un bandeau « Claude travaille : clockifai (12 min), fidwork (3 min) » = entrées en cours de mes agents ;
   - un bandeau « N suggestions » qui mène à la liste des suggestions.
@@ -811,12 +847,13 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (écran des jetons : fait, section Agents, droits D15, exclusions, bandeau « Claude travaille », « toujours rattacher », filtre des rapports, réglages de facturation des agents) ; vérifier les hooks dans l'extension VSCode | M/L | en cours |
+| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents ; reste : droits D15, exclusions, bandeau « Claude travaille », « toujours rattacher », filtre des rapports, réglages de facturation des agents) ; vérifier les hooks dans l'extension VSCode | M/L | en cours |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
 | 3 MCP | Service `mcp`, outils (dont `set_current_task`), `.mcp.json`, commandes du plugin et relais `session_task` / `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |
 | 5 Connecteur claude.ai | OAuth (selon Supabase Auth auto-hébergé), publication du connecteur | M, conditionnel | envisagé |
 | 6 Sessions cloud | Hook de dépôt, `POST /api/activity/events/raw` avec filtrage à l'arrivée, guide de réglage de l'environnement (réseau, secret réseau) | S, plus tard (§12) | envisagé |
+| 7 Usage IA (D17) | Lecture de la transcription au `Stop` et `SubagentStop` (totaux par modèle et effort, dédoublonnés par `message.id`), événement `agent_usage`, table répliquée `agent_usage` et ses flux, prix `ai_model_prices`, coût estimé, affichage (entrée, rapports, exports, carte de l'agent) | M | validé |
 
 ## 11. Points d'attention
 
@@ -868,3 +905,5 @@ Ouvertes :
 2. `send_excerpts` désactivé par défaut (proposé) ?
 3. Règles de workspace : le projet du dépôt (`code_repositories.project_id`, D9) suffit-il, ou faut-il aussi
    des règles par chemin posées par un admin ?
+4. Usage IA (D17) : qui voit les tokens et le coût (le pilote et les managers, ou les managers seulement) ? Prix
+   par défaut intégrés et mis à jour avec Clockifai, ou saisis par chaque installation ?

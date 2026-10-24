@@ -584,6 +584,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hoursRequested => 'Nombre d\'heures';
 
   @override
+  String get humans => 'Humains';
+
+  @override
+  String get humansAndAgents => 'Humains et agents';
+
+  @override
   String get integrations => 'Intégrations';
 
   @override

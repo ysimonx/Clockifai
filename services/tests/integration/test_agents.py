@@ -10,7 +10,7 @@ from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
-from .test_backend import ENV, SUPABASE, _call, iso, rest, signup
+from .test_backend import ENV, SERVICES, SUPABASE, _call, iso, rest, signup
 
 pytestmark = pytest.mark.skipif(__import__("os").environ.get("INTEGRATION") != "1", reason="INTEGRATION=1 requis")
 
@@ -134,6 +134,32 @@ def test_server_writes_agent_entries(squad):
     assert status == 200 and rows[0]["description"] == "export des rapports"
     status, rows = rest("PATCH", f"time_entries?id=eq.{entry}", squad["people"]["autre"][0], {"description": "x"})
     assert status == 200 and rows == []
+
+
+def test_export_filters_humans_and_agents(squad):
+    """Filtre « Humains / Agents » des rapports : `member_kind` de l'export (plan 10, §8)."""
+    pilote_t, pilote = squad["people"]["pilote"]
+    start = _now() - timedelta(hours=8)
+    assert _write(squad, str(uuid.uuid4()), start, start + timedelta(minutes=30),
+                  p_description="session exportée") == "ok"
+    assert rest("POST", "time_entries", pilote_t, {
+        "id": str(uuid.uuid4()), "workspace_id": squad["wid"], "user_id": pilote, "description": "saisie du pilote",
+        "start_at": iso(start), "end_at": iso(start + timedelta(minutes=45))})[0] == 201
+    day = start.date().isoformat()
+    url = f"{SERVICES}/api/exports/report?workspace_id={squad['wid']}&from={day}&to={day}&format=csv"
+
+    def lines(kind: str = "") -> str:
+        status, body = _call("GET", url + (f"&member_kind={kind}" if kind else ""), pilote_t)
+        assert status == 200, body
+        return body.decode("utf-8-sig")
+
+    both = lines()
+    assert "session exportée" in both and "saisie du pilote" in both
+    agents = lines("agent")
+    assert "session exportée" in agents and "saisie du pilote" not in agents
+    humans = lines("human")
+    assert "saisie du pilote" in humans and "session exportée" not in humans
+    assert lines("robot") == both, "valeur inconnue ignorée"
 
 
 def test_entry_never_changes_person(squad):

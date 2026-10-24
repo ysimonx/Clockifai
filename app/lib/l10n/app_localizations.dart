@@ -1112,6 +1112,18 @@ abstract class AppLocalizations {
   /// **'Nombre d\'heures'**
   String get hoursRequested;
 
+  /// No description provided for @humans.
+  ///
+  /// In fr, this message translates to:
+  /// **'Humains'**
+  String get humans;
+
+  /// No description provided for @humansAndAgents.
+  ///
+  /// In fr, this message translates to:
+  /// **'Humains et agents'**
+  String get humansAndAgents;
+
   /// No description provided for @integrations.
   ///
   /// In fr, this message translates to:

@@ -25,12 +25,14 @@ class EntryGroup {
   bool get anyLocked => rows.any((r) => r.entry.locked);
 }
 
-/// Description (sans espaces en bout), projet, tâche, tags (en ensemble) et facturable.
-/// Le taux horaire et l'auteur de la saisie n'entrent pas en compte.
+/// Personne, description (sans espaces en bout), projet, tâche, tags (en ensemble) et facturable.
+/// Le taux horaire et l'auteur de la saisie n'entrent pas en compte. La personne ne sépare rien dans
+/// « Suivi du temps » (ses seules entrées), mais bien dans le rapport détaillé.
 String similarityKey(EntryRow row) {
   final e = row.entry;
   final tags = row.tagIds.toSet().toList()..sort();
-  return [e.description.trim(), e.projectId ?? '', e.taskId ?? '', tags.join(','), e.billable ? '1' : '0'].join('\u0000');
+  return [e.userId, e.description.trim(), e.projectId ?? '', e.taskId ?? '', tags.join(','), e.billable ? '1' : '0']
+      .join('\u0000');
 }
 
 /// Regroupe les entrées d'une journée, données les plus récentes d'abord : chaque groupe prend la place

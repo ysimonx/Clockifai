@@ -94,6 +94,92 @@ void main() {
     expect(await modules.invoicedEntryIds(ws), isEmpty);
   });
 
+  test('facture : taux actuel pour une entrée sans taux, détail par tâche', () async {
+    final client = await catalog.createClient(ws, name: 'ACME');
+    final p = await catalog.createProject(ws,
+        ProjectsCompanion.insert(workspaceId: ws, name: 'cvad', clientId: Value(client), hourlyRateCents: const Value(14285)));
+    final free = await catalog.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'Conseil', clientId: Value(client)));
+    await db.into(db.workspaceMembers).insert(
+        WorkspaceMembersCompanion.insert(workspaceId: ws, userId: me, hourlyRateCents: const Value(9000)));
+    final export = await catalog.createTask(ws, p, 'Export PDF');
+    final audit = await catalog.createTask(ws, p, 'Audit');
+    Future<void> add(String project, int hour, {String? task, int? rate}) => entries.createManual(
+          workspaceId: ws,
+          userId: me,
+          draft: EntryDraft(projectId: project, taskId: task, hourlyRateCents: rate),
+          start: DateTime.utc(2026, 10, 23, hour),
+          end: DateTime.utc(2026, 10, 23, hour, 30),
+        );
+    await add(p, 8); // saisie avant que le projet ait un taux
+    await add(p, 9, rate: 14285);
+    await add(p, 10, task: export, rate: 14285);
+    await add(p, 11, task: audit);
+    await add(p, 12, task: 'tache-supprimee', rate: 14285);
+    await add(free, 13); // projet sans taux : celui du membre
+
+    Future<List<(String, double, int)>> invoice({required bool byTask}) async {
+      final id = await modules.createInvoiceFromTime(
+        workspaceId: ws, userId: me, clientId: client,
+        from: DateTime.utc(2026, 10, 1), to: DateTime.utc(2026, 11, 1),
+        currency: 'EUR', taxPercent: 20, projectNames: {p: 'cvad', free: 'Conseil'},
+        byTask: byTask, taskNames: {export: 'Export PDF', audit: 'Audit'},
+      );
+      final items = await modules.watchItems(id!).first;
+      await modules.deleteInvoice(id);
+      return [for (final i in items) (i.description, i.quantity, i.unitPriceCents)];
+    }
+
+    expect(await invoice(byTask: false), [('Conseil', 0.5, 9000), ('cvad', 2.5, 14285)]);
+    expect(await invoice(byTask: true), [
+      ('Conseil', 0.5, 9000),
+      ('cvad', 1.5, 14285), // sans tâche, et tâche supprimée
+      ('cvad — Audit', 0.5, 14285),
+      ('cvad — Export PDF', 0.5, 14285),
+    ]);
+  });
+
+  test('nouveau taux : seules les entrées non facturées et modifiables le prennent', () async {
+    final client = await catalog.createClient(ws, name: 'ACME');
+    final p = await catalog.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'cvad', clientId: Value(client)));
+    Future<String> add(int day) => entries.createManual(
+          workspaceId: ws,
+          userId: me,
+          draft: EntryDraft(projectId: p, hourlyRateCents: 10000),
+          start: DateTime.utc(2026, 10, day, 9),
+          end: DateTime.utc(2026, 10, day, 10),
+        );
+    final open = await add(20);
+    final locked = await add(21);
+    await (db.update(db.timeEntries)..where((t) => t.id.equals(locked))).write(const TimeEntriesCompanion(locked: Value(true)));
+    final early = await add(2);
+    final approvedDay = await add(14);
+    await db.into(db.timesheetSubmissions).insert(TimesheetSubmissionsCompanion.insert(
+        workspaceId: ws, userId: me, periodStart: '2026-10-12', periodEnd: '2026-10-18', status: const Value('approved')));
+    final billed = await add(9);
+    final invoiceId = await modules.createInvoiceFromTime(
+      workspaceId: ws, userId: me, clientId: client,
+      from: DateTime.utc(2026, 10, 9), to: DateTime.utc(2026, 10, 10),
+      currency: 'EUR', taxPercent: 20, projectNames: {p: 'cvad'},
+    );
+    expect(invoiceId, isNotNull);
+
+    Future<Set<String>> ids({required bool isAdmin}) async => {
+          for (final e in await modules.rerateableEntries(ws,
+              projectId: p, isAdmin: isAdmin, lockBefore: DateTime(2026, 10, 5)))
+            e.id
+        };
+    expect(await ids(isAdmin: false), {open});
+    // Un admin passe outre le verrouillage et les approbations, pas la facture.
+    expect(await ids(isAdmin: true), {open, locked, early, approvedDay});
+
+    await modules.setEntryRates({open: 14285});
+    final rates = {
+      for (final e in await (db.select(db.timeEntries)..where((t) => t.projectId.equals(p))).get()) e.id: e.hourlyRateCents
+    };
+    expect(rates[open], 14285);
+    expect(rates[billed], 10000);
+  });
+
   test('planning : chevauchement de période', () async {
     await modules.saveAssignment(ws, ScheduleAssignmentsCompanion.insert(
       workspaceId: ws, userId: me, startDate: '2026-10-08', endDate: '2026-10-14',

@@ -314,6 +314,30 @@ abstract class AppLocalizations {
   /// **'Appliquer'**
   String get apply;
 
+  /// No description provided for @applyRateApply.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appliquer'**
+  String get applyRateApply;
+
+  /// No description provided for @applyRateBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 entrée non facturée a gardé un autre taux.} other{{count} entrées non facturées ont gardé un autre taux.}} Le nouveau taux vaut pour les nouvelles entrées ; l\'appliquer aussi à celles-ci ?'**
+  String applyRateBody(num count);
+
+  /// No description provided for @applyRateKeep.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seulement les nouvelles'**
+  String get applyRateKeep;
+
+  /// No description provided for @applyRateTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appliquer le nouveau taux ?'**
+  String get applyRateTitle;
+
   /// No description provided for @applyRounding.
   ///
   /// In fr, this message translates to:
@@ -1298,6 +1322,12 @@ abstract class AppLocalizations {
   /// **'Facture'**
   String get invoice;
 
+  /// No description provided for @invoiceByTask.
+  ///
+  /// In fr, this message translates to:
+  /// **'Détailler par tâche'**
+  String get invoiceByTask;
+
   /// No description provided for @invoiceDraft.
   ///
   /// In fr, this message translates to:
@@ -1733,7 +1763,7 @@ abstract class AppLocalizations {
   /// No description provided for @newInvoiceHelp.
   ///
   /// In fr, this message translates to:
-  /// **'Une ligne par projet est créée à partir du temps facturable non encore facturé du client sur la période.'**
+  /// **'Une ligne par projet, ou par tâche si vous détaillez, est créée à partir du temps facturable non encore facturé du client sur la période. Une entrée saisie avant que son projet ait un taux prend le taux actuel.'**
   String get newInvoiceHelp;
 
   /// No description provided for @newKioskDevice.

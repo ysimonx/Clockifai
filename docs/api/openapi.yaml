@@ -93,7 +93,9 @@ paths:
       description: |
         Entrées terminées (`end_at` non nul, non supprimées) dont le début tombe dans `[from, to]`,
         avec utilisateur, client, projet, tâche et tags. La colonne « Type » du détail vaut `humain`, ou
-        `agent` pour le temps d'un agent Claude (`workspace_members.kind`).
+        `agent` pour le temps d'un agent Claude (`workspace_members.kind`). Le taux horaire d'une entrée est celui
+        posé à sa saisie, sinon le taux actuel du projet, puis du membre (entrée saisie avant qu'ils aient un
+        taux) ; les montants du XLSX et du PDF en découlent.
 
         Périmètre selon le rôle :
         - **manager+** : tout le workspace, filtres libres ;

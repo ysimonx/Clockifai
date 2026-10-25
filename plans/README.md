@@ -40,3 +40,4 @@ livrés : on les cite par leur nom de fichier.
 | [09-forges-git.md](09-forges-git.md) | Branches, commits et demandes de fusion rattachés aux tâches | envisagé | 04 lot 0, 10 lot 1 |
 | [10-suivi-claude-code.md](10-suivi-claude-code.md) | Temps de Claude (agents membres de l'équipe), mon temps (suggestions) et usage IA (tokens, modèle, effort) | en cours | — |
 | [11-documentation.md](11-documentation.md) | Documentation tenue à jour : architecture, API, guide, exploitation | fait | — |
+| [12-taux-et-factures-par-tache.md](12-taux-et-factures-par-tache.md) | Taux des entrées saisies sans taux, nouveau taux appliqué aux entrées non facturées, factures détaillées par tâche | fait | — |

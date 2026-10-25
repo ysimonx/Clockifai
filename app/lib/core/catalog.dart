@@ -129,6 +129,10 @@ class CatalogController extends ChangeNotifier {
   int? rateFor({required String? projectId, required String userId}) =>
       project(projectId)?.hourlyRateCents ?? memberOf(userId)?.hourlyRateCents;
 
+  /// Taux d'une entrée : celui posé à la saisie, sinon le taux applicable aujourd'hui (entrée saisie avant que le
+  /// projet ou le membre ait un taux). Même règle dans les factures et les exports.
+  int? entryRate(TimeEntry e) => e.hourlyRateCents ?? rateFor(projectId: e.projectId, userId: e.userId);
+
   /// Facturable par défaut : selon le projet. Pour un agent Claude, l'exception du projet, sinon le réglage
   /// du workspace ([agentBilling] `never` : jamais), comme `entry_defaults` côté serveur (plan 10, D16).
   bool billableFor({required String? projectId, required String userId, String? agentBilling}) {

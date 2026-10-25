@@ -172,7 +172,8 @@ class PageScaffold extends StatelessWidget {
   }
 }
 
-Future<bool> confirm(BuildContext context, {required String title, String? message, String? confirmLabel, bool destructive = true}) async {
+Future<bool> confirm(BuildContext context,
+    {required String title, String? message, String? confirmLabel, String? cancelLabel, bool destructive = true}) async {
   final l = context.l10n;
   final res = await showDialog<bool>(
     context: context,
@@ -180,7 +181,7 @@ Future<bool> confirm(BuildContext context, {required String title, String? messa
       title: Text(title),
       content: message == null ? null : Text(message),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(cancelLabel ?? l.cancel)),
         FilledButton(
           style: destructive ? FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error) : null,
           onPressed: () => Navigator.pop(ctx, true),

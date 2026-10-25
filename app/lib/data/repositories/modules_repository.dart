@@ -228,9 +228,40 @@ class ModulesRepository {
     return rows.map((r) => r.read<String>('time_entry_id')).toSet();
   }
 
+  /// Entrées qu'un nouveau taux peut encore toucher : ni supprimées, ni facturées ; hors admin, ni verrouillées,
+  /// ni antérieures à [lockBefore], ni dans une période approuvée, comme `time_entries_guard`.
+  Future<List<TimeEntry>> rerateableEntries(String workspaceId,
+      {String? projectId, String? userId, required bool isAdmin, DateTime? lockBefore}) async {
+    final invoiced = await invoicedEntryIds(workspaceId);
+    final q = db.select(db.timeEntries)..where((t) => t.workspaceId.equals(workspaceId) & t.deletedAt.isNull());
+    if (projectId != null) q.where((t) => t.projectId.equals(projectId));
+    if (userId != null) q.where((t) => t.userId.equals(userId));
+    final entries = (await q.get()).where((e) => !invoiced.contains(e.id));
+    if (isAdmin) return entries.toList();
+    final approved = await (db.select(db.timesheetSubmissions)
+          ..where((s) => s.workspaceId.equals(workspaceId) & s.status.equals('approved') & s.deletedAt.isNull()))
+        .get();
+    bool frozen(TimeEntry e) {
+      final day = dayKey(e.startAt.toLocal());
+      if (e.locked || (lockBefore != null && day.compareTo(dayKey(lockBefore)) < 0)) return true;
+      return approved.any((s) => s.userId == e.userId && s.periodStart.compareTo(day) <= 0 && s.periodEnd.compareTo(day) >= 0);
+    }
+
+    return entries.where((e) => !frozen(e)).toList();
+  }
+
+  /// Pose le taux de chaque entrée ([rates] : identifiant → taux en centimes, nul pour aucun).
+  Future<void> setEntryRates(Map<String, int?> rates) => db.transaction(() async {
+        for (final MapEntry(key: id, value: rate) in rates.entries) {
+          await (db.update(db.timeEntries)..where((t) => t.id.equals(id)))
+              .write(TimeEntriesCompanion(hourlyRateCents: Value(rate)));
+        }
+      });
+
   /// Crée une facture brouillon depuis le temps facturable d'un client sur une période :
-  /// une ligne par (projet, taux), quantités en heures. Les entrées sont marquées facturées.
-  /// Le numéro définitif est attribué par le serveur à la synchronisation.
+  /// une ligne par (projet, taux), ou par (projet, tâche, taux) avec [byTask], quantités en heures. Une entrée
+  /// sans taux prend celui applicable aujourd'hui (`CatalogController.entryRate`). Les entrées sont marquées
+  /// facturées. Le numéro définitif est attribué par le serveur à la synchronisation.
   Future<String?> createInvoiceFromTime({
     required String workspaceId,
     required String userId,
@@ -240,12 +271,19 @@ class ModulesRepository {
     required String currency,
     required double taxPercent,
     required Map<String, String> projectNames,
+    bool byTask = false,
+    Map<String, String> taskNames = const {},
   }) async {
     final already = await invoicedEntryIds(workspaceId);
-    final projectIds = (await (db.select(db.projects)..where((p) => p.clientId.equals(clientId) & p.deletedAt.isNull())).get())
-        .map((p) => p.id)
-        .toList();
+    final projects = await (db.select(db.projects)..where((p) => p.clientId.equals(clientId) & p.deletedAt.isNull())).get();
+    final projectIds = projects.map((p) => p.id).toList();
     if (projectIds.isEmpty) return null;
+    final projectRates = {for (final p in projects) p.id: p.hourlyRateCents};
+    final memberRates = {
+      for (final m in await (db.select(db.workspaceMembers)..where((m) => m.workspaceId.equals(workspaceId))).get())
+        m.userId: m.hourlyRateCents,
+    };
+    int rateOf(TimeEntry e) => e.hourlyRateCents ?? projectRates[e.projectId] ?? memberRates[e.userId] ?? 0;
     final entries = await (db.select(db.timeEntries)
           ..where((t) =>
               t.workspaceId.equals(workspaceId) &
@@ -259,9 +297,17 @@ class ModulesRepository {
     final toBill = entries.where((e) => !already.contains(e.id)).toList();
     if (toBill.isEmpty) return null;
 
-    final groups = <(String?, int), List<TimeEntry>>{};
+    final groups = <(String?, String?, int), List<TimeEntry>>{};
     for (final e in toBill) {
-      groups.putIfAbsent((e.projectId, e.hourlyRateCents ?? 0), () => []).add(e);
+      // Une tâche inconnue (supprimée) compte comme sans tâche.
+      final task = byTask && taskNames.containsKey(e.taskId) ? e.taskId : null;
+      groups.putIfAbsent((e.projectId, task, rateOf(e)), () => []).add(e);
+    }
+    // « Projet », ou « Projet — Tâche ».
+    String label((String?, String?, int) key) {
+      final project = projectNames[key.$1] ?? '';
+      final task = taskNames[key.$2];
+      return task == null ? project : '$project — $task';
     }
     final invoiceId = newId();
     await db.transaction(() async {
@@ -277,7 +323,17 @@ class ModulesRepository {
             createdBy: Value(userId),
           ));
       var position = 0;
-      final keys = groups.keys.toList()..sort((a, b) => (projectNames[a.$1] ?? '').compareTo(projectNames[b.$1] ?? ''));
+      // Par projet, la ligne sans tâche d'abord, puis les tâches dans l'ordre alphabétique.
+      int compare((String?, String?, int) a, (String?, String?, int) b) {
+        final byProject = (projectNames[a.$1] ?? '').compareTo(projectNames[b.$1] ?? '');
+        if (byProject != 0) return byProject;
+        final ta = taskNames[a.$2], tb = taskNames[b.$2];
+        if (ta == null || tb == null) return ta == tb ? a.$3.compareTo(b.$3) : (ta == null ? -1 : 1);
+        final byTask = ta.compareTo(tb);
+        return byTask != 0 ? byTask : a.$3.compareTo(b.$3);
+      }
+
+      final keys = groups.keys.toList()..sort(compare);
       for (final key in keys) {
         final list = groups[key]!;
         final seconds = list.fold<int>(0, (s, e) => s + e.endAt!.difference(e.startAt).inSeconds);
@@ -286,10 +342,10 @@ class ModulesRepository {
               workspaceId: workspaceId,
               invoiceId: invoiceId,
               position: Value(position++),
-              description: Value(projectNames[key.$1] ?? ''),
+              description: Value(label(key)),
               quantity: Value(hours),
-              unitPriceCents: Value(key.$2),
-              amountCents: Value((hours * key.$2).round()),
+              unitPriceCents: Value(key.$3),
+              amountCents: Value((hours * key.$3).round()),
               projectId: Value(key.$1),
             ));
       }

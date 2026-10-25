@@ -109,6 +109,7 @@ erDiagram
     timestamptz start_at
     timestamptz end_at "NULL = chronomètre en cours"
     int duration_seconds "calculée par trigger"
+    int hourly_rate_cents "taux à la saisie ; NULL = taux actuel du projet, sinon du membre"
     bool locked
     text source "NULL = app | kiosk | activity | agent"
     uuid created_by "posé depuis le JWT"

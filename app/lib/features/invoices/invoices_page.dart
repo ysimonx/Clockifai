@@ -96,6 +96,7 @@ class InvoicesPage extends StatelessWidget {
     final now = DateTime.now();
     var range = DateTimeRange(start: DateTime(now.year, now.month - 1), end: DateTime(now.year, now.month).subtract(const Duration(days: 1)));
     final tax = TextEditingController(text: ws.defaultTaxPercent.toString());
+    var byTask = false;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setState) {
@@ -122,7 +123,12 @@ class InvoicesPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               TextField(controller: tax, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: InputDecoration(labelText: l.taxPercent, suffixText: '%')),
-              const SizedBox(height: 8),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: byTask,
+                title: Text(l.invoiceByTask),
+                onChanged: (v) => setState(() => byTask = v ?? false),
+              ),
               Text(l.newInvoiceHelp, style: Theme.of(ctx).textTheme.bodySmall),
             ]),
           ),
@@ -144,6 +150,8 @@ class InvoicesPage extends StatelessWidget {
       currency: client?.currencyOverride ?? ws.currency,
       taxPercent: double.tryParse(tax.text.replaceAll(',', '.')) ?? ws.defaultTaxPercent,
       projectNames: {for (final p in catalog.projects) p.id: p.name},
+      byTask: byTask,
+      taskNames: {for (final t in catalog.tasks) t.id: t.name},
     );
     if (!context.mounted) return;
     if (id == null) return showSnack(context, l.nothingToInvoice);

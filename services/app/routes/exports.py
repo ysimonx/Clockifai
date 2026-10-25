@@ -36,7 +36,9 @@ def _parse_date(value: str | None, default: date) -> date:
 def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> list[dict]:
     sql = """
         select te.id, te.start_at, te.end_at, te.duration_seconds, te.description, te.billable,
-               te.hourly_rate_cents, wm.display_name as user_name, wm.email as user_email,
+               -- Entrée saisie avant que son projet ou son membre ait un taux : le taux actuel (catalog.entryRate).
+               coalesce(te.hourly_rate_cents, p.hourly_rate_cents, wm.hourly_rate_cents) as hourly_rate_cents,
+               wm.display_name as user_name, wm.email as user_email,
                wm.kind as user_kind,
                p.name as project_name, c.name as client_name, t.name as task_name,
                coalesce(string_agg(tg.name, ', ' order by tg.name), '') as tags
@@ -67,7 +69,8 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
     if filters.get("member_kind") in ("human", "agent"):
         sql += " and wm.kind = %(member_kind)s"
         params["member_kind"] = filters["member_kind"]
-    sql += " group by te.id, wm.display_name, wm.email, wm.kind, p.name, c.name, t.name order by te.start_at"
+    sql += (" group by te.id, wm.display_name, wm.email, wm.kind, wm.hourly_rate_cents, p.name, p.hourly_rate_cents,"
+            " c.name, t.name order by te.start_at")
     return fetch_all(sql, params)
 
 

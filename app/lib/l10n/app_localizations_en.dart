@@ -132,6 +132,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apply => 'Apply';
 
   @override
+  String get applyRateApply => 'Apply';
+
+  @override
+  String applyRateBody(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count unbilled entries kept another rate.',
+      one: '1 unbilled entry kept another rate.',
+    );
+    return '$_temp0 The new rate applies to new entries; apply it to these as well?';
+  }
+
+  @override
+  String get applyRateKeep => 'Only new entries';
+
+  @override
+  String get applyRateTitle => 'Apply the new rate?';
+
+  @override
   String applyRounding(int minutes) {
     return 'Round to $minutes min';
   }
@@ -685,6 +705,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invoice => 'Invoice';
 
   @override
+  String get invoiceByTask => 'Detail by task';
+
+  @override
   String get invoiceDraft => 'Draft';
 
   @override
@@ -937,7 +960,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newInvoiceHelp =>
-      'One line per project is created from the client\'s billable, not yet invoiced time in the period.';
+      'One line per project, or per task when detailed, is created from the client\'s billable, not yet invoiced time in the period. An entry recorded before its project had a rate takes the current rate.';
 
   @override
   String get newKioskDevice => 'New device';

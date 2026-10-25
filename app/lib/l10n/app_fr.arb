@@ -57,6 +57,10 @@
     }
   },
   "apply": "Appliquer",
+  "applyRateApply": "Appliquer",
+  "applyRateBody": "{count, plural, =1{1 entrée non facturée a gardé un autre taux.} other{{count} entrées non facturées ont gardé un autre taux.}} Le nouveau taux vaut pour les nouvelles entrées ; l'appliquer aussi à celles-ci ?",
+  "applyRateKeep": "Seulement les nouvelles",
+  "applyRateTitle": "Appliquer le nouveau taux ?",
   "applyRounding": "Arrondi {minutes} min",
   "@applyRounding": {
     "placeholders": {
@@ -350,6 +354,7 @@
   "inviteLinkTitle": "Lien d'invitation",
   "inviteMember": "Inviter un membre",
   "invoice": "Facture",
+  "invoiceByTask": "Détailler par tâche",
   "invoiceDraft": "Brouillon",
   "invoiceNote": "Mentions / conditions",
   "invoiceNoteHint": "Conditions de paiement, IBAN… (Entrée pour enregistrer)",
@@ -492,7 +497,7 @@
   "newClient": "Nouveau client",
   "newGroup": "Nouveau groupe",
   "newInvoice": "Nouvelle facture",
-  "newInvoiceHelp": "Une ligne par projet est créée à partir du temps facturable non encore facturé du client sur la période.",
+  "newInvoiceHelp": "Une ligne par projet, ou par tâche si vous détaillez, est créée à partir du temps facturable non encore facturé du client sur la période. Une entrée saisie avant que son projet ait un taux prend le taux actuel.",
   "newKioskDevice": "Nouvel appareil",
   "newPassword": "Nouveau mot de passe (8 caractères min.)",
   "newPolicy": "Nouvelle politique",

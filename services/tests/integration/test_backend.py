@@ -237,6 +237,26 @@ def test_flask_export(alice, alice_ws):
     assert status == 200 and body[:4] == b"%PDF"
 
 
+def test_flask_export_uses_the_current_rate_of_an_entry_without_rate(alice, alice_ws):
+    # Entrée saisie avant que le projet ait un taux : l'export prend le taux actuel, une entrée qui a le sien le garde.
+    pid = str(uuid.uuid4())
+    assert rest("POST", "projects", alice["token"], {"id": pid, "workspace_id": alice_ws, "name": "Taux tardif"})[0] == 201
+    start = datetime.now(UTC).replace(microsecond=0) - timedelta(hours=3)
+    for i, rate in enumerate([None, 9000]):
+        assert rest("POST", "time_entries", alice["token"], {
+            "id": str(uuid.uuid4()), "workspace_id": alice_ws, "user_id": alice["id"], "project_id": pid,
+            "description": f"taux {rate}", "hourly_rate_cents": rate,
+            "start_at": iso(start + timedelta(minutes=10 * i)), "end_at": iso(start + timedelta(minutes=10 * i + 5))})[0] == 201
+    assert rest("PATCH", f"projects?id=eq.{pid}", alice["token"], {"hourly_rate_cents": 12345})[0] == 200
+
+    day = start.date().isoformat()
+    status, body = _call("GET", f"{SERVICES}/api/exports/report?workspace_id={alice_ws}&project_id={pid}"
+                                f"&from={day}&to={date.today().isoformat()}&format=csv", alice["token"])
+    assert status == 200, body
+    rates = {line.split(";")[6]: line.split(";")[-1] for line in body.decode("utf-8-sig").strip().splitlines()[1:]}
+    assert rates == {"taux None": "123,45", "taux 9000": "90,00"}
+
+
 def test_flask_export_forbidden_for_outsider(alice_ws):
     token, _ = signup("eve")
     status, _ = _call("GET", f"{SERVICES}/api/exports/report?workspace_id={alice_ws}", token)

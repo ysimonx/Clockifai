@@ -45,7 +45,7 @@ class ReportCalculator {
   }
 
   double amountOf(EntryRow r) {
-    final rate = r.entry.hourlyRateCents;
+    final rate = catalog.entryRate(r.entry);
     if (!r.entry.billable || rate == null) return 0;
     return secondsOf(r) / 3600 * rate / 100;
   }

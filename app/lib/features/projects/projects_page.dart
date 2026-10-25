@@ -9,6 +9,7 @@ import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
+import '../../core/widgets/rate_change.dart';
 import '../../data/drift/database.dart';
 
 class ProjectsPage extends StatefulWidget {
@@ -236,7 +237,14 @@ class _ProjectDialogState extends State<_ProjectDialog> {
     if (widget.project == null) {
       await catalogRepo.createProject(ws, data);
     } else {
-      await catalogRepo.updateProject(widget.project!.id, data);
+      final project = widget.project!;
+      await catalogRepo.updateProject(project.id, data);
+      final rate = data.hourlyRateCents.value;
+      if (rate != project.hourlyRateCents && mounted) {
+        final catalog = context.read<CatalogController>();
+        await offerRateChange(context,
+            projectId: project.id, rateFor: (e) => rate ?? catalog.memberOf(e.userId)?.hourlyRateCents);
+      }
     }
     if (mounted) Navigator.pop(context);
   }

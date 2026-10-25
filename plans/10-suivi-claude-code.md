@@ -942,8 +942,8 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 - **Installation du plugin depuis VSCode** : faute de `/plugin` dans l'extension, elle passe par un terminal.
   L'écran Intégrations doit le dire clairement, et le guide utilisateur aussi.
 - **Factures** : `createInvoiceFromTime` regroupe les lignes par (projet, taux). Les heures de Claude se
-  mêlent donc à celles des humains au même taux. Un taux « IA » par projet, distinct du taux du projet,
-  serait un ajout ultérieur.
+  mêlent donc à celles des humains au même taux. « Détailler par tâche » les sépare quand Claude a nommé ses
+  tâches (plan 12). Un taux « IA » par projet, distinct du taux du projet, serait un ajout ultérieur.
 - **Sessions parallèles pour un même client** : le cumul est facturé (D2). Pour l'éviter : D16 (non
   facturable), ou la piste de la durée calendaire.
 - **Approbations** : l'approbation de la période du pilote ne verrouille pas les entrées de son agent.

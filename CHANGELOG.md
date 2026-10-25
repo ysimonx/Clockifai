@@ -10,6 +10,18 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Ajouté
+
+- Factures : **Détailler par tâche** à la création, une ligne « Projet — Tâche » par tâche, le temps sans
+  tâche restant sur la ligne du projet (25 octobre 2026).
+- Changer le taux horaire d'un projet ou d'une personne propose de l'appliquer aux entrées pas encore
+  facturées qui ont gardé un autre taux (« Appliquer le nouveau taux ? ») (25 octobre 2026).
+
+### Corrigé
+
+- Une entrée saisie avant que son projet ou la personne ait un taux horaire prend le taux actuel dans les
+  factures, les rapports et les exports, au lieu de sortir à 0 sur une ligne à part (25 octobre 2026).
+
 ## [0.2.0] — 2026-10-24
 
 ### Ajouté

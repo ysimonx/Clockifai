@@ -133,6 +133,26 @@ class AppLocalizationsFr extends AppLocalizations {
   String get apply => 'Appliquer';
 
   @override
+  String get applyRateApply => 'Appliquer';
+
+  @override
+  String applyRateBody(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entrées non facturées ont gardé un autre taux.',
+      one: '1 entrée non facturée a gardé un autre taux.',
+    );
+    return '$_temp0 Le nouveau taux vaut pour les nouvelles entrées ; l\'appliquer aussi à celles-ci ?';
+  }
+
+  @override
+  String get applyRateKeep => 'Seulement les nouvelles';
+
+  @override
+  String get applyRateTitle => 'Appliquer le nouveau taux ?';
+
+  @override
   String applyRounding(int minutes) {
     return 'Arrondi $minutes min';
   }
@@ -689,6 +709,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get invoice => 'Facture';
 
   @override
+  String get invoiceByTask => 'Détailler par tâche';
+
+  @override
   String get invoiceDraft => 'Brouillon';
 
   @override
@@ -942,7 +965,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get newInvoiceHelp =>
-      'Une ligne par projet est créée à partir du temps facturable non encore facturé du client sur la période.';
+      'Une ligne par projet, ou par tâche si vous détaillez, est créée à partir du temps facturable non encore facturé du client sur la période. Une entrée saisie avant que son projet ait un taux prend le taux actuel.';
 
   @override
   String get newKioskDevice => 'Nouvel appareil';

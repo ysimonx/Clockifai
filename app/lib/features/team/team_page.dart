@@ -14,6 +14,7 @@ import '../../core/session.dart';
 import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
+import '../../core/widgets/rate_change.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
@@ -457,10 +458,18 @@ class _AdminMenu extends StatelessWidget {
       ),
     );
     if (ok != true) return;
+    final rate = parse(hourly.text);
     await workspaceRepo.updateMember(
       member.id,
-      WorkspaceMembersCompanion(hourlyRateCents: Value(parse(hourly.text)), costRateCents: Value(parse(cost.text))),
+      WorkspaceMembersCompanion(hourlyRateCents: Value(rate), costRateCents: Value(parse(cost.text))),
     );
+    if (rate == member.hourlyRateCents || !context.mounted) return;
+    // Le taux du membre ne vaut que sur les projets sans taux.
+    final catalog = context.read<CatalogController>();
+    await offerRateChange(context,
+        userId: member.userId,
+        concerns: (e) => catalog.project(e.projectId)?.hourlyRateCents == null,
+        rateFor: (_) => rate);
   }
 }
 

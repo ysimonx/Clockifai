@@ -349,7 +349,8 @@ export function helpers(page, failures, clock = null) {
 }
 
 /** Ouvre un contexte enregistré, exécute [fn], renvoie le chemin du webm. */
-export async function record(browser, { phone = false } = {}, fn) {
+/** [onContext] : réglages du contexte avant la première page (interception de requêtes, permissions). */
+export async function record(browser, { phone = false, onContext } = {}, fn) {
   const viewport = phone ? { width: 390, height: 844 } : { width: W, height: H };
   const ctx = await browser.newContext({
     viewport,
@@ -361,6 +362,7 @@ export async function record(browser, { phone = false } = {}, fn) {
     ...(FAST ? {} : { recordVideo: { dir: out, size: viewport } }),
   });
   await ctx.addInitScript(overlay);
+  await onContext?.(ctx);
   const clock = { start: Date.now(), cuts: [], scenes: [] };
   const page = await ctx.newPage();
   try {

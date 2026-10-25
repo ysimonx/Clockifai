@@ -12,6 +12,8 @@
 #   Camille Martin   member  compagnon de l'équipe Unité 4
 #   Léo Dubois, Hugo Petit   membres de l'équipe Unité 4
 #   Nadia Rahmani    member  équipe « Calorifuge », hors du périmètre de Karim
+# Studio « Studio Alex » (vidéo 6, Claude Code) :
+#   Alex Girard      owner   développeur indépendant ; son agent « Claude · Alex Girard » travaille dans ses dépôts
 # Mot de passe commun : Demo-2026-clockifai · PIN kiosque : 1234 (Camille), 2468 (Léo)
 set -eu
 cd "$(dirname "$0")/.."
@@ -34,6 +36,9 @@ fi
 echo "[demo] nettoyage des comptes de démo précédents"
 $PSQL <<'SQL'
 delete from public.workspaces where created_by in (select id from auth.users where email like '%@demo.clockifai.fr');
+-- Comptes techniques des agents Claude des comptes de démo (agent-<id>@agents.clockifai.invalid).
+delete from auth.users where raw_app_meta_data ->> 'kind' = 'agent'
+   and raw_app_meta_data ->> 'owner_id' in (select id::text from auth.users where email like '%@demo.clockifai.fr');
 delete from auth.users where email like '%@demo.clockifai.fr';
 SQL
 
@@ -49,6 +54,7 @@ signup camille@demo.clockifai.fr "Camille Martin"
 signup leo@demo.clockifai.fr "Léo Dubois"
 signup hugo@demo.clockifai.fr "Hugo Petit"
 signup nadia@demo.clockifai.fr "Nadia Rahmani"
+signup alex@demo.clockifai.fr "Alex Girard"
 
 echo "[demo] entreprise et équipe"
 $PSQL <<'SQL'
@@ -67,7 +73,7 @@ begin
   where id = wid;
   update public.workspace_members set hourly_rate_cents = 6500 where workspace_id = wid and user_id = sophie;
   for r in select u.id, u.email, p.display_name from auth.users u join public.profiles p on p.id = u.id
-            where u.email like '%@demo.clockifai.fr' and u.id <> sophie loop
+            where u.email like '%@demo.clockifai.fr' and u.id <> sophie and u.email <> 'alex@demo.clockifai.fr' loop
     insert into public.workspace_members (workspace_id, user_id, role, display_name, email, hourly_rate_cents, capacity_hours_per_day)
     values (wid, r.id, case r.email when 'julien@demo.clockifai.fr' then 'manager' else 'member' end, r.display_name, r.email,
             case r.email when 'julien@demo.clockifai.fr' then 6000 when 'karim@demo.clockifai.fr' then 5000
@@ -174,4 +180,52 @@ begin
   values (wid, 'Tablette base vie', encode(extensions.digest('kio_demo_tablette_base_vie_2026', 'sha256'), 'hex'), u_sophie);
 end $$;
 SQL
+
+echo "[demo] studio d'Alex (vidéo 6, Claude Code)"
+$PSQL <<'SQL'
+do $$
+declare
+  u_alex uuid := (select id from auth.users where email = 'alex@demo.clockifai.fr');
+  wid uuid := (select default_workspace_id from public.profiles where id = (select id from auth.users where email = 'alex@demo.clockifai.fr'));
+  c_boul uuid; c_cab uuid; p_site uuid; p_rdv uuid; p_int uuid; t_maq uuid; t_reu uuid; t_rec uuid;
+  d date; i int;
+begin
+  update public.workspaces set name = 'Studio Alex', task_creation = 'everyone' where id = wid;
+  update public.workspace_members set hourly_rate_cents = 6000 where workspace_id = wid and user_id = u_alex;
+  insert into public.clients (workspace_id, name) values (wid, 'Boulangerie Martin (démo)') returning id into c_boul;
+  insert into public.clients (workspace_id, name) values (wid, 'Cabinet Dupuis (démo)') returning id into c_cab;
+  insert into public.projects (workspace_id, client_id, name, color, hourly_rate_cents) values
+    (wid, c_boul, 'Site de la boulangerie', '#F97316', 6500) returning id into p_site;
+  insert into public.projects (workspace_id, client_id, name, color, hourly_rate_cents) values
+    (wid, c_cab, 'Appli de rendez-vous', '#0EA5E9', 7000) returning id into p_rdv;
+  insert into public.projects (workspace_id, name, color, billable_default) values (wid, 'Interne', '#64748B', false)
+    returning id into p_int;
+  insert into public.tasks (workspace_id, project_id, name) values (wid, p_site, 'Maquettes') returning id into t_maq;
+  insert into public.tasks (workspace_id, project_id, name) values (wid, p_site, 'Réunion client') returning id into t_reu;
+  insert into public.tasks (workspace_id, project_id, name) values (wid, p_rdv, 'Recette') returning id into t_rec;
+  -- Dépôts rattachés à leur projet (« Toujours rattacher ce dépôt à ce projet ») : les sessions de Claude y arrivent.
+  insert into public.activity_rules (workspace_id, user_id, match_kind, pattern, project_id) values
+    (wid, u_alex, 'repo', 'github.com/studio-alex/site-boulangerie', p_site),
+    (wid, u_alex, 'repo', 'github.com/studio-alex/appli-rdv', p_rdv);
+
+  -- Les heures d'Alex, jours ouvrés des deux dernières semaines (celles de Claude : demo/claude-history.mjs).
+  for i in 1..13 loop
+    d := current_date - i;
+    continue when extract(isodow from d) > 5;
+    insert into public.time_entries (workspace_id, user_id, project_id, task_id, description, start_at, end_at, billable, hourly_rate_cents) values
+      (wid, u_alex, p_int, null, 'Courriels et devis',
+       (d + time '08:30') at time zone 'Europe/Paris', (d + time '09:00') at time zone 'Europe/Paris', false, 6000),
+      (wid, u_alex, case when i % 2 = 0 then p_site else p_rdv end, case when i % 2 = 0 then t_maq else t_rec end,
+       case when i % 2 = 0 then 'Maquettes de la page d''accueil' else 'Recette de la prise de rendez-vous' end,
+       (d + time '09:00') at time zone 'Europe/Paris', (d + time '12:00') at time zone 'Europe/Paris', true,
+       case when i % 2 = 0 then 6500 else 7000 end);
+    if extract(isodow from d) = 2 then
+      insert into public.time_entries (workspace_id, user_id, project_id, task_id, description, start_at, end_at, billable, hourly_rate_cents)
+      values (wid, u_alex, p_site, t_reu, 'Point avec Mme Martin',
+              (d + time '14:00') at time zone 'Europe/Paris', (d + time '15:00') at time zone 'Europe/Paris', true, 6500);
+    end if;
+  end loop;
+end $$;
+SQL
+node demo/claude-history.mjs
 echo "[demo] prêt"

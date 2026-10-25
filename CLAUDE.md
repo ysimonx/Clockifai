@@ -163,7 +163,10 @@ l'index `plans/README.md`, dans le même commit. Les numéros ne sont jamais ré
 (répétition sans vidéo, captures `demo/out/echec-*.png`) et ajuster le scénario dans `demo/videos/`.
 Les éléments Flutter sont repérés par leur étiquette d'accessibilité ou leur texte propre (`find()` dans `demo/lib/helpers.mjs`).
 Filmer avec le Chromium de Playwright (défaut), pas avec Chrome (`DEMO_CHANNEL=chrome`, répétitions seulement :
-horodatage des vidéos faux). Sous Node 26, `npx playwright install` peut se figer : installation manuelle dans `demo/README.md`.
+horodatage des vidéos faux). La vidéo 6 (Claude Code, studio d'Alex) tourne sur un second build compilé avec
+`SERVICES_URL=https://clockifai.example.fr` (`app/build/web-demo`, port 3101, refait seul s'il est plus ancien que
+`app/build/web`) ; Playwright passe ces requêtes au Flask local, et l'activité de Claude est postée par l'API
+d'activité (`demo/claude-history.mjs`, `demo/lib/claude.mjs`). Sous Node 26, `npx playwright install` peut se figer : installation manuelle dans `demo/README.md`.
 Le tournage écrit aussi `demo/out/<nom>.chapters.json` (début de chaque `h.scene(…)`, d'après un repère filmé
 puis effacé, car la vidéo de Playwright s'étire par rapport à l'horloge). Le nom
 de la vidéo (`export const name`) et ceux des scènes sont référencés par le guide : les renommer impose de reprendre

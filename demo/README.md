@@ -1,6 +1,6 @@
 # Vidéos de démonstration
 
-Cinq vidéos sans voix, avec des bandeaux explicatifs incrustés, tournées automatiquement
+Six vidéos sans voix, avec des bandeaux explicatifs incrustés, tournées automatiquement
 dans un navigateur (Playwright) sur la pile locale :
 
 | Vidéo | Personne | Ce qu'elle montre |
@@ -10,6 +10,7 @@ dans un navigateur (Playwright) sur la pile locale :
 | `3-julien-manager.mp4` | Julien, conducteur de travaux, manager | Toute l'entreprise : équipe et taux, approbation d'une feuille et d'une absence hors de l'équipe de Karim, affectation au planning, rapports et export Excel, budgets, réglages en lecture seule |
 | `4-sophie-gestion-workspace.mp4` | Sophie, propriétaire | Rôles, groupes, chefs d'équipe, invitations, règles (saisie pour autrui, verrouillage, arrondi), projets, absences, planning, rapports, factures, kiosque |
 | `5-admin-installation.mp4` | Administrateur de l'installation | Supabase Studio (comptes, données, SQL), paramétrage `deploy/.env`, commandes d'exploitation, récapitulatif des rôles |
+| `6-alex-claude-code.mp4` | Alex, développeur indépendant, et son agent Claude | Connexion d'un poste, installation du plugin (terminal en incrustation), session de Claude Code en direct, réglage « Tâches de Claude », postes connectés, fiche de l'agent, rapports humains / agents et détaillé, correction d'une entrée, facture détaillée par tâche |
 
 ## Tourner
 
@@ -40,10 +41,22 @@ rm -rf $PW/chromium-1187 && mkdir -p $PW/chromium-1187 && ditto -x -k /tmp/chrom
 touch $PW/ffmpeg-1011/INSTALLATION_COMPLETE $PW/chromium-1187/INSTALLATION_COMPLETE
 ```
 
-Avant chaque vidéo, `prepare-demo.sh` recrée l'entreprise fictive « Échafaudages du Nord »
-(comptes `*@demo.clockifai.fr`, mot de passe `Demo-2026-clockifai`). Ces comptes servent aussi
+Avant chaque vidéo, `prepare-demo.sh` recrée l'entreprise fictive « Échafaudages du Nord » et le studio
+d'Alex (comptes `*@demo.clockifai.fr`, mot de passe `Demo-2026-clockifai`). Ces comptes servent aussi
 à essayer l'app à la main. `sh prepare-demo.sh --clean-test-accounts` supprime en plus les comptes
 laissés par les tests automatiques.
+
+L'historique de Claude (vidéo 6) passe par le vrai chemin : `claude-history.mjs` connecte le « Mac mini »
+d'Alex (`POST /api/tokens`, qui crée son agent) puis poste les événements de ses sessions des derniers jours
+ouvrés (`POST /api/activity/events`, `lib/claude.mjs`) ; le serveur en tire les entrées, tâches et
+descriptions. Le Flask local doit tourner. Pendant le tournage, la vidéo poste de même une session en direct,
+avec le jeton qu'elle vient de copier à l'écran (presse-papiers lu par Playwright).
+
+La vidéo 6 montre l'écran Claude Code d'une vraie instance : sur la pile locale, en http, il afficherait les
+commandes de développement (marketplace `clockifai-dev`). `lib/public-instance.mjs` compile donc un second
+build, `app/build/web-demo`, avec `SERVICES_URL=https://clockifai.example.fr` (refait tout seul, environ
+1 min 30, quand il est plus ancien que `app/build/web`), le sert sur le port 3101, et Playwright passe les
+requêtes vers cette adresse au Flask local.
 
 L'app est servie depuis `app/build/web` sur le port **3100** (le 3000 sert au `flutter run` de
 développement). Une scène qui échoue est notée, une capture est enregistrée dans `demo/out/echec-*.png`
@@ -74,4 +87,6 @@ morts : garder l'écran ouvert, ou brancher le secteur.
 | `lib/helpers.mjs` | Pilotage de Flutter web par son arbre d'accessibilité, curseur, enregistrement |
 | `lib/overlay.js` | Incrustations : bandeau, carte titre, panneau de code, curseur visible |
 | `prepare-demo.sh` | Données de démonstration rejouables |
+| `claude-history.mjs`, `lib/claude.mjs` | Poste de Claude Code et sessions d'Alex (vidéo 6), par l'API d'activité |
+| `lib/public-instance.mjs` | Build et interception « adresse publique » de la vidéo 6 |
 | `serve.mjs` | Petit serveur du build web |

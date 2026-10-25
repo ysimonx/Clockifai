@@ -932,6 +932,10 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 | 6 Sessions cloud | Hook de dépôt, `POST /api/activity/events/raw` avec filtrage à l'arrivée, guide de réglage de l'environnement (réseau, secret réseau) | S, plus tard (§12) | envisagé |
 | 7 Usage IA (D17) | Lecture de la transcription au `Stop` et `SubagentStop` (totaux par modèle et effort, dédoublonnés par `message.id`), événement `agent_usage`, table répliquée `agent_usage` et ses flux, prix `ai_model_prices`, coût estimé, affichage (entrée, rapports, exports, carte de l'agent) | M | validé |
 
+Documentation : section « Le temps de Claude Code » du guide (page Membre) et vidéo 6, « Alex et son agent
+Claude » (`demo/videos/6-claude-code.mjs`, 26 octobre 2026). Son historique et sa session en direct passent par
+`POST /api/tokens` et `POST /api/activity/events`, comme le plugin.
+
 ## 11. Points d'attention
 
 - **Horloge client** : `occurred_at` est fourni par le poste et `received_at` est conservé ; on rejette les écarts aberrants (§5).

@@ -116,8 +116,7 @@ export async function run(browser, failures) {
       await h.click(/^Nouvelle facture$/, 1500);
       await h.click(/Centrale Sud \(démo\)/, 1000);
       await h.pick(/Raffinerie Nord \(démo\)/, 1200);
-      await h.click(/^Détailler par tâche$/, 1200);
-      await h.caption(C('Facturation'), 'Détailler par tâche', 'Une ligne par tâche (« Projet — Tâche ») plutôt qu’une seule par projet.', ROLE, 3500);
+      await h.caption(C('Facturation'), 'Détailler par tâche', 'Coché par défaut : une ligne par tâche (« Projet — Tâche ») plutôt qu’une seule par projet.', ROLE, 3500);
       await h.clickLast(/^Générer$/, 3500);
       await h.caption(C('Facturation'), 'Une ligne par projet et par tâche, au bon taux', 'Numérotation continue attribuée par le serveur, TVA, remise, PDF. Les heures facturées ne peuvent plus être modifiées.', ROLE, 6000);
       await h.clickLast(/^Fermer$/, 1200);

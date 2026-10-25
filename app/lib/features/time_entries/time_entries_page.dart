@@ -99,7 +99,12 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
                 currentWeek = w;
                 children.add(_WeekHeader(weekStart: w, total: weekTotals[w] ?? 0));
               }
-              children.add(_DayCard(day: d, rows: byDay[d]!, running: running));
+              children.add(DayCard(
+                day: d,
+                rows: byDay[d]!,
+                running: running,
+                grouped: context.watch<DisplayPrefs>().groupSimilarEntries,
+              ));
             }
             children.add(Padding(
               padding: const EdgeInsets.all(16),
@@ -149,25 +154,29 @@ class _WeekHeader extends StatelessWidget {
   }
 }
 
-class _DayCard extends StatelessWidget {
-  const _DayCard({required this.day, required this.rows, required this.running});
+/// Une journée : en-tête (jour, total) et ses entrées, les similaires réunies si [grouped].
+/// Sert au « Suivi du temps » et au rapport détaillé.
+class DayCard extends StatelessWidget {
+  const DayCard({super.key, required this.day, required this.rows, required this.grouped, this.running = const [], this.showUser = false});
   final DateTime day;
   final List<EntryRow> rows;
+  final bool grouped;
   final List<TimeEntry> running;
+  final bool showUser;
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     final theme = Theme.of(context);
     final total = rows.fold<int>(0, (s, r) => s + r.seconds);
-    final lines = context.watch<DisplayPrefs>().groupSimilarEntries
+    final lines = grouped
         ? [
             for (final g in groupSimilar(rows))
               g.isSingle
-                  ? EntryTile(row: g.first, running: running)
-                  : EntryGroupTile(key: ValueKey('$day ${g.key}'), group: g, day: day, running: running),
+                  ? EntryTile(row: g.first, running: running, showUser: showUser)
+                  : EntryGroupTile(key: ValueKey('$day ${g.key}'), group: g, day: day, running: running, showUser: showUser),
           ]
-        : [for (final r in rows) EntryTile(row: r, running: running)];
+        : [for (final r in rows) EntryTile(row: r, running: running, showUser: showUser)];
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
@@ -354,10 +363,11 @@ Future<void> _continue(BuildContext context, EntryRow row) async {
 /// Groupe d'entrées similaires d'une journée (plans/08-regroupement-entrees.md) : une ligne résumée
 /// (nombre, plage, durée cumulée) qui se déplie sur ses entrées.
 class EntryGroupTile extends StatefulWidget {
-  const EntryGroupTile({super.key, required this.group, required this.day, this.running = const []});
+  const EntryGroupTile({super.key, required this.group, required this.day, this.running = const [], this.showUser = false});
   final EntryGroup group;
   final DateTime day;
   final List<TimeEntry> running;
+  final bool showUser;
 
   @override
   State<EntryGroupTile> createState() => _EntryGroupTileState();
@@ -425,6 +435,9 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
               ),
               const SizedBox(height: 4),
               Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                if (widget.showUser)
+                  Text(context.watch<CatalogController>().memberOf(e.userId)?.displayName ?? '?',
+                      style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
                 ProjectLabel(projectId: e.projectId, taskId: e.taskId, dense: true),
                 TagChips(g.first.tagIds),
               ]),

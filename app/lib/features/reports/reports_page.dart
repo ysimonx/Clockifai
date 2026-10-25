@@ -84,6 +84,15 @@ class _ReportsPageState extends State<ReportsPage> {
     };
   }
 
+  /// Entrées par jour (heure locale), dans l'ordre reçu : les plus récentes d'abord.
+  static Map<DateTime, List<EntryRow>> _byDay(List<EntryRow> rows) {
+    final byDay = <DateTime, List<EntryRow>>{};
+    for (final r in rows) {
+      byDay.putIfAbsent(startOfDay(r.entry.startAt.toLocal()), () => []).add(r);
+    }
+    return byDay;
+  }
+
   List<EntryRow> _filter(List<EntryRow> rows, CatalogController catalog) => rows.where((r) {
         final e = r.entry;
         if (_projectId != null && e.projectId != _projectId) return false;
@@ -175,14 +184,9 @@ class _ReportsPageState extends State<ReportsPage> {
             if (rows.isEmpty)
               EmptyState(icon: Icons.bar_chart, title: l.noDataForPeriod)
             else if (_detailed)
-              Card(
-                child: Column(children: [
-                  for (var i = 0; i < rows.length; i++) ...[
-                    if (i > 0) const Divider(height: 1),
-                    EntryTile(row: rows[i], showUser: rights.seesOthers),
-                  ],
-                ]),
-              )
+              // Jour par jour, les entrées similaires d'une journée réunies sur une ligne dépliable.
+              for (final day in _byDay(rows).entries)
+                DayCard(day: day.key, rows: day.value, grouped: true, showUser: rights.seesOthers)
             else
               Card(
                 child: Column(children: [

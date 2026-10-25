@@ -17,6 +17,13 @@ la date d'arrivée de chaque évolution.
 - Changer le taux horaire d'un projet ou d'une personne propose de l'appliquer aux entrées pas encore
   facturées qui ont gardé un autre taux (« Appliquer le nouveau taux ? ») (25 octobre 2026).
 
+### Modifié
+
+- Rapports, vue **Détaillé** : les entrées jour par jour, avec le total de chaque journée ; les entrées
+  similaires d'une journée (même personne, description, projet, tâche, tags, facturation) tiennent sur une
+  ligne dépliable (25 octobre 2026).
+- Factures : **Détailler par tâche** est coché par défaut (25 octobre 2026).
+
 ### Corrigé
 
 - Une entrée saisie avant que son projet ou la personne ait un taux horaire prend le taux actuel dans les

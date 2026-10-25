@@ -26,7 +26,10 @@ Par ailleurs, une facture ne montrait qu'une ligne par projet. Depuis que Claude
   L'écriture passe par la base locale, comme toute modification d'entrée (pas de RPC).
 - **D3. « Détailler par tâche »** dans la création d'une facture : une ligne par (projet, tâche, taux),
   « Projet — Tâche » ; le temps sans tâche (ou d'une tâche supprimée) reste sur la ligne « Projet », en tête du
-  projet, puis les tâches par ordre alphabétique. Décoché par défaut : la facture par projet ne change pas.
+  projet, puis les tâches par ordre alphabétique. Décoché par défaut à la livraison, **coché par défaut** depuis
+  le 25 octobre au soir, à la demande de Yannick : on facture d'abord par tâche, la facture par projet reste à
+  un clic. La case n'agit que sur les entrées qui ont une tâche : une description (« GOT-344… ») n'en tient pas
+  lieu.
 
 Les deux premières décisions vont ensemble : D1 répare les entrées saisies sans taux, D2 traite les changements
 de taux, qu'un repli ne peut pas voir (l'entrée a déjà un taux, l'ancien).

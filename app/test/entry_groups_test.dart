@@ -18,11 +18,11 @@ void main() {
   tearDown(() => db.close());
 
   Future<String> add(int hour, int minutes,
-      {String description = 'Revue', String? projectId = 'p1', String? taskId = 't1', List<String> tags = const ['a', 'b'], bool billable = true}) {
+      {String description = 'Revue', String? projectId = 'p1', String? taskId = 't1', List<String> tags = const ['a', 'b'], bool billable = true, String userId = me}) {
     final start = DateTime.utc(2026, 10, 22, hour);
     return repo.createManual(
       workspaceId: ws,
-      userId: me,
+      userId: userId,
       start: start,
       end: start.add(Duration(minutes: minutes)),
       draft: EntryDraft(description: description, projectId: projectId, taskId: taskId, billable: billable, tagIds: tags),
@@ -49,6 +49,14 @@ void main() {
     await add(13, 10, billable: false);
     await add(14, 10, projectId: null, taskId: null);
     expect(groupSimilar(await rows()), hasLength(7));
+  });
+
+  test('rapport détaillé : la même activité de deux personnes fait deux groupes', () async {
+    await add(8, 30);
+    await add(9, 30);
+    await add(10, 30, userId: 'user-2');
+    final all = await repo.watchEntries(workspaceId: ws, from: DateTime.utc(2026, 10, 22), to: DateTime.utc(2026, 10, 23)).first;
+    expect([for (final g in groupSimilar(all)) (g.first.entry.userId, g.rows.length)], [('user-2', 1), (me, 2)]);
   });
 
   test('ordre : le groupe prend la place de son entrée la plus récente ; totaux et plage', () async {

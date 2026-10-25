@@ -96,7 +96,7 @@ class InvoicesPage extends StatelessWidget {
     final now = DateTime.now();
     var range = DateTimeRange(start: DateTime(now.year, now.month - 1), end: DateTime(now.year, now.month).subtract(const Duration(days: 1)));
     final tax = TextEditingController(text: ws.defaultTaxPercent.toString());
-    var byTask = false;
+    var byTask = true;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setState) {

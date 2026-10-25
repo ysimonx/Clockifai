@@ -138,7 +138,9 @@ begin
   for d in select generate_series(date_trunc('month', current_date) - interval '1 month', current_date - 22, interval '1 day')::date loop
     continue when extract(isodow from d) > 5;
     insert into public.time_entries (workspace_id, user_id, project_id, task_id, description, start_at, end_at, billable, hourly_rate_cents) values
-      (wid, u_camille, scaf, montage, 'Montage niveaux 1 et 2', (d + time '07:30') at time zone 'Europe/Paris', (d + time '12:00') at time zone 'Europe/Paris', true, 4800),
+      (wid, u_camille, scaf, case when extract(isodow from d) = 5 then demontage else montage end,
+       case when extract(isodow from d) = 5 then 'Démontage niveau 1' else 'Montage niveaux 1 et 2' end,
+       (d + time '07:30') at time zone 'Europe/Paris', (d + time '12:00') at time zone 'Europe/Paris', true, 4800),
       (wid, u_nadia, calo, null, 'Calorifugeage ligne vapeur', (d + time '08:00') at time zone 'Europe/Paris', (d + time '12:00') at time zone 'Europe/Paris', true, 5200),
       (wid, u_julien, arret, null, 'Préparation arrêt de tranche', (d + time '13:00') at time zone 'Europe/Paris', (d + time '16:00') at time zone 'Europe/Paris', true, 6000);
   end loop;

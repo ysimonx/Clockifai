@@ -46,7 +46,8 @@ class TagsPage extends StatelessWidget {
                                 case 'archive':
                                   await catalogRepo.updateTag(t.id, archived: !t.archived);
                                 case 'delete':
-                                  if (await confirm(context, title: l.deleteTag)) await catalogRepo.deleteTag(t.id);
+                                  await catalogRepo.deleteTag(t.id);
+                                  if (context.mounted) showUndo(context, l.tagDeleted(t.name), () => catalogRepo.restoreTag(t));
                               }
                             },
                             itemBuilder: (_) => [

@@ -182,7 +182,6 @@
     }
   },
   "journalIgnored": "Proposition ignorée",
-  "journalUndo": "Annuler",
   "journalSummary": "Bilan du jour",
   "journalConfirmed": "Confirmé",
   "journalToConfirm": "À confirmer",
@@ -468,17 +467,11 @@
   "decision": "Décision",
   "defaultHours": "Horaires par défaut",
   "delete": "Supprimer",
-  "deleteClient": "Supprimer le client ?",
-  "deleteClientMessage": "Les projets de ce client seront conservés, sans client.",
-  "deleteEntry": "Supprimer l'entrée ?",
-  "deleteEntryMessage": "Cette entrée de temps sera supprimée sur tous vos appareils.",
   "deleteGroup": "Supprimer le groupe",
   "deleteGroupMessage": "Les membres restent dans le workspace ; les chefs d'équipe n'encadrent plus ce groupe.",
   "deleteInvoice": "Supprimer la facture ?",
   "deleteInvoiceMessage": "Les entrées de temps redeviennent facturables.",
   "deletePolicy": "Supprimer la politique ?",
-  "deleteProject": "Supprimer le projet ?",
-  "deleteProjectMessage": "Les entrées existantes restent, mais ne seront plus rattachées à un projet visible.",
   "deleteSimilarEntries": "Supprimer les {count} entrées",
   "@deleteSimilarEntries": {
     "placeholders": {
@@ -487,20 +480,46 @@
       }
     }
   },
-  "deleteSimilarEntriesMessage": "Les {count} entrées de ce groupe seront supprimées.",
-  "@deleteSimilarEntriesMessage": {
+  "undo": "Annuler",
+  "entryDeleted": "Entrée supprimée",
+  "entriesDeleted": "{count, plural, =1{1 entrée supprimée} other{{count} entrées supprimées}}",
+  "@entriesDeleted": {
     "placeholders": {
       "count": {
         "type": "int"
       }
     }
   },
-  "deleteTag": "Supprimer le tag ?",
+  "entryUpdated": "Entrée modifiée",
+  "timerDiscarded": "Chronomètre abandonné : le temps en cours n'est pas enregistré",
+  "clientDeleted": "Client « {name} » supprimé ; ses projets restent, sans client",
+  "@clientDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "projectDeleted": "Projet « {name} » supprimé ; ses entrées restent",
+  "@projectDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tagDeleted": "Tag « {name} » supprimé",
+  "@tagDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "description": "Description",
   "descriptionRequired": "Une description est obligatoire dans ce workspace.",
   "detailed": "Détaillé",
   "discardTimer": "Abandonner le chronomètre",
-  "discardTimerMessage": "Le temps en cours ne sera pas enregistré.",
   "discount": "Remise",
   "discountPercent": "Remise",
   "draftNumberPending": "Brouillon",

@@ -60,6 +60,9 @@ class CatalogRepository {
   Future<void> deleteClient(String id) =>
       (db.update(db.clients)..where((t) => t.id.equals(id))).write(ClientsCompanion(deletedAt: Value(nowUtc())));
 
+  /// Annuler la suppression de [before] (lu avant [deleteClient]).
+  Future<void> restoreClient(ClientItem before) => db.transaction(() => db.restoreRow(db.clients, before.toCompanion(false)));
+
   // ------------------------------------------------------------------ projets
   Future<String> createProject(String workspaceId, ProjectsCompanion data) async {
     final id = newId();
@@ -72,6 +75,9 @@ class CatalogRepository {
 
   Future<void> deleteProject(String id) =>
       (db.update(db.projects)..where((t) => t.id.equals(id))).write(ProjectsCompanion(deletedAt: Value(nowUtc())));
+
+  /// Annuler la suppression de [before] (lu avant [deleteProject]).
+  Future<void> restoreProject(Project before) => db.transaction(() => db.restoreRow(db.projects, before.toCompanion(false)));
 
   // ------------------------------------------------------------------ tâches
   Future<String> createTask(String workspaceId, String projectId, String name, {int? estimateSeconds}) async {
@@ -117,6 +123,9 @@ class CatalogRepository {
 
   Future<void> deleteTag(String id) =>
       (db.update(db.tags)..where((t) => t.id.equals(id))).write(TagsCompanion(deletedAt: Value(nowUtc())));
+
+  /// Annuler la suppression de [before] (lu avant [deleteTag]).
+  Future<void> restoreTag(Tag before) => db.transaction(() => db.restoreRow(db.tags, before.toCompanion(false)));
 
   static String? _blankToNull(String? v) => (v == null || v.trim().isEmpty) ? null : v.trim();
 }

@@ -149,9 +149,8 @@ class _TimerBarState extends State<TimerBar> {
     final running = _running;
     if (running == null) return;
     final l = context.l10n;
-    if (await confirm(context, title: l.discardTimer, message: l.discardTimerMessage)) {
-      await entriesRepo.delete(running.id);
-    }
+    final before = await entriesRepo.delete(running.id);
+    if (mounted) showUndo(context, l.timerDiscarded, () => entriesRepo.restore(before));
   }
 
   void _onDescriptionChanged(String value) {

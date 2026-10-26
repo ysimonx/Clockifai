@@ -264,9 +264,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get journalIgnored => 'Proposition ignorée';
 
   @override
-  String get journalUndo => 'Annuler';
-
-  @override
   String get journalSummary => 'Bilan du jour';
 
   @override
@@ -695,20 +692,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get delete => 'Supprimer';
 
   @override
-  String get deleteClient => 'Supprimer le client ?';
-
-  @override
-  String get deleteClientMessage =>
-      'Les projets de ce client seront conservés, sans client.';
-
-  @override
-  String get deleteEntry => 'Supprimer l\'entrée ?';
-
-  @override
-  String get deleteEntryMessage =>
-      'Cette entrée de temps sera supprimée sur tous vos appareils.';
-
-  @override
   String get deleteGroup => 'Supprimer le groupe';
 
   @override
@@ -726,24 +709,48 @@ class AppLocalizationsFr extends AppLocalizations {
   String get deletePolicy => 'Supprimer la politique ?';
 
   @override
-  String get deleteProject => 'Supprimer le projet ?';
-
-  @override
-  String get deleteProjectMessage =>
-      'Les entrées existantes restent, mais ne seront plus rattachées à un projet visible.';
-
-  @override
   String deleteSimilarEntries(int count) {
     return 'Supprimer les $count entrées';
   }
 
   @override
-  String deleteSimilarEntriesMessage(int count) {
-    return 'Les $count entrées de ce groupe seront supprimées.';
+  String get undo => 'Annuler';
+
+  @override
+  String get entryDeleted => 'Entrée supprimée';
+
+  @override
+  String entriesDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entrées supprimées',
+      one: '1 entrée supprimée',
+    );
+    return '$_temp0';
   }
 
   @override
-  String get deleteTag => 'Supprimer le tag ?';
+  String get entryUpdated => 'Entrée modifiée';
+
+  @override
+  String get timerDiscarded =>
+      'Chronomètre abandonné : le temps en cours n\'est pas enregistré';
+
+  @override
+  String clientDeleted(String name) {
+    return 'Client « $name » supprimé ; ses projets restent, sans client';
+  }
+
+  @override
+  String projectDeleted(String name) {
+    return 'Projet « $name » supprimé ; ses entrées restent';
+  }
+
+  @override
+  String tagDeleted(String name) {
+    return 'Tag « $name » supprimé';
+  }
 
   @override
   String get description => 'Description';
@@ -757,9 +764,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get discardTimer => 'Abandonner le chronomètre';
-
-  @override
-  String get discardTimerMessage => 'Le temps en cours ne sera pas enregistré.';
 
   @override
   String get discount => 'Remise';

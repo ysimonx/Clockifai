@@ -256,9 +256,10 @@ class _EntryDialogState extends State<_EntryDialog> {
 
   Future<void> _delete() async {
     final l = context.l10n;
-    if (!await confirm(context, title: l.deleteEntry, message: l.deleteEntryMessage)) return;
-    await entriesRepo.delete(widget.entry!.id);
-    if (mounted) Navigator.pop(context);
+    final before = await entriesRepo.delete(widget.entry!.id);
+    if (!mounted) return;
+    showUndo(context, l.entryDeleted, () => entriesRepo.restore(before));
+    Navigator.pop(context);
   }
 
   @override

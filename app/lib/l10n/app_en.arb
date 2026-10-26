@@ -182,7 +182,6 @@
     }
   },
   "journalIgnored": "Suggestion dismissed",
-  "journalUndo": "Undo",
   "journalSummary": "Day summary",
   "journalConfirmed": "Confirmed",
   "journalToConfirm": "To confirm",
@@ -374,17 +373,11 @@
   "decision": "Decision",
   "defaultHours": "Default hours",
   "delete": "Delete",
-  "deleteClient": "Delete client?",
-  "deleteClientMessage": "Projects of this client are kept, without a client.",
-  "deleteEntry": "Delete entry?",
-  "deleteEntryMessage": "This time entry will be deleted on all your devices.",
   "deleteGroup": "Delete group",
   "deleteGroupMessage": "Members stay in the workspace; team managers no longer manage this group.",
   "deleteInvoice": "Delete invoice?",
   "deleteInvoiceMessage": "Time entries become billable again.",
   "deletePolicy": "Delete policy?",
-  "deleteProject": "Delete project?",
-  "deleteProjectMessage": "Existing entries are kept but no longer linked to a visible project.",
   "deleteSimilarEntries": "Delete the {count} entries",
   "@deleteSimilarEntries": {
     "placeholders": {
@@ -393,20 +386,46 @@
       }
     }
   },
-  "deleteSimilarEntriesMessage": "The {count} entries of this group will be deleted.",
-  "@deleteSimilarEntriesMessage": {
+  "undo": "Undo",
+  "entryDeleted": "Entry deleted",
+  "entriesDeleted": "{count, plural, =1{1 entry deleted} other{{count} entries deleted}}",
+  "@entriesDeleted": {
     "placeholders": {
       "count": {
         "type": "int"
       }
     }
   },
-  "deleteTag": "Delete tag?",
+  "entryUpdated": "Entry updated",
+  "timerDiscarded": "Timer discarded: the running time was not saved",
+  "clientDeleted": "Client “{name}” deleted; its projects remain, without a client",
+  "@clientDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "projectDeleted": "Project “{name}” deleted; its entries remain",
+  "@projectDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tagDeleted": "Tag “{name}” deleted",
+  "@tagDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "description": "Description",
   "descriptionRequired": "A description is required in this workspace.",
   "detailed": "Detailed",
   "discardTimer": "Discard timer",
-  "discardTimerMessage": "The running time will not be saved.",
   "discount": "Discount",
   "discountPercent": "Discount",
   "draftNumberPending": "Draft",

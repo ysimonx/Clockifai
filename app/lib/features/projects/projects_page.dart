@@ -132,9 +132,8 @@ class _ProjectTile extends StatelessWidget {
                     case 'archive':
                       await catalogRepo.updateProject(project.id, ProjectsCompanion(archived: Value(!project.archived)));
                     case 'delete':
-                      if (context.mounted && await confirm(context, title: l.deleteProject, message: l.deleteProjectMessage)) {
-                        await catalogRepo.deleteProject(project.id);
-                      }
+                      await catalogRepo.deleteProject(project.id);
+                      if (context.mounted) showUndo(context, l.projectDeleted(project.name), () => catalogRepo.restoreProject(project));
                   }
                 },
                 itemBuilder: (_) => [

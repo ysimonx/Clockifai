@@ -21,9 +21,8 @@ class RunningTimerRow extends StatelessWidget {
 
   Future<void> _discard(BuildContext context) async {
     final l = context.l10n;
-    if (await confirm(context, title: l.discardTimer, message: l.discardTimerMessage)) {
-      await entriesRepo.delete(entry.id);
-    }
+    final before = await entriesRepo.delete(entry.id);
+    if (context.mounted) showUndo(context, l.timerDiscarded, () => entriesRepo.restore(before));
   }
 
   @override

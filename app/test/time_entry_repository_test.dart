@@ -174,6 +174,36 @@ void main() {
     expect(raw.deletedAt, isNotNull);
   });
 
+  test('Annuler : une entrée supprimée revient, même déjà retirée de la base locale par la synchronisation', () async {
+    Future<String> make(String desc) => repo.createManual(
+          workspaceId: ws, userId: me, draft: EntryDraft(description: desc, projectId: 'p1', hourlyRateCents: 5000),
+          start: DateTime.utc(2026, 10, 11, 9), end: DateTime.utc(2026, 10, 11, 10),
+        );
+    final a = await make('Encore là');
+    final b = await make('Déjà repartie');
+    final before = await repo.deleteMany([a, b]);
+    expect(before.map((e) => (e.description, e.deletedAt)).toSet(), {('Encore là', null), ('Déjà repartie', null)});
+    // La synchronisation retire de la base locale ce que le serveur a supprimé.
+    await (db.delete(db.timeEntries)..where((t) => t.id.equals(b))).go();
+
+    await repo.restore(before);
+    final rows = await repo.watchEntries(workspaceId: ws, from: DateTime.utc(2026, 10, 11), to: DateTime.utc(2026, 10, 12)).first;
+    expect(rows.map((r) => (r.entry.description, r.entry.projectId, r.entry.hourlyRateCents)).toSet(),
+        {('Encore là', 'p1', 5000), ('Déjà repartie', 'p1', 5000)});
+  });
+
+  test('Annuler une modification : tout revient, un tarif vide compris', () async {
+    final id = await repo.createManual(
+      workspaceId: ws, userId: me, draft: EntryDraft(description: 'Avant'),
+      start: DateTime.utc(2026, 10, 11, 9), end: DateTime.utc(2026, 10, 11, 10),
+    );
+    final before = await (db.select(db.timeEntries)..where((t) => t.id.equals(id))).getSingle();
+    await repo.update(before, description: 'Après', projectId: 'p2', hourlyRateCents: 7000);
+    await repo.restore([before]);
+    final after = await (db.select(db.timeEntries)..where((t) => t.id.equals(id))).getSingle();
+    expect((after.description, after.projectId, after.hourlyRateCents, after.deletedAt), ('Avant', null, null, null));
+  });
+
   test('feuille de temps : ajouter puis réduire le total d\'une cellule', () async {
     final day = DateTime(2026, 10, 7);
     await repo.setDayTotal(workspaceId: ws, userId: me, projectId: 'p1', dayLocal: day, targetSeconds: 2 * 3600, billable: true);

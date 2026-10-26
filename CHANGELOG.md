@@ -21,16 +21,22 @@ la date d'arrivée de chaque évolution.
 - Aujourd'hui : **Saisie express**, une ligne en clair (« 1h20 point hebdo interne », « 9h-10h30 maquettes hier »)
   devient une entrée, rangée dans le premier créneau vide assez grand, avec un aperçu de ce qui a été compris
   (26 octobre 2026).
+- Suivi du temps : la **description** et le **projet** d'une entrée se modifient sur place, d'un clic ; Entrée
+  enregistre, Échap abandonne, et le bandeau propose Annuler (26 octobre 2026).
 
 ### Modifié
 
 - Suivi du temps : les durées et les totaux s'affichent à la minute (« 3:00 » au lieu de « 3:00:00 ») ; les
   secondes restent pour un chronomètre en cours (26 octobre 2026).
+- **Annuler plutôt que confirmer** : supprimer une entrée ou un groupe d'entrées, abandonner un chronomètre,
+  supprimer un projet, un client ou un tag se fait sans « Êtes-vous sûr ? » ; le bandeau propose Annuler pendant
+  8 secondes, même si la suppression a déjà été synchronisée (26 octobre 2026).
 
 ### Corrigé
 
 - Aujourd'hui : un jour de changement d'heure, la frise et les anneaux de la semaine décalaient les heures d'une
   heure (26 octobre 2026).
+- Aujourd'hui : le bandeau « Annuler » restait affiché jusqu'à un clic (26 octobre 2026).
 
 ## [0.2.2] — 2026-10-26
 

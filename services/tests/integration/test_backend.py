@@ -289,6 +289,17 @@ def test_connector_style_upserts():
     _, rows = rest("GET", f"time_entries?id=eq.{eid}&select=billable,end_at", token)
     assert rows == [{"billable": False, "end_at": None}]
 
+    # « Annuler » une suppression (plan 13, AppDatabase.restoreRow) : la ligne, déjà retirée de la base locale,
+    # est réinsérée encore supprimée (PUT sans les colonnes nulles), puis rétablie (PATCH deleted_at nul).
+    deleted = datetime.now(UTC).isoformat()
+    assert rest("PATCH", f"time_entries?id=eq.{eid}", token, {"deleted_at": deleted})[0] in (200, 204)
+    assert upsert("time_entries", token, {
+        "id": eid, "workspace_id": wid, "user_id": uid, "description": "", "deleted_at": deleted,
+        "start_at": datetime.now(UTC).isoformat(), "billable": 0, "locked": 0})[0] in (200, 201)
+    assert rest("PATCH", f"time_entries?id=eq.{eid}", token, {"deleted_at": None})[0] in (200, 204)
+    _, rows = rest("GET", f"time_entries?id=eq.{eid}&select=deleted_at", token)
+    assert rows == [{"deleted_at": None}]
+
 
 def test_invitations(alice, alice_ws):
     # Compte existant : ajout direct.

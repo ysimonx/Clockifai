@@ -9,6 +9,7 @@ import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/pickers.dart' show ProjectPick;
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
@@ -18,6 +19,7 @@ import 'ai_usage.dart';
 import 'entry_dialog.dart';
 import 'entry_group_dialog.dart';
 import 'entry_groups.dart';
+import 'inline_edit.dart';
 
 /// Page d'accueil : entrées terminées de l'utilisateur, groupées par jour.
 class TimeEntriesPage extends StatefulWidget {
@@ -105,6 +107,7 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
                 rows: byDay[d]!,
                 running: running,
                 grouped: context.watch<DisplayPrefs>().groupSimilarEntries,
+                inlineEdit: true,
               ));
             }
             children.add(Padding(
@@ -156,14 +159,16 @@ class _WeekHeader extends StatelessWidget {
 }
 
 /// Une journée : en-tête (jour, total) et ses entrées, les similaires réunies si [grouped].
-/// Sert au « Suivi du temps » et au rapport détaillé.
+/// Sert au « Suivi du temps » (description et projet modifiables sur place : [inlineEdit]) et au rapport détaillé.
 class DayCard extends StatelessWidget {
-  const DayCard({super.key, required this.day, required this.rows, required this.grouped, this.running = const [], this.showUser = false});
+  const DayCard(
+      {super.key, required this.day, required this.rows, required this.grouped, this.running = const [], this.showUser = false, this.inlineEdit = false});
   final DateTime day;
   final List<EntryRow> rows;
   final bool grouped;
   final List<TimeEntry> running;
   final bool showUser;
+  final bool inlineEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -174,10 +179,11 @@ class DayCard extends StatelessWidget {
         ? [
             for (final g in groupSimilar(rows))
               g.isSingle
-                  ? EntryTile(row: g.first, running: running, showUser: showUser)
-                  : EntryGroupTile(key: ValueKey('$day ${g.key}'), group: g, day: day, running: running, showUser: showUser),
+                  ? EntryTile(row: g.first, running: running, showUser: showUser, inlineEdit: inlineEdit)
+                  : EntryGroupTile(
+                      key: ValueKey('$day ${g.key}'), group: g, day: day, running: running, showUser: showUser, inlineEdit: inlineEdit),
           ]
-        : [for (final r in rows) EntryTile(row: r, running: running, showUser: showUser)];
+        : [for (final r in rows) EntryTile(row: r, running: running, showUser: showUser, inlineEdit: inlineEdit)];
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
@@ -204,9 +210,13 @@ class DayCard extends StatelessWidget {
 
 /// Ligne d'entrée de temps (réutilisée par les rapports détaillés).
 class EntryTile extends StatelessWidget {
-  const EntryTile({super.key, required this.row, this.showUser = false, this.running = const [], this.showContinue = true});
+  const EntryTile(
+      {super.key, required this.row, this.showUser = false, this.running = const [], this.showContinue = true, this.inlineEdit = false});
   final EntryRow row;
   final bool showUser;
+
+  /// Description et projet modifiables d'un clic (« Suivi du temps ») ; ailleurs, un clic ouvre le dialogue.
+  final bool inlineEdit;
 
   /// Chronomètres en cours de l'utilisateur : si l'un vise la même tâche, ▶ devient ■.
   final List<TimeEntry> running;
@@ -228,16 +238,34 @@ class EntryTile extends StatelessWidget {
     final canEdit = rights.canEditTimeOf(e.userId);
     final canDuplicate = rights.canCreateTimeFor(e.userId);
     final author = e.createdBy;
+    // Description et projet modifiables sur place, aux mêmes conditions que le dialogue : le serveur refuserait
+    // une entrée verrouillée ou d'une période close.
+    final lockDate = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
+    final locked = !session.isAdmin && (e.locked || (lockDate != null && e.startAt.toLocal().isBefore(lockDate)));
+    final inline = inlineEdit && canEdit && !locked;
 
-    final description = Text(
-      e.description.isEmpty ? l.noDescription : e.description,
-      style: e.description.isEmpty ? TextStyle(color: theme.colorScheme.outline) : null,
-      overflow: TextOverflow.ellipsis,
-    );
+    Future<void> saveDescription(String text) async {
+      if (session.workspace!.requireDescription && text.isEmpty) return showSnack(context, l.descriptionRequired);
+      await entriesRepo.update(e, description: text);
+      if (context.mounted) showUndo(context, l.entryUpdated, () => entriesRepo.restore([e]));
+    }
+
+    Future<void> saveProject(ProjectPick pick) async {
+      if (session.workspace!.requireProject && pick.projectId == null) return showSnack(context, l.projectRequired);
+      await entriesRepo.update(e,
+          projectId: pick.projectId,
+          clearProject: pick.projectId == null,
+          taskId: pick.taskId,
+          clearTask: pick.taskId == null,
+          hourlyRateCents: pick.projectId != e.projectId ? catalog.rateFor(projectId: pick.projectId, userId: e.userId) : null);
+      if (context.mounted) showUndo(context, l.entryUpdated, () => entriesRepo.restore([e]));
+    }
+
+    final description = InlineDescription(key: ValueKey('description ${e.id}'), text: e.description, onSave: inline ? saveDescription : null);
 
     final meta = Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
       if (showUser) Text(catalog.memberOf(e.userId)?.displayName ?? '?', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-      ProjectLabel(projectId: e.projectId, taskId: e.taskId, dense: true),
+      InlineProject(projectId: e.projectId, taskId: e.taskId, onPick: inline ? saveProject : null),
       TagChips(row.tagIds),
       if (author != null && author != e.userId && e.source != 'agent')
         Text(l.enteredBy(memberName(catalog.memberOf(author))),
@@ -281,9 +309,8 @@ class EntryTile extends StatelessWidget {
                 ),
               );
             case 'delete':
-              if (await confirm(context, title: l.deleteEntry, message: l.deleteEntryMessage)) {
-                await entriesRepo.delete(e.id);
-              }
+              final before = await entriesRepo.delete(e.id);
+              if (context.mounted) showUndo(context, l.entryDeleted, () => entriesRepo.restore(before));
           }
         },
         itemBuilder: (_) => [
@@ -366,11 +393,15 @@ Future<void> _continue(BuildContext context, EntryRow row) async {
 /// Groupe d'entrées similaires d'une journée (plans/08-regroupement-entrees.md) : une ligne résumée
 /// (nombre, plage, durée cumulée) qui se déplie sur ses entrées.
 class EntryGroupTile extends StatefulWidget {
-  const EntryGroupTile({super.key, required this.group, required this.day, this.running = const [], this.showUser = false});
+  const EntryGroupTile(
+      {super.key, required this.group, required this.day, this.running = const [], this.showUser = false, this.inlineEdit = false});
   final EntryGroup group;
   final DateTime day;
   final List<TimeEntry> running;
   final bool showUser;
+
+  /// Pour les entrées dépliées ([EntryTile.inlineEdit]).
+  final bool inlineEdit;
 
   @override
   State<EntryGroupTile> createState() => _EntryGroupTileState();
@@ -472,9 +503,8 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
                 case 'edit':
                   await showEntryGroupDialog(context, g);
                 case 'delete':
-                  if (await confirm(context, title: l.deleteSimilarEntries(count), message: l.deleteSimilarEntriesMessage(count))) {
-                    await entriesRepo.deleteMany([for (final r in g.rows) r.entry.id]);
-                  }
+                  final before = await entriesRepo.deleteMany([for (final r in g.rows) r.entry.id]);
+                  if (context.mounted) showUndo(context, l.entriesDeleted(before.length), () => entriesRepo.restore(before));
               }
             },
             itemBuilder: (_) => [
@@ -494,7 +524,7 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
         Container(
           color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
           padding: const EdgeInsets.only(left: 36),
-          child: EntryTile(row: r, showContinue: false),
+          child: EntryTile(row: r, showContinue: false, inlineEdit: widget.inlineEdit),
         ),
       ],
     ]);

@@ -389,17 +389,25 @@ class TimeEntryRepository {
     if (tagIds != null) await _replaceTags(entry, tagIds);
   }
 
-  /// Suppression logique : le serveur garde la trace, les clients la retirent.
-  Future<void> delete(String entryId) async {
-    await (db.update(db.timeEntries)..where((t) => t.id.equals(entryId)))
-        .write(TimeEntriesCompanion(deletedAt: Value(nowUtc())));
-  }
+  /// Suppression logique : le serveur garde la trace, les clients la retirent. Renvoie l'entrée telle qu'avant,
+  /// pour [restore] (Annuler).
+  Future<List<TimeEntry>> delete(String entryId) => deleteMany([entryId]);
 
-  /// Suppression logique de plusieurs entrées (groupe d'entrées similaires).
-  Future<void> deleteMany(List<String> entryIds) async {
-    await (db.update(db.timeEntries)..where((t) => t.id.isIn(entryIds)))
-        .write(TimeEntriesCompanion(deletedAt: Value(nowUtc())));
-  }
+  /// Suppression logique de plusieurs entrées (groupe d'entrées similaires) ; renvoie les entrées d'avant.
+  Future<List<TimeEntry>> deleteMany(List<String> entryIds) => db.transaction(() async {
+        final before = await (db.select(db.timeEntries)..where((t) => t.id.isIn(entryIds))).get();
+        await (db.update(db.timeEntries)..where((t) => t.id.isIn(entryIds)))
+            .write(TimeEntriesCompanion(deletedAt: Value(nowUtc())));
+        return before;
+      });
+
+  /// Annuler : remet des entrées supprimées ou modifiées dans l'état lu avant ([AppDatabase.restoreRow]).
+  /// Leurs tags n'ont pas bougé côté serveur : ils reviennent avec la synchronisation.
+  Future<void> restore(List<TimeEntry> before) => db.transaction(() async {
+        for (final e in before) {
+          await db.restoreRow(db.timeEntries, e.toCompanion(false));
+        }
+      });
 
   Future<List<String>> tagIdsOf(String entryId) async {
     final rows = await (db.select(db.timeEntryTags)..where((t) => t.timeEntryId.equals(entryId))).get();

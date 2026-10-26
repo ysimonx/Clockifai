@@ -59,9 +59,8 @@ class _ClientsPageState extends State<ClientsPage> {
                                 case 'archive':
                                   await catalogRepo.updateClient(c.id, archived: !c.archived);
                                 case 'delete':
-                                  if (await confirm(context, title: l.deleteClient, message: l.deleteClientMessage)) {
-                                    await catalogRepo.deleteClient(c.id);
-                                  }
+                                  await catalogRepo.deleteClient(c.id);
+                                  if (context.mounted) showUndo(context, l.clientDeleted(c.name), () => catalogRepo.restoreClient(c));
                               }
                             },
                             itemBuilder: (_) => [

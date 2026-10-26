@@ -391,6 +391,91 @@ def test_hook_relays_the_task_name_and_nothing_else(tmp_path):
         server.close()
 
 
+# ---------------------------------------------------------------- usage IA lu dans la transcription (D17)
+SLOT = 300
+
+
+def assistant(message_id, at, model="claude-opus-5-5", effort="xhigh", speed="standard", **usage):
+    counts = {"input_tokens": 2, "output_tokens": 100, "cache_creation_input_tokens": 1000,
+              "cache_creation": {"ephemeral_5m_input_tokens": 0, "ephemeral_1h_input_tokens": 1000},
+              "cache_read_input_tokens": 5000, "speed": speed, "service_tier": "standard", **usage}
+    return {"type": "assistant", "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(at)),
+            "effort": effort, "sessionId": "s-a", "cwd": "/secret/dossier",
+            "message": {"id": message_id, "model": model, "role": "assistant",
+                        "content": [{"type": "text", "text": "réponse secrète"}], "usage": counts}}
+
+
+def write_lines(path: Path, lines, end="\n"):
+    with path.open("a", encoding="utf-8") as f:
+        f.write("\n".join(line if isinstance(line, str) else json.dumps(line) for line in lines) + end)
+
+
+def usage_of(events):
+    return [e for e in events if e["kind"] == "agent_usage"]
+
+
+def test_usage_totals_leave_without_any_text(tmp_path):
+    transcript = tmp_path / "s-a.jsonl"
+    base = (time.time() // SLOT - 2) * SLOT  # début d'une tranche de 5 minutes, il y a 10 minutes
+    write_lines(transcript, [
+        {"type": "user", "message": {"role": "user", "content": "mon prompt secret"}},
+        assistant("m1", base + 10), assistant("m1", base + 11),  # une réponse sur deux lignes : comptée une fois
+        assistant("m2", base + 20, cache_creation=None),  # sans détail : écriture au tarif de 5 minutes
+        assistant("m3", base + 30, model="<synthetic>"),  # message de Claude Code, pas un appel à l'API
+        assistant("m4", base + SLOT + 5, effort="high"),
+        "pas du json", {"type": "assistant", "message": "format inconnu"},
+    ])
+    write_lines(transcript, [assistant("m5", base + SLOT + 6)], end="")  # ligne en cours d'écriture
+    events = hook.collect(ev("Stop", tmp_path, transcript_path=str(transcript)), time.time())
+    usage = usage_of(events)
+    assert all(set(e) <= WHITELIST for e in events)
+    text = json.dumps(events)
+    assert "secret" not in text and "réponse" not in text and "dossier" not in text.replace(str(tmp_path), "")
+    assert [(e["payload"]["effort"], e["payload"]["requests"]) for e in usage] == [("xhigh", 2), ("high", 1)]
+    first = usage[0]["payload"]
+    assert first == {"model": "claude-opus-5-5", "effort": "xhigh", "speed": "standard", "requests": 2,
+                     "input_tokens": 4, "output_tokens": 200, "cache_write_5m_tokens": 1000,
+                     "cache_write_1h_tokens": 1000, "cache_read_tokens": 10000}
+    assert usage[0]["occurred_at"].startswith(time.strftime("%Y-%m-%dT%H:%M:20", time.gmtime(base)))
+
+    # La suite de la transcription : seule la ligne terminée depuis est lue, rien n'est recompté.
+    write_lines(transcript, ["", assistant("m6", base + SLOT + 7, speed="fast")], end="\n")
+    later = usage_of(hook.collect(ev("Stop", tmp_path, transcript_path=str(transcript)), time.time()))
+    assert sorted((e["payload"]["speed"], e["payload"]["requests"]) for e in later) == [("fast", 1), ("standard", 1)]
+    assert usage_of(hook.collect(ev("Stop", tmp_path, transcript_path=str(transcript)), time.time())) == []
+
+
+def test_usage_ids_are_stable_and_subagents_are_read_once(tmp_path, monkeypatch):
+    transcript = tmp_path / "s-a.jsonl"
+    subagents = tmp_path / "s-a" / "subagents"
+    subagents.mkdir(parents=True)
+    now = time.time()
+    write_lines(transcript, [assistant("m1", now - 60)])
+    write_lines(subagents / "agent-x.jsonl", [assistant("h1", now - 50, model="claude-haiku-5-5", effort="medium")])
+    stop = ev("Stop", tmp_path, transcript_path=str(transcript))
+    first = usage_of(hook.collect(stop, now))
+    assert sorted(e["payload"]["model"] for e in first) == ["claude-haiku-5-5", "claude-opus-5-5"]
+    # Même contenu relu ailleurs (file locale perdue, autre cache) : mêmes id, le serveur ne compte qu'une fois.
+    monkeypatch.setenv("CLOCKIFAI_CACHE_DIR", str(tmp_path / "autre-cache"))
+    assert sorted(e["id"] for e in usage_of(hook.collect(stop, now))) == sorted(e["id"] for e in first)
+
+    write_lines(subagents / "agent-x.jsonl", [assistant("h2", now - 10, model="claude-haiku-5-5", effort="medium")])
+    sub = ev("SubagentStop", tmp_path, transcript_path=str(transcript),
+             agent_transcript_path=str(subagents / "agent-x.jsonl"))
+    assert [e["payload"]["requests"] for e in usage_of(hook.collect(sub, now))] == [1]
+    assert usage_of(hook.collect(stop, now)) == [], "le Stop suivant ne recompte pas le sous-agent"
+
+
+def test_rewritten_transcript_is_not_counted_again(tmp_path):
+    transcript = tmp_path / "s-a.jsonl"
+    write_lines(transcript, [assistant(f"m{i}", time.time() - 60) for i in range(3)])
+    stop = ev("Stop", tmp_path, transcript_path=str(transcript))
+    assert [e["payload"]["requests"] for e in usage_of(hook.collect(stop, time.time()))] == [3]
+    transcript.write_text("")  # réécrite plus courte
+    write_lines(transcript, [assistant("m9", time.time() - 30)])
+    assert usage_of(hook.collect(stop, time.time())) == [], "position au-delà de la fin : on repart de la fin"
+
+
 # ---------------------------------------------------------------- marketplace de l'instance
 @pytest.fixture
 def client():

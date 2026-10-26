@@ -77,11 +77,11 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 ### Flask
 - Authentifie le JWT Supabase (`auth.py`), puis vérifie explicitement l'appartenance au workspace (`require_workspace`) : la connexion psycopg contourne la RLS.
 - Un seul worker gunicorn (le scheduler APScheduler tourne dans le process).
-- Blueprints : `exports`, `invitations` (lien renvoyé si pas de SMTP), `kiosk` (jeton d'appareil `X-Kiosk-Token`, anti force brute en mémoire), `invoices` (PDF), `jobs`, `tokens` (jetons personnels `clk_…`), `agents` (agents retirés, restaurés par un admin), `activity` (événements des hooks Claude Code, temps des agents : `services/agent_clock.py` recalcule, `agent_entry_write` écrit), `claude` (marketplace publique : zip de `integrations/claude-code/`, HTTPS exigé par Claude Code).
+- Blueprints : `exports`, `invitations` (lien renvoyé si pas de SMTP), `kiosk` (jeton d'appareil `X-Kiosk-Token`, anti force brute en mémoire), `invoices` (PDF), `jobs`, `tokens` (jetons personnels `clk_…`), `agents` (agents retirés, restaurés par un admin), `activity` (événements des hooks Claude Code, temps des agents : `services/agent_clock.py` recalcule, `agent_entry_write` écrit ; usage IA : `link_usage` cumule `agent_usage` par entrée, coût au tarif de `ai_model_prices`, mis à jour par migration), `claude` (marketplace publique : zip de `integrations/claude-code/`, HTTPS exigé par Claude Code).
 
 ### Plugin Claude Code (`plans/10-suivi-claude-code.md`)
 - `integrations/claude-code/scripts/clockifai_hook.py` tourne avec le `python3` de macOS : **Python 3.9, bibliothèque standard** (ruff le vérifie avec `integrations/claude-code/ruff.toml`). Il n'écrit jamais sur stdout et sort toujours avec 0.
-- Liste blanche (D6) : jamais le prompt, `tool_input`, `tool_response` ni la transcription, sauf le nom de tâche passé à l'outil `set_current_task` (D18). Ajouter un fichier au plugin, c'est aussi l'ajouter à `PLUGIN_FILES` (`routes/claude.py`).
+- Liste blanche (D6) : jamais le prompt, `tool_input`, `tool_response` ni le texte de la transcription, sauf le nom de tâche passé à l'outil `set_current_task` (D18). La transcription (et celles des sous-agents) est relue sur le poste au `Stop` pour l'usage IA (D17) : seuls partent des totaux `agent_usage` par tranche de 5 minutes, modèle, effort et vitesse. Ajouter un fichier au plugin, c'est aussi l'ajouter à `PLUGIN_FILES` (`routes/claude.py`).
 - `scripts/clockifai_mcp.py` : serveur MCP local (stdio, `.mcp.json`), même contrainte Python 3.9 ; il n'appelle pas le réseau, le hook relaie le nom (`session_task` `{task_name}`).
 
 ### Flutter
@@ -109,8 +109,8 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - Clé d'envoi Google Play hors dépôt (`~/.config/clockifai/android/`) ; numéro de build = minutes depuis le 2026-01-01.
 
 ## Tests
-- `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètres simultanés, verrouillage, upsert du connecteur, exports, chefs d'équipe, agents Claude, jetons et événements d'activité, script du plugin jusqu'à l'entrée de l'agent) ; `test_claude_plugin.py` : script du plugin (liste blanche, nom de tâche relayé, serveur MCP local, commits par session, file locale, lancé avec le python3 de macOS) et marketplace.
-- `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, pont de la barre de menus macOS (canal simulé), regroupement des entrées similaires (dont la ligne dépliable), commandes de connexion de Claude Code et « dernier événement », bandeau « Claude travaille », sur base Drift en mémoire.
+- `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètres simultanés, verrouillage, upsert du connecteur, exports, chefs d'équipe, agents Claude, jetons et événements d'activité, script du plugin jusqu'à l'entrée de l'agent) ; `test_claude_plugin.py` : script du plugin (liste blanche, nom de tâche relayé, usage lu dans la transcription, serveur MCP local, commits par session, file locale, lancé avec le python3 de macOS) et marketplace.
+- `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, pont de la barre de menus macOS (canal simulé), regroupement des entrées similaires (dont la ligne dépliable), commandes de connexion de Claude Code et « dernier événement », bandeau « Claude travaille », usage IA des entrées d'agent (lignes et totaux du rapport), sur base Drift en mémoire.
 - Parcours navigateur (Playwright, hors dépôt) : activer l'arbre d'accessibilité Flutter en cliquant `flt-semantics-placeholder`, puis cliquer un champ et taper au clavier (`fill` ne suffit pas).
 
 ## Ports locaux

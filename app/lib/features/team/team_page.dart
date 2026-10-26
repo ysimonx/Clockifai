@@ -19,6 +19,7 @@ import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../settings/settings_page.dart' show roleLabel;
+import '../time_entries/ai_usage.dart';
 
 /// Membres du workspace : rôle, taux, activité de la semaine et chronomètre en cours ;
 /// groupes d'utilisateurs et chefs d'équipe (plans/03-saisie-pour-autrui.md).
@@ -68,11 +69,17 @@ class _TeamPageState extends State<TeamPage> {
       builder: (context, snap) {
         final rows = snap.data ?? const <EntryRow>[];
         final weekByUser = <String, int>{};
+        // Usage IA de la semaine, par agent (plan 10, D17).
+        final aiTokensByUser = <String, int>{};
+        final aiCostByUser = <String, int>{};
         // Plusieurs chronomètres par membre si le workspace le permet (les plus récents d'abord).
         final runningByUser = <String, List<EntryRow>>{};
         for (final r in rows) {
-          weekByUser[r.entry.userId] = (weekByUser[r.entry.userId] ?? 0) + r.seconds;
-          if (r.entry.endAt == null) (runningByUser[r.entry.userId] ??= []).add(r);
+          final u = r.entry.userId;
+          weekByUser[u] = (weekByUser[u] ?? 0) + r.seconds;
+          if (r.aiTokens > 0) aiTokensByUser[u] = (aiTokensByUser[u] ?? 0) + r.aiTokens;
+          if (r.aiCostMicros != null) aiCostByUser[u] = (aiCostByUser[u] ?? 0) + r.aiCostMicros!;
+          if (r.entry.endAt == null) (runningByUser[u] ??= []).add(r);
         }
         _reveal(focus);
         // Toutes les fiches construites (pas de ListView paresseuse), pour pouvoir amener [focus] à l'écran.
@@ -100,6 +107,8 @@ class _TeamPageState extends State<TeamPage> {
                   child: _MemberCard(
                     member: m,
                     weekSeconds: weekByUser[m.userId] ?? 0,
+                    weekAiTokens: aiTokensByUser[m.userId] ?? 0,
+                    weekAiCostMicros: aiCostByUser[m.userId],
                     running: runningByUser[m.userId] ?? const [],
                     showActivity: m.userId == session.userId || rights.manages(m.userId),
                     highlighted: m.userId == focus,
@@ -293,10 +302,14 @@ class _MemberCard extends StatelessWidget {
     required this.weekSeconds,
     required this.running,
     required this.showActivity,
+    this.weekAiTokens = 0,
+    this.weekAiCostMicros,
     this.highlighted = false,
   });
   final WorkspaceMember member;
   final int weekSeconds;
+  final int weekAiTokens;
+  final int? weekAiCostMicros;
   final List<EntryRow> running;
   final bool showActivity;
   final bool highlighted;
@@ -357,6 +370,7 @@ class _MemberCard extends StatelessWidget {
                 ElapsedText(run.entry.startAt, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
               ]),
             Text('${l.thisWeek}: ${formatHm(weekSeconds)}'),
+            if (weekAiTokens > 0) AiUsageText(tokens: weekAiTokens, costMicros: weekAiCostMicros),
           ],
           if (session.isManager && member.hourlyRateCents != null)
             Text('${l.hourlyRate}: ${formatMoney(member.hourlyRateCents! / 100, ws.currency, locale)}${l.perHour}'),

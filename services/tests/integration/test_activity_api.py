@@ -1,6 +1,6 @@
 """Jetons personnels et entrées des agents Claude, de bout en bout (Flask + Postgres).
 
-Plan : plans/10-suivi-claude-code.md (D2, D5, D7, D9, D10, D14, D16)
+Plan : plans/10-suivi-claude-code.md (D2, D5, D7, D9, D10, D14, D16, D17)
 """
 
 from __future__ import annotations
@@ -469,6 +469,58 @@ def test_inactive_agent_records_nothing(team):
         rest("PATCH", agent_member, owner_t, {"status": "active"})
 
 
+USAGE = {"model": "claude-opus-5-5", "effort": "xhigh", "speed": "standard", "requests": 3, "input_tokens": 10,
+         "output_tokens": 2_000, "cache_write_5m_tokens": 1_000, "cache_write_1h_tokens": 20_000,
+         "cache_read_tokens": 300_000}
+
+
+def _usage(entry_id: str, token: str = SERVICE) -> list[dict]:
+    _, rows = rest("GET", f"agent_usage?time_entry_id=eq.{entry_id}&deleted_at=is.null&order=model,effort"
+                          "&select=model,effort,speed,requests,input_tokens,cache_read_tokens,cost_micros,user_id", token)
+    return rows
+
+
+def test_usage_is_summed_per_entry_and_priced(team):
+    """Usage IA (D17) : rattaché à l'entrée qui couvre son heure, cumulé par modèle et effort, coût au tarif de l'API."""
+    pilote_t, _ = team["people"]["pilote"]
+    autre_t, _ = team["people"]["autre"]
+    session = str(uuid.uuid4())
+    once = _event("agent_usage", _ago(292), session, payload=USAGE)
+    events = [
+        _event("prompt", _ago(300), session), _event("agent_stop", _ago(290), session), once,
+        _event("agent_usage", _ago(291), session, payload=dict(USAGE, model="claude-haiku-5-5", effort="medium")),
+        _event("agent_usage", _ago(291), session, payload=dict(USAGE, model="claude-futur-9")),
+        # Une pause de plus de 10 minutes : nouvelle entrée de la même session.
+        _event("prompt", _ago(270), session), _event("agent_stop", _ago(265), session),
+        _event("agent_usage", _ago(266), session, payload=dict(USAGE, speed="fast")),
+        _event("agent_usage", _ago(266), session, payload=dict(USAGE, input_tokens=-1)),
+    ]
+    status, res = api("POST", "/api/activity/events", team["token"], {"events": events})
+    assert status == 202 and [r["index"] for r in res["rejected"]] == [8]
+    first, second = [e for e in _agent_entries(team["agent"])
+                     if _ago(301) <= datetime.fromisoformat(e["start_at"]) <= _ago(264)]
+    rows = _usage(first["id"])
+    assert [(r["model"], r["effort"], r["requests"], r["cost_micros"]) for r in rows] == [
+        ("claude-futur-9", "xhigh", 3, None),           # modèle sans tarif connu : tokens comptés, coût inconnu
+        ("claude-haiku-5-5", "medium", 3, 8_126),       # 10×0,10 + 2000×0,50 + 1000×0,125 + 20000×0,20 + 300000×0,01
+        ("claude-opus-5-5", "xhigh", 3, 265_040),       # 10×4 + 2000×20 + 1000×5 + 20000×8 + 300000×0,20
+    ]
+    assert {r["user_id"] for r in rows} == {team["agent"]}
+    assert [(r["speed"], r["cost_micros"]) for r in _usage(second["id"])] == [("fast", 530_080)]
+
+    # Le même événement renvoyé (file locale du poste) ne compte pas deux fois ; un nouvel usage s'ajoute.
+    again = [once, _event("agent_usage", _ago(291), session, payload=dict(USAGE, requests=1, cache_read_tokens=0))]
+    assert api("POST", "/api/activity/events", team["token"], {"events": again})[0] == 202
+    opus = [r for r in _usage(first["id"]) if r["model"] == "claude-opus-5-5"]
+    assert [(r["requests"], r["cache_read_tokens"]) for r in opus] == [(4, 300_000)]
+
+    # Lecture : comme l'entrée, le pilote oui, un autre membre non.
+    assert len(_usage(first["id"], pilote_t)) == 3
+    assert _usage(first["id"], autre_t) == []
+    status, _ = rest("PATCH", f"agent_usage?time_entry_id=eq.{first['id']}", pilote_t, {"requests": 0})
+    assert status in (401, 403), "seul le serveur écrit l'usage"
+
+
 def test_kiosk_lists_humans_only(team):
     owner_t, _ = team["people"]["owner"]
     status, device = _call("POST", f"{SERVICES}/api/kiosk/devices", owner_t, {"workspace_id": team["wid"]})
@@ -507,7 +559,16 @@ def test_hook_script_end_to_end(team, tmp_path):
     hook("UserPromptSubmit", prompt="ajoute le plugin")
     subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "Ajout du plugin"], cwd=repo, env=env, check=True)
     hook("PostToolUse", tool_name="Bash", tool_input={"command": "git commit -m 'Ajout du plugin'"}, duration_ms=800)
-    hook("Stop")
+    # La transcription que Claude Code écrit sur le poste : le hook n'en envoie que l'usage (D17).
+    transcript = tmp_path / f"{session}.jsonl"
+    line = {"type": "assistant", "timestamp": iso(datetime.now(UTC) - timedelta(seconds=5)), "effort": "xhigh",
+            "message": {"id": "msg_1", "model": "claude-opus-5-5", "content": [{"type": "text", "text": "secret"}],
+                        "usage": {"input_tokens": 10, "output_tokens": 2000, "cache_creation_input_tokens": 21000,
+                                  "cache_creation": {"ephemeral_5m_input_tokens": 1000,
+                                                     "ephemeral_1h_input_tokens": 20000},
+                                  "cache_read_input_tokens": 300000, "speed": "standard"}}}
+    transcript.write_text(json.dumps(line) + "\n" + json.dumps(line) + "\n")
+    hook("Stop", transcript_path=str(transcript))
     assert not (tmp_path / "cache" / "hook.log").exists()
 
     [entry] = [e for e in _agent_entries(team["agent"]) if e["description"] == "Ajout du plugin"]
@@ -520,3 +581,4 @@ def test_hook_script_end_to_end(team, tmp_path):
     _, repos = rest("GET", f"code_repositories?workspace_id=eq.{team['wid']}&remote_key=eq.github.com/acme/plugin-e2e"
                            "&select=name", SERVICE)
     assert repos == [{"name": "plugin-e2e"}]
+    assert [(u["requests"], u["cost_micros"]) for u in _usage(entry["id"])] == [(1, 265_040)]

@@ -14,6 +14,7 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../timer/timer_rules.dart';
 import 'agents_banner.dart';
+import 'ai_usage.dart';
 import 'entry_dialog.dart';
 import 'entry_group_dialog.dart';
 import 'entry_groups.dart';
@@ -241,6 +242,7 @@ class EntryTile extends StatelessWidget {
       if (author != null && author != e.userId && e.source != 'agent')
         Text(l.enteredBy(memberName(catalog.memberOf(author))),
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline, fontStyle: FontStyle.italic)),
+      if (row.aiTokens > 0) AiUsageText(tokens: row.aiTokens, costMicros: row.aiCostMicros),
     ]);
 
     final trailing = Row(mainAxisSize: MainAxisSize.min, children: [
@@ -390,6 +392,8 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
     final end = g.endAt;
     final times = '${timeLabel(context, g.startAt)} – ${end == null ? '…' : timeLabel(context, end)}';
     final isMine = e.userId == session.userId;
+    final aiTokens = g.rows.fold<int>(0, (s, r) => s + r.aiTokens);
+    final aiCosts = [for (final r in g.rows) ?r.aiCostMicros];
     // Mêmes règles que le dialogue d'entrée : le serveur refuserait la modification d'une entrée verrouillée.
     final lockDate = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
     final inLockedPeriod = lockDate != null && widget.day.isBefore(lockDate) && !session.isAdmin;
@@ -440,6 +444,8 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
                       style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
                 ProjectLabel(projectId: e.projectId, taskId: e.taskId, dense: true),
                 TagChips(g.first.tagIds),
+                if (aiTokens > 0)
+                  AiUsageText(tokens: aiTokens, costMicros: aiCosts.isEmpty ? null : aiCosts.reduce((a, b) => a + b)),
               ]),
               if (!wide) ...[const SizedBox(height: 2), Text(times, style: theme.textTheme.bodySmall)],
             ]),

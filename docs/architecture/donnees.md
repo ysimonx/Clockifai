@@ -239,7 +239,7 @@ erDiagram
   }
 ```
 
-### Agents Claude et activité de code (0012, 0013)
+### Agents Claude et activité de code (0012, 0013, 0016)
 
 Le temps de Claude est celui d'un membre `kind = 'agent'`, un par pilote (`agent_owner_id`), dont les entrées sont
 des `time_entries` ordinaires (`source = 'agent'`) écrites par le serveur seulement
@@ -253,6 +253,7 @@ erDiagram
   time_entries |o--o{ code_commits : "entrée d'agent"
   auth_users ||--o{ activity_rules : "règles de"
   projects ||--o{ activity_rules : "mène à"
+  time_entries ||--o{ agent_usage : "usage IA"
 
   code_repositories {
     uuid id PK
@@ -277,10 +278,32 @@ erDiagram
     uuid project_id FK
     uuid task_id FK
   }
+  agent_usage {
+    uuid id PK
+    uuid time_entry_id FK "CASCADE"
+    uuid user_id "l'agent"
+    text model "claude-opus-5-5…"
+    text effort "low … max, NULL inconnu"
+    text speed "standard | fast"
+    int requests
+    bigint input_tokens
+    bigint output_tokens
+    bigint cache_write_5m_tokens
+    bigint cache_write_1h_tokens
+    bigint cache_read_tokens
+    bigint cost_micros "millionièmes de dollar, NULL sans tarif"
+  }
 ```
 
 `code_repositories` et `code_commits` sont lisibles par les membres, écrites par le serveur seulement.
 `activity_rules` sont personnelles : créées par le serveur, le client ne peut que les retirer (`deleted_at`).
+
+`agent_usage` cumule, par entrée d'agent et par (modèle, effort, vitesse), l'usage de l'API que le plugin lit dans la
+transcription de Claude Code (unique `nulls not distinct (time_entry_id, model, effort, speed)`). Flask le recalcule
+à chaque événement de la session et pose le coût estimé au tarif de `ai_model_prices` : prix publics d'Anthropic en
+dollars par million de tokens (entrée, sortie, écriture en cache à 5 minutes et à 1 heure, lecture du cache,
+multiplicateur du mode rapide), sans workspace, mis à jour par migration et lus par Flask seulement. `agent_usage` se
+lit comme l'entrée (`user_id = auth.uid() or manages(workspace_id, user_id)`) et n'est écrit que par le serveur.
 
 ### Hors du schéma `public`
 
@@ -311,12 +334,12 @@ Ce que chaque utilisateur connecté reçoit dans sa base locale. Toutes les requ
 | `my_profile` | automatique | 0 | `profiles` | sa propre ligne |
 | `workspace_core` | automatique | 1 | `workspaces`, `workspace_members`, `clients`, `projects`, `tasks`, `tags`, `time_off_policies`, `holidays`, `user_groups`, `user_group_members`, `team_manager_assignments`, `team_scope` | tous les workspaces où l'on est membre actif |
 | `my_time_entries` | automatique | 2 | `time_entries`, `time_entry_tags`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments` | `user_id` = soi, dans tous ses workspaces |
-| `managed_team` | automatique | 3 | `time_entries`, `time_entry_tags`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances` | lignes des collaborateurs encadrés : jointure sur `team_scope` par `(workspace_id, user_id)` avec `manager_id` = soi, rien d'un autre workspace du collaborateur |
-| `team_data` | à la demande, paramètre `workspace_id` | 3 | `time_entries`, `time_entry_tags`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments`, `invoices`, `invoice_items`, `invoice_entries` | tout le workspace demandé, si l'on y a un rôle autre que `member` |
+| `managed_team` | automatique | 3 | `time_entries`, `time_entry_tags`, `agent_usage`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances` | lignes des collaborateurs encadrés : jointure sur `team_scope` par `(workspace_id, user_id)` avec `manager_id` = soi, rien d'un autre workspace du collaborateur |
+| `team_data` | à la demande, paramètre `workspace_id` | 3 | `time_entries`, `time_entry_tags`, `agent_usage`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments`, `invoices`, `invoice_items`, `invoice_entries` | tout le workspace demandé, si l'on y a un rôle autre que `member` |
 
 `SessionController` souscrit `team_data` pour le workspace courant quand le rôle est owner, admin ou manager, et
 change de souscription avec le workspace. Ne sont jamais synchronisés : `kiosk_devices` (géré par Flask),
-`code_repositories` et `code_commits` (lus en ligne), les schémas
+`code_repositories` et `code_commits` (lus en ligne), `ai_model_prices` (lu par Flask), les schémas
 `clockifai_private` et `clockifai_meta`, `auth.*`.
 
 ## Matrice des droits

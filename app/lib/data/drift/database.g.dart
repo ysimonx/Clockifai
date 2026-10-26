@@ -7000,6 +7000,998 @@ class TimeEntryTagsCompanion extends UpdateCompanion<TimeEntryTag> {
   }
 }
 
+class $AgentUsageTable extends AgentUsage
+    with TableInfo<$AgentUsageTable, AgentUsageRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AgentUsageTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: newId,
+  );
+  static const VerificationMeta _workspaceIdMeta = const VerificationMeta(
+    'workspaceId',
+  );
+  @override
+  late final GeneratedColumn<String> workspaceId = GeneratedColumn<String>(
+    'workspace_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timeEntryIdMeta = const VerificationMeta(
+    'timeEntryId',
+  );
+  @override
+  late final GeneratedColumn<String> timeEntryId = GeneratedColumn<String>(
+    'time_entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modelMeta = const VerificationMeta('model');
+  @override
+  late final GeneratedColumn<String> model = GeneratedColumn<String>(
+    'model',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _effortMeta = const VerificationMeta('effort');
+  @override
+  late final GeneratedColumn<String> effort = GeneratedColumn<String>(
+    'effort',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _speedMeta = const VerificationMeta('speed');
+  @override
+  late final GeneratedColumn<String> speed = GeneratedColumn<String>(
+    'speed',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _requestsMeta = const VerificationMeta(
+    'requests',
+  );
+  @override
+  late final GeneratedColumn<int> requests = GeneratedColumn<int>(
+    'requests',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _inputTokensMeta = const VerificationMeta(
+    'inputTokens',
+  );
+  @override
+  late final GeneratedColumn<int> inputTokens = GeneratedColumn<int>(
+    'input_tokens',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _outputTokensMeta = const VerificationMeta(
+    'outputTokens',
+  );
+  @override
+  late final GeneratedColumn<int> outputTokens = GeneratedColumn<int>(
+    'output_tokens',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cacheWrite5mTokensMeta =
+      const VerificationMeta('cacheWrite5mTokens');
+  @override
+  late final GeneratedColumn<int> cacheWrite5mTokens = GeneratedColumn<int>(
+    'cache_write_5m_tokens',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cacheWrite1hTokensMeta =
+      const VerificationMeta('cacheWrite1hTokens');
+  @override
+  late final GeneratedColumn<int> cacheWrite1hTokens = GeneratedColumn<int>(
+    'cache_write_1h_tokens',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cacheReadTokensMeta = const VerificationMeta(
+    'cacheReadTokens',
+  );
+  @override
+  late final GeneratedColumn<int> cacheReadTokens = GeneratedColumn<int>(
+    'cache_read_tokens',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _costMicrosMeta = const VerificationMeta(
+    'costMicros',
+  );
+  @override
+  late final GeneratedColumn<int> costMicros = GeneratedColumn<int>(
+    'cost_micros',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: nowUtc,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    workspaceId,
+    timeEntryId,
+    userId,
+    model,
+    effort,
+    speed,
+    requests,
+    inputTokens,
+    outputTokens,
+    cacheWrite5mTokens,
+    cacheWrite1hTokens,
+    cacheReadTokens,
+    costMicros,
+    createdAt,
+    updatedAt,
+    deletedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'agent_usage';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AgentUsageRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('workspace_id')) {
+      context.handle(
+        _workspaceIdMeta,
+        workspaceId.isAcceptableOrUnknown(
+          data['workspace_id']!,
+          _workspaceIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_workspaceIdMeta);
+    }
+    if (data.containsKey('time_entry_id')) {
+      context.handle(
+        _timeEntryIdMeta,
+        timeEntryId.isAcceptableOrUnknown(
+          data['time_entry_id']!,
+          _timeEntryIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_timeEntryIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('model')) {
+      context.handle(
+        _modelMeta,
+        model.isAcceptableOrUnknown(data['model']!, _modelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_modelMeta);
+    }
+    if (data.containsKey('effort')) {
+      context.handle(
+        _effortMeta,
+        effort.isAcceptableOrUnknown(data['effort']!, _effortMeta),
+      );
+    }
+    if (data.containsKey('speed')) {
+      context.handle(
+        _speedMeta,
+        speed.isAcceptableOrUnknown(data['speed']!, _speedMeta),
+      );
+    }
+    if (data.containsKey('requests')) {
+      context.handle(
+        _requestsMeta,
+        requests.isAcceptableOrUnknown(data['requests']!, _requestsMeta),
+      );
+    }
+    if (data.containsKey('input_tokens')) {
+      context.handle(
+        _inputTokensMeta,
+        inputTokens.isAcceptableOrUnknown(
+          data['input_tokens']!,
+          _inputTokensMeta,
+        ),
+      );
+    }
+    if (data.containsKey('output_tokens')) {
+      context.handle(
+        _outputTokensMeta,
+        outputTokens.isAcceptableOrUnknown(
+          data['output_tokens']!,
+          _outputTokensMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cache_write_5m_tokens')) {
+      context.handle(
+        _cacheWrite5mTokensMeta,
+        cacheWrite5mTokens.isAcceptableOrUnknown(
+          data['cache_write_5m_tokens']!,
+          _cacheWrite5mTokensMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cache_write_1h_tokens')) {
+      context.handle(
+        _cacheWrite1hTokensMeta,
+        cacheWrite1hTokens.isAcceptableOrUnknown(
+          data['cache_write_1h_tokens']!,
+          _cacheWrite1hTokensMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cache_read_tokens')) {
+      context.handle(
+        _cacheReadTokensMeta,
+        cacheReadTokens.isAcceptableOrUnknown(
+          data['cache_read_tokens']!,
+          _cacheReadTokensMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cost_micros')) {
+      context.handle(
+        _costMicrosMeta,
+        costMicros.isAcceptableOrUnknown(data['cost_micros']!, _costMicrosMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AgentUsageRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AgentUsageRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      workspaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workspace_id'],
+      )!,
+      timeEntryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}time_entry_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      model: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}model'],
+      )!,
+      effort: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}effort'],
+      ),
+      speed: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}speed'],
+      ),
+      requests: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}requests'],
+      ),
+      inputTokens: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}input_tokens'],
+      ),
+      outputTokens: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}output_tokens'],
+      ),
+      cacheWrite5mTokens: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cache_write_5m_tokens'],
+      ),
+      cacheWrite1hTokens: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cache_write_1h_tokens'],
+      ),
+      cacheReadTokens: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cache_read_tokens'],
+      ),
+      costMicros: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cost_micros'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $AgentUsageTable createAlias(String alias) {
+    return $AgentUsageTable(attachedDatabase, alias);
+  }
+}
+
+class AgentUsageRow extends DataClass implements Insertable<AgentUsageRow> {
+  final String id;
+  final String workspaceId;
+  final String timeEntryId;
+  final String userId;
+  final String model;
+  final String? effort;
+  final String? speed;
+  final int? requests;
+  final int? inputTokens;
+  final int? outputTokens;
+  final int? cacheWrite5mTokens;
+  final int? cacheWrite1hTokens;
+  final int? cacheReadTokens;
+
+  /// Null : modèle sans tarif connu.
+  final int? costMicros;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final DateTime? deletedAt;
+  const AgentUsageRow({
+    required this.id,
+    required this.workspaceId,
+    required this.timeEntryId,
+    required this.userId,
+    required this.model,
+    this.effort,
+    this.speed,
+    this.requests,
+    this.inputTokens,
+    this.outputTokens,
+    this.cacheWrite5mTokens,
+    this.cacheWrite1hTokens,
+    this.cacheReadTokens,
+    this.costMicros,
+    this.createdAt,
+    this.updatedAt,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['workspace_id'] = Variable<String>(workspaceId);
+    map['time_entry_id'] = Variable<String>(timeEntryId);
+    map['user_id'] = Variable<String>(userId);
+    map['model'] = Variable<String>(model);
+    if (!nullToAbsent || effort != null) {
+      map['effort'] = Variable<String>(effort);
+    }
+    if (!nullToAbsent || speed != null) {
+      map['speed'] = Variable<String>(speed);
+    }
+    if (!nullToAbsent || requests != null) {
+      map['requests'] = Variable<int>(requests);
+    }
+    if (!nullToAbsent || inputTokens != null) {
+      map['input_tokens'] = Variable<int>(inputTokens);
+    }
+    if (!nullToAbsent || outputTokens != null) {
+      map['output_tokens'] = Variable<int>(outputTokens);
+    }
+    if (!nullToAbsent || cacheWrite5mTokens != null) {
+      map['cache_write_5m_tokens'] = Variable<int>(cacheWrite5mTokens);
+    }
+    if (!nullToAbsent || cacheWrite1hTokens != null) {
+      map['cache_write_1h_tokens'] = Variable<int>(cacheWrite1hTokens);
+    }
+    if (!nullToAbsent || cacheReadTokens != null) {
+      map['cache_read_tokens'] = Variable<int>(cacheReadTokens);
+    }
+    if (!nullToAbsent || costMicros != null) {
+      map['cost_micros'] = Variable<int>(costMicros);
+    }
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  AgentUsageCompanion toCompanion(bool nullToAbsent) {
+    return AgentUsageCompanion(
+      id: Value(id),
+      workspaceId: Value(workspaceId),
+      timeEntryId: Value(timeEntryId),
+      userId: Value(userId),
+      model: Value(model),
+      effort: effort == null && nullToAbsent
+          ? const Value.absent()
+          : Value(effort),
+      speed: speed == null && nullToAbsent
+          ? const Value.absent()
+          : Value(speed),
+      requests: requests == null && nullToAbsent
+          ? const Value.absent()
+          : Value(requests),
+      inputTokens: inputTokens == null && nullToAbsent
+          ? const Value.absent()
+          : Value(inputTokens),
+      outputTokens: outputTokens == null && nullToAbsent
+          ? const Value.absent()
+          : Value(outputTokens),
+      cacheWrite5mTokens: cacheWrite5mTokens == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cacheWrite5mTokens),
+      cacheWrite1hTokens: cacheWrite1hTokens == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cacheWrite1hTokens),
+      cacheReadTokens: cacheReadTokens == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cacheReadTokens),
+      costMicros: costMicros == null && nullToAbsent
+          ? const Value.absent()
+          : Value(costMicros),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory AgentUsageRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AgentUsageRow(
+      id: serializer.fromJson<String>(json['id']),
+      workspaceId: serializer.fromJson<String>(json['workspaceId']),
+      timeEntryId: serializer.fromJson<String>(json['timeEntryId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      model: serializer.fromJson<String>(json['model']),
+      effort: serializer.fromJson<String?>(json['effort']),
+      speed: serializer.fromJson<String?>(json['speed']),
+      requests: serializer.fromJson<int?>(json['requests']),
+      inputTokens: serializer.fromJson<int?>(json['inputTokens']),
+      outputTokens: serializer.fromJson<int?>(json['outputTokens']),
+      cacheWrite5mTokens: serializer.fromJson<int?>(json['cacheWrite5mTokens']),
+      cacheWrite1hTokens: serializer.fromJson<int?>(json['cacheWrite1hTokens']),
+      cacheReadTokens: serializer.fromJson<int?>(json['cacheReadTokens']),
+      costMicros: serializer.fromJson<int?>(json['costMicros']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'workspaceId': serializer.toJson<String>(workspaceId),
+      'timeEntryId': serializer.toJson<String>(timeEntryId),
+      'userId': serializer.toJson<String>(userId),
+      'model': serializer.toJson<String>(model),
+      'effort': serializer.toJson<String?>(effort),
+      'speed': serializer.toJson<String?>(speed),
+      'requests': serializer.toJson<int?>(requests),
+      'inputTokens': serializer.toJson<int?>(inputTokens),
+      'outputTokens': serializer.toJson<int?>(outputTokens),
+      'cacheWrite5mTokens': serializer.toJson<int?>(cacheWrite5mTokens),
+      'cacheWrite1hTokens': serializer.toJson<int?>(cacheWrite1hTokens),
+      'cacheReadTokens': serializer.toJson<int?>(cacheReadTokens),
+      'costMicros': serializer.toJson<int?>(costMicros),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  AgentUsageRow copyWith({
+    String? id,
+    String? workspaceId,
+    String? timeEntryId,
+    String? userId,
+    String? model,
+    Value<String?> effort = const Value.absent(),
+    Value<String?> speed = const Value.absent(),
+    Value<int?> requests = const Value.absent(),
+    Value<int?> inputTokens = const Value.absent(),
+    Value<int?> outputTokens = const Value.absent(),
+    Value<int?> cacheWrite5mTokens = const Value.absent(),
+    Value<int?> cacheWrite1hTokens = const Value.absent(),
+    Value<int?> cacheReadTokens = const Value.absent(),
+    Value<int?> costMicros = const Value.absent(),
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> updatedAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => AgentUsageRow(
+    id: id ?? this.id,
+    workspaceId: workspaceId ?? this.workspaceId,
+    timeEntryId: timeEntryId ?? this.timeEntryId,
+    userId: userId ?? this.userId,
+    model: model ?? this.model,
+    effort: effort.present ? effort.value : this.effort,
+    speed: speed.present ? speed.value : this.speed,
+    requests: requests.present ? requests.value : this.requests,
+    inputTokens: inputTokens.present ? inputTokens.value : this.inputTokens,
+    outputTokens: outputTokens.present ? outputTokens.value : this.outputTokens,
+    cacheWrite5mTokens: cacheWrite5mTokens.present
+        ? cacheWrite5mTokens.value
+        : this.cacheWrite5mTokens,
+    cacheWrite1hTokens: cacheWrite1hTokens.present
+        ? cacheWrite1hTokens.value
+        : this.cacheWrite1hTokens,
+    cacheReadTokens: cacheReadTokens.present
+        ? cacheReadTokens.value
+        : this.cacheReadTokens,
+    costMicros: costMicros.present ? costMicros.value : this.costMicros,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  AgentUsageRow copyWithCompanion(AgentUsageCompanion data) {
+    return AgentUsageRow(
+      id: data.id.present ? data.id.value : this.id,
+      workspaceId: data.workspaceId.present
+          ? data.workspaceId.value
+          : this.workspaceId,
+      timeEntryId: data.timeEntryId.present
+          ? data.timeEntryId.value
+          : this.timeEntryId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      model: data.model.present ? data.model.value : this.model,
+      effort: data.effort.present ? data.effort.value : this.effort,
+      speed: data.speed.present ? data.speed.value : this.speed,
+      requests: data.requests.present ? data.requests.value : this.requests,
+      inputTokens: data.inputTokens.present
+          ? data.inputTokens.value
+          : this.inputTokens,
+      outputTokens: data.outputTokens.present
+          ? data.outputTokens.value
+          : this.outputTokens,
+      cacheWrite5mTokens: data.cacheWrite5mTokens.present
+          ? data.cacheWrite5mTokens.value
+          : this.cacheWrite5mTokens,
+      cacheWrite1hTokens: data.cacheWrite1hTokens.present
+          ? data.cacheWrite1hTokens.value
+          : this.cacheWrite1hTokens,
+      cacheReadTokens: data.cacheReadTokens.present
+          ? data.cacheReadTokens.value
+          : this.cacheReadTokens,
+      costMicros: data.costMicros.present
+          ? data.costMicros.value
+          : this.costMicros,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AgentUsageRow(')
+          ..write('id: $id, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('timeEntryId: $timeEntryId, ')
+          ..write('userId: $userId, ')
+          ..write('model: $model, ')
+          ..write('effort: $effort, ')
+          ..write('speed: $speed, ')
+          ..write('requests: $requests, ')
+          ..write('inputTokens: $inputTokens, ')
+          ..write('outputTokens: $outputTokens, ')
+          ..write('cacheWrite5mTokens: $cacheWrite5mTokens, ')
+          ..write('cacheWrite1hTokens: $cacheWrite1hTokens, ')
+          ..write('cacheReadTokens: $cacheReadTokens, ')
+          ..write('costMicros: $costMicros, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    workspaceId,
+    timeEntryId,
+    userId,
+    model,
+    effort,
+    speed,
+    requests,
+    inputTokens,
+    outputTokens,
+    cacheWrite5mTokens,
+    cacheWrite1hTokens,
+    cacheReadTokens,
+    costMicros,
+    createdAt,
+    updatedAt,
+    deletedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AgentUsageRow &&
+          other.id == this.id &&
+          other.workspaceId == this.workspaceId &&
+          other.timeEntryId == this.timeEntryId &&
+          other.userId == this.userId &&
+          other.model == this.model &&
+          other.effort == this.effort &&
+          other.speed == this.speed &&
+          other.requests == this.requests &&
+          other.inputTokens == this.inputTokens &&
+          other.outputTokens == this.outputTokens &&
+          other.cacheWrite5mTokens == this.cacheWrite5mTokens &&
+          other.cacheWrite1hTokens == this.cacheWrite1hTokens &&
+          other.cacheReadTokens == this.cacheReadTokens &&
+          other.costMicros == this.costMicros &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt);
+}
+
+class AgentUsageCompanion extends UpdateCompanion<AgentUsageRow> {
+  final Value<String> id;
+  final Value<String> workspaceId;
+  final Value<String> timeEntryId;
+  final Value<String> userId;
+  final Value<String> model;
+  final Value<String?> effort;
+  final Value<String?> speed;
+  final Value<int?> requests;
+  final Value<int?> inputTokens;
+  final Value<int?> outputTokens;
+  final Value<int?> cacheWrite5mTokens;
+  final Value<int?> cacheWrite1hTokens;
+  final Value<int?> cacheReadTokens;
+  final Value<int?> costMicros;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<int> rowid;
+  const AgentUsageCompanion({
+    this.id = const Value.absent(),
+    this.workspaceId = const Value.absent(),
+    this.timeEntryId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.model = const Value.absent(),
+    this.effort = const Value.absent(),
+    this.speed = const Value.absent(),
+    this.requests = const Value.absent(),
+    this.inputTokens = const Value.absent(),
+    this.outputTokens = const Value.absent(),
+    this.cacheWrite5mTokens = const Value.absent(),
+    this.cacheWrite1hTokens = const Value.absent(),
+    this.cacheReadTokens = const Value.absent(),
+    this.costMicros = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AgentUsageCompanion.insert({
+    this.id = const Value.absent(),
+    required String workspaceId,
+    required String timeEntryId,
+    required String userId,
+    required String model,
+    this.effort = const Value.absent(),
+    this.speed = const Value.absent(),
+    this.requests = const Value.absent(),
+    this.inputTokens = const Value.absent(),
+    this.outputTokens = const Value.absent(),
+    this.cacheWrite5mTokens = const Value.absent(),
+    this.cacheWrite1hTokens = const Value.absent(),
+    this.cacheReadTokens = const Value.absent(),
+    this.costMicros = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : workspaceId = Value(workspaceId),
+       timeEntryId = Value(timeEntryId),
+       userId = Value(userId),
+       model = Value(model);
+  static Insertable<AgentUsageRow> custom({
+    Expression<String>? id,
+    Expression<String>? workspaceId,
+    Expression<String>? timeEntryId,
+    Expression<String>? userId,
+    Expression<String>? model,
+    Expression<String>? effort,
+    Expression<String>? speed,
+    Expression<int>? requests,
+    Expression<int>? inputTokens,
+    Expression<int>? outputTokens,
+    Expression<int>? cacheWrite5mTokens,
+    Expression<int>? cacheWrite1hTokens,
+    Expression<int>? cacheReadTokens,
+    Expression<int>? costMicros,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (workspaceId != null) 'workspace_id': workspaceId,
+      if (timeEntryId != null) 'time_entry_id': timeEntryId,
+      if (userId != null) 'user_id': userId,
+      if (model != null) 'model': model,
+      if (effort != null) 'effort': effort,
+      if (speed != null) 'speed': speed,
+      if (requests != null) 'requests': requests,
+      if (inputTokens != null) 'input_tokens': inputTokens,
+      if (outputTokens != null) 'output_tokens': outputTokens,
+      if (cacheWrite5mTokens != null)
+        'cache_write_5m_tokens': cacheWrite5mTokens,
+      if (cacheWrite1hTokens != null)
+        'cache_write_1h_tokens': cacheWrite1hTokens,
+      if (cacheReadTokens != null) 'cache_read_tokens': cacheReadTokens,
+      if (costMicros != null) 'cost_micros': costMicros,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AgentUsageCompanion copyWith({
+    Value<String>? id,
+    Value<String>? workspaceId,
+    Value<String>? timeEntryId,
+    Value<String>? userId,
+    Value<String>? model,
+    Value<String?>? effort,
+    Value<String?>? speed,
+    Value<int?>? requests,
+    Value<int?>? inputTokens,
+    Value<int?>? outputTokens,
+    Value<int?>? cacheWrite5mTokens,
+    Value<int?>? cacheWrite1hTokens,
+    Value<int?>? cacheReadTokens,
+    Value<int?>? costMicros,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<int>? rowid,
+  }) {
+    return AgentUsageCompanion(
+      id: id ?? this.id,
+      workspaceId: workspaceId ?? this.workspaceId,
+      timeEntryId: timeEntryId ?? this.timeEntryId,
+      userId: userId ?? this.userId,
+      model: model ?? this.model,
+      effort: effort ?? this.effort,
+      speed: speed ?? this.speed,
+      requests: requests ?? this.requests,
+      inputTokens: inputTokens ?? this.inputTokens,
+      outputTokens: outputTokens ?? this.outputTokens,
+      cacheWrite5mTokens: cacheWrite5mTokens ?? this.cacheWrite5mTokens,
+      cacheWrite1hTokens: cacheWrite1hTokens ?? this.cacheWrite1hTokens,
+      cacheReadTokens: cacheReadTokens ?? this.cacheReadTokens,
+      costMicros: costMicros ?? this.costMicros,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (workspaceId.present) {
+      map['workspace_id'] = Variable<String>(workspaceId.value);
+    }
+    if (timeEntryId.present) {
+      map['time_entry_id'] = Variable<String>(timeEntryId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (model.present) {
+      map['model'] = Variable<String>(model.value);
+    }
+    if (effort.present) {
+      map['effort'] = Variable<String>(effort.value);
+    }
+    if (speed.present) {
+      map['speed'] = Variable<String>(speed.value);
+    }
+    if (requests.present) {
+      map['requests'] = Variable<int>(requests.value);
+    }
+    if (inputTokens.present) {
+      map['input_tokens'] = Variable<int>(inputTokens.value);
+    }
+    if (outputTokens.present) {
+      map['output_tokens'] = Variable<int>(outputTokens.value);
+    }
+    if (cacheWrite5mTokens.present) {
+      map['cache_write_5m_tokens'] = Variable<int>(cacheWrite5mTokens.value);
+    }
+    if (cacheWrite1hTokens.present) {
+      map['cache_write_1h_tokens'] = Variable<int>(cacheWrite1hTokens.value);
+    }
+    if (cacheReadTokens.present) {
+      map['cache_read_tokens'] = Variable<int>(cacheReadTokens.value);
+    }
+    if (costMicros.present) {
+      map['cost_micros'] = Variable<int>(costMicros.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AgentUsageCompanion(')
+          ..write('id: $id, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('timeEntryId: $timeEntryId, ')
+          ..write('userId: $userId, ')
+          ..write('model: $model, ')
+          ..write('effort: $effort, ')
+          ..write('speed: $speed, ')
+          ..write('requests: $requests, ')
+          ..write('inputTokens: $inputTokens, ')
+          ..write('outputTokens: $outputTokens, ')
+          ..write('cacheWrite5mTokens: $cacheWrite5mTokens, ')
+          ..write('cacheWrite1hTokens: $cacheWrite1hTokens, ')
+          ..write('cacheReadTokens: $cacheReadTokens, ')
+          ..write('costMicros: $costMicros, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TimesheetSubmissionsTable extends TimesheetSubmissions
     with TableInfo<$TimesheetSubmissionsTable, TimesheetSubmission> {
   @override
@@ -15198,6 +16190,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TagsTable tags = $TagsTable(this);
   late final $TimeEntriesTable timeEntries = $TimeEntriesTable(this);
   late final $TimeEntryTagsTable timeEntryTags = $TimeEntryTagsTable(this);
+  late final $AgentUsageTable agentUsage = $AgentUsageTable(this);
   late final $TimesheetSubmissionsTable timesheetSubmissions =
       $TimesheetSubmissionsTable(this);
   late final $TimeOffPoliciesTable timeOffPolicies = $TimeOffPoliciesTable(
@@ -15235,6 +16228,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     tags,
     timeEntries,
     timeEntryTags,
+    agentUsage,
     timesheetSubmissions,
     timeOffPolicies,
     timeOffAllowances,
@@ -18537,6 +19531,457 @@ typedef $$TimeEntryTagsTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $TimeEntryTagsTable, TimeEntryTag>,
       ),
       TimeEntryTag,
+      PrefetchHooks Function()
+    >;
+typedef $$AgentUsageTableCreateCompanionBuilder = AgentUsageCompanion Function({
+  Value<String> id,
+  required String workspaceId,
+  required String timeEntryId,
+  required String userId,
+  required String model,
+  Value<String?> effort,
+  Value<String?> speed,
+  Value<int?> requests,
+  Value<int?> inputTokens,
+  Value<int?> outputTokens,
+  Value<int?> cacheWrite5mTokens,
+  Value<int?> cacheWrite1hTokens,
+  Value<int?> cacheReadTokens,
+  Value<int?> costMicros,
+  Value<DateTime?> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<int> rowid,
+});
+typedef $$AgentUsageTableUpdateCompanionBuilder = AgentUsageCompanion Function({
+  Value<String> id,
+  Value<String> workspaceId,
+  Value<String> timeEntryId,
+  Value<String> userId,
+  Value<String> model,
+  Value<String?> effort,
+  Value<String?> speed,
+  Value<int?> requests,
+  Value<int?> inputTokens,
+  Value<int?> outputTokens,
+  Value<int?> cacheWrite5mTokens,
+  Value<int?> cacheWrite1hTokens,
+  Value<int?> cacheReadTokens,
+  Value<int?> costMicros,
+  Value<DateTime?> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<int> rowid,
+});
+
+class $$AgentUsageTableFilterComposer
+    extends Composer<_$AppDatabase, $AgentUsageTable> {
+  $$AgentUsageTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get timeEntryId => $composableBuilder(
+    column: $table.timeEntryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get effort => $composableBuilder(
+    column: $table.effort,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get speed => $composableBuilder(
+    column: $table.speed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get requests => $composableBuilder(
+    column: $table.requests,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get inputTokens => $composableBuilder(
+    column: $table.inputTokens,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get outputTokens => $composableBuilder(
+    column: $table.outputTokens,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cacheWrite5mTokens => $composableBuilder(
+    column: $table.cacheWrite5mTokens,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cacheWrite1hTokens => $composableBuilder(
+    column: $table.cacheWrite1hTokens,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cacheReadTokens => $composableBuilder(
+    column: $table.cacheReadTokens,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get costMicros => $composableBuilder(
+    column: $table.costMicros,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AgentUsageTableOrderingComposer
+    extends Composer<_$AppDatabase, $AgentUsageTable> {
+  $$AgentUsageTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get timeEntryId => $composableBuilder(
+    column: $table.timeEntryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get effort => $composableBuilder(
+    column: $table.effort,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get speed => $composableBuilder(
+    column: $table.speed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get requests => $composableBuilder(
+    column: $table.requests,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get inputTokens => $composableBuilder(
+    column: $table.inputTokens,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get outputTokens => $composableBuilder(
+    column: $table.outputTokens,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cacheWrite5mTokens => $composableBuilder(
+    column: $table.cacheWrite5mTokens,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cacheWrite1hTokens => $composableBuilder(
+    column: $table.cacheWrite1hTokens,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cacheReadTokens => $composableBuilder(
+    column: $table.cacheReadTokens,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get costMicros => $composableBuilder(
+    column: $table.costMicros,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AgentUsageTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AgentUsageTable> {
+  $$AgentUsageTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get workspaceId => $composableBuilder(
+    column: $table.workspaceId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get timeEntryId => $composableBuilder(
+    column: $table.timeEntryId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get model =>
+      $composableBuilder(column: $table.model, builder: (column) => column);
+
+  GeneratedColumn<String> get effort =>
+      $composableBuilder(column: $table.effort, builder: (column) => column);
+
+  GeneratedColumn<String> get speed =>
+      $composableBuilder(column: $table.speed, builder: (column) => column);
+
+  GeneratedColumn<int> get requests =>
+      $composableBuilder(column: $table.requests, builder: (column) => column);
+
+  GeneratedColumn<int> get inputTokens => $composableBuilder(
+    column: $table.inputTokens,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get outputTokens => $composableBuilder(
+    column: $table.outputTokens,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cacheWrite5mTokens => $composableBuilder(
+    column: $table.cacheWrite5mTokens,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cacheWrite1hTokens => $composableBuilder(
+    column: $table.cacheWrite1hTokens,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cacheReadTokens => $composableBuilder(
+    column: $table.cacheReadTokens,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get costMicros => $composableBuilder(
+    column: $table.costMicros,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+}
+
+class $$AgentUsageTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AgentUsageTable,
+          AgentUsageRow,
+          $$AgentUsageTableFilterComposer,
+          $$AgentUsageTableOrderingComposer,
+          $$AgentUsageTableAnnotationComposer,
+          $$AgentUsageTableCreateCompanionBuilder,
+          $$AgentUsageTableUpdateCompanionBuilder,
+          (
+            AgentUsageRow,
+            BaseReferences<_$AppDatabase, $AgentUsageTable, AgentUsageRow>,
+          ),
+          AgentUsageRow,
+          PrefetchHooks Function()
+        > {
+  $$AgentUsageTableTableManager(_$AppDatabase db, $AgentUsageTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AgentUsageTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AgentUsageTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AgentUsageTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> workspaceId = const Value.absent(),
+                Value<String> timeEntryId = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> model = const Value.absent(),
+                Value<String?> effort = const Value.absent(),
+                Value<String?> speed = const Value.absent(),
+                Value<int?> requests = const Value.absent(),
+                Value<int?> inputTokens = const Value.absent(),
+                Value<int?> outputTokens = const Value.absent(),
+                Value<int?> cacheWrite5mTokens = const Value.absent(),
+                Value<int?> cacheWrite1hTokens = const Value.absent(),
+                Value<int?> cacheReadTokens = const Value.absent(),
+                Value<int?> costMicros = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AgentUsageCompanion(
+                id: id,
+                workspaceId: workspaceId,
+                timeEntryId: timeEntryId,
+                userId: userId,
+                model: model,
+                effort: effort,
+                speed: speed,
+                requests: requests,
+                inputTokens: inputTokens,
+                outputTokens: outputTokens,
+                cacheWrite5mTokens: cacheWrite5mTokens,
+                cacheWrite1hTokens: cacheWrite1hTokens,
+                cacheReadTokens: cacheReadTokens,
+                costMicros: costMicros,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                required String workspaceId,
+                required String timeEntryId,
+                required String userId,
+                required String model,
+                Value<String?> effort = const Value.absent(),
+                Value<String?> speed = const Value.absent(),
+                Value<int?> requests = const Value.absent(),
+                Value<int?> inputTokens = const Value.absent(),
+                Value<int?> outputTokens = const Value.absent(),
+                Value<int?> cacheWrite5mTokens = const Value.absent(),
+                Value<int?> cacheWrite1hTokens = const Value.absent(),
+                Value<int?> cacheReadTokens = const Value.absent(),
+                Value<int?> costMicros = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AgentUsageCompanion.insert(
+                id: id,
+                workspaceId: workspaceId,
+                timeEntryId: timeEntryId,
+                userId: userId,
+                model: model,
+                effort: effort,
+                speed: speed,
+                requests: requests,
+                inputTokens: inputTokens,
+                outputTokens: outputTokens,
+                cacheWrite5mTokens: cacheWrite5mTokens,
+                cacheWrite1hTokens: cacheWrite1hTokens,
+                cacheReadTokens: cacheReadTokens,
+                costMicros: costMicros,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AgentUsageTable, AgentUsageRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $AgentUsageTable,
+                    AgentUsageRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AgentUsageTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AgentUsageTable,
+      AgentUsageRow,
+      $$AgentUsageTableFilterComposer,
+      $$AgentUsageTableOrderingComposer,
+      $$AgentUsageTableAnnotationComposer,
+      $$AgentUsageTableCreateCompanionBuilder,
+      $$AgentUsageTableUpdateCompanionBuilder,
+      (
+        AgentUsageRow,
+        BaseReferences<_$AppDatabase, $AgentUsageTable, AgentUsageRow>,
+      ),
+      AgentUsageRow,
       PrefetchHooks Function()
     >;
 typedef $$TimesheetSubmissionsTableCreateCompanionBuilder =
@@ -22712,6 +24157,8 @@ class $AppDatabaseManager {
       $$TimeEntriesTableTableManager(_db, _db.timeEntries);
   $$TimeEntryTagsTableTableManager get timeEntryTags =>
       $$TimeEntryTagsTableTableManager(_db, _db.timeEntryTags);
+  $$AgentUsageTableTableManager get agentUsage =>
+      $$AgentUsageTableTableManager(_db, _db.agentUsage);
   $$TimesheetSubmissionsTableTableManager get timesheetSubmissions =>
       $$TimesheetSubmissionsTableTableManager(_db, _db.timesheetSubmissions);
   $$TimeOffPoliciesTableTableManager get timeOffPolicies =>

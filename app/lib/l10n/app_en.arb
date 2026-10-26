@@ -22,6 +22,52 @@
   "agentRestored": "Agent restored: its pilot's Claude Code sessions record time again.",
   "agents": "Agents",
   "agentsHelp": "Claude agents: their time is recorded by Claude Code, one agent per person who connected a computer (Settings › Integrations).",
+  "aiUsage": "AI usage",
+  "aiUsageHelp": "Tokens used by Claude and cost estimated at Anthropic API prices, in US dollars. With a Claude subscription (Pro, Max), this is not an actual expense.",
+  "aiTokens": "{tokens} tokens",
+  "@aiTokens": {
+    "placeholders": {
+      "tokens": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCostEstimated": "Estimated AI cost",
+  "aiRequests": "{count, plural, =1{1 call} other{{count} calls}}",
+  "@aiRequests": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiUsageBreakdown": "Input {input} · output {output} · cache write {written} · cache read {read}",
+  "@aiUsageBreakdown": {
+    "placeholders": {
+      "input": {
+        "type": "String"
+      },
+      "output": {
+        "type": "String"
+      },
+      "written": {
+        "type": "String"
+      },
+      "read": {
+        "type": "String"
+      }
+    }
+  },
+  "aiUnknownPrice": "unknown price",
+  "aiFastMode": "fast mode",
+  "aiEffort": "{level} effort",
+  "@aiEffort": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
   "agentsWorking": "Claude is working",
   "agentsWorkingHelp": "Your agent's running Claude Code sessions. After 10 minutes without activity, a session closes at the time of its last action. Tap a session to change its project, create a task for it or change its description.",
   "agentTimeOf": "Time of {name}: you can correct its entries, not add new ones.",

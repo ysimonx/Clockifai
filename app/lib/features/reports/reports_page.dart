@@ -18,6 +18,7 @@ import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import '../time_entries/ai_usage.dart';
 import '../time_entries/entry_dialog.dart';
 import '../time_entries/time_entries_page.dart';
 import 'report_model.dart';
@@ -161,6 +162,16 @@ class _ReportsPageState extends State<ReportsPage> {
               _StatCard(label: l.totalTime, value: formatHm(totals.total)),
               _StatCard(label: l.billableTime, value: formatHm(totals.billable)),
               _StatCard(label: l.amount, value: formatMoney(totals.amount, ws.currency, locale)),
+              // Entrées d'agent Claude : tokens et coût estimé au tarif de l'API (plan 10, D17).
+              if (totals.aiTokens > 0)
+                Tooltip(
+                  message: l.aiUsageHelp,
+                  child: _StatCard(
+                    label: l.aiCostEstimated,
+                    value: totals.aiCostMicros == null ? '—' : formatAiCost(totals.aiCostMicros!, locale),
+                    caption: l.aiTokens(formatTokens(totals.aiTokens, locale)),
+                  ),
+                ),
             ]),
             const SizedBox(height: 16),
             if (rows.isNotEmpty) _DailyChart(rows: rows, range: range, calc: calc),
@@ -193,7 +204,12 @@ class _ReportsPageState extends State<ReportsPage> {
                   for (final g in groups)
                     ListTile(
                       leading: g.color == null ? null : ColorDot(g.color!, size: 12),
-                      title: Text(g.label),
+                      title: g.aiTokens == 0
+                          ? Text(g.label)
+                          : Wrap(spacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                              Text(g.label),
+                              AiUsageText(tokens: g.aiTokens, costMicros: g.aiCostMicros),
+                            ]),
                       subtitle: LinearProgressIndicator(
                         value: totals.total == 0 ? 0 : g.seconds / totals.total,
                         color: g.color == null ? null : colorFromHex(g.color!),
@@ -316,7 +332,7 @@ class _ReportsPageState extends State<ReportsPage> {
           await entriesRepo.watchEntries(workspaceId: session.workspaceId!, userId: userId, from: range.start, to: range.end).first,
           catalog,
         ).where((r) => r.entry.userId == session.userId || rights.manages(r.entry.userId)).toList();
-        final csv = StringBuffer('﻿User;Type;Client;Project;Task;Description;Start;End;Hours;Billable\n');
+        final csv = StringBuffer('﻿User;Type;Client;Project;Task;Description;Start;End;Hours;Billable;AI tokens;AI cost (USD)\n');
         String q(String s) => '"${s.replaceAll('"', '""')}"';
         for (final r in rows) {
           final e = r.entry;
@@ -331,6 +347,8 @@ class _ReportsPageState extends State<ReportsPage> {
             e.endAt?.toLocal().toIso8601String() ?? '',
             (r.seconds / 3600).toStringAsFixed(2),
             e.billable ? '1' : '0',
+            r.aiTokens == 0 ? '' : '${r.aiTokens}',
+            r.aiCostMicros == null ? '' : (r.aiCostMicros! / 1e6).toStringAsFixed(4),
           ].join(';'));
         }
         await FileSaver.instance.saveFile(name: name, bytes: Uint8List.fromList(utf8.encode(csv.toString())), fileExtension: 'csv', mimeType: MimeType.csv);
@@ -357,9 +375,10 @@ class _ReportsPageState extends State<ReportsPage> {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value});
+  const _StatCard({required this.label, required this.value, this.caption});
   final String label;
   final String value;
+  final String? caption;
 
   @override
   Widget build(BuildContext context) {
@@ -373,6 +392,7 @@ class _StatCard extends StatelessWidget {
             Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
             const SizedBox(height: 4),
             Text(value, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+            if (caption != null) Text(caption!, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
           ]),
         ),
       ),

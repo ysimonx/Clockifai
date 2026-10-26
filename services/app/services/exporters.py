@@ -12,12 +12,17 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 _HEADERS = ["Utilisateur", "Type", "Client", "Projet", "Tâche", "Description", "Tags",
-            "Début", "Fin", "Durée (h)", "Facturable", "Montant"]
+            "Début", "Fin", "Durée (h)", "Facturable", "Montant", "Tokens IA", "Coût IA estimé (USD)"]
 
 
 def member_kind_label(row: dict) -> str:
     """Colonne « Type » : temps d'un agent Claude ou d'une personne (plans/10-suivi-claude-code.md)."""
     return "agent" if row.get("user_kind") == "agent" else "humain"
+
+
+def ai_cost(row: dict) -> float:
+    """Coût IA estimé d'une entrée d'agent, en dollars au tarif de l'API (plans/10-suivi-claude-code.md, D17)."""
+    return (row.get("ai_cost_micros") or 0) / 1e6
 
 
 def _amount(row: dict) -> float:
@@ -48,36 +53,44 @@ def build_xlsx(rows: list[dict], start: date, end: date) -> bytes:
             round((r["duration_seconds"] or 0) / 3600, 2),
             "oui" if r["billable"] else "non",
             _amount(r),
+            r.get("ai_tokens") or None,
+            round(ai_cost(r), 4) if r.get("ai_cost_micros") is not None else None,
         ])
     for row in ws.iter_rows(min_row=4, min_col=8, max_col=9):
         for cell in row:
             cell.number_format = "yyyy-mm-dd hh:mm"
-    for col, width in enumerate([22, 9, 18, 22, 18, 40, 18, 17, 17, 10, 10, 12], start=1):
+    for col, width in enumerate([22, 9, 18, 22, 18, 40, 18, 17, 17, 10, 10, 12, 12, 14], start=1):
         ws.column_dimensions[get_column_letter(col)].width = width
     ws.freeze_panes = "A4"
 
     # Feuille résumé par projet
     summary = wb.create_sheet("Résumé")
-    summary.append(["Projet", "Client", "Heures", "Montant"])
+    summary.append(["Projet", "Client", "Heures", "Montant", "Coût IA estimé (USD)"])
     for cell in summary[1]:
         cell.font = Font(bold=True)
-    agg: dict[tuple, list[float]] = defaultdict(lambda: [0.0, 0.0])
-    for r in rows:
-        key = (r["project_name"] or "(sans projet)", r["client_name"] or "")
-        agg[key][0] += (r["duration_seconds"] or 0) / 3600
-        agg[key][1] += _amount(r)
-    for (project, client), (hours, amount) in sorted(agg.items()):
-        summary.append([project, client, round(hours, 2), round(amount, 2)])
-    total_hours = sum(v[0] for v in agg.values())
-    total_amount = sum(v[1] for v in agg.values())
-    summary.append(["Total", "", round(total_hours, 2), round(total_amount, 2)])
+    agg = _by_project(rows)
+    for (project, client), (hours, amount, cost) in sorted(agg.items()):
+        summary.append([project, client, round(hours, 2), round(amount, 2), round(cost, 2)])
+    summary.append(["Total", "", round(sum(v[0] for v in agg.values()), 2), round(sum(v[1] for v in agg.values()), 2),
+                    round(sum(v[2] for v in agg.values()), 2)])
     summary[summary.max_row][0].font = Font(bold=True)
-    for col, width in enumerate([28, 22, 10, 12], start=1):
+    for col, width in enumerate([28, 22, 10, 12, 14], start=1):
         summary.column_dimensions[get_column_letter(col)].width = width
 
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+def _by_project(rows: list[dict]) -> dict[tuple, list[float]]:
+    """Heures, montant et coût IA estimé par (projet, client)."""
+    agg: dict[tuple, list[float]] = defaultdict(lambda: [0.0, 0.0, 0.0])
+    for r in rows:
+        key = (r["project_name"] or "(sans projet)", r["client_name"] or "")
+        agg[key][0] += (r["duration_seconds"] or 0) / 3600
+        agg[key][1] += _amount(r)
+        agg[key][2] += ai_cost(r)
+    return agg
 
 
 _PDF_TEMPLATE = """
@@ -99,12 +112,16 @@ _PDF_TEMPLATE = """
 <div class="sub">Du {{ start.strftime('%d/%m/%Y') }} au {{ end.strftime('%d/%m/%Y') }} — {{ rows|length }} entrée(s)</div>
 
 <table class="summary">
-  <tr><th>Projet</th><th>Client</th><th class="num">Heures</th><th class="num">Montant</th></tr>
+  <tr><th>Projet</th><th>Client</th><th class="num">Heures</th><th class="num">Montant</th>
+    {% if has_ai %}<th class="num">Coût IA estimé (USD)</th>{% endif %}</tr>
   {% for s in summary %}
-  <tr><td>{{ s.project }}</td><td>{{ s.client }}</td><td class="num">{{ '%.2f' % s.hours }}</td><td class="num">{{ '%.2f' % s.amount }}</td></tr>
+  <tr><td>{{ s.project }}</td><td>{{ s.client }}</td><td class="num">{{ '%.2f' % s.hours }}</td><td class="num">{{ '%.2f' % s.amount }}</td>
+    {% if has_ai %}<td class="num">{{ '%.2f' % s.ai_cost }}</td>{% endif %}</tr>
   {% endfor %}
-  <tr class="totals"><td>Total</td><td></td><td class="num">{{ '%.2f' % total_hours }}</td><td class="num">{{ '%.2f' % total_amount }}</td></tr>
+  <tr class="totals"><td>Total</td><td></td><td class="num">{{ '%.2f' % total_hours }}</td><td class="num">{{ '%.2f' % total_amount }}</td>
+    {% if has_ai %}<td class="num">{{ '%.2f' % total_ai_cost }}</td>{% endif %}</tr>
 </table>
+{% if has_ai %}<div class="sub">Coût IA : tokens des entrées d'agent Claude au tarif de l'API d'Anthropic, en dollars US (estimation).</div>{% endif %}
 
 <table>
   <thead><tr>
@@ -133,14 +150,12 @@ def build_pdf(rows: list[dict], start: date, end: date, workspace_id: str) -> by
 
     for r in rows:
         r["amount"] = _amount(r)
-    agg: dict[tuple, list[float]] = defaultdict(lambda: [0.0, 0.0])
-    for r in rows:
-        key = (r["project_name"] or "(sans projet)", r["client_name"] or "")
-        agg[key][0] += (r["duration_seconds"] or 0) / 3600
-        agg[key][1] += r["amount"]
-    summary = [{"project": k[0], "client": k[1], "hours": v[0], "amount": v[1]} for k, v in sorted(agg.items())]
+    agg = _by_project(rows)
+    summary = [{"project": k[0], "client": k[1], "hours": v[0], "amount": v[1], "ai_cost": v[2]}
+               for k, v in sorted(agg.items())]
     html = render_template_string(
         _PDF_TEMPLATE, rows=rows, start=start, end=end, summary=summary, kind=member_kind_label,
         total_hours=sum(v[0] for v in agg.values()), total_amount=sum(v[1] for v in agg.values()),
+        total_ai_cost=sum(v[2] for v in agg.values()), has_ai=any(r.get("ai_tokens") for r in rows),
     )
     return HTML(string=html).write_pdf()

@@ -22,6 +22,52 @@
   "agentRestored": "Agent restauré : les sessions Claude Code de son pilote produisent de nouveau du temps.",
   "agents": "Agents",
   "agentsHelp": "Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).",
+  "aiUsage": "Usage IA",
+  "aiUsageHelp": "Tokens consommés par Claude et coût estimé au tarif de l'API d'Anthropic, en dollars US. Avec un abonnement Claude (Pro, Max), ce n'est pas une dépense réelle.",
+  "aiTokens": "{tokens} tokens",
+  "@aiTokens": {
+    "placeholders": {
+      "tokens": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCostEstimated": "Coût IA estimé",
+  "aiRequests": "{count, plural, =1{1 appel} other{{count} appels}}",
+  "@aiRequests": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiUsageBreakdown": "Entrée {input} · sortie {output} · cache écrit {written} · cache lu {read}",
+  "@aiUsageBreakdown": {
+    "placeholders": {
+      "input": {
+        "type": "String"
+      },
+      "output": {
+        "type": "String"
+      },
+      "written": {
+        "type": "String"
+      },
+      "read": {
+        "type": "String"
+      }
+    }
+  },
+  "aiUnknownPrice": "tarif inconnu",
+  "aiFastMode": "mode rapide",
+  "aiEffort": "effort {level}",
+  "@aiEffort": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
   "agentsWorking": "Claude travaille",
   "agentsWorkingHelp": "Sessions Claude Code en cours de votre agent. Sans activité pendant 10 minutes, une session se clôt à l'heure de sa dernière action. Touchez une session pour changer son projet, lui créer une tâche ou changer sa description.",
   "agentTimeOf": "Temps de {name} : vous pouvez corriger ses entrées, pas en ajouter.",

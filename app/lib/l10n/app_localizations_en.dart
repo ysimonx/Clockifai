@@ -81,6 +81,53 @@ class AppLocalizationsEn extends AppLocalizations {
       'Claude agents: their time is recorded by Claude Code, one agent per person who connected a computer (Settings › Integrations).';
 
   @override
+  String get aiUsage => 'AI usage';
+
+  @override
+  String get aiUsageHelp =>
+      'Tokens used by Claude and cost estimated at Anthropic API prices, in US dollars. With a Claude subscription (Pro, Max), this is not an actual expense.';
+
+  @override
+  String aiTokens(String tokens) {
+    return '$tokens tokens';
+  }
+
+  @override
+  String get aiCostEstimated => 'Estimated AI cost';
+
+  @override
+  String aiRequests(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count calls',
+      one: '1 call',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiUsageBreakdown(
+    String input,
+    String output,
+    String written,
+    String read,
+  ) {
+    return 'Input $input · output $output · cache write $written · cache read $read';
+  }
+
+  @override
+  String get aiUnknownPrice => 'unknown price';
+
+  @override
+  String get aiFastMode => 'fast mode';
+
+  @override
+  String aiEffort(String level) {
+    return '$level effort';
+  }
+
+  @override
   String get agentsWorking => 'Claude is working';
 
   @override

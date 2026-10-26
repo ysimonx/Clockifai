@@ -2,11 +2,17 @@ import 'package:drift/drift.dart';
 
 import '../drift/database.dart';
 
-/// Une entrée de temps et les identifiants de ses tags.
+/// Une entrée de temps, les identifiants de ses tags et, pour une entrée d'agent Claude, son usage IA (plan 10, D17).
 class EntryRow {
-  const EntryRow(this.entry, this.tagIds);
+  const EntryRow(this.entry, this.tagIds, {this.aiTokens = 0, this.aiCostMicros});
   final TimeEntry entry;
   final List<String> tagIds;
+
+  /// Tokens traités (entrée, sortie, écriture et lecture du cache) ; 0 sans usage connu.
+  final int aiTokens;
+
+  /// Coût estimé au tarif de l'API, en millionièmes de dollar ; null sans tarif ni usage.
+  final int? aiCostMicros;
 
   int get seconds {
     final e = entry;
@@ -89,6 +95,14 @@ class TimeEntryRepository {
     return q.watch();
   }
 
+  /// Usage IA d'une entrée d'agent, par modèle et effort (les plus gros d'abord).
+  Stream<List<AgentUsageRow>> watchUsage(String entryId) {
+    final q = db.select(db.agentUsage)
+      ..where((u) => u.timeEntryId.equals(entryId) & u.deletedAt.isNull())
+      ..orderBy([(u) => OrderingTerm.desc(u.costMicros), (u) => OrderingTerm.asc(u.model)]);
+    return q.watch();
+  }
+
   /// Entrées démarrées dans [from, to[ (UTC), les plus récentes d'abord.
   /// [userId] null = toute l'équipe (selon ce que la sync a fourni).
   Stream<List<EntryRow>> watchEntries({
@@ -114,10 +128,10 @@ class TimeEntryRepository {
     return db
         .customSelect(
           'SELECT te.*, (SELECT group_concat(tet.tag_id) FROM time_entry_tags tet '
-          'WHERE tet.time_entry_id = te.id) AS tag_ids '
+          'WHERE tet.time_entry_id = te.id) AS tag_ids, $_aiColumns '
           'FROM time_entries te WHERE $where ORDER BY unixepoch(te.start_at) DESC',
           variables: vars,
-          readsFrom: {db.timeEntries, db.timeEntryTags},
+          readsFrom: {db.timeEntries, db.timeEntryTags, db.agentUsage},
         )
         .watch()
         .map((rows) => rows.map(_toEntryRow).toList());
@@ -145,10 +159,18 @@ class TimeEntryRepository {
     });
   }
 
+  /// Usage IA cumulé de l'entrée `te` (D17).
+  static const _aiColumns = '(SELECT SUM(COALESCE(au.input_tokens, 0) + COALESCE(au.output_tokens, 0) '
+      '+ COALESCE(au.cache_write_5m_tokens, 0) + COALESCE(au.cache_write_1h_tokens, 0) + COALESCE(au.cache_read_tokens, 0)) '
+      'FROM agent_usage au WHERE au.time_entry_id = te.id AND au.deleted_at IS NULL) AS ai_tokens, '
+      '(SELECT SUM(au.cost_micros) FROM agent_usage au WHERE au.time_entry_id = te.id AND au.deleted_at IS NULL) '
+      'AS ai_cost_micros';
+
   EntryRow _toEntryRow(QueryRow row) {
     final entry = db.timeEntries.map(row.data);
     final raw = row.data['tag_ids'] as String?;
-    return EntryRow(entry, raw == null || raw.isEmpty ? const [] : raw.split(','));
+    return EntryRow(entry, raw == null || raw.isEmpty ? const [] : raw.split(','),
+        aiTokens: row.data['ai_tokens'] as int? ?? 0, aiCostMicros: row.data['ai_cost_micros'] as int?);
   }
 
   /// Temps total (terminé) par projet : clé null = sans projet.

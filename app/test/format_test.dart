@@ -1,4 +1,5 @@
 import 'package:clockifai/core/format.dart';
+import 'package:clockifai/features/time_entries/ai_usage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -40,5 +41,14 @@ void main() {
   test('colorFromHex', () {
     expect(colorFromHex('#FF0000').toARGB32(), 0xFFFF0000);
     expect(colorFromHex('nope').toARGB32(), 0xFF3B82F6);
+  });
+
+  test('usage IA : nom du modèle, tokens et coût en dollars (plan 10, D17)', () {
+    expect(modelLabel('claude-opus-5-5'), 'Opus 5.5');
+    expect(modelLabel('claude-haiku-4-5-20251001'), 'Haiku 4.5');
+    expect(modelLabel('claude-fable-5'), 'Fable 5');
+    expect(modelLabel('<synthetic>'), '<synthetic>');
+    expect(formatTokens(1234567, 'en'), '1.23M');
+    expect(formatAiCost(4560000, 'en'), r'$4.56');
   });
 }

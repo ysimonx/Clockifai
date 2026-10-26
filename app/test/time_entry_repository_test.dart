@@ -241,4 +241,38 @@ void main() {
     expect(groups.map((g) => g.label), ['Site web', '—']);
     catalog.dispose();
   });
+
+  test('usage IA d\'une entrée d\'agent : cumulé sur la ligne et dans le rapport (plan 10, D17)', () async {
+    final catalogRepo = CatalogRepository(db);
+    final claude = await repo.createManual(
+      workspaceId: ws, userId: 'agent-1', draft: EntryDraft(description: 'Export PDF'),
+      start: DateTime.utc(2026, 10, 11, 9), end: DateTime.utc(2026, 10, 11, 10),
+    );
+    await repo.createManual(
+      workspaceId: ws, userId: me, draft: EntryDraft(description: 'Relecture'),
+      start: DateTime.utc(2026, 10, 11, 11), end: DateTime.utc(2026, 10, 11, 12),
+    );
+    Future<void> usage(String model, {int? cost, DateTime? deletedAt}) => db.into(db.agentUsage).insert(AgentUsageCompanion.insert(
+          workspaceId: ws, timeEntryId: claude, userId: 'agent-1', model: model,
+          inputTokens: const Value(10), outputTokens: const Value(2000), cacheWrite5mTokens: const Value(1000),
+          cacheWrite1hTokens: const Value(20000), cacheReadTokens: const Value(300000), costMicros: Value(cost),
+          deletedAt: Value(deletedAt),
+        ));
+    await usage('claude-opus-5-5', cost: 265040);
+    await usage('claude-futur-9'); // tarif inconnu : tokens comptés, pas de coût
+    await usage('claude-haiku-5-5', cost: 8126, deletedAt: DateTime.utc(2026, 10, 12)); // usage passé à une autre entrée
+
+    final rows = await repo.watchEntries(workspaceId: ws, from: DateTime.utc(2026, 10, 11), to: DateTime.utc(2026, 10, 12)).first;
+    final agent = rows.singleWhere((r) => r.entry.id == claude);
+    expect(agent.aiTokens, 2 * 323010);
+    expect(agent.aiCostMicros, 265040);
+    final human = rows.singleWhere((r) => r.entry.id != claude);
+    expect((human.aiTokens, human.aiCostMicros), (0, null));
+    expect((await repo.watchUsage(claude).first).map((u) => u.model), ['claude-opus-5-5', 'claude-futur-9']);
+
+    final catalog = CatalogController(catalogRepo, WorkspaceRepository(db), TeamRepository(db))..bind(ws);
+    final t = ReportCalculator(catalog: catalog, roundingMinutes: 0, applyRounding: false).totals(rows);
+    expect((t.aiTokens, t.aiCostMicros), (2 * 323010, 265040));
+    catalog.dispose();
+  });
 }

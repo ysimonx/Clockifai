@@ -1,7 +1,7 @@
 # Suivi du temps : Claude et moi (hooks, extension VSCode, connecteur MCP) — plan 10
 
-> Statut : **en cours** (lot 1 commencé le 23 octobre 2026, branche `plan-10-lot-1`, fait le 24 octobre 2026).
-> Les lots 2, 3, 4 et 7 sont validés, les lots 5 et 6 restent envisagés.
+> Statut : **en cours** (lot 1 commencé le 23 octobre 2026, branche `plan-10-lot-1`, fait le 24 octobre 2026 ;
+> lot 7, usage IA, fait le 26 octobre 2026). Les lots 2, 3 et 4 sont validés, les lots 5 et 6 restent envisagés.
 >
 > Objectif : mesurer, projet par projet, **deux temps distincts** :
 > - le **temps de Claude**, pendant que les agents Claude Code travaillent, y compris quand on a quitté la fenêtre ;
@@ -458,6 +458,37 @@ coût de l'IA par projet et par client, et pouvoir le refacturer.
   sur la carte de l'agent (page Équipe).
 - **Facturation**, plus tard : proposer le coût IA comme ligne de facture (au coût, ou avec une marge), à côté
   des heures.
+- **Décidé et fait** (26 octobre 2026, lot 7) :
+  - **Lecture** : au `Stop`, au `SubagentStop` et au `SessionEnd`, la transcription de la session et celles de ses
+    sous-agents (`<dossier>/<session>/subagents/*.jsonl`, Claude Code 2.1), depuis la position gardée dans
+    `~/.cache/clockifai/usage/`, jusqu'à la dernière ligne complète. Un `message.id` déjà vu (les 200 derniers) ou
+    un modèle qui n'est pas `claude…` (`<synthetic>`) est ignoré. Une transcription plus courte que la position
+    (réécrite) n'est pas recomptée.
+  - **Cumul par tranche de 5 minutes** de la transcription (horodatage de la ligne) et par (modèle, effort,
+    vitesse), plutôt qu'un total par `Stop` : l'événement est daté de la dernière ligne de sa tranche, donc
+    rattaché à l'entrée qui couvre cette heure, même pour une longue réponse ou une session déjà en cours à
+    l'installation du plugin (le serveur refuse au-delà de 7 jours). Id : `uuid5(session, dernier message.id,
+    modèle, effort, vitesse)`.
+  - **Compteurs** : `requests`, `input_tokens`, `output_tokens`, `cache_write_5m_tokens`, `cache_write_1h_tokens`
+    (l'écriture en cache n'a pas le même prix à 5 minutes et à 1 heure ; détail absent : 5 minutes),
+    `cache_read_tokens`. La vitesse (`usage.speed`, `fast` en mode rapide) suit le modèle.
+  - **Serveur** (`link_usage`) : à chaque recalcul de la session, le cumul de chaque entrée est refait depuis les
+    événements de la fenêtre de 7 jours. Un usage va à l'entrée qui couvre son heure (la plus récente), sinon à la
+    dernière commencée avant (fin corrigée à la main), sinon à la première ; un usage passé à une autre entrée
+    quitte l'ancienne (`deleted_at`). Une entrée supprimée garde son usage, qui disparaît avec elle des rapports.
+  - **Prix intégrés** (`ai_model_prices`, 0016) : tarifs publics d'Anthropic en dollars, relevés le 26 octobre 2026,
+    mis à jour avec Clockifai par une migration ; pas d'écran de saisie. Un modèle daté prend le tarif de son nom
+    sans date ; un modèle inconnu garde ses tokens et un coût nul (`cost_micros` null, « tarif inconnu »). Mode
+    rapide : tout le tarif multiplié (`fast_multiplier`, ×2 pour Opus 5.5, 5 et 4.8). Non distingués : les prompts
+    de plus de 100 000 tokens de Haiku 5.5 (×5) et l'inférence limitée aux États-Unis (×1,1).
+  - **Coût en dollars**, en millionièmes (`cost_micros`), marqué « estimé, tarif API » : avec un abonnement Claude,
+    ce n'est pas une dépense réelle. Pas de conversion dans la devise du workspace.
+  - **Visibilité** : comme l'entrée, le pilote et ceux qui l'encadrent (`managed_team`) et les managers
+    (`team_data`) ; RLS `user_id = auth.uid() or manages(...)`, écriture par Flask seulement.
+  - **Dans l'app** : « ✦ 12 M tokens · 4,56 $ » sur la ligne d'une entrée d'agent et d'un groupe d'entrées,
+    détail par modèle dans sa fenêtre (« Usage IA »), carte « Coût IA estimé » et coût par regroupement dans les
+    rapports, total de la semaine sur la fiche de l'agent ; colonnes « Tokens IA » et « Coût IA estimé (USD) »
+    dans les exports CSV et Excel, colonne de coût dans le résumé du PDF.
 
 **D18. Claude nomme la tâche de son sujet** (lot 1c, demandé et fait le 24 octobre 2026). Un pilote qui travaille
 sur `main` n'a pas de branche pour distinguer ses sujets, et la tâche de D9 ne pouvait être qu'une tâche existante.
@@ -505,12 +536,15 @@ sur `main` n'a pas de branche pour distinguer ses sujets, et la tâche de D9 ne 
 
 `postgres` n'a que `usage` sur `clockifai_private` (0008). Les tables privées se créent donc dans
 `0012_activity_private.admin.sql`, exécutée en `supabase_admin`, qui les donne ensuite à `postgres` et retire
-les droits de `powersync_role`, `anon` et `authenticated`, comme 0008. Le reste va dans `0013_activity.sql`.
+les droits de `powersync_role`, `anon` et `authenticated`, comme 0008. Le reste va dans `0013_activity.sql`. L'usage IA (D17) arrive avec
+`0016_agent_usage.sql`, qui ajoute aussi le type `agent_usage` aux événements.
 
 | Table | Colonnes | Sync |
 |---|---|---|
 | `clockifai_private.api_tokens` (0012) | `id`, `workspace_id`, `user_id`, `name`, `token_hash` (unique), `last_used_at`, `created_at`, `revoked_at` | non |
-| `clockifai_private.activity_events` (0012) | `id` (clé d'idempotence : `event_id` généré par le hook ou l'extension, `uuid5(remote_key, sha)` pour un commit), `workspace_id`, `user_id`, `token_id`, `actor` (`agent`, `human`), `kind` (`prompt`, `agent_tool`, `agent_stop`, `agent_wait`, `session_start`, `session_end`, `session_task`, `session_description`, `focus_start`, `focus_alive`, `focus_end`, `edit`, `terminal`, `commit`, `presence`), `occurred_at`, `received_at`, `session_id` (hook) ou `window_id` (extension), `remote_key`, `cwd`, `git_branch`, `sha`, `subject`, `author_email`, `authored_at`, `editor`, `machine`, `active` (présence), `payload` (jsonb : tâche ou description relayée), `excerpt` ; index `(user_id, occurred_at)` et `(session_id, occurred_at)` | non |
+| `clockifai_private.activity_events` (0012) | `id` (clé d'idempotence : `event_id` généré par le hook ou l'extension, `uuid5(remote_key, sha)` pour un commit), `workspace_id`, `user_id`, `token_id`, `actor` (`agent`, `human`), `kind` (`prompt`, `agent_tool`, `agent_stop`, `agent_wait`, `session_start`, `session_end`, `session_task`, `session_description`, `agent_usage` (0016), `focus_start`, `focus_alive`, `focus_end`, `edit`, `terminal`, `commit`, `presence`), `occurred_at`, `received_at`, `session_id` (hook) ou `window_id` (extension), `remote_key`, `cwd`, `git_branch`, `sha`, `subject`, `author_email`, `authored_at`, `editor`, `machine`, `active` (présence), `payload` (jsonb : tâche ou description relayée), `excerpt` ; index `(user_id, occurred_at)` et `(session_id, occurred_at)` | non |
+| `public.agent_usage` (0016, D17) | `workspace_id`, `time_entry_id` (`on delete cascade`), `user_id` (l'agent), `model`, `effort`, `speed`, `requests`, `input_tokens`, `output_tokens`, `cache_write_5m_tokens`, `cache_write_1h_tokens`, `cache_read_tokens`, `cost_micros` (millionièmes de dollar, null sans tarif), + colonnes standard ; unique `nulls not distinct (time_entry_id, model, effort, speed)` | `managed_team`, `team_data` |
+| `public.ai_model_prices` (0016, D17) | `model` (clé), prix en dollars par million de tokens : `input_per_mtok`, `output_per_mtok`, `cache_write_5m_per_mtok`, `cache_write_1h_per_mtok`, `cache_read_per_mtok`, `fast_multiplier`, `priced_on` ; lue par Flask seulement | non |
 | `clockifai_private.agent_tasks` (0014, D18) | `task_id` (clé, `on delete cascade`), `workspace_id`, `session_id`, `name` (nom posé par le serveur) ; index `(session_id)` | non |
 | `public.profiles` (0015, D18) | `+ claude_tasks` (`subject`, `session`, `off` ; défaut `subject`) | `my_profile` (existant) |
 | `clockifai_private.agent_entries` (0012) | `time_entry_id` (clé, `on delete cascade`), `workspace_id`, `agent_user_id`, `session_id`, `remote_key`, `git_branch`, `cwd`, `last_activity_at`, `waiting_since`, `closed_by_idle`, `server_start_at`, `server_end_at`, `server_project_id`, `server_task_id`, `server_description`, `description_source` (`auto`, `claude`), `prompt_count`, `commit_count` ; index `(session_id)` | non |
@@ -930,7 +964,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |
 | 5 Connecteur claude.ai | OAuth (selon Supabase Auth auto-hébergé), publication du connecteur | M, conditionnel | envisagé |
 | 6 Sessions cloud | Hook de dépôt, `POST /api/activity/events/raw` avec filtrage à l'arrivée, guide de réglage de l'environnement (réseau, secret réseau) | S, plus tard (§12) | envisagé |
-| 7 Usage IA (D17) | Lecture de la transcription au `Stop` et `SubagentStop` (totaux par modèle et effort, dédoublonnés par `message.id`), événement `agent_usage`, table répliquée `agent_usage` et ses flux, prix `ai_model_prices`, coût estimé, affichage (entrée, rapports, exports, carte de l'agent) | M | validé |
+| 7 Usage IA (D17) | Lecture de la transcription au `Stop`, `SubagentStop` et `SessionEnd` (totaux par tranche de 5 minutes, modèle, effort et vitesse, dédoublonnés par `message.id`), événement `agent_usage`, table répliquée `agent_usage` et ses flux, prix `ai_model_prices` (0016), coût estimé, affichage (entrée, groupe, rapports, exports, fiche de l'agent), tests unitaires, du plugin, d'intégration et de l'app | M | fait |
 
 Documentation : section « Le temps de Claude Code » du guide (page Membre) et vidéo 6, « Alex et son agent
 Claude » (`demo/videos/6-claude-code.mjs`, 26 octobre 2026). Son historique et sa session en direct passent par
@@ -986,5 +1020,6 @@ Ouvertes :
 2. `send_excerpts` désactivé par défaut (proposé) ?
 3. Règles de workspace : le projet du dépôt (`code_repositories.project_id`, D9) suffit-il, ou faut-il aussi
    des règles par chemin posées par un admin ?
-4. Usage IA (D17) : qui voit les tokens et le coût (le pilote et les managers, ou les managers seulement) ? Prix
-   par défaut intégrés et mis à jour avec Clockifai, ou saisis par chaque installation ?
+4. ~~Usage IA (D17) : qui voit les tokens et le coût ? Prix intégrés ou saisis par chaque installation ?~~
+   Tranché le 26 octobre 2026 : comme l'entrée (le pilote, ses chefs d'équipe, les managers) ; prix intégrés et
+   mis à jour avec Clockifai ; coût en dollars, « estimé, tarif API » (D17).

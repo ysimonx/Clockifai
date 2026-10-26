@@ -561,12 +561,14 @@ paths:
       description: |
         Au plus 200 événements, enregistrés dans `clockifai_private.activity_events` (idempotence par `id`).
         Un événement daté de plus de 7 jours ou de plus de 5 minutes dans le futur est refusé, comme un `kind`
-        inconnu ou un événement d'agent sans `session_id` ; les autres sont acceptés.
+        inconnu, un événement d'agent sans `session_id` ou un `agent_usage` sans modèle ou aux compteurs qui ne
+        sont pas des entiers positifs ; les autres sont acceptés.
 
         Pour chaque session d'agent du lot, le chronomètre (plan 10, D7) recalcule les entrées de l'agent
         Claude du pilote à partir des événements de la session, et les écrit par `agent_entry_write`. Les
-        commits revendiqués par la session sont rattachés à son entrée. Rien n'est écrit pour un agent
-        désactivé ou retiré.
+        commits revendiqués par la session sont rattachés à son entrée. L'usage IA (`agent_usage`, D17) est
+        cumulé dans `public.agent_usage` pour l'entrée qui couvre son heure, par modèle, effort et vitesse, avec
+        un coût estimé au tarif de `public.ai_model_prices`. Rien n'est écrit pour un agent désactivé ou retiré.
       security:
         - apiToken: []
         - supabaseJwt: []
@@ -1076,7 +1078,8 @@ components:
         kind:
           type: string
           enum: [prompt, agent_tool, agent_stop, agent_wait, session_start, session_end, session_task,
-                 session_description, focus_start, focus_alive, focus_end, edit, terminal, commit, presence]
+                 session_description, agent_usage, focus_start, focus_alive, focus_end, edit, terminal, commit,
+                 presence]
         occurred_at: { type: string, format: date-time, description: "Avec fuseau (ex. `Z`)." }
         session_id: { type: string, description: Requis pour un événement d'agent. }
         window_id: { type: string, description: Fenêtre VSCode (extension). }
@@ -1090,7 +1093,7 @@ components:
         duration_ms: { type: integer, minimum: 0, description: "`agent_tool` : durée de l'outil." }
         payload:
           type: object
-          description: "`session_task` : `{task_name}` (nom donné par Claude, 80 caractères : tâche reprise ou créée dans le projet de l'entrée) ou `{task_id, project_id}` ; `session_description` : `{description}`. 2000 caractères JSON au plus."
+          description: "`session_task` : `{task_name}` (nom donné par Claude, 80 caractères : tâche reprise ou créée dans le projet de l'entrée) ou `{task_id, project_id}` ; `session_description` : `{description}` ; `agent_usage` : `{model, effort, speed, requests, input_tokens, output_tokens, cache_write_5m_tokens, cache_write_1h_tokens, cache_read_tokens}` (totaux d'une tranche de 5 minutes de la transcription, entiers positifs ; `effort` et `speed` facultatifs, `speed` vaut `standard` par défaut). 2000 caractères JSON au plus."
         editor: { type: string }
         machine: { type: string }
         active: { type: boolean }

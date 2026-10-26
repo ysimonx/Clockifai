@@ -27,6 +27,10 @@ class ReportGroup {
   int billableSeconds = 0;
   double amount = 0;
   int entries = 0;
+
+  /// Usage IA des entrées d'agent (plan 10, D17) ; coût null tant qu'aucune entrée n'a de tarif connu.
+  int aiTokens = 0;
+  int? aiCostMicros;
 }
 
 /// Calcul des rapports à partir des entrées locales (fonctionne hors ligne).
@@ -50,16 +54,19 @@ class ReportCalculator {
     return secondsOf(r) / 3600 * rate / 100;
   }
 
-  ({int total, int billable, double amount}) totals(List<EntryRow> rows) {
-    var total = 0, billable = 0;
+  ({int total, int billable, double amount, int aiTokens, int? aiCostMicros}) totals(List<EntryRow> rows) {
+    var total = 0, billable = 0, aiTokens = 0;
+    int? aiCost;
     var amount = 0.0;
     for (final r in rows) {
       final s = secondsOf(r);
       total += s;
       if (r.entry.billable) billable += s;
       amount += amountOf(r);
+      aiTokens += r.aiTokens;
+      if (r.aiCostMicros != null) aiCost = (aiCost ?? 0) + r.aiCostMicros!;
     }
-    return (total: total, billable: billable, amount: amount);
+    return (total: total, billable: billable, amount: amount, aiTokens: aiTokens, aiCostMicros: aiCost);
   }
 
   List<ReportGroup> group(List<EntryRow> rows, GroupBy by, {required String noProject, required String noClient, required String noTag, required String noDescription, required String Function(DateTime) dayLabel}) {
@@ -71,6 +78,8 @@ class ReportCalculator {
       if (r.entry.billable) g.billableSeconds += s;
       g.amount += amountOf(r) * share;
       g.entries += 1;
+      g.aiTokens += (r.aiTokens * share).round();
+      if (r.aiCostMicros != null) g.aiCostMicros = (g.aiCostMicros ?? 0) + (r.aiCostMicros! * share).round();
     }
 
     for (final r in rows) {

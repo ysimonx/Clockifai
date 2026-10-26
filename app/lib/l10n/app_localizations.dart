@@ -230,6 +230,54 @@ abstract class AppLocalizations {
   /// **'Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).'**
   String get agentsHelp;
 
+  /// No description provided for @quickEntry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisie express'**
+  String get quickEntry;
+
+  /// No description provided for @quickEntryHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce que vous avez fait, en clair : « 1h20 point hebdo interne »'**
+  String get quickEntryHint;
+
+  /// No description provided for @quickEntryTry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Essayer :'**
+  String get quickEntryTry;
+
+  /// No description provided for @quickEntryHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Durée (1h20, 45min) ou plage (9h-10h30), jour (hier, vendredi), projet ou tâche, #tag, « non facturable » : dans n’importe quel ordre. Entrée pour enregistrer, Échap pour effacer.'**
+  String get quickEntryHelp;
+
+  /// No description provided for @quickDurationMissing.
+  ///
+  /// In fr, this message translates to:
+  /// **'durée ?'**
+  String get quickDurationMissing;
+
+  /// No description provided for @quickProjectMissing.
+  ///
+  /// In fr, this message translates to:
+  /// **'projet ?'**
+  String get quickProjectMissing;
+
+  /// No description provided for @quickInGap.
+  ///
+  /// In fr, this message translates to:
+  /// **'dans un créneau vide'**
+  String get quickInGap;
+
+  /// No description provided for @quickAdded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouté : {description} · {day}, {range}'**
+  String quickAdded(String description, String day, String range);
+
   /// No description provided for @appearance.
   ///
   /// In fr, this message translates to:

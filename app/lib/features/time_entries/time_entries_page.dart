@@ -149,7 +149,7 @@ class _WeekHeader extends StatelessWidget {
         Text(label, style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.outline)),
         const Spacer(),
         Text('${l.weekTotal}: ', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
-        Text(formatClock(total), style: theme.textTheme.titleSmall),
+        Text(formatHm(total), style: theme.textTheme.titleSmall),
       ]),
     );
   }
@@ -189,7 +189,7 @@ class DayCard extends StatelessWidget {
               Text(dayLabel(context, day, today: l.today, yesterday: l.yesterday), style: theme.textTheme.titleSmall),
               const Spacer(),
               Text('${l.total}: ', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
-              Text(formatClock(total), style: theme.textTheme.titleSmall),
+              Text(formatHm(total), style: theme.textTheme.titleSmall),
             ]),
           ),
           for (var i = 0; i < lines.length; i++) ...[
@@ -255,7 +255,8 @@ class EntryTile extends StatelessWidget {
       const SizedBox(width: 12),
       SizedBox(
         width: 72,
-        child: Text(formatClock(row.seconds), textAlign: TextAlign.right, style: theme.textTheme.titleSmall?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
+        // Durées à la minute ; les secondes seulement pour un chronomètre en cours.
+        child: Text(e.endAt == null ? formatClock(row.seconds) : formatHm(row.seconds), textAlign: TextAlign.right, style: theme.textTheme.titleSmall?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
       ),
       if (isMine && showContinue) _ContinueButton(row: row, running: running),
       PopupMenuButton<String>(
@@ -459,7 +460,7 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
           const SizedBox(width: 12),
           SizedBox(
             width: 72,
-            child: Text(formatClock(g.seconds),
+            child: Text(g.rows.any((r) => r.entry.endAt == null) ? formatClock(g.seconds) : formatHm(g.seconds),
                 textAlign: TextAlign.right,
                 style: theme.textTheme.titleSmall?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
           ),

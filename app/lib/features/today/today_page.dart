@@ -19,6 +19,7 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/entry_dialog.dart';
 import 'day_plan.dart';
+import 'quick_entry.dart';
 
 /// « Aujourd'hui », le journal automatique (plans/13-ux-moderne.md, lot 11) : la journée sur une frise, les entrées
 /// saisies, les créneaux vides et les propositions tirées des habitudes, du planning et des sessions de Claude, à
@@ -84,6 +85,8 @@ class _TodayPageState extends State<TodayPage> {
   double _dragDx = 0;
   final _focus = FocusNode(debugLabel: 'journal');
   final _title = TextEditingController();
+  final _quick = TextEditingController();
+  final _quickFocus = FocusNode(debugLabel: 'saisie express');
   String? _titleFor;
   Timer? _tick;
 
@@ -98,9 +101,9 @@ class _TodayPageState extends State<TodayPage> {
     final key = '$ws|$me|$agentId|${_day.toIso8601String()}';
     if (key == _streamsKey) return;
     _streamsKey = key;
-    final next = _day.add(const Duration(days: 1));
+    final next = addDays(_day, 1);
     _mineStream = entriesRepo.watchEntries(
-        workspaceId: ws, userId: me, from: _day.subtract(const Duration(days: 35)), to: next, includeRunning: true);
+        workspaceId: ws, userId: me, from: addDays(_day, -35), to: next, includeRunning: true);
     _agentStream = agentId == null
         ? Stream.value(const <EntryRow>[])
         : entriesRepo.watchEntries(workspaceId: ws, userId: agentId, from: _day, to: next, includeRunning: true);
@@ -122,10 +125,12 @@ class _TodayPageState extends State<TodayPage> {
     _tick?.cancel();
     _focus.dispose();
     _title.dispose();
+    _quick.dispose();
+    _quickFocus.dispose();
     super.dispose();
   }
 
-  DateTime _at(int minutes) => _day.add(Duration(minutes: minutes));
+  DateTime _at(int minutes) => atMinute(_day, minutes);
 
   void _goTo(DateTime day) => setState(() {
         _day = _midnight(day);
@@ -177,7 +182,7 @@ class _TodayPageState extends State<TodayPage> {
       required bool loading}) {
     final l = context.l10n;
     final now = widget.clock();
-    final dayEnd = _day.add(const Duration(days: 1));
+    final dayEnd = addDays(_day, 1);
     final mineRows = rows.where((r) => !r.entry.startAt.toLocal().isBefore(_day) && r.entry.startAt.toLocal().isBefore(dayEnd)).toList();
     final history = [for (final r in rows) if (r.entry.startAt.toLocal().isBefore(_day)) r.entry];
     final plan = planDay(
@@ -346,6 +351,8 @@ class _TodayPageState extends State<TodayPage> {
 
     final hero = _hero(context, plan: plan, drafts: drafts, gaps: gaps, loggedMin: loggedMin, draftMin: draftMin,
         onConfirmAll: () => confirmDrafts(drafts), onReview: () => setState(() => _sel = drafts.firstOrNull?.id));
+    final quick = _quickEntry(context,
+        catalog: catalog, rows: rows, proposed: [for (final b in blocks) if (b.kind != _Kind.logged) b.span], now: now, me: me, ws: ws);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -358,6 +365,8 @@ class _TodayPageState extends State<TodayPage> {
               const SizedBox(height: 16),
               hero,
               const SizedBox(height: 16),
+              quick,
+              const SizedBox(height: 16),
               Focus(
                 focusNode: _focus,
                 onKeyEvent: onKey,
@@ -369,7 +378,7 @@ class _TodayPageState extends State<TodayPage> {
                   gaps: gaps,
                   claude: claudeSpans,
                   isToday: _day == _midnight(now),
-                  nowMin: now.difference(_day).inMinutes,
+                  nowMin: minuteOf(now, _day),
                   commitSpan: commitSpan,
                 ),
               ),
@@ -395,6 +404,164 @@ class _TodayPageState extends State<TodayPage> {
     );
   }
 
+  // ------------------------------------------------------------------ saisie express (lot 3)
+  /// Où ranger [q] : sa plage, sinon le premier créneau vide assez grand de son jour, en laissant d'abord en place
+  /// les propositions affichées ([proposed], jour affiché seulement), puis à leur place, sinon après la dernière entrée.
+  ({DateTime day, Span span, bool inGap})? _slotFor(QuickEntry q, List<EntryRow> rows, DateTime now, List<Span> proposed) {
+    final day = addDays(now, q.dayOffset);
+    if (q.hasRange) return (day: day, span: Span(q.startMinute!, q.endMinute!), inGap: false);
+    final d = q.minutes;
+    if (d == null || d <= 0) return null;
+    final end = addDays(day, 1);
+    final plan = planDay(
+      day: day,
+      now: now,
+      mine: [for (final r in rows) if (!r.entry.startAt.toLocal().isBefore(day) && r.entry.startAt.toLocal().isBefore(end)) r.entry],
+      history: [for (final r in rows) if (r.entry.startAt.toLocal().isBefore(day)) r.entry],
+    );
+    Span? fit(List<Span> taken) => subtract(plan.windows, taken, min: 5).where((g) => g.length >= d).firstOrNull;
+    if (fit([...plan.busy, if (day == _day) ...proposed]) case final g?) return (day: day, span: Span(g.start, g.start + d), inGap: true);
+    if (fit(plan.busy) case final g?) return (day: day, span: Span(g.start, g.start + d), inGap: false);
+    final from = plan.busy.isEmpty ? plan.typical.start : plan.busy.map((s) => s.end).reduce(math.max);
+    return (day: day, span: Span(from, math.min(1440, from + d)), inGap: false);
+  }
+
+  List<String> _examples(CatalogController catalog) {
+    String word(String name) => name.split(RegExp(r'\s+')).firstWhere((w) => w.length >= 5, orElse: () => name.split(' ').last).toLowerCase();
+    final tasks = catalog.tasks.where((t) => t.status == 'active' && catalog.project(t.projectId)?.archived == false).toList();
+    final projects = catalog.activeProjects;
+    return [
+      if (tasks.isNotEmpty) '1h30 ${tasks.first.name.toLowerCase()} ${word(catalog.project(tasks.first.projectId)!.name)}',
+      if (projects.isNotEmpty) '9h-10h30 ${word(projects.last.name)} hier',
+      '45min appel #nf',
+    ];
+  }
+
+  Widget _quickEntry(BuildContext context,
+      {required CatalogController catalog,
+      required List<EntryRow> rows,
+      required List<Span> proposed,
+      required DateTime now,
+      required String me,
+      required String ws}) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    final q = parseQuickEntry(
+      _quick.text,
+      weekday: now.weekday,
+      projects: [for (final p in catalog.activeProjects) QuickProject(p.id, p.name, client: catalog.client(p.clientId)?.name)],
+      tasks: [for (final t in catalog.tasks) if (t.status == 'active') QuickTask(t.id, t.name, t.projectId)],
+      tags: [for (final t in catalog.activeTags) QuickTag(t.id, t.name)],
+    );
+    final slot = q == null ? null : _slotFor(q, rows, now, proposed);
+    final ready = q != null && q.isComplete && slot != null;
+    final project = catalog.project(q?.projectId);
+    final task = catalog.task(q?.taskId);
+
+    Future<void> save() async {
+      if (!ready) return;
+      final billable = q.billable ?? catalog.billableFor(projectId: q.projectId, userId: me);
+      final added = l.quickAdded(q.description.isEmpty ? (project?.name ?? '') : q.description,
+          dayLabel(context, slot.day, today: l.today, yesterday: l.yesterday), '${hm(slot.span.start)} → ${hm(slot.span.end)}');
+      final id = await entriesRepo.createManual(
+        workspaceId: ws,
+        userId: me,
+        start: atMinute(slot.day, slot.span.start),
+        end: atMinute(slot.day, slot.span.end),
+        createdBy: me,
+        draft: EntryDraft(
+          description: q.description,
+          projectId: q.projectId,
+          taskId: q.taskId,
+          billable: billable,
+          hourlyRateCents: catalog.rateFor(projectId: q.projectId, userId: me),
+          tagIds: q.tagIds,
+        ),
+      );
+      if (!mounted) return;
+      _quick.clear();
+      setState(() {});
+      _quickFocus.requestFocus();
+      _snack(added, () => entriesRepo.delete(id));
+    }
+
+    Widget chip(String text, {Color? dot, bool missing = false, bool mono = false}) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: missing ? theme.colorScheme.errorContainer.withValues(alpha: 0.5) : theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            if (dot != null) ...[
+              Container(width: 8, height: 8, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
+              const SizedBox(width: 6),
+            ],
+            Text(text, style: theme.textTheme.labelMedium?.copyWith(fontFeatures: mono ? const [FontFeature.tabularFigures()] : null)),
+          ]),
+        );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Expanded(
+              child: CallbackShortcuts(
+                bindings: {const SingleActivator(LogicalKeyboardKey.escape): () => setState(_quick.clear)},
+                child: TextField(
+                  controller: _quick,
+                  focusNode: _quickFocus,
+                  textInputAction: TextInputAction.done,
+                  style: theme.textTheme.titleMedium,
+                  decoration: InputDecoration(
+                    labelText: l.quickEntry,
+                    hintText: l.quickEntryHint,
+                    prefixIcon: const Icon(Icons.add),
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                  onSubmitted: (_) => save(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            FilledButton(onPressed: ready ? save : null, child: Text(l.save)),
+          ]),
+          const SizedBox(height: 8),
+          if (q == null)
+            Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+              Text(l.quickEntryTry, style: theme.textTheme.bodySmall),
+              for (final ex in _examples(catalog))
+                ActionChip(
+                  label: Text(ex),
+                  onPressed: () => setState(() {
+                    _quick.text = ex;
+                    _quick.selection = TextSelection.collapsed(offset: ex.length);
+                    _quickFocus.requestFocus();
+                  }),
+                ),
+            ])
+          else
+            Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+              chip(q.duration == null ? l.quickDurationMissing : formatHm(q.duration! * 60), missing: q.duration == null, mono: true),
+              chip(project?.name ?? l.quickProjectMissing, dot: project == null ? null : colorFromHex(project.color), missing: project == null && q.description.isEmpty),
+              if (task != null) chip(task.name),
+              // La description seule quand elle dit autre chose que le nom de la tâche.
+              if (q.description.isNotEmpty && fold(q.description) != fold(task?.name ?? '')) chip('« ${q.description} »'),
+              for (final id in q.tagIds) chip('#${catalog.tag(id)?.name ?? ''}'),
+              if (slot != null) ...[
+                chip(dayLabel(context, slot.day, today: l.today, yesterday: l.yesterday)),
+                chip('${hm(slot.span.start)} → ${hm(slot.span.end)}${slot.inGap ? ' · ${l.quickInGap}' : ''}', mono: true),
+              ],
+              chip((q.billable ?? catalog.billableFor(projectId: q.projectId, userId: me)) ? l.billable : l.nonBillable),
+            ]),
+          const SizedBox(height: 6),
+          Text(l.quickEntryHelp, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+        ]),
+      ),
+    );
+  }
+
   void _snack(String message, Future<void> Function() undo) {
     final l = context.l10n;
     ScaffoldMessenger.maybeOf(context)
@@ -411,9 +578,9 @@ class _TodayPageState extends State<TodayPage> {
     final theme = Theme.of(context);
     final locale = context.localeTag;
     final today = _midnight(now);
-    final days = [for (var i = 6; i >= 0; i--) _day.subtract(Duration(days: i))];
+    final days = [for (var i = 6; i >= 0; i--) addDays(_day, -i)];
     int minutesOn(DateTime d) {
-      final end = d.add(const Duration(days: 1));
+      final end = addDays(d, 1);
       return rows
           .where((r) => !r.entry.startAt.toLocal().isBefore(d) && r.entry.startAt.toLocal().isBefore(end))
           .fold(0, (a, r) => a + ((r.entry.endAt ?? now).difference(r.entry.startAt).inMinutes));
@@ -429,7 +596,7 @@ class _TodayPageState extends State<TodayPage> {
         Row(mainAxisSize: MainAxisSize.min, children: [
           IconButton(
             tooltip: MaterialLocalizations.of(context).previousPageTooltip,
-            onPressed: () => _goTo(_day.subtract(const Duration(days: 1))),
+            onPressed: () => _goTo(addDays(_day, -1)),
             icon: const Icon(Icons.chevron_left),
           ),
           Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
@@ -439,7 +606,7 @@ class _TodayPageState extends State<TodayPage> {
           ]),
           IconButton(
             tooltip: MaterialLocalizations.of(context).nextPageTooltip,
-            onPressed: _day.isBefore(today) ? () => _goTo(_day.add(const Duration(days: 1))) : null,
+            onPressed: _day.isBefore(today) ? () => _goTo(addDays(_day, 1)) : null,
             icon: const Icon(Icons.chevron_right),
           ),
           if (_day != today) TextButton(onPressed: () => _goTo(today), child: Text(l.journalBackToToday)),

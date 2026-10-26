@@ -81,6 +81,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Claude agents: their time is recorded by Claude Code, one agent per person who connected a computer (Settings › Integrations).';
 
   @override
+  String get quickEntry => 'Quick entry';
+
+  @override
+  String get quickEntryHint =>
+      'What you did, in plain words: “1h20 weekly meeting internal”';
+
+  @override
+  String get quickEntryTry => 'Try:';
+
+  @override
+  String get quickEntryHelp =>
+      'Duration (1h20, 45min) or range (9h-10h30), day (yesterday, friday), project or task, #tag, “non facturable”: in any order. Enter to save, Esc to clear.';
+
+  @override
+  String get quickDurationMissing => 'duration?';
+
+  @override
+  String get quickProjectMissing => 'project?';
+
+  @override
+  String get quickInGap => 'in an empty slot';
+
+  @override
+  String quickAdded(String description, String day, String range) {
+    return 'Added: $description · $day, $range';
+  }
+
+  @override
   String get appearance => 'Appearance';
 
   @override

@@ -83,6 +83,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).';
 
   @override
+  String get appearance => 'Apparence';
+
+  @override
+  String get appearanceSystem => 'Comme le système';
+
+  @override
+  String get appearanceLight => 'Claire';
+
+  @override
+  String get appearanceDark => 'Sombre';
+
+  @override
   String get journalHeroPending => 'Votre journée est presque prête';
 
   @override

@@ -22,6 +22,10 @@
   "agentRestored": "Agent restored: its pilot's Claude Code sessions record time again.",
   "agents": "Agents",
   "agentsHelp": "Claude agents: their time is recorded by Claude Code, one agent per person who connected a computer (Settings › Integrations).",
+  "appearance": "Appearance",
+  "appearanceSystem": "Same as system",
+  "appearanceLight": "Light",
+  "appearanceDark": "Dark",
   "journalHeroPending": "Your day is almost ready",
   "journalHeroPendingText": "{total} rebuilt, {proposed} of it proposed: {count, plural, =1{1 suggestion to confirm} other{{count} suggestions to confirm}}.",
   "@journalHeroPendingText": {

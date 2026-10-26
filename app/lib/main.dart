@@ -93,12 +93,13 @@ class _ClockifaiAppState extends State<ClockifaiApp> {
         ChangeNotifierProvider.value(value: _locale),
         ChangeNotifierProvider.value(value: _display),
       ],
-      child: Consumer<LocaleController>(
-        builder: (context, locale, _) => MaterialApp.router(
+      child: Consumer2<LocaleController, DisplayPrefs>(
+        builder: (context, locale, display, _) => MaterialApp.router(
           title: 'Clockifai',
           debugShowCheckedModeBanner: false,
           theme: buildTheme(Brightness.light),
           darkTheme: buildTheme(Brightness.dark),
+          themeMode: display.themeMode,
           locale: locale.locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: const [

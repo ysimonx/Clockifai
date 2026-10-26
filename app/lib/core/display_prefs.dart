@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Préférences d'affichage mémorisées sur l'appareil (ni en base, ni synchronisées).
@@ -7,6 +7,7 @@ class DisplayPrefs extends ChangeNotifier {
 
   static const _groupSimilarKey = 'group_similar_entries';
   static const _dismissedKey = 'journal_dismissed';
+  static const _themeKey = 'theme_mode';
   final SharedPreferences _prefs;
 
   /// Suivi du temps : entrées similaires d'une journée réunies sur une ligne dépliable (activé par défaut).
@@ -14,6 +15,22 @@ class DisplayPrefs extends ChangeNotifier {
 
   Future<void> setGroupSimilarEntries(bool value) async {
     await _prefs.setBool(_groupSimilarKey, value);
+    notifyListeners();
+  }
+
+  /// Apparence : celle du système (par défaut), ou claire ou sombre quoi qu'en dise le système.
+  ThemeMode get themeMode => switch (_prefs.getString(_themeKey)) {
+        'light' => ThemeMode.light,
+        'dark' => ThemeMode.dark,
+        _ => ThemeMode.system,
+      };
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    if (mode == ThemeMode.system) {
+      await _prefs.remove(_themeKey);
+    } else {
+      await _prefs.setString(_themeKey, mode == ThemeMode.dark ? 'dark' : 'light');
+    }
     notifyListeners();
   }
 

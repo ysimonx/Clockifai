@@ -16,6 +16,8 @@ la date d'arrivée de chaque évolution.
   habituelle et des propositions tirées de vos habitudes, du planning et des sessions de Claude, à confirmer d'un
   geste (ou une par une, avec « Pourquoi ce bloc ») ; glisser pour créer ou ajuster une entrée, raccourcis clavier,
   sept derniers jours en anneaux (26 octobre 2026).
+- Paramètres : **Apparence**, comme le système (par défaut), claire ou sombre, réglée sur chaque appareil
+  (26 octobre 2026).
 
 ## [0.2.2] — 2026-10-26
 

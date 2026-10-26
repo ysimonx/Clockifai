@@ -17,6 +17,9 @@ la date d'arrivée de chaque évolution.
 - Changer le taux horaire d'un projet ou d'une personne propose de l'appliquer aux entrées pas encore
   facturées qui ont gardé un autre taux (« Appliquer le nouveau taux ? ») (25 octobre 2026).
 
+- Guide utilisateur : sixième vidéo, **Claude Code**, sur la page Membre (connecter un poste, une session en
+  direct, les tâches de Claude, contrôler, corriger et facturer le temps de son agent) (26 octobre 2026).
+
 ### Modifié
 
 - Rapports, vue **Détaillé** : les entrées jour par jour, avec le total de chaque journée ; les entrées

@@ -2,7 +2,7 @@
 //
 //   make up && make app-build-web        # pile locale et build web à jour
 //   cd demo && npm install
-//   node record.mjs                      # les 5 vidéos (données réinitialisées avant chacune)
+//   node record.mjs                      # les 6 vidéos (données réinitialisées avant chacune)
 //   node record.mjs 2 3                  # seulement les vidéos 2 et 3
 //
 // Résultats : demo/out/<n>-<nom>.mp4, sans voix, avec incrustations explicatives, et
@@ -26,6 +26,7 @@ const videos = {
   3: () => import('./videos/3-manager.mjs'),
   4: () => import('./videos/4-gestion-workspace.mjs'),
   5: () => import('./videos/5-admin-installation.mjs'),
+  6: () => import('./videos/6-claude-code.mjs'),
 };
 const wanted = process.argv.slice(2).filter((a) => videos[a]);
 const ids = wanted.length ? wanted : Object.keys(videos);

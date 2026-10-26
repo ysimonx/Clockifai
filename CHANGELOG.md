@@ -10,6 +10,8 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.2] — 2026-10-26
+
 ### Ajouté
 
 - Claude Code : **usage IA** de chaque entrée de l'agent, lu sur le poste dans la transcription (jamais le texte

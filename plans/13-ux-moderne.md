@@ -1,7 +1,7 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
 > Statut : **envisagé** (26 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
-> (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), dix écrans dont cinq interactifs.
+> (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
 
@@ -51,6 +51,30 @@ Identité visuelle des maquettes, à confirmer : Geist (interface) et Geist Mono
 froid, encre presque noire pour les actions principales, couleurs de projet de la palette catégorielle validée
 (contraste et daltonisme), Claude repéré par une trame et une étoile violette plutôt que par une couleur de plus.
 
+## Plus loin : la journée se remplit seule, on valide
+
+Même rapide, une saisie reste une saisie. Rangée « 0 » du canevas : Clockifai reconstitue la journée à partir de
+traces qu'il a déjà ou peut avoir, et la personne valide.
+
+| Écran | Ce qui change |
+|---|---|
+| **Journal automatique** | Frise horizontale de la journée : une ligne de traces (agenda, temps actif dans VSCode, commits), la ligne « Vous » et la ligne « Claude ». Les blocs proposés sont en pointillé avec leur source ; « Tout confirmer » en un geste, ou une par une. Chaque bloc dit pourquoi il existe (« VSCode actif sur appli-rdv de 11:14 à 11:49, deux commits de Claude relus »). Manipulation directe : glisser sur le vide crée un bloc, tirer un bord l'ajuste ; au clavier, Entrée confirme, Retour arrière ignore, les flèches décalent ou allongent. Semaine en anneaux (complète, partielle, proposée). Thème clair et nuit. |
+| **Demander à Clockifai** (⌘J) | Questions en français (« combien sur la boulangerie ce mois-ci ? », « combien Claude m'a coûté ? ») et demandes de modification (« mets mes deux dernières heures sur Dupuis », « prépare la facture de Dupuis ») ; une modification est toujours montrée en aperçu avant d'être appliquée, puis annulable. |
+| **Chantier : arrivée et départ** | Le téléphone détecte l'entrée et la sortie du périmètre du chantier (heures seulement, jamais la position) ; le soir, la journée est prête : heures réelles, ou arrondies au planning selon la règle de l'entreprise ; tâche reprise du planning ; un bouton pour valider. |
+
+Ce que cela demande :
+
+- **Traces déjà disponibles** : sessions et commits de Claude (plan 10), planning (`schedule_assignments`),
+  habitudes (historique des entrées). **À construire** : temps actif dans l'éditeur (plan 10, lot 2, extension
+  VSCode), agenda (Google, Microsoft : heure et titre seulement), présence sur chantier (géorepérage iOS et Android,
+  autorisation « toujours », opt-in, désactivable).
+- **Brouillons** : une entrée proposée n'est pas une entrée ; elle vit à part (`time_suggestions`, plan 10) jusqu'à la
+  validation, n'entre ni dans les rapports, ni dans les factures, ni dans les feuilles soumises.
+- **Assistant** : Claude par l'API, avec des outils côté Flask (lire un rapport, préparer une modification) ; les
+  droits sont ceux de la personne (`require_workspace`, RLS) ; aucune écriture sans aperçu confirmé ; coût et
+  confidentialité à afficher (les données envoyées au modèle sont des agrégats, pas les descriptions brutes, à
+  trancher).
+
 ## Lots
 
 | Lot | Contenu | Taille | État |
@@ -65,9 +89,12 @@ froid, encre presque noire pour les actions principales, couleurs de projet de l
 | 8 Équipe | Tableau des retards, relance par notification, approbation avec écart au planning | M | envisagé |
 | 9 Mobile chantier | « Comme hier », durée au pouce, dictée, glisser, badge hors ligne, pointage d'équipe repensé | M | envisagé |
 | 10 Identité visuelle | Polices, jetons de couleur, mode sombre, densité | S/M | envisagé |
+| 11 Journal automatique | Brouillons tirés des traces, frise manipulable (glisser, tirer les bords, clavier), « pourquoi ce bloc », validation en un geste ; dépend des lots 2 et 4 | L | envisagé |
+| 12 Demander à Clockifai | Assistant ⌘J : questions sur les rapports, modifications avec aperçu et Annuler ; Claude par l'API, outils côté Flask | M/L | envisagé |
+| 13 Présence chantier | Géorepérage du chantier sur téléphone (opt-in), journée prête le soir, arrondi au planning selon l'entreprise | M/L | envisagé |
 
 Ordre proposé : 1 (gains immédiats, sans changer la structure), puis 2 et 3 ensemble (le cœur de la proposition),
-puis 5 et 6, puis 4, 7, 8, 9 ; 10 au fil de l'eau.
+puis 4 et 11 (la journée qui se remplit seule), 5 et 6, puis 12, 7, 8, 9, 13 ; 10 au fil de l'eau.
 
 ## Mesures
 
@@ -82,3 +109,6 @@ puis 5 et 6, puis 4, 7, 8, 9 ; 10 au fil de l'eau.
 2. Saisie express : quelle grammaire minimale en anglais, et faut-il les tags et la facturation dans la ligne ?
 3. Agenda : quelles sources, et lire seulement l'heure et le titre des événements ?
 4. Identité visuelle : garder le bleu actuel comme couleur de marque, ou passer à l'encre et réserver le bleu aux projets ?
+5. Journal automatique : les brouillons s'affichent-ils d'office, ou seulement après un premier réglage des sources ?
+6. Assistant : quelles données peuvent partir vers le modèle (agrégats seulement, ou aussi les descriptions) ?
+7. Présence chantier : quelles entreprises l'accepteraient, et faut-il l'accord écrit de chaque compagnon ?

@@ -143,8 +143,13 @@ app-android: ## Lance « Clockifai Dev » sur Android (émulateur ou téléphone
 app-android-keystore: ## Crée la clé d'envoi Google Play (une fois, hors dépôt ; à sauvegarder)
 	sh app/tool/android_keystore.sh
 
-app-dist-android: ## « Clockifai » pour Google Play : app bundle (.aab) de production signé
+app-dist-android: ## « Clockifai » pour Google Play : app bundle (.aab) signé, envoyé si compte de service
 	sh app/tool/android_dist.sh
+
+app-upload-android: ## Envoie un .aab déjà construit sur Google Play (AAB=…, le plus récent par défaut)
+	uv run --script app/tool/play_upload.py $(if $(AAB),$(abspath $(AAB)))
+
+app-dist-stores: app-dist-testflight app-dist-android ## iPhone, Mac et Android, en une commande
 
 app-install-macos: ## Copie « Clockifai » (prod) dans /Applications
 	@test -d app/build/macos/Build/Products/Release/Clockifai.app || (echo "Lancer d'abord make app-build-macos" && exit 1)

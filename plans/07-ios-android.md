@@ -37,7 +37,10 @@ Comme pour macOS (`06-macos-barre-de-menus.md`) : une version de développement 
    **clé d'envoi** (Play App Signing : Google détient la clé de signature finale). La clé est créée une fois par
    `make app-android-keystore` dans `~/.config/clockifai/android/` (`upload.jks`, `key.properties`), hors du dépôt,
    et doit être sauvegardée. Le script vérifie que le bundle porte bien l'empreinte SHA-256 de cette clé (et non la clé
-   de debug, repli de `build.gradle.kts` sur un poste sans clé).
+   de debug, repli de `build.gradle.kts` sur un poste sans clé). Avec un compte de service Google
+   (`~/.config/clockifai/android/play-service-account.json`, invité dans la Play Console), `app/tool/play_upload.py`
+   l'envoie ensuite sur la piste de test interne (API Google Play Developer, notes tirées du CHANGELOG) ;
+   `make app-upload-android` renvoie un .aab déjà construit, `make app-dist-stores` enchaîne les trois plateformes.
 5. **Numéro de build** croissant exigé par TestFlight et Google Play : par défaut, minutes écoulées depuis le
    2026-01-01 UTC (`BUILD_NUMBER=…` pour forcer) ; la version affichée reste celle de `pubspec.yaml`.
 6. **Outils** : SDK Android 36 (licences acceptées), simulateur iOS 27. Avec Xcode 27, l'app Simulator est remplacée

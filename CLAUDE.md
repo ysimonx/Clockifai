@@ -38,6 +38,7 @@ make app-ios / make app-android-emulator && make app-android   # « Clockifai De
 make app-dist-ios         # « Clockifai » → App Store Connect / TestFlight (compte Xcode)
 make app-dist-testflight  # iPhone puis Mac ; clé d'API App Store Connect dans ~/.config/clockifai/apple/ si présente
 make app-android-keystore && make app-dist-android            # clé d'envoi (une fois) puis .aab Google Play
+make app-dist-stores      # iPhone, Mac, Android ; le .aab part sur Google Play si compte de service (play_upload.py)
 make app-analyze / make app-test
 make docs-check           # routes Flask ↔ openapi.yaml, liens et scènes vidéo du guide, statuts des plans
 make docs-serve           # guide servi comme en prod : http://localhost:3200/guide/

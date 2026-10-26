@@ -3,7 +3,7 @@
 // Claude vient de demo/claude-history.mjs, et la session en direct est envoyée pendant le tournage avec le jeton
 // que la scène « connexion » vient de créer, comme le ferait le plugin.
 import { helpers, record } from '../lib/helpers.mjs';
-import { claudeSession, postEvents } from '../lib/claude.mjs';
+import { claudeSession, postEvents, usagePayload } from '../lib/claude.mjs';
 import { PUBLIC_APP, PUBLIC_URL, routePublic, startPublicApp } from '../lib/public-instance.mjs';
 
 export const warmup = ['alex@demo.clockifai.fr'];
@@ -28,7 +28,7 @@ export async function run(browser, failures) {
         'Connecter son ordinateur, une fois par poste',
         'Chaque session de Claude Code devient du temps, tout seul',
         'Claude nomme la tâche de son travail',
-        'Contrôler et corriger le temps de son agent',
+        'Contrôler et corriger le temps de son agent, et ce qu’il coûte',
         'Facturer ses heures et celles de Claude',
       ], 7000);
       await h.hideCard();
@@ -74,7 +74,7 @@ export async function run(browser, failures) {
           '',
           '# Claude nomme la tâche de ce travail : « Commande de gâteaux »',
         ], 7000);
-        // Ce qu'envoie le plugin : début de session, prompt, tâche nommée par Claude, puis ses outils.
+        // Ce qu'envoie le plugin : début de session, prompt, tâche nommée par Claude, ses outils et son usage IA.
         const live = claudeSession('site-boulangerie');
         const t0 = new Date(Date.now() - 60000);
         const at = (s) => new Date(t0.getTime() + s * 1000);
@@ -82,8 +82,10 @@ export async function run(browser, failures) {
           live.ev('session_start', at(0), { payload: { source: 'startup' } }), live.ev('prompt', at(5)),
           live.ev('session_task', at(30), { payload: { task_name: 'Commande de gâteaux' } }),
           live.ev('agent_tool', at(55), { duration_ms: 15000 }),
+          live.ev('agent_usage', at(56), { payload: usagePayload(0.5) }),
         ]);
-        heartbeat = setInterval(() => postEvents(token, [live.ev('agent_tool', new Date(), { duration_ms: 15000 })]).catch(() => {}), 30000);
+        heartbeat = setInterval(() => postEvents(token, [live.ev('agent_tool', new Date(), { duration_ms: 15000 }),
+          live.ev('agent_usage', new Date(), { payload: usagePayload(0.1) })]).catch(() => {}), 30000);
         await h.hideCode();
         await h.nav('Suivi du temps', 1000);
         await h.find(/Commande de gâteaux/, { timeout: 30000 });
@@ -105,7 +107,7 @@ export async function run(browser, failures) {
         await h.reveal(/^Voir sa fiche dans l'équipe$/, 300, { x: 720 });
         await h.click(/^Voir sa fiche dans l'équipe$/, 2500);
         await h.caption(C('Équipe'), 'Un membre de l’équipe, piloté par Alex',
-          'L’agent a sa fiche : ses sessions en cours et son total de la semaine. Un administrateur peut le désactiver ou le retirer.', ROLE, 6000);
+          'L’agent a sa fiche : ses sessions en cours, son total de la semaine et son coût IA estimé. Un administrateur peut le désactiver ou le retirer.', ROLE, 7000);
       });
 
       await h.scene('contrôle', async () => {
@@ -121,17 +123,22 @@ export async function run(browser, failures) {
         await h.clickLast(/^OK$/, 1800);
         await h.click(/^Humains et agents$/, 900);
         await h.pick(/^Agents$/, 1800);
-        await h.caption(C('Rapports'), 'Le temps de Claude, à part', 'Le filtre « Humains et agents » sépare les heures d’Alex de celles de son agent.', ROLE, 5000);
+        await h.hover(/^Coût IA estimé/);
+        await h.caption(C('Rapports'), 'Le temps de Claude, à part, et ce qu’il coûte',
+          'Le filtre « Humains et agents » sépare les heures d’Alex de celles de son agent. « Coût IA estimé » : ses tokens au tarif de l’API d’Anthropic, en dollars (avec un abonnement Claude, un ordre de grandeur).', ROLE, 8000);
         await h.click(/^Agents$/, 900);
         await h.pick(/^Humains et agents$/, 1500);
         await h.click(/^Détaillé$/, 1500);
         await h.reveal(/^Détaillé$/, 230);
         await h.caption(C('Rapports'), 'Jour par jour',
-          'Les heures d’Alex et celles de Claude ; chaque session dans sa tâche, décrite par les messages de ses commits.', ROLE, 6500);
+          'Les heures d’Alex et celles de Claude ; chaque session dans sa tâche, décrite par les messages de ses commits, avec ses tokens et son coût.', ROLE, 7000);
         await h.reveal(/Compresse les photos de la vitrine/, 420);
         await h.click(/Compresse les photos de la vitrine/, 2000);
         await h.caption(C('Rapports'), 'Corriger le temps de son agent',
           'Projet, tâche, description, horaires, ou supprimer l’entrée. Pas d’ajout à la main : seul Claude Code enregistre ce temps, et une correction n’est jamais écrasée.', ROLE, 7000);
+        await h.hover(/^Usage IA/);
+        await h.caption(C('Rapports'), 'Usage IA de la session',
+          'Par modèle et par effort : appels, tokens en entrée et en sortie, écrits et lus en cache. Le plugin ne lit que ces totaux dans la transcription, jamais vos messages.', ROLE, 7500);
         await h.clickLast(/^Annuler$/, 1000);
       });
 
@@ -161,7 +168,8 @@ export async function run(browser, failures) {
         'Claude nomme ses tâches ; le dépôt donne le projet',
         'Rien de vos messages ni de votre code ne part vers Clockifai',
         'Le temps de l’agent se contrôle, se corrige et se facture',
-      ], 8000);
+        'Son usage de l’IA : tokens et coût estimé de chaque entrée',
+      ], 9000);
     });
 
     return [{ webm: desktop }, { webm: end }];

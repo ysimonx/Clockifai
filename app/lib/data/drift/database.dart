@@ -211,6 +211,33 @@ class TimeEntryTags extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Usage IA d'une entrée d'agent Claude, par modèle, effort et vitesse (plan 10, D17). Écrit par le serveur :
+/// tokens lus dans la transcription sur le poste, coût estimé au tarif de l'API en millionièmes de dollar.
+@DataClassName('AgentUsageRow')
+class AgentUsage extends Table {
+  TextColumn get id => text().clientDefault(newId)();
+  TextColumn get workspaceId => text()();
+  TextColumn get timeEntryId => text()();
+  TextColumn get userId => text()();
+  TextColumn get model => text()();
+  TextColumn get effort => text().nullable()();
+  TextColumn get speed => text().nullable()();
+  IntColumn get requests => integer().nullable()();
+  IntColumn get inputTokens => integer().nullable()();
+  IntColumn get outputTokens => integer().nullable()();
+  IntColumn get cacheWrite5mTokens => integer().named('cache_write_5m_tokens').nullable()();
+  IntColumn get cacheWrite1hTokens => integer().named('cache_write_1h_tokens').nullable()();
+  IntColumn get cacheReadTokens => integer().nullable()();
+  /// Null : modèle sans tarif connu.
+  IntColumn get costMicros => integer().nullable()();
+  DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 // ---------------------------------------------------------------------------
 // Modules : approbations, absences, planning, facturation.
 // Les dates sans heure (period_start, start_date…) restent du texte « yyyy-MM-dd ».
@@ -458,6 +485,7 @@ class InvoiceEntries extends Table {
   Tags,
   TimeEntries,
   TimeEntryTags,
+  AgentUsage,
   TimesheetSubmissions,
   TimeOffPolicies,
   TimeOffAllowances,

@@ -39,7 +39,7 @@ def auto_stop_long_timers(workspace_id: str | None = None) -> int:
 def purge_soft_deleted(older_than_days: int = 30) -> int:
     """Supprime physiquement les lignes soft-deleted depuis plus de N jours (déjà retirées des clients par PowerSync)."""
     total = 0
-    for table in ("time_entries", "tasks", "projects", "clients", "tags", "workspace_members", "workspaces"):
+    for table in ("agent_usage", "time_entries", "tasks", "projects", "clients", "tags", "workspace_members", "workspaces"):
         total += execute(
             f"delete from public.{table} where deleted_at is not null and deleted_at < now() - make_interval(days => %(d)s)",
             {"d": older_than_days},

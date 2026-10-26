@@ -337,8 +337,8 @@
             10 minutes sans activité, l’entrée s’arrête à l’heure de la dernière activité. Deux sessions en même temps
             font deux chronomètres.</li>
           <li>L’entrée est décrite par les messages des commits faits pendant la session, sinon par le dépôt et la
-            branche. Seuls le dépôt, la branche, le dossier et la durée des outils partent vers Clockifai : jamais vos
-            messages, ni le contenu des fichiers.</li>
+            branche. Seuls le dépôt, la branche, le dossier, la durée des outils et l’usage de l’IA (ci-dessous) partent
+            vers Clockifai : jamais vos messages, ni les réponses de Claude, ni le contenu des fichiers.</li>
           <li>Tant qu’une session tourne, le bandeau <span class="ui">Claude travaille</span>, en haut de
             <span class="ui">Suivi du temps</span>, l’affiche avec sa description, son projet et sa durée. Touchez-la
             pour choisir son projet ou changer sa description.</li>
@@ -377,6 +377,15 @@
             peut révoquer leurs jetons. Une fois le premier poste connecté, <span class="ui">Voir sa fiche dans
             l’équipe</span> ouvre la fiche de votre agent dans <span class="ui">Équipe</span> : ses sessions en cours
             et son total de la semaine.</li>
+          <li>Chaque entrée de votre agent indique aussi son <span class="ui">Usage IA</span> : le nombre de tokens
+            traités par Claude et un coût estimé en dollars, par exemple « 12 M tokens · 4,56 $ ». Ce coût est celui
+            de l’API d’Anthropic pour le même travail : avec un abonnement Claude (Pro, Max), ce n’est pas une dépense
+            réelle, mais un ordre de grandeur. La fenêtre de l’entrée détaille l’usage par modèle (Opus, Sonnet, Haiku…)
+            et par niveau d’effort, avec le nombre d’appels ; un modèle trop récent pour Clockifai affiche
+            <span class="ui">tarif inconnu</span>. Les <span class="ui">Rapports</span> totalisent le
+            <span class="ui">Coût IA estimé</span> de la période et de chaque projet, client ou personne, et la fiche
+            de votre agent dans <span class="ui">Équipe</span> celui de la semaine. Votre chef d’équipe et les
+            managers le voient comme le temps de votre agent.</li>
           <li>Si un administrateur désactive ou retire votre agent, l’écran le signale : vos sessions ne produisent plus
             de temps. Un administrateur peut le réactiver ou le restaurer depuis <span class="ui">Équipe</span>.</li>
         </ul>

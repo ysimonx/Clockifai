@@ -14,6 +14,7 @@ import '../../core/widgets/pickers.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import 'ai_usage.dart';
 
 /// Heure à écrire pour une entrée modifiée : null si l'heure saisie, à la minute près, est celle d'origine.
 /// Le dialogue ne saisit pas les secondes : réécrire une heure inchangée les perdrait, et ferait passer une entrée
@@ -468,6 +469,8 @@ class _EntryDialogState extends State<_EntryDialog> {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(l.endsNextDay, style: theme.textTheme.bodySmall),
               ),
+            // Entrée d'agent : tokens, modèle, effort et coût estimé (plan 10, D17).
+            if (widget.entry != null && catalog.isAgent(widget.entry!.userId)) AiUsageSection(entryId: widget.entry!.id),
           ]),
         ),
       ),

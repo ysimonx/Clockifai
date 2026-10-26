@@ -253,7 +253,9 @@ def test_flask_export_uses_the_current_rate_of_an_entry_without_rate(alice, alic
     status, body = _call("GET", f"{SERVICES}/api/exports/report?workspace_id={alice_ws}&project_id={pid}"
                                 f"&from={day}&to={date.today().isoformat()}&format=csv", alice["token"])
     assert status == 200, body
-    rates = {line.split(";")[6]: line.split(";")[-1] for line in body.decode("utf-8-sig").strip().splitlines()[1:]}
+    header, *lines = body.decode("utf-8-sig").strip().splitlines()
+    rate = header.split(";").index("Taux horaire")
+    rates = {line.split(";")[6]: line.split(";")[rate] for line in lines}
     assert rates == {"taux None": "123,45", "taux 9000": "90,00"}
 
 

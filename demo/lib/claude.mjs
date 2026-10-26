@@ -13,7 +13,16 @@ export function claudeSession(repo) {
   return { ...base, ev };
 }
 
-/** Session terminée : début, prompt, tâche nommée par Claude, outils toutes les 2 min 30, commits, fin du tour. */
+/** Usage IA de 5 minutes de travail (plan 10, D17), comme le plugin le lit dans la transcription : Opus 5.5 en effort
+ *  xhigh, environ 0,75 $ au tarif de l'API, un peu plus ou un peu moins selon [k]. */
+export const usagePayload = (k = 1, model = 'claude-opus-5-5', effort = 'xhigh') => ({
+  model, effort, speed: 'standard', requests: Math.round(12 * k), input_tokens: Math.round(20 * k),
+  output_tokens: Math.round(6000 * k), cache_write_5m_tokens: 0, cache_write_1h_tokens: Math.round(40000 * k),
+  cache_read_tokens: Math.round(1_500_000 * k),
+});
+
+/** Session terminée : début, prompt, tâche nommée par Claude, outils toutes les 2 min 30, usage IA par tranche de
+ *  5 minutes (et un sous-agent Haiku), commits, fin du tour. */
 export function pastSession({ repo, start, minutes, task, commits = [] }) {
   const s = claudeSession(repo);
   const at = (sec) => new Date(start.getTime() + sec * 1000);
@@ -21,6 +30,10 @@ export function pastSession({ repo, start, minutes, task, commits = [] }) {
   const events = [s.ev('session_start', at(0), { payload: { source: 'startup' } }), s.ev('prompt', at(5)),
     s.ev('session_task', at(30), { payload: { task_name: task } })];
   for (let sec = 60; sec < end - 60; sec += 150) events.push(s.ev('agent_tool', at(sec), { duration_ms: 20000 }));
+  for (let sec = 300, i = 0; sec <= end; sec += 300, i++) {
+    events.push(s.ev('agent_usage', at(sec - 10), { payload: usagePayload([1, 0.7, 1.3, 0.9][i % 4]) }));
+  }
+  events.push(s.ev('agent_usage', at(Math.round(end / 3)), { payload: usagePayload(0.6, 'claude-haiku-5-5', 'medium') }));
   if (end > 20 * 60) events.push(s.ev('prompt', at(Math.round(end / 2))));
   commits.forEach((subject, i) => {
     const t = at(end - 90 + i * 10);

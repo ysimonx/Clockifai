@@ -230,6 +230,65 @@ abstract class AppLocalizations {
   /// **'Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).'**
   String get agentsHelp;
 
+  /// No description provided for @aiUsage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Usage IA'**
+  String get aiUsage;
+
+  /// No description provided for @aiUsageHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tokens consommés par Claude et coût estimé au tarif de l\'API d\'Anthropic, en dollars US. Avec un abonnement Claude (Pro, Max), ce n\'est pas une dépense réelle.'**
+  String get aiUsageHelp;
+
+  /// No description provided for @aiTokens.
+  ///
+  /// In fr, this message translates to:
+  /// **'{tokens} tokens'**
+  String aiTokens(String tokens);
+
+  /// No description provided for @aiCostEstimated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Coût IA estimé'**
+  String get aiCostEstimated;
+
+  /// No description provided for @aiRequests.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 appel} other{{count} appels}}'**
+  String aiRequests(int count);
+
+  /// No description provided for @aiUsageBreakdown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrée {input} · sortie {output} · cache écrit {written} · cache lu {read}'**
+  String aiUsageBreakdown(
+    String input,
+    String output,
+    String written,
+    String read,
+  );
+
+  /// No description provided for @aiUnknownPrice.
+  ///
+  /// In fr, this message translates to:
+  /// **'tarif inconnu'**
+  String get aiUnknownPrice;
+
+  /// No description provided for @aiFastMode.
+  ///
+  /// In fr, this message translates to:
+  /// **'mode rapide'**
+  String get aiFastMode;
+
+  /// No description provided for @aiEffort.
+  ///
+  /// In fr, this message translates to:
+  /// **'effort {level}'**
+  String aiEffort(String level);
+
   /// No description provided for @agentsWorking.
   ///
   /// In fr, this message translates to:

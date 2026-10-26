@@ -1,6 +1,6 @@
 """Événements d'activité (hooks Claude Code, extension VSCode) et entrées des agents Claude.
 
-Plan : plans/10-suivi-claude-code.md (D6, D7, D9, D10, D13). Les fonctions sans `conn` sont pures (testées sans
+Plan : plans/10-suivi-claude-code.md (D6, D7, D9, D10, D13, D17). Les fonctions sans `conn` sont pures (testées sans
 base) ; process_session applique le chronomètre (agent_clock) à une session et écrit par agent_entry_write.
 """
 
@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import psycopg
@@ -22,7 +24,7 @@ from .entry_defaults import UnknownProject, entry_defaults
 log = logging.getLogger(__name__)
 
 AGENT_KINDS = {"prompt", "agent_tool", "agent_stop", "agent_wait", "session_start", "session_end",
-               "session_task", "session_description"}
+               "session_task", "session_description", "agent_usage"}
 HUMAN_KINDS = {"focus_start", "focus_alive", "focus_end", "edit", "terminal", "presence"}
 KINDS = AGENT_KINDS | HUMAN_KINDS | {"commit"}
 CLOCK_KINDS = {"prompt", "agent_tool", "agent_stop", "agent_wait", "session_start", "session_end", "session_task"}
@@ -33,6 +35,9 @@ MAX_AGE = timedelta(days=7)          # événements plus anciens refusés, et fe
 MAX_FUTURE = timedelta(minutes=5)
 MAX_PAYLOAD = 2000                   # caractères JSON
 DESCRIPTION_MAX = 500
+USAGE_COUNTERS = ("requests", "input_tokens", "output_tokens", "cache_write_5m_tokens", "cache_write_1h_tokens",
+                  "cache_read_tokens")
+USAGE_MAX = 10**12                   # garde-fou par compteur et par événement
 
 _TEXT_LIMITS = {"session_id": 200, "window_id": 200, "remote_key": 300, "cwd": 1000, "git_branch": 200,
                 "sha": 64, "subject": 200, "author_email": 320, "editor": 50, "machine": 100, "excerpt": 200}
@@ -80,8 +85,92 @@ def parse_event(raw: dict, now: datetime) -> tuple[dict | None, str | None]:
     text = json.dumps(payload, ensure_ascii=False)
     if len(text) > MAX_PAYLOAD:
         return None, "payload too large"
+    if kind == "agent_usage" and usage_of(payload) is None:
+        return None, "agent_usage payload needs model and non-negative integer counters"
     row["payload"] = text if payload else None
     return row, None
+
+
+# ---------------------------------------------------------------- usage IA (D17)
+def usage_of(payload: dict) -> dict | None:
+    """Totaux d'un événement `agent_usage` (modèle, effort, vitesse et compteurs), ou None s'il est illisible."""
+    model = " ".join(str(payload.get("model") or "").split())[:100]
+    if not model:
+        return None
+    usage = {"model": model, "effort": str(payload["effort"])[:20] if payload.get("effort") else None,
+             "speed": str(payload.get("speed") or "standard")[:20]}
+    for name in USAGE_COUNTERS:
+        value = payload.get(name, 0)
+        if not isinstance(value, int) or isinstance(value, bool) or not 0 <= value <= USAGE_MAX:
+            return None
+        usage[name] = value
+    return usage
+
+
+@dataclass(frozen=True)
+class Price:
+    """Tarif d'un modèle, en dollars par million de tokens, soit des millionièmes de dollar par token."""
+
+    input: Decimal
+    output: Decimal
+    cache_write_5m: Decimal
+    cache_write_1h: Decimal
+    cache_read: Decimal
+    fast_multiplier: Decimal | None = None
+
+
+def price_for(model: str, prices: dict[str, Price]) -> Price | None:
+    """Tarif du modèle, ou de son nom sans date (claude-haiku-4-5-20251001 → claude-haiku-4-5)."""
+    if model in prices:
+        return prices[model]
+    m = re.fullmatch(r"(.+)-\d{8}", model)
+    return prices.get(m.group(1)) if m else None
+
+
+def cost_micros(usage: dict, price: Price | None) -> int | None:
+    """Coût estimé au tarif de l'API, en millionièmes de dollar ; None sans tarif connu."""
+    if price is None:
+        return None
+    total = (usage["input_tokens"] * price.input + usage["output_tokens"] * price.output
+             + usage["cache_write_5m_tokens"] * price.cache_write_5m
+             + usage["cache_write_1h_tokens"] * price.cache_write_1h + usage["cache_read_tokens"] * price.cache_read)
+    if usage["speed"] == "fast" and price.fast_multiplier:
+        total *= price.fast_multiplier
+    return int(Decimal(total).to_integral_value(ROUND_HALF_UP))
+
+
+@dataclass(frozen=True)
+class EntrySpan:
+    id: str
+    start: datetime
+    end: datetime | None
+
+
+def usage_entry(entries: list[EntrySpan], at: datetime, now: datetime) -> str | None:
+    """Entrée de la session à laquelle rattacher un usage daté de [at] : celle qui couvre cet instant (la plus
+    récente), sinon la dernière commencée avant (fin corrigée à la main), sinon la première."""
+    covering = [e for e in entries if e.start <= at <= (e.end or now)]
+    if covering:
+        return max(covering, key=lambda e: e.start).id
+    before = [e for e in entries if e.start <= at]
+    if before:
+        return max(before, key=lambda e: e.start).id
+    return min(entries, key=lambda e: e.start).id if entries else None
+
+
+def aggregate_usage(events: list[tuple[datetime, dict]], entries: list[EntrySpan],
+                    now: datetime) -> dict[tuple[str, str, str | None, str], dict]:
+    """Cumul par (entrée, modèle, effort, vitesse) des usages [(heure, usage_of(...))] de la session."""
+    totals: dict[tuple[str, str, str | None, str], dict] = {}
+    for at, usage in events:
+        entry_id = usage_entry(entries, at, now)
+        if entry_id is None:
+            continue
+        key = (entry_id, usage["model"], usage["effort"], usage["speed"])
+        acc = totals.setdefault(key, dict.fromkeys(USAGE_COUNTERS, 0))
+        for name in USAGE_COUNTERS:
+            acc[name] += usage[name]
+    return totals
 
 
 def repo_name(remote_key: str | None) -> str | None:
@@ -517,6 +606,7 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                     description_source=desc_source)
 
     link_commits(conn, workspace_id, pilot_id, session_id, rows, now)
+    link_usage(conn, workspace_id, agent_id, session_id, rows, now)
     return written
 
 
@@ -581,3 +671,68 @@ def link_commits(conn, workspace_id: str, pilot_id: str, session_id: str, rows: 
              author["id"] if author else None, r["authored_at"], r["occurred_at"], session_id,
              entry["id"] if entry else None),
         )
+
+
+def _prices(conn) -> dict[str, Price]:
+    return {r["model"]: Price(r["input_per_mtok"], r["output_per_mtok"], r["cache_write_5m_per_mtok"],
+                              r["cache_write_1h_per_mtok"], r["cache_read_per_mtok"], r["fast_multiplier"])
+            for r in conn.execute("select * from public.ai_model_prices").fetchall()}
+
+
+def link_usage(conn, workspace_id: str, agent_id: str, session_id: str, rows: list[dict], now: datetime) -> None:
+    """Usage IA de la session (D17) : cumul par entrée d'agent, recalculé depuis les événements de la fenêtre,
+    puisque les entrées peuvent avoir été recoupées ou corrigées depuis. Coût au tarif du moment (instantané)."""
+    events = [(r["occurred_at"], usage_of(_payload(r))) for r in rows if r["kind"] == "agent_usage"]
+    events = [(at, u) for at, u in events if u is not None]
+    spans = conn.execute(
+        """
+        select te.id, te.start_at, te.end_at
+          from clockifai_private.agent_entries ae join public.time_entries te on te.id = ae.time_entry_id
+         where ae.workspace_id = %s and ae.session_id = %s and ae.last_activity_at > %s
+        """,
+        (workspace_id, session_id, now - MAX_AGE),
+    ).fetchall()
+    if not spans:
+        return
+    entries = [EntrySpan(str(r["id"]), r["start_at"], r["end_at"]) for r in spans]
+    # Seules les entrées commencées dans la fenêtre ont tous leurs événements : les autres gardent leur cumul.
+    fresh = {e.id for e in entries if e.start > now - MAX_AGE}
+    wanted = {k: v for k, v in aggregate_usage(events, entries, now).items() if k[0] in fresh}
+    prices = _prices(conn) if wanted else {}
+    for (entry_id, model, effort, speed), counts in wanted.items():
+        usage = {"model": model, "effort": effort, "speed": speed, **counts}
+        conn.execute(
+            """
+            insert into public.agent_usage (workspace_id, time_entry_id, user_id, model, effort, speed, requests,
+                                            input_tokens, output_tokens, cache_write_5m_tokens, cache_write_1h_tokens,
+                                            cache_read_tokens, cost_micros)
+            values (%(wid)s, %(entry)s, %(agent)s, %(model)s, %(effort)s, %(speed)s, %(requests)s, %(input_tokens)s,
+                    %(output_tokens)s, %(cache_write_5m_tokens)s, %(cache_write_1h_tokens)s, %(cache_read_tokens)s,
+                    %(cost)s)
+            on conflict on constraint agent_usage_entry_key do update set
+              requests = excluded.requests, input_tokens = excluded.input_tokens,
+              output_tokens = excluded.output_tokens, cache_write_5m_tokens = excluded.cache_write_5m_tokens,
+              cache_write_1h_tokens = excluded.cache_write_1h_tokens, cache_read_tokens = excluded.cache_read_tokens,
+              cost_micros = excluded.cost_micros, deleted_at = null
+            where (public.agent_usage.requests, public.agent_usage.input_tokens, public.agent_usage.output_tokens,
+                   public.agent_usage.cache_write_5m_tokens, public.agent_usage.cache_write_1h_tokens,
+                   public.agent_usage.cache_read_tokens, public.agent_usage.cost_micros, public.agent_usage.deleted_at)
+                  is distinct from
+                  (excluded.requests, excluded.input_tokens, excluded.output_tokens, excluded.cache_write_5m_tokens,
+                   excluded.cache_write_1h_tokens, excluded.cache_read_tokens, excluded.cost_micros, null::timestamptz)
+            """,
+            {**usage, "wid": workspace_id, "entry": entry_id, "agent": agent_id,
+             "cost": cost_micros(usage, price_for(model, prices))},
+        )
+    # Un usage passé à une autre entrée (entrée recoupée, horaires corrigés) quitte l'ancienne.
+    keep = [[e, m, f, s] for (e, m, f, s) in wanted]
+    conn.execute(
+        """
+        update public.agent_usage au set deleted_at = now()
+         where au.time_entry_id = any(%s::uuid[]) and au.deleted_at is null
+           and not exists (select 1 from jsonb_array_elements(%s::jsonb) k
+                            where k->>0 = au.time_entry_id::text and k->>1 = au.model
+                              and k->>2 is not distinct from au.effort and k->>3 = au.speed)
+        """,
+        (sorted(fresh), json.dumps(keep)),
+    )

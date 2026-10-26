@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Hook Claude Code → Clockifai (plans/10-suivi-claude-code.md, §6.1, D6, D7, D13).
+"""Hook Claude Code → Clockifai (plans/10-suivi-claude-code.md, §6.1, D6, D7, D13, D17).
 
 Lit l'événement du hook sur stdin et n'en garde que la liste blanche (D6) : session, dépôt, branche, dossier,
 durée de l'outil. Jamais le prompt, les entrées ou sorties des outils, ni la transcription, sauf le nom de tâche
 que Claude passe à l'outil `set_current_task` du plugin (D18). La commande d'un outil Bash est lue sur le poste pour
-y repérer un `git commit` (D13), jamais envoyée.
+y repérer un `git commit` (D13), jamais envoyée. La transcription est lue sur le poste pour en tirer l'usage de
+l'API (D17) : seuls partent des totaux par modèle, effort et vitesse, jamais le texte des messages.
 
 N'écrit jamais sur stdout (Claude Code l'ajouterait au contexte) et sort toujours avec le code 0.
 Réglages : CLAUDE_PLUGIN_OPTION_URL et CLAUDE_PLUGIN_OPTION_TOKEN (userConfig du plugin). Sans adresse réglée,
@@ -43,6 +44,10 @@ SPOOL_MAX = 5000                 # lignes
 SPOOL_MAX_AGE = 6.5 * 86400      # le serveur refuse au-delà de 7 jours
 BATCH = 200
 COMMIT_NS = uuid.NAMESPACE_URL   # id d'un commit : uuid5(NAMESPACE_URL, "clockifai:commit:<remote_key>:<sha>")
+USAGE_SLOT = 300                 # usage IA cumulé par tranche de 5 minutes de la transcription (D17)
+USAGE_SEEN_MAX = 200             # derniers message.id comptés, par transcription : une réponse tient sur plusieurs lignes
+USAGE_READ_MAX = 50_000_000      # octets lus au plus par appel (première lecture d'une longue session)
+USAGE_HOOKS = ("Stop", "SubagentStop", "SessionEnd")
 
 # Outil du serveur MCP du plugin (clockifai_mcp.py) : Claude y nomme la tâche du sujet en cours (D18).
 # Claude Code le nomme mcp__plugin_<plugin>_<serveur>__set_current_task.
@@ -244,6 +249,133 @@ def _commit_event(info: dict, c: dict, session_id: str | None, cwd: str, now: fl
             "author_email": c["email"], "authored_at": c["authored_at"]}
 
 
+# ---------------------------------------------------------------- usage IA (D17)
+def _count(value) -> int:
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else 0
+
+
+def _usage_counts(usage: dict) -> dict | None:
+    """Compteurs d'un `message.usage` ; l'écriture en cache se répartit entre 5 minutes et 1 heure (tarifs différents)."""
+    written = _count(usage.get("cache_creation_input_tokens"))
+    detail = usage.get("cache_creation")
+    if isinstance(detail, dict):
+        w5, w1h = _count(detail.get("ephemeral_5m_input_tokens")), _count(detail.get("ephemeral_1h_input_tokens"))
+        w5 += max(0, written - w5 - w1h)  # détail incomplet : le reste au tarif de 5 minutes
+    else:
+        w5, w1h = written, 0
+    counts = {"input_tokens": _count(usage.get("input_tokens")), "output_tokens": _count(usage.get("output_tokens")),
+              "cache_write_5m_tokens": w5, "cache_write_1h_tokens": w1h,
+              "cache_read_tokens": _count(usage.get("cache_read_input_tokens"))}
+    return counts if any(counts.values()) else None
+
+
+def _timestamp(value) -> float | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt.timestamp() if dt.tzinfo else None
+
+
+def read_usage(path: Path, now: float) -> dict:
+    """Nouveaux appels à l'API d'une transcription (JSONL), cumulés par (tranche, modèle, effort, vitesse).
+
+    Reprend au dernier octet lu (position gardée par transcription) et s'arrête à la dernière ligne complète.
+    Une réponse occupe plusieurs lignes au même `usage` : comptée une fois par `message.id`. Lecture tolérante :
+    une ligne inconnue est ignorée. Seuls les champs d'usage sont lus, jamais le texte des messages.
+    """
+    buckets: dict = {}
+    with _Locked(cache_dir() / "usage" / f"{_key(str(path))}.json") as st:
+        try:
+            size = path.stat().st_size
+        except OSError:
+            return buckets
+        offset = st.get("offset", 0)
+        if not isinstance(offset, int) or offset > size:
+            offset = size  # transcription réécrite : on repart de sa fin plutôt que de recompter
+        if offset == size:
+            st["offset"] = offset
+            return buckets
+        with path.open("rb") as f:
+            f.seek(offset)
+            data = f.read(min(size - offset, USAGE_READ_MAX))
+        end = data.rfind(b"\n")
+        if end < 0:
+            return buckets  # ligne en cours d'écriture
+        data = data[:end + 1]
+        st["offset"] = offset + len(data)
+        seen = [i for i in st.get("seen", []) if isinstance(i, str)]
+        known = set(seen)
+        for raw in data.splitlines():
+            if b'"assistant"' not in raw or b'"usage"' not in raw:
+                continue
+            try:
+                line = json.loads(raw)
+            except ValueError:
+                continue
+            message = line.get("message") if isinstance(line, dict) and line.get("type") == "assistant" else None
+            if not isinstance(message, dict) or not isinstance(message.get("usage"), dict):
+                continue
+            model, message_id = message.get("model"), message.get("id")
+            if not isinstance(model, str) or not model.startswith("claude"):
+                continue  # « <synthetic> » : message écrit par Claude Code, pas un appel à l'API
+            if isinstance(message_id, str):
+                if message_id in known:
+                    continue
+                known.add(message_id)
+                seen.append(message_id)
+            counts = _usage_counts(message["usage"])
+            if counts is None:
+                continue
+            at = _timestamp(line.get("timestamp")) or now
+            effort = line.get("effort") if isinstance(line.get("effort"), str) else None
+            speed = message["usage"].get("speed")
+            key = (int(at // USAGE_SLOT), model[:100], effort[:20] if effort else None,
+                   speed[:20] if isinstance(speed, str) and speed else "standard")
+            bucket = buckets.setdefault(key, dict(dict.fromkeys(counts, 0), requests=0, at=at, last=None))
+            for name, value in counts.items():
+                bucket[name] += value
+            bucket["requests"] += 1
+            bucket["at"] = max(bucket["at"], at)
+            bucket["last"] = message_id if isinstance(message_id, str) else bucket["last"]
+        st["seen"] = seen[-USAGE_SEEN_MAX:]
+    return buckets
+
+
+def transcripts(data: dict, hook: str, session_id: str) -> list[Path]:
+    """Transcriptions à relire : celle de la session au Stop et à la fin, celle du sous-agent qui s'arrête, et celles
+    de tous les sous-agents de la session (`<dossier>/<session>/subagents/*.jsonl`, Claude Code 2.1)."""
+    paths = []
+    main = data.get("transcript_path")
+    main = Path(main) if isinstance(main, str) and main else None
+    agent = data.get("agent_transcript_path")
+    if hook == "SubagentStop" and isinstance(agent, str) and agent:
+        paths.append(Path(agent))
+    elif main:
+        paths.append(main)
+    if main:
+        try:
+            paths += sorted((main.parent / session_id / "subagents").glob("*.jsonl"))
+        except OSError:
+            pass
+    return list(dict.fromkeys(paths))
+
+
+def usage_events(data: dict, hook: str, base: dict, now: float) -> list[dict]:
+    events = []
+    for path in transcripts(data, hook, base["session_id"]):
+        for (_, model, effort, speed), b in sorted(read_usage(path, now).items(), key=lambda kv: kv[1]["at"]):
+            counts = {k: v for k, v in b.items() if k not in ("at", "last")}
+            # Même contenu, même id : un renvoi depuis la file locale n'est compté qu'une fois par le serveur.
+            event_id = (uuid.uuid5(COMMIT_NS, f"clockifai:usage:{base['session_id']}:{b['last']}:{model}:{effort}:{speed}")
+                        if b["last"] else uuid.uuid4())
+            events.append(dict(base, id=str(event_id), kind="agent_usage", occurred_at=iso(b["at"]),
+                               payload=dict(counts, model=model, effort=effort, speed=speed)))
+    return events
+
+
 # ---------------------------------------------------------------- événements
 def _tool_due(session_id: str, duration_ms, now: float) -> bool:
     """Au plus un agent_tool par minute et par session, sauf un outil long (D7.3, D7.6)."""
@@ -305,6 +437,11 @@ def collect(data: dict, now: float) -> list[dict]:
         elif hook == "SessionEnd" and data.get("reason"):
             event["payload"] = {"reason": str(data["reason"])[:40]}
         events.append(event)
+        if hook in USAGE_HOOKS:
+            try:
+                events += usage_events(data, hook, base, now)
+            except Exception as e:  # noqa: BLE001 - un format méconnaissable omet l'usage, jamais le reste
+                log_error(f"usage : {type(e).__name__}")
 
     # Commits (D13) : après une commande Bash et au Stop. Une commande git qui en crée les revendique.
     # SessionStart pose le point de départ du dossier.
@@ -397,10 +534,9 @@ def take_spool(now: float) -> list[dict]:
 
 
 def deliver(url: str, token: str, events: list[dict], now: float) -> None:
-    if events:
-        sent = post(url, token, events)
-        if sent is False:
-            spool(events)
+    for i in range(0, len(events), BATCH):  # la première lecture d'une longue transcription peut dépasser un lot
+        if post(url, token, events[i:i + BATCH]) is False:
+            spool(events[i:])
             return
     pending = take_spool(now)
     for i in range(0, len(pending), BATCH):

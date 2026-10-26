@@ -80,6 +80,10 @@ streams:
       - SELECT time_entry_tags.* FROM time_entry_tags
           JOIN team_scope ON team_scope.workspace_id = time_entry_tags.workspace_id AND team_scope.user_id = time_entry_tags.user_id
         WHERE team_scope.manager_id = auth.user_id()
+      # Usage IA des entrées d'agent (plan 10, D17) : le pilote (team_scope pilote → agent) et ses chefs d'équipe.
+      - SELECT agent_usage.* FROM agent_usage
+          JOIN team_scope ON team_scope.workspace_id = agent_usage.workspace_id AND team_scope.user_id = agent_usage.user_id
+        WHERE team_scope.manager_id = auth.user_id() AND agent_usage.deleted_at IS NULL
       - SELECT timesheet_submissions.* FROM timesheet_submissions
           JOIN team_scope ON team_scope.workspace_id = timesheet_submissions.workspace_id AND team_scope.user_id = timesheet_submissions.user_id
         WHERE team_scope.manager_id = auth.user_id() AND timesheet_submissions.deleted_at IS NULL
@@ -103,6 +107,12 @@ streams:
                                  AND role != 'member')
       - SELECT * FROM time_entry_tags
         WHERE workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')
+      - SELECT * FROM agent_usage
+        WHERE deleted_at IS NULL
+          AND workspace_id = subscription.parameter('workspace_id')
           AND workspace_id IN (SELECT workspace_id FROM workspace_members
                                WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
                                  AND role != 'member')

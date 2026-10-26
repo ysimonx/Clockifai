@@ -144,6 +144,26 @@ const schema = Schema([
   ], indexes: [
     Index('entry_tags_entry', [IndexedColumn('time_entry_id')]),
   ]),
+  // Usage IA des entrées d'agent (plan 10, D17), écrit par le serveur seulement.
+  Table('agent_usage', [
+    Column.text('workspace_id'),
+    Column.text('time_entry_id'),
+    Column.text('user_id'),
+    Column.text('model'),
+    Column.text('effort'),
+    Column.text('speed'),
+    Column.integer('requests'),
+    Column.integer('input_tokens'),
+    Column.integer('output_tokens'),
+    Column.integer('cache_write_5m_tokens'),
+    Column.integer('cache_write_1h_tokens'),
+    Column.integer('cache_read_tokens'),
+    Column.integer('cost_micros'),
+    ..._audit,
+    ..._softDelete,
+  ], indexes: [
+    Index('agent_usage_entry', [IndexedColumn('time_entry_id')]),
+  ], ignoreEmptyUpdates: true),
   Table('timesheet_submissions', [
     Column.text('workspace_id'),
     Column.text('user_id'),

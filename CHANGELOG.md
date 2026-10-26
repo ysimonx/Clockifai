@@ -10,6 +10,15 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Ajouté
+
+- Claude Code : **usage IA** de chaque entrée de l'agent, lu sur le poste dans la transcription (jamais le texte
+  des messages) : tokens traités et coût estimé au tarif de l'API d'Anthropic, en dollars, sur la ligne de
+  l'entrée, détaillé par modèle et effort dans sa fenêtre, totalisé dans les rapports (« Coût IA estimé ») et sur
+  la fiche de l'agent ; colonnes « Tokens IA » et « Coût IA estimé (USD) » dans les exports (26 octobre 2026).
+  Mettre à jour le plugin sur chaque poste (`claude plugin marketplace update clockifai`, puis
+  `claude plugin update clockifai@clockifai`).
+
 ## [0.2.1] — 2026-10-26
 
 ### Ajouté

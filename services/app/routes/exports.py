@@ -17,7 +17,7 @@ from flask import Blueprint, Response, abort, g, request
 
 from ..auth import managed_user_ids, require_user, require_workspace
 from ..db import fetch_all
-from ..services.exporters import build_pdf, build_xlsx, member_kind_label
+from ..services.exporters import ai_cost, build_pdf, build_xlsx, member_kind_label
 
 bp = Blueprint("exports", __name__)
 
@@ -41,7 +41,13 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
                wm.display_name as user_name, wm.email as user_email,
                wm.kind as user_kind,
                p.name as project_name, c.name as client_name, t.name as task_name,
-               coalesce(string_agg(tg.name, ', ' order by tg.name), '') as tags
+               coalesce(string_agg(tg.name, ', ' order by tg.name), '') as tags,
+               -- Usage IA des entrées d'agent (plan 10, D17) : tokens et coût estimé, en millionièmes de dollar.
+               (select sum(au.input_tokens + au.output_tokens + au.cache_write_5m_tokens + au.cache_write_1h_tokens
+                           + au.cache_read_tokens)
+                  from public.agent_usage au where au.time_entry_id = te.id and au.deleted_at is null) as ai_tokens,
+               (select sum(au.cost_micros)
+                  from public.agent_usage au where au.time_entry_id = te.id and au.deleted_at is null) as ai_cost_micros
           from public.time_entries te
           left join public.workspace_members wm on wm.workspace_id = te.workspace_id and wm.user_id = te.user_id
           left join public.projects p on p.id = te.project_id
@@ -99,7 +105,8 @@ def export_report():
         buf = io.StringIO()
         writer = csv.writer(buf, delimiter=";")
         writer.writerow(["Utilisateur", "Email", "Type", "Client", "Projet", "Tâche", "Description", "Tags",
-                         "Début", "Fin", "Durée (h)", "Facturable", "Taux horaire"])
+                         "Début", "Fin", "Durée (h)", "Facturable", "Taux horaire", "Tokens IA",
+                         "Coût IA estimé (USD)"])
         for r in rows:
             writer.writerow([
                 r["user_name"], r["user_email"], member_kind_label(r), r["client_name"] or "", r["project_name"] or "",
@@ -108,6 +115,8 @@ def export_report():
                 f"{(r['duration_seconds'] or 0) / 3600:.2f}".replace(".", ","),
                 "oui" if r["billable"] else "non",
                 f"{(r['hourly_rate_cents'] or 0) / 100:.2f}".replace(".", ",") if r["hourly_rate_cents"] else "",
+                r["ai_tokens"] or "",
+                f"{ai_cost(r):.4f}".replace(".", ",") if r["ai_cost_micros"] is not None else "",
             ])
         data = ("﻿" + buf.getvalue()).encode("utf-8")
         return _file_response(data, f"{filename}.csv", "text/csv; charset=utf-8")

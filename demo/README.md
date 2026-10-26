@@ -48,8 +48,9 @@ laissés par les tests automatiques.
 
 L'historique de Claude (vidéo 6) passe par le vrai chemin : `claude-history.mjs` connecte le « Mac mini »
 d'Alex (`POST /api/tokens`, qui crée son agent) puis poste les événements de ses sessions des derniers jours
-ouvrés (`POST /api/activity/events`, `lib/claude.mjs`) ; le serveur en tire les entrées, tâches et
-descriptions. Le Flask local doit tourner. Pendant le tournage, la vidéo poste de même une session en direct,
+ouvrés (`POST /api/activity/events`, `lib/claude.mjs`), usage IA compris (`agent_usage` par tranche de 5 minutes,
+Opus 5.5 et un sous-agent Haiku) ; le serveur en tire les entrées, tâches, descriptions et coûts estimés. Le Flask
+local doit tourner. Pendant le tournage, la vidéo poste de même une session en direct,
 avec le jeton qu'elle vient de copier à l'écran (presse-papiers lu par Playwright).
 
 La vidéo 6 montre l'écran Claude Code d'une vraie instance : sur la pile locale, en http, il afficherait les

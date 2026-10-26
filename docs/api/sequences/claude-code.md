@@ -39,15 +39,17 @@ sequenceDiagram
     opt nouveau sujet (D18)
         CC->>CC: Claude appelle set_current_task(nom), serveur MCP local du plugin, sans réseau
     end
-    CC->>F: POST /api/activity/events (Bearer clk_…) : prompt, session_task {task_name}, outils (1 par minute), Stop, commits
+    CC->>CC: au Stop : transcription relue sur le poste depuis la dernière position, usage cumulé par 5 minutes (D17)
+    CC->>F: POST /api/activity/events (Bearer clk_…) : prompt, session_task {task_name}, outils (1 par minute), Stop, commits, agent_usage
     F->>PG: activity_events (idempotent par id)
     F->>PG: verrou de la session, événements des 7 derniers jours, entrées existantes
     F->>F: agent_clock : intervalles de travail, coupés au changement de sujet, plages figées par un humain
     F->>PG: tâche du sujet selon le réglage du pilote : reprise, renommée ou créée (subject_task)
     F->>PG: agent_entry_write (contrôles de la garde) puis agent_entries
     F->>PG: commits de la session → code_repositories, code_commits
+    F->>PG: usage de la session → agent_usage par entrée, modèle et effort, coût au tarif de ai_model_prices
     PG->>PS: réplication logique
-    PS-->>App: entrée de l'agent (flux managed_team)
+    PS-->>App: entrée de l'agent et son usage IA (flux managed_team)
     end
 
     rect rgba(127, 127, 127, 0.1)
@@ -68,7 +70,12 @@ sequenceDiagram
   hook relaie `session_task` `{task_name}` ; le serveur reprend ou crée la tâche de ce nom dans le projet de
   l'entrée, et coupe l'entrée quand le sujet change en cours de route.
 - Un agent désactivé ou retiré par un admin : les événements sont gardés, aucune entrée n'est écrite.
-- Le script du plugin n'envoie ni prompt, ni contenu des outils, ni transcription : session, dépôt, branche,
-  dossier, durée de l'outil. Il lit la commande d'un outil `Bash` sur le poste pour repérer un `git commit` ; la
+- Usage IA (D17) : au `Stop`, au `SubagentStop` et à la fin de la session, le script relit la transcription de la
+  session et de ses sous-agents depuis la dernière position lue et n'envoie que des totaux par tranche de 5
+  minutes, modèle, effort et vitesse (appels, tokens en entrée, en sortie, écrits en cache à 5 minutes et à 1 heure,
+  lus en cache), dédoublonnés par `message.id`. Chaque tranche va à l'entrée qui couvre son heure ; le coût est une
+  estimation au tarif public de l'API, en dollars.
+- Le script du plugin n'envoie ni prompt, ni contenu des outils, ni texte de la transcription : session, dépôt,
+  branche, dossier, durée de l'outil, totaux d'usage. Il lit la commande d'un outil `Bash` sur le poste pour repérer un `git commit` ; la
   session revendique les commits faits pendant sa commande (D13). Instance injoignable : file d'attente locale,
   renvoyée au prochain envoi réussi.

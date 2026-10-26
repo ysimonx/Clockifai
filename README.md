@@ -148,6 +148,12 @@ d'API App Store Connect (Utilisateurs et accès > Intégrations > App Store Conn
 rangée hors du dépôt dans `~/.config/clockifai/apple/` : `AuthKey_<ID>.p8` et `asc.env` (`ASC_KEY_ID=<ID>`,
 `ASC_ISSUER_ID=<émetteur>`). Les scripts l'emploient dès qu'elle est là (`app/tool/apple_auth.sh`).
 
+Google Play : pour que le .aab parte tout seul sur la piste de test interne, un compte de service Google. Dans Google
+Cloud, activer « Google Play Android Developer API », créer un compte de service et une clé JSON, rangée dans
+`~/.config/clockifai/android/play-service-account.json` ; dans la Play Console (Utilisateurs et autorisations), inviter
+l'adresse du compte de service avec le droit de publier sur les pistes de test de l'app. Les notes de version sont
+tirées du CHANGELOG (500 caractères au plus).
+
 | Plateforme | Commande | Résultat |
 |---|---|---|
 | Web | `make prod-up` (serveur) | L'image du service `web` compile l'app avec les URLs de production |
@@ -158,7 +164,9 @@ rangée hors du dépôt dans `~/.config/clockifai/apple/` : `AuthKey_<ID>.p8` et
 | iPhone | `make app-dist-ios` | Envoi à App Store Connect, installation et mises à jour par TestFlight |
 | iPhone + Mac | `make app-dist-testflight` | Les deux envois à la suite |
 | Android | `make app-android-keystore` | Une fois : clé d'envoi Google Play dans `~/.config/clockifai/android/`, à sauvegarder |
-| Android | `make app-dist-android` | App bundle signé `app/build/Clockifai-<version>-<build>.aab`, à déposer dans la Play Console |
+| Android | `make app-dist-android` | App bundle signé `app/build/Clockifai-<version>-<build>.aab`, envoyé sur la piste de test interne avec le compte de service, sinon à déposer dans la Play Console |
+| Android | `make app-upload-android` | Envoie un .aab déjà construit (`AAB=…`, le plus récent par défaut) |
+| Toutes | `make app-dist-stores` | iPhone, Mac et Android à la suite |
 
 Le numéro de build croît tout seul (minutes depuis le 2026-01-01) : TestFlight et Google Play l'exigent.
 Après un envoi, TestFlight propose le build au bout de 5 à 30 minutes de traitement par Apple.

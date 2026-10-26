@@ -2,6 +2,7 @@
 # « Clockifai » pour Google Play : app bundle (.aab) de production signé avec la clé d'envoi.
 #   make app-dist-android            (BUILD_NUMBER=… pour forcer le numéro de build)
 # Google Play exige un numéro de build croissant : par défaut, minutes écoulées depuis le 2026-01-01 (UTC).
+# Avec un compte de service Google (tool/play_upload.py), le bundle part ensuite sur la piste de test interne.
 set -eu
 cd "$(dirname "$0")/.."
 KEYS=${CLOCKIFAI_ANDROID_KEY_PROPERTIES:-$HOME/.config/clockifai/android/key.properties}
@@ -25,4 +26,10 @@ actual=$(keytool -J-Duser.language=en -printcert -jarfile "$AAB" | sed -n 's/^.*
 
 OUT="build/Clockifai-$VERSION-$BUILD.aab"
 cp "$AAB" "$OUT"
-echo "[android] prêt : app/$OUT (Play Console > Tester et publier)"
+PLAY_KEY=${PLAY_SERVICE_ACCOUNT:-$HOME/.config/clockifai/android/play-service-account.json}
+if [ -f "$PLAY_KEY" ]; then
+  echo "[android] prêt : app/$OUT, envoi sur Google Play"
+  uv run --script tool/play_upload.py "$OUT"
+else
+  echo "[android] prêt : app/$OUT (Play Console > Tester et publier ; envoi automatique : compte de service, README)"
+fi

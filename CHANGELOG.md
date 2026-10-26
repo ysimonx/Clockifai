@@ -19,6 +19,11 @@ la date d'arrivée de chaque évolution.
   Mettre à jour le plugin sur chaque poste (`claude plugin marketplace update clockifai`, puis
   `claude plugin update clockifai@clockifai`).
 
+### Modifié
+
+- Guide utilisateur : la vidéo 6 (Claude Code) montre l'usage IA, sur la fiche de l'agent, dans les rapports et
+  dans la fenêtre d'une entrée de Claude (26 octobre 2026).
+
 ## [0.2.1] — 2026-10-26
 
 ### Ajouté

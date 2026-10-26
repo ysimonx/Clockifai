@@ -512,4 +512,21 @@ class AppDatabase extends _$AppDatabase {
         onCreate: (m) async {},
         onUpgrade: (m, from, to) async {},
       );
+
+  /// « Annuler » (plans/13-ux-moderne.md) : remet [row], lue avant une suppression logique ou une modification, telle
+  /// qu'elle était (`toCompanion(false)`, nulls compris). Une ligne supprimée a pu quitter la base locale entre-temps,
+  /// les flux ne gardant que les lignes non supprimées : elle est alors réinsérée, encore marquée supprimée, puis
+  /// rétablie par une mise à jour. Une insertion PowerSync n'envoie pas les colonnes nulles ; la mise à jour
+  /// envoie `deleted_at: null`, que le serveur applique. À appeler dans une transaction de l'appelant (pas de
+  /// transaction imbriquée sur sqlite_async).
+  Future<void> restoreRow<T extends Table, D>(TableInfo<T, D> table, UpdateCompanion<D> row) async {
+    final values = row.toColumns(false);
+    final idColumn = table.columnsByName['id']! as GeneratedColumn<String>;
+    Expression<bool> byId(T _) => idColumn.equalsExp(values['id']! as Expression<String>);
+    final here = await (select(table)..where(byId)).getSingleOrNull();
+    if (here == null) {
+      await into(table).insert(RawValuesInsertable<D>({...values, 'deleted_at': Variable<DateTime>(nowUtc())}));
+    }
+    await (update(table)..where(byId)).write(row);
+  }
 }

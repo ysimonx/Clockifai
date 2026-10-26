@@ -62,6 +62,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - Après modification de `powersync/sync-config.yaml` : `docker compose … restart powersync`. Les listes littérales `IN ('a','b')` sont refusées dans les sous-requêtes des streams.
 - Cinq flux : `my_profile` (son profil, auto), `workspace_core` (référentiel, auto), `my_time_entries` (données personnelles, auto), `team_data` (tout le workspace, souscrit par `SessionController` pour les managers), `managed_team` (temps, feuilles et absences des collaborateurs d'un chef d'équipe, auto, jointure sur `team_scope` par `(workspace_id, user_id)`).
 - Une colonne non nulle ajoutée à une table existante n'est répliquée qu'au prochain changement de ligne : la migration « touche » les lignes (`update … set col = col`) et la colonne Drift reste nullable.
+- Une insertion PowerSync (PUT) n'envoie pas les colonnes nulles ; remettre une colonne à nul passe par une mise à jour (PATCH). « Annuler » rétablit une ligne par `AppDatabase.restoreRow` (réinsérée si la sync l'a déjà retirée). Pas de transaction Drift imbriquée sur sqlite_async.
 - Dates sans heure (`period_start`, `start_date`, `date`…) : texte `yyyy-MM-dd` côté client (`dayKey()` / `parseDay()` dans `modules_repository.dart`).
 - Le worker web PowerSync est **compilé depuis l'app** (`make app-web-assets`), pas téléchargé : le worker publié peut être en décalage de version avec `sqlite_async`.
 
@@ -110,7 +111,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 
 ## Tests
 - `services/tests/` : unitaires sans base ; `services/tests/integration/` : contre la pile Docker (inscription, RLS, rôles, chronomètres simultanés, verrouillage, upsert du connecteur, exports, chefs d'équipe, agents Claude, jetons et événements d'activité, script du plugin jusqu'à l'entrée de l'agent) ; `test_claude_plugin.py` : script du plugin (liste blanche, nom de tâche relayé, usage lu dans la transcription, serveur MCP local, commits par session, file locale, lancé avec le python3 de macOS) et marketplace.
-- `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, pont de la barre de menus macOS (canal simulé), regroupement des entrées similaires (dont la ligne dépliable), commandes de connexion de Claude Code et « dernier événement », bandeau « Claude travaille », usage IA des entrées d'agent (lignes et totaux du rapport), journal automatique (`features/today` : calcul `planDay` et page « Aujourd'hui »), sur base Drift en mémoire.
+- `app/test/` : parsing des durées, dépôts (entrées, modules, équipes), `TeamRights`, pont de la barre de menus macOS (canal simulé), regroupement des entrées similaires (dont la ligne dépliable), commandes de connexion de Claude Code et « dernier événement », bandeau « Claude travaille », Annuler et édition sur place d'une entrée, usage IA des entrées d'agent (lignes et totaux du rapport), journal automatique (`features/today` : calcul `planDay` et page « Aujourd'hui »), sur base Drift en mémoire.
 - Parcours navigateur (Playwright, hors dépôt) : activer l'arbre d'accessibilité Flutter en cliquant `flt-semantics-placeholder`, puis cliquer un champ et taper au clavier (`fill` ne suffit pas).
 
 ## Ports locaux

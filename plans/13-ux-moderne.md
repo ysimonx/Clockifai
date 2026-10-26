@@ -116,11 +116,29 @@ Ce que cela demande :
   l'horloge (`addDays`, `atMinute`, `minuteOf`) : « hier » reste juste après un changement d'heure. Aperçu en étiquettes sous le champ ; Entrée
   enregistre, Échap efface, Annuler dans le bandeau. Exemples cliquables tirés des projets et tâches.
 
+### Lot 1, premiers gains (faits)
+
+- Annuler plutôt que confirmer (`showUndo`, `core/widgets/common.dart`, bandeau de 8 s) : supprimer une entrée, un
+  groupe d'entrées similaires, abandonner un chronomètre, supprimer un projet, un client ou un tag. Restent confirmés
+  ce qui ne se défait pas d'un geste ou touche d'autres personnes : déconnexion, révocation d'un jeton,
+  reconnexion d'un ordinateur, réinitialisation du kiosque, nouveau taux sur les entrées passées, annulation d'une
+  demande d'absence, suppression d'une facture (numérotation), d'une politique d'absence, d'un groupe (ses membres
+  et chefs d'équipe sont retirés), retrait d'un membre.
+- Rétablir une ligne : `AppDatabase.restoreRow` réécrit la ligne lue avant (`toCompanion(false)`). Une ligne
+  supprimée quitte la base locale dès la synchronisation suivante (les flux filtrent `deleted_at`) : elle est
+  réinsérée encore supprimée, puis rétablie par une mise à jour, car une insertion PowerSync n'envoie pas les
+  colonnes nulles. Pas de transaction imbriquée (sqlite_async) : l'appelant ouvre la transaction.
+- Description et projet modifiables sur place dans « Suivi du temps » (`features/time_entries/inline_edit.dart`) :
+  clic sur la description (Entrée enregistre, Échap abandonne), clic sur le projet (sélecteur) ; aux conditions
+  du dialogue (droits, entrée verrouillée, période close, projet ou description exigés), avec Annuler. Ailleurs
+  (rapports, approbations), un clic ouvre toujours le dialogue. Pas d'infobulle : l'étiquette d'accessibilité
+  reste la description.
+
 ## Lots
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Petits gains | Annuler au lieu des confirmations ; durées sans secondes ; description et projet modifiables sur place ; sélection multiple et barre d'actions ; raccourcis à une touche ; ⌘K (navigation et actions) | M | en cours (durées sans secondes : fait) |
+| 1 Petits gains | Annuler au lieu des confirmations ; durées sans secondes ; description et projet modifiables sur place ; sélection multiple et barre d'actions ; raccourcis à une touche ; ⌘K (navigation et actions) | M | en cours (durées sans secondes, Annuler, description et projet sur place : faits ; sélection multiple, raccourcis, ⌘K : à faire) |
 | 2 Journal du jour | Page « Aujourd'hui » (pistes Vous et Claude, trous, pause habituelle dans le profil, bilan du jour) ; remplace la vue jour de « Suivi du temps » et du calendrier | M/L | envisagé |
 | 3 Saisie express | Analyseur FR/EN (durée, plage, jour, projet et tâche flous, `#tag`, facturable), étiquettes à la frappe, placement dans les trous ; aussi dans la barre de menus (⌥⌘T) | M | en cours (page « Aujourd'hui » : fait ; barre de menus : à faire) |
 | 4 Pistes | Moteur de suggestions : planning, habitudes, sessions de Claude et commits (rejoint le plan 10, lot 2, `time_suggestions`) ; agenda en option (Google, Microsoft) | M/L | envisagé |

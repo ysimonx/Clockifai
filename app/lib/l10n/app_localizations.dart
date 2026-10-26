@@ -506,12 +506,6 @@ abstract class AppLocalizations {
   /// **'Proposition ignorée'**
   String get journalIgnored;
 
-  /// No description provided for @journalUndo.
-  ///
-  /// In fr, this message translates to:
-  /// **'Annuler'**
-  String get journalUndo;
-
   /// No description provided for @journalSummary.
   ///
   /// In fr, this message translates to:
@@ -1219,30 +1213,6 @@ abstract class AppLocalizations {
   /// **'Supprimer'**
   String get delete;
 
-  /// No description provided for @deleteClient.
-  ///
-  /// In fr, this message translates to:
-  /// **'Supprimer le client ?'**
-  String get deleteClient;
-
-  /// No description provided for @deleteClientMessage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Les projets de ce client seront conservés, sans client.'**
-  String get deleteClientMessage;
-
-  /// No description provided for @deleteEntry.
-  ///
-  /// In fr, this message translates to:
-  /// **'Supprimer l\'entrée ?'**
-  String get deleteEntry;
-
-  /// No description provided for @deleteEntryMessage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Cette entrée de temps sera supprimée sur tous vos appareils.'**
-  String get deleteEntryMessage;
-
   /// No description provided for @deleteGroup.
   ///
   /// In fr, this message translates to:
@@ -1273,35 +1243,59 @@ abstract class AppLocalizations {
   /// **'Supprimer la politique ?'**
   String get deletePolicy;
 
-  /// No description provided for @deleteProject.
-  ///
-  /// In fr, this message translates to:
-  /// **'Supprimer le projet ?'**
-  String get deleteProject;
-
-  /// No description provided for @deleteProjectMessage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Les entrées existantes restent, mais ne seront plus rattachées à un projet visible.'**
-  String get deleteProjectMessage;
-
   /// No description provided for @deleteSimilarEntries.
   ///
   /// In fr, this message translates to:
   /// **'Supprimer les {count} entrées'**
   String deleteSimilarEntries(int count);
 
-  /// No description provided for @deleteSimilarEntriesMessage.
+  /// No description provided for @undo.
   ///
   /// In fr, this message translates to:
-  /// **'Les {count} entrées de ce groupe seront supprimées.'**
-  String deleteSimilarEntriesMessage(int count);
+  /// **'Annuler'**
+  String get undo;
 
-  /// No description provided for @deleteTag.
+  /// No description provided for @entryDeleted.
   ///
   /// In fr, this message translates to:
-  /// **'Supprimer le tag ?'**
-  String get deleteTag;
+  /// **'Entrée supprimée'**
+  String get entryDeleted;
+
+  /// No description provided for @entriesDeleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 entrée supprimée} other{{count} entrées supprimées}}'**
+  String entriesDeleted(int count);
+
+  /// No description provided for @entryUpdated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrée modifiée'**
+  String get entryUpdated;
+
+  /// No description provided for @timerDiscarded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chronomètre abandonné : le temps en cours n\'est pas enregistré'**
+  String get timerDiscarded;
+
+  /// No description provided for @clientDeleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Client « {name} » supprimé ; ses projets restent, sans client'**
+  String clientDeleted(String name);
+
+  /// No description provided for @projectDeleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Projet « {name} » supprimé ; ses entrées restent'**
+  String projectDeleted(String name);
+
+  /// No description provided for @tagDeleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tag « {name} » supprimé'**
+  String tagDeleted(String name);
 
   /// No description provided for @description.
   ///
@@ -1326,12 +1320,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Abandonner le chronomètre'**
   String get discardTimer;
-
-  /// No description provided for @discardTimerMessage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Le temps en cours ne sera pas enregistré.'**
-  String get discardTimerMessage;
 
   /// No description provided for @discount.
   ///

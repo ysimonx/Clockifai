@@ -262,9 +262,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journalIgnored => 'Suggestion dismissed';
 
   @override
-  String get journalUndo => 'Undo';
-
-  @override
   String get journalSummary => 'Day summary';
 
   @override
@@ -693,20 +690,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String get deleteClient => 'Delete client?';
-
-  @override
-  String get deleteClientMessage =>
-      'Projects of this client are kept, without a client.';
-
-  @override
-  String get deleteEntry => 'Delete entry?';
-
-  @override
-  String get deleteEntryMessage =>
-      'This time entry will be deleted on all your devices.';
-
-  @override
   String get deleteGroup => 'Delete group';
 
   @override
@@ -723,24 +706,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deletePolicy => 'Delete policy?';
 
   @override
-  String get deleteProject => 'Delete project?';
-
-  @override
-  String get deleteProjectMessage =>
-      'Existing entries are kept but no longer linked to a visible project.';
-
-  @override
   String deleteSimilarEntries(int count) {
     return 'Delete the $count entries';
   }
 
   @override
-  String deleteSimilarEntriesMessage(int count) {
-    return 'The $count entries of this group will be deleted.';
+  String get undo => 'Undo';
+
+  @override
+  String get entryDeleted => 'Entry deleted';
+
+  @override
+  String entriesDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries deleted',
+      one: '1 entry deleted',
+    );
+    return '$_temp0';
   }
 
   @override
-  String get deleteTag => 'Delete tag?';
+  String get entryUpdated => 'Entry updated';
+
+  @override
+  String get timerDiscarded =>
+      'Timer discarded: the running time was not saved';
+
+  @override
+  String clientDeleted(String name) {
+    return 'Client “$name” deleted; its projects remain, without a client';
+  }
+
+  @override
+  String projectDeleted(String name) {
+    return 'Project “$name” deleted; its entries remain';
+  }
+
+  @override
+  String tagDeleted(String name) {
+    return 'Tag “$name” deleted';
+  }
 
   @override
   String get description => 'Description';
@@ -754,9 +761,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discardTimer => 'Discard timer';
-
-  @override
-  String get discardTimerMessage => 'The running time will not be saved.';
 
   @override
   String get discount => 'Discount';

@@ -193,6 +193,20 @@ Future<bool> confirm(BuildContext context,
   return res ?? false;
 }
 
+/// « Annuler plutôt que confirmer » (plans/13-ux-moderne.md, principe 5) : l'action est déjà faite, le bandeau propose
+/// de la défaire quelques secondes. `persist: false` : sinon un bandeau à action reste affiché jusqu'à un clic.
+void showUndo(BuildContext context, String message, Future<void> Function() undo) {
+  final l = context.l10n;
+  ScaffoldMessenger.maybeOf(context)
+    ?..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      content: Text(message),
+      persist: false,
+      duration: const Duration(seconds: 8),
+      action: SnackBarAction(label: l.undo, onPressed: () => undo()),
+    ));
+}
+
 void showSnack(BuildContext context, String message) {
   ScaffoldMessenger.maybeOf(context)
     ?..hideCurrentSnackBar()

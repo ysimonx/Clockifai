@@ -264,7 +264,7 @@ class _TodayPageState extends State<TodayPage> {
         _sel = next?.id;
       });
       final minutes = list.fold(0, (a, b) => a + b.span.length);
-      _snack(l.journalAdded(list.length, formatHm(minutes * 60)), () => entriesRepo.deleteMany(ids));
+      showUndo(this.context, l.journalAdded(list.length, formatHm(minutes * 60)), () => entriesRepo.deleteMany(ids));
     }
 
     Future<void> dismiss(_Block b) async {
@@ -273,7 +273,7 @@ class _TodayPageState extends State<TodayPage> {
       await prefs.dismissSuggestion(key);
       if (!mounted) return;
       setState(() => _sel = next?.id);
-      _snack(l.journalIgnored, () => prefs.restoreSuggestion(key));
+      showUndo(this.context, l.journalIgnored, () => prefs.restoreSuggestion(key));
     }
 
     Future<void> saveFresh() async {
@@ -301,7 +301,7 @@ class _TodayPageState extends State<TodayPage> {
         _freshTask = null;
         _sel = 'e:$id';
       });
-      _snack(l.journalAdded(1, formatHm(sp.length * 60)), () => entriesRepo.delete(id));
+      showUndo(this.context, l.journalAdded(1, formatHm(sp.length * 60)), () => entriesRepo.delete(id));
     }
 
     Future<void> commitSpan(_Block b, Span sp) async {
@@ -482,7 +482,7 @@ class _TodayPageState extends State<TodayPage> {
       _quick.clear();
       setState(() {});
       _quickFocus.requestFocus();
-      _snack(added, () => entriesRepo.delete(id));
+      showUndo(this.context, added, () => entriesRepo.delete(id));
     }
 
     Widget chip(String text, {Color? dot, bool missing = false, bool mono = false}) => Container(
@@ -560,16 +560,6 @@ class _TodayPageState extends State<TodayPage> {
         ]),
       ),
     );
-  }
-
-  void _snack(String message, Future<void> Function() undo) {
-    final l = context.l10n;
-    ScaffoldMessenger.maybeOf(context)
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(message),
-        action: SnackBarAction(label: l.journalUndo, onPressed: () => undo()),
-      ));
   }
 
   // ------------------------------------------------------------------ en-tête : jour et semaine en anneaux

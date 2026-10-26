@@ -83,6 +83,189 @@ class AppLocalizationsFr extends AppLocalizations {
       'Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).';
 
   @override
+  String get journalHeroPending => 'Votre journée est presque prête';
+
+  @override
+  String journalHeroPendingText(String total, String proposed, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count propositions à confirmer',
+      one: '1 proposition à confirmer',
+    );
+    return '$total reconstituées, dont $proposed proposées : $_temp0.';
+  }
+
+  @override
+  String get journalHeroGaps => 'Il reste des créneaux vides';
+
+  @override
+  String get journalHeroGapsText =>
+      'Touchez un créneau en pointillé pour le remplir, ou glissez sur la ligne « Vous ».';
+
+  @override
+  String get journalHeroDone => 'Journée complète';
+
+  @override
+  String journalHeroDoneText(String total) {
+    return '$total saisies, rien à confirmer.';
+  }
+
+  @override
+  String get journalHeroNothing => 'Rien à proposer pour ce jour';
+
+  @override
+  String journalHeroNothingText(String total) {
+    return '$total saisies.';
+  }
+
+  @override
+  String journalConfirmAll(int count) {
+    return 'Tout confirmer · $count';
+  }
+
+  @override
+  String get journalReviewOne => 'Revoir une par une';
+
+  @override
+  String get journalYou => 'Vous';
+
+  @override
+  String journalToFill(String duration) {
+    return '$duration à saisir';
+  }
+
+  @override
+  String get journalHint =>
+      'Glisser sur le vide : créer · tirer un bord ou le bloc : ajuster · Entrée : confirmer · Retour arrière : ignorer · flèches : décaler';
+
+  @override
+  String get journalProposed => 'Proposé par Clockifai';
+
+  @override
+  String get journalSourceClaude => 'Pendant une session de Claude';
+
+  @override
+  String get journalSourceHabit => 'Habitude';
+
+  @override
+  String get journalSourcePlanning => 'Planning';
+
+  @override
+  String get journalLogged => 'Saisi';
+
+  @override
+  String get journalRunning => 'En cours';
+
+  @override
+  String get journalNew => 'Nouvelle entrée';
+
+  @override
+  String get journalWhy => 'Pourquoi ce bloc';
+
+  @override
+  String journalReasonClaudeSession(String start, String end) {
+    return 'Claude travaillait sur ce projet de $start à $end';
+  }
+
+  @override
+  String get journalReasonClaudePilot =>
+      'Le temps de suivre sa session et de relire son travail';
+
+  @override
+  String journalReasonHabitWeekday(int count, int of, String time) {
+    return 'Habitude : $count fois sur les $of dernières semaines, le même jour, vers $time';
+  }
+
+  @override
+  String journalReasonHabitDaily(int count, int of, String time) {
+    return 'Habitude : $count jours sur les $of derniers jours travaillés, vers $time';
+  }
+
+  @override
+  String journalReasonPlanned(String duration) {
+    return 'Planning : $duration prévues sur ce projet';
+  }
+
+  @override
+  String journalReasonAlreadyLogged(String duration) {
+    return 'Déjà saisi sur ce projet aujourd’hui : $duration';
+  }
+
+  @override
+  String get journalReasonNew =>
+      'Créé sur la frise : choisissez le projet, puis enregistrez.';
+
+  @override
+  String get journalPrivacy =>
+      'Rien de vos fichiers ni de vos messages : seulement des heures, vos entrées passées, le planning et les sessions de Claude.';
+
+  @override
+  String get journalConfirm => 'Confirmer';
+
+  @override
+  String get journalIgnore => 'Ignorer';
+
+  @override
+  String get journalEditEntry => 'Modifier…';
+
+  @override
+  String journalAdded(int count, String duration) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entrées ajoutées',
+      one: '1 entrée ajoutée',
+    );
+    return '$_temp0 · $duration';
+  }
+
+  @override
+  String get journalIgnored => 'Proposition ignorée';
+
+  @override
+  String get journalUndo => 'Annuler';
+
+  @override
+  String get journalSummary => 'Bilan du jour';
+
+  @override
+  String get journalConfirmed => 'Confirmé';
+
+  @override
+  String get journalToConfirm => 'À confirmer';
+
+  @override
+  String journalTarget(String duration) {
+    return 'sur $duration';
+  }
+
+  @override
+  String journalTypicalDay(String start, String end) {
+    return 'Journée type : $start – $end, d’après vos semaines passées';
+  }
+
+  @override
+  String journalTypicalDefault(String start, String end) {
+    return 'Journée type par défaut : $start – $end';
+  }
+
+  @override
+  String get journalSelectHint =>
+      'Choisissez un bloc, ou glissez sur la ligne « Vous » pour en créer un.';
+
+  @override
+  String get journalDescriptionHint => 'Qu’avez-vous fait ?';
+
+  @override
+  String journalDayRing(String day, int percent) {
+    return '$day : $percent % saisi';
+  }
+
+  @override
+  String get journalBackToToday => 'Revenir à aujourd’hui';
+
+  @override
   String get aiUsage => 'Usage IA';
 
   @override

@@ -1,7 +1,8 @@
 # Suivi du temps : Claude et moi (hooks, extension VSCode, connecteur MCP) — plan 10
 
 > Statut : **en cours** (lot 1 commencé le 23 octobre 2026, branche `plan-10-lot-1`, fait le 24 octobre 2026 ;
-> lot 7, usage IA, fait le 26 octobre 2026). Les lots 2, 3 et 4 sont validés, les lots 5 et 6 restent envisagés.
+> lot 7, usage IA, fait le 26 octobre 2026). Les lots 3 et 4 sont validés, le lot 2 est en attente, les lots 5 et 6
+> restent envisagés.
 >
 > Objectif : mesurer, projet par projet, **deux temps distincts** :
 > - le **temps de Claude**, pendant que les agents Claude Code travaillent, y compris quand on a quitté la fenêtre ;
@@ -959,7 +960,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 |---|---|---|---|
 | 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille », filtre des rapports, colonne « Type » des exports, réglages de facturation des agents, lien de l'écran Intégrations vers la fiche de l'agent) ; hooks vérifiés dans l'extension VSCode | M/L | fait |
 | 1c Tâche nommée par Claude (D18) | Serveur MCP local du plugin (`set_current_task`), relais `session_task` `{task_name}` par le hook, `subject_task` et découpage des entrées par sujet (`agent_clock`), « préciser = renommer » (`agent_tasks`, 0014), réglage « Tâches de Claude » par pilote (`profiles.claude_tasks`, 0015), tests unitaires, du plugin et d'intégration, essai réel avec Claude Code | S/M | fait |
-| 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | validé |
+| 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | en attente (26 octobre 2026 : pas de mesure de l'activité personnelle pour l'instant ; le journal du plan 13 s'en passe) |
 | 3 MCP | Service `mcp`, outils (`set_current_task` déjà fait en local, lot 1c), `.mcp.json`, commandes du plugin et relais `session_description` par le hook | M | validé |
 | 4 Confort | Calendrier, barre de menus macOS, signal de présence (`/api/activity/presence`), extraits de prompt | M | validé |
 | 5 Connecteur claude.ai | OAuth (selon Supabase Auth auto-hébergé), publication du connecteur | M, conditionnel | envisagé |

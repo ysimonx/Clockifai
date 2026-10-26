@@ -1,0 +1,345 @@
+import '../../data/drift/database.dart';
+
+/// Journal automatique (plans/13-ux-moderne.md, lot 11) : la journée se remplit à partir de ce que Clockifai sait
+/// déjà, et la personne valide. Calcul pur, sans base ni widget : il reçoit les entrées et le planning, et rend la
+/// journée type, les créneaux vides et les propositions.
+///
+/// Les minutes sont comptées depuis minuit, en heure locale.
+
+/// Une plage de la journée, en minutes depuis minuit.
+class Span {
+  const Span(this.start, this.end);
+  final int start;
+  final int end;
+  int get length => end - start;
+  bool overlaps(Span o) => start < o.end && o.start < end;
+  Span? intersect(Span o) {
+    final s = start > o.start ? start : o.start;
+    final e = end < o.end ? end : o.end;
+    return e > s ? Span(s, e) : null;
+  }
+
+  @override
+  bool operator ==(Object other) => other is Span && other.start == start && other.end == end;
+  @override
+  int get hashCode => Object.hash(start, end);
+  @override
+  String toString() => 'Span(${hm(start)}–${hm(end)})';
+}
+
+String hm(int m) => '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
+
+enum DraftSource { claude, habit, planning }
+
+/// Pourquoi une proposition existe, à traduire par l'interface.
+enum ReasonKind {
+  /// Claude travaillait sur ce projet : [a] début, [b] fin.
+  claudeSession,
+  /// Le temps de piloter la session : la suivre, la relire.
+  claudePilot,
+  /// Habitude sur un même jour de la semaine : [count] fois sur les [of] derniers, vers [a].
+  habitWeekday,
+  /// Habitude quotidienne : [count] jours sur les [of] derniers jours travaillés, vers [a].
+  habitDaily,
+  /// Planning : [count] minutes prévues sur ce projet ce jour.
+  planned,
+  /// Déjà saisi sur ce projet aujourd'hui : [count] minutes.
+  alreadyLogged,
+}
+
+class DraftReason {
+  const DraftReason(this.kind, {this.a = 0, this.b = 0, this.count = 0, this.of = 0});
+  final ReasonKind kind;
+  final int a;
+  final int b;
+  final int count;
+  final int of;
+}
+
+/// Une entrée proposée, pas encore enregistrée.
+class Draft {
+  const Draft({
+    required this.key,
+    required this.source,
+    required this.span,
+    required this.description,
+    this.projectId,
+    this.taskId,
+    this.reasons = const [],
+  });
+
+  /// Stable d'un calcul à l'autre (même jour, mêmes données) : sert à l'ignorer pour de bon.
+  final String key;
+  final DraftSource source;
+  final Span span;
+  final String description;
+  final String? projectId;
+  final String? taskId;
+  final List<DraftReason> reasons;
+
+  Draft withSpan(Span s) => Draft(key: key, source: source, span: s, description: description, projectId: projectId, taskId: taskId, reasons: reasons);
+}
+
+/// Journée type déduite de l'historique : arrivée, pause de midi, départ, durée visée.
+class TypicalDay {
+  const TypicalDay({required this.start, required this.lunch, required this.end, required this.target, required this.fromHistory});
+  final int start;
+  final Span? lunch;
+  final int end;
+  final int target;
+  final bool fromHistory;
+
+  static const fallback = TypicalDay(start: 510, lunch: Span(750, 840), end: 1050, target: 450, fromHistory: false);
+
+  /// Plages de travail (hors pause).
+  List<Span> get windows => lunch == null
+      ? [Span(start, end)]
+      : [if (lunch!.start > start) Span(start, lunch!.start), if (end > lunch!.end) Span(lunch!.end, end)];
+}
+
+class DayPlan {
+  const DayPlan({required this.typical, required this.windows, required this.busy, required this.drafts, required this.gaps});
+  final TypicalDay typical;
+
+  /// Plages de travail du jour (coupées à maintenant pour aujourd'hui).
+  final List<Span> windows;
+
+  /// Temps déjà saisi (entrées terminées et chronomètres en cours).
+  final List<Span> busy;
+  final List<Draft> drafts;
+
+  /// Créneaux encore vides après les propositions.
+  final List<Span> gaps;
+
+  int get loggedMinutes => busy.fold(0, (a, s) => a + s.length);
+  int get draftMinutes => drafts.fold(0, (a, d) => a + d.span.length);
+}
+
+const _minDraft = 10;
+const _minGap = 15;
+
+int _snap(int m) => (m / 5).round() * 5;
+
+DateTime _midnight(DateTime d) => DateTime(d.year, d.month, d.day);
+String dayKey(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+/// Plage d'une entrée dans la journée [day] (minuit local), en minutes ; une entrée en cours s'arrête à [now].
+Span? spanOf(TimeEntry e, DateTime day, DateTime now) {
+  final dayStart = _midnight(day);
+  final s = e.startAt.toLocal().difference(dayStart).inMinutes;
+  final end = (e.endAt ?? now).toLocal().difference(dayStart).inMinutes;
+  final clipped = Span(s < 0 ? 0 : s, end > 1440 ? 1440 : end);
+  return clipped.length > 0 ? clipped : null;
+}
+
+int _median(List<int> xs) {
+  final s = [...xs]..sort();
+  return s[s.length ~/ 2];
+}
+
+bool _workday(DateTime d) => d.weekday <= DateTime.friday;
+
+/// Journée type sur les jours travaillés de [history] (au moins trois), sinon [TypicalDay.fallback].
+TypicalDay typicalDay(List<TimeEntry> history, DateTime now) {
+  final byDay = <String, List<Span>>{};
+  for (final e in history) {
+    if (e.endAt == null) continue;
+    final local = e.startAt.toLocal();
+    final day = _midnight(local);
+    if (!_workday(day)) continue;
+    final sp = spanOf(e, day, now);
+    if (sp != null) (byDay[dayKey(day)] ??= []).add(sp);
+  }
+  if (byDay.length < 3) return TypicalDay.fallback;
+  final starts = <int>[], ends = <int>[], totals = <int>[], lunchStarts = <int>[], lunchEnds = <int>[];
+  for (final spans in byDay.values) {
+    spans.sort((a, b) => a.start.compareTo(b.start));
+    starts.add(spans.first.start);
+    ends.add(spans.map((s) => s.end).reduce((a, b) => a > b ? a : b));
+    totals.add(spans.fold(0, (a, s) => a + s.length));
+    // Pause de midi : le plus long creux qui commence entre 11:00 et 14:30.
+    Span? best;
+    for (var i = 1; i < spans.length; i++) {
+      final gap = Span(spans[i - 1].end, spans[i].start);
+      if (gap.length >= 20 && gap.start >= 660 && gap.start <= 870 && (best == null || gap.length > best.length)) best = gap;
+    }
+    if (best != null) {
+      lunchStarts.add(best.start);
+      lunchEnds.add(best.end);
+    }
+  }
+  final lunch = lunchStarts.length * 2 >= byDay.length ? Span(_snap(_median(lunchStarts)), _snap(_median(lunchEnds))) : null;
+  final target = ((_median(totals) / 15).round() * 15).clamp(60, 720);
+  return TypicalDay(start: _snap(_median(starts)), lunch: lunch, end: _snap(_median(ends)), target: target, fromHistory: true);
+}
+
+/// Retire [taken] des plages [free] ; ne garde que les morceaux d'au moins [min] minutes.
+List<Span> subtract(List<Span> free, List<Span> taken, {int min = 1}) {
+  var out = [...free];
+  for (final t in taken) {
+    final next = <Span>[];
+    for (final f in out) {
+      if (!f.overlaps(t)) {
+        next.add(f);
+        continue;
+      }
+      if (t.start > f.start) next.add(Span(f.start, t.start));
+      if (t.end < f.end) next.add(Span(t.end, f.end));
+    }
+    out = next;
+  }
+  return out.where((s) => s.length >= min).toList()..sort((a, b) => a.start.compareTo(b.start));
+}
+
+String _habitKey(TimeEntry e) => '${e.description.trim().toLowerCase()}\u0000${e.projectId ?? ''}\u0000${e.taskId ?? ''}';
+
+/// Empreinte stable d'une chaîne (FNV-1a 32 bits) : la clé d'une habitude ignorée survit au redémarrage.
+String _fnv(String text) {
+  var h = 0x811c9dc5;
+  for (final c in text.codeUnits) {
+    h ^= c;
+    h = (h * 0x01000193) & 0xffffffff;
+  }
+  return h.toRadixString(36);
+}
+
+/// Calcule la journée [day] : propositions tirées des sessions de Claude ([agentEntries], celles des agents du
+/// pilote), des habitudes ([history] : ses entrées des semaines précédentes) et du [planning], dans cet ordre de
+/// priorité, sur les créneaux que [mine] (ses entrées du jour) laisse vides. [dismissed] : clés ignorées.
+DayPlan planDay({
+  required DateTime day,
+  required DateTime now,
+  required List<TimeEntry> mine,
+  required List<TimeEntry> history,
+  List<TimeEntry> agentEntries = const [],
+  List<ScheduleAssignment> planning = const [],
+  Set<String> dismissed = const {},
+}) {
+  final d0 = _midnight(day);
+  final isToday = d0 == _midnight(now);
+  final isFuture = d0.isAfter(_midnight(now));
+  final nowMin = now.difference(d0).inMinutes;
+  final typical = typicalDay(history.where((e) => e.startAt.toLocal().isBefore(d0)).toList(), now);
+  final busy = [for (final e in mine) ?spanOf(e, d0, now)]..sort((a, b) => a.start.compareTo(b.start));
+
+  // Un week-end sans habitude de travail ne se remplit pas ; un jour à venir non plus.
+  var windows = _workday(d0) && !isFuture ? typical.windows : <Span>[];
+  if (isToday) windows = [for (final w in windows) if (w.start < nowMin) Span(w.start, w.end < nowMin ? w.end : nowMin)];
+
+  var free = subtract(windows, busy, min: _minDraft);
+  final drafts = <Draft>[];
+  void place(Draft d) {
+    if (dismissed.contains(d.key)) return;
+    drafts.add(d);
+    free = subtract(free, [d.span], min: _minDraft);
+  }
+
+  // 1. Claude travaillait : le pilote suivait la session (prompts, relecture).
+  for (final a in [...agentEntries]..sort((x, y) => x.startAt.compareTo(y.startAt))) {
+    final sp = spanOf(a, d0, now);
+    if (sp == null) continue;
+    for (final f in [...free]) {
+      final piece = f.intersect(sp);
+      if (piece == null || piece.length < _minDraft) continue;
+      place(Draft(
+        key: 'claude:${a.id}:${piece.start}',
+        source: DraftSource.claude,
+        span: piece,
+        description: a.description,
+        projectId: a.projectId,
+        taskId: a.taskId,
+        reasons: [DraftReason(ReasonKind.claudeSession, a: sp.start, b: sp.end), const DraftReason(ReasonKind.claudePilot)],
+      ));
+    }
+  }
+
+  // 2. Habitudes : même activité, à la même heure, la plupart des jours (ou le même jour de la semaine).
+  final loggedKeys = {for (final e in mine) _habitKey(e)};
+  final past = history.where((e) => e.endAt != null && e.startAt.toLocal().isBefore(d0)).toList();
+  final workdays = {for (final e in past) if (_workday(_midnight(e.startAt.toLocal()))) dayKey(e.startAt.toLocal())}.toList()..sort();
+  final lastWorkdays = workdays.reversed.take(10).toSet();
+  final sameWeekdays = [for (var i = 1; i <= 4; i++) dayKey(d0.subtract(Duration(days: 7 * i)))];
+  final groups = <String, List<TimeEntry>>{};
+  for (final e in past) {
+    if (e.projectId == null && e.description.trim().isEmpty) continue;
+    (groups[_habitKey(e)] ??= []).add(e);
+  }
+  final habits = <({String key, TimeEntry sample, int start, int length, DraftReason reason})>[];
+  groups.forEach((k, list) {
+    if (loggedKeys.contains(k)) return;
+    final days = {for (final e in list) dayKey(e.startAt.toLocal())};
+    final weekdayHits = sameWeekdays.where(days.contains).length;
+    final dailyHits = lastWorkdays.where(days.contains).length;
+    DraftReason? reason;
+    List<TimeEntry> basis;
+    if (weekdayHits >= 3) {
+      basis = list.where((e) => sameWeekdays.contains(dayKey(e.startAt.toLocal()))).toList();
+      reason = DraftReason(ReasonKind.habitWeekday, count: weekdayHits, of: 4);
+    } else if (lastWorkdays.length >= 5 && dailyHits * 10 >= lastWorkdays.length * 6) {
+      basis = list.where((e) => lastWorkdays.contains(dayKey(e.startAt.toLocal()))).toList();
+      reason = DraftReason(ReasonKind.habitDaily, count: dailyHits, of: lastWorkdays.length);
+    } else {
+      return;
+    }
+    final starts = [for (final e in basis) e.startAt.toLocal().difference(_midnight(e.startAt.toLocal())).inMinutes];
+    final lengths = [for (final e in basis) e.endAt!.difference(e.startAt).inMinutes];
+    final start = _snap(_median(starts));
+    habits.add((key: k, sample: basis.last, start: start, length: _median(lengths),
+        reason: DraftReason(reason.kind, count: reason.count, of: reason.of, a: start)));
+  });
+  habits.sort((a, b) => a.start.compareTo(b.start));
+  for (final h in habits) {
+    final want = Span(h.start, h.start + h.length);
+    Span? best;
+    for (final f in free) {
+      final piece = f.intersect(want);
+      if (piece != null && (best == null || piece.length > best.length)) best = piece;
+    }
+    if (best == null || best.length * 2 < h.length || best.length < _minDraft) continue;
+    place(Draft(
+      key: 'habit:${_fnv(h.key)}:${dayKey(d0)}',
+      source: DraftSource.habit,
+      span: best,
+      description: h.sample.description,
+      projectId: h.sample.projectId,
+      taskId: h.sample.taskId,
+      reasons: [h.reason],
+    ));
+  }
+
+  // 3. Planning : le reste des heures prévues sur le projet, dans les créneaux libres restants.
+  final dateKey = dayKey(d0);
+  for (final a in planning) {
+    if (a.projectId == null || a.startDate.compareTo(dateKey) > 0 || a.endDate.compareTo(dateKey) < 0) continue;
+    final planned = (a.hoursPerDay * 60).round();
+    final already = [for (final e in mine) if (e.projectId == a.projectId) ?spanOf(e, d0, now)].fold(0, (s, x) => s + x.length);
+    final proposed = drafts.where((x) => x.projectId == a.projectId).fold(0, (s, x) => s + x.span.length);
+    var left = planned - already - proposed;
+    for (final f in [...free]) {
+      if (left < _minDraft) break;
+      final piece = Span(f.start, f.start + (f.length < left ? f.length : left));
+      if (piece.length < _minDraft) continue;
+      place(Draft(
+        key: 'plan:${a.id}:$dateKey:${piece.start}',
+        source: DraftSource.planning,
+        span: piece,
+        description: a.note ?? '',
+        projectId: a.projectId,
+        reasons: [
+          DraftReason(ReasonKind.planned, count: planned),
+          if (already > 0) DraftReason(ReasonKind.alreadyLogged, count: already),
+        ],
+      ));
+      left -= piece.length;
+    }
+  }
+
+  drafts.sort((a, b) => a.span.start.compareTo(b.span.start));
+  return DayPlan(
+    typical: typical,
+    windows: windows,
+    busy: busy,
+    drafts: drafts,
+    gaps: subtract(free, const [], min: _minGap),
+  );
+}

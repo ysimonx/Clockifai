@@ -1,6 +1,6 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
-> Statut : **envisagé** (26 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
+> Statut : **en cours** (lot 11, première version, commencé le 26 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
 > (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
@@ -75,6 +75,34 @@ Ce que cela demande :
   confidentialité à afficher (les données envoyées au modèle sont des agrégats, pas les descriptions brutes, à
   trancher).
 
+## Décisions
+
+- **26 octobre 2026** : on commence par le journal automatique (lot 11), dans une version réduite qui n'utilise
+  que ce que Clockifai sait déjà : historique des entrées (habitudes, journée type), planning, sessions de Claude.
+- **26 octobre 2026** : pas de mesure de l'activité personnelle sur le poste (temps actif dans VSCode, plan 10,
+  lot 2) : Yannick n'en est pas encore convaincu. Le lot 2 du plan 10 passe en attente ; la ligne « Traces » des
+  maquettes n'est pas construite.
+
+### Lot 11, première version (faite)
+
+- Page **Aujourd'hui** (`/today`, `features/today/today_page.dart`), en tête du menu ; l'accueil reste
+  « Suivi du temps » tant que la question 1 n'est pas tranchée.
+- Calcul pur `planDay` (`features/today/day_plan.dart`, testé sans base) : journée type tirée des jours travaillés
+  des cinq dernières semaines (arrivée, pause de midi, départ, durée médianes ; à défaut 8:30 – 17:30, pause de
+  12:30 à 14:00, 7 h 30), créneaux vides jusqu'à maintenant, puis propositions dans cet ordre : temps des sessions
+  de Claude du pilote, habitudes (même description, projet et tâche : 3 des 4 mêmes jours de semaine, ou 6 des 10
+  derniers jours travaillés, à l'heure médiane), planning (heures prévues moins le déjà saisi). Chaque proposition
+  a une clé stable et ses raisons ; une proposition ignorée est mémorisée sur l'appareil (`DisplayPrefs`) et laisse
+  sa place à la suivante.
+- Les propositions sont calculées sur l'appareil, hors ligne compris, et ne sont pas synchronisées ; seules les
+  entrées confirmées le sont.
+- Frise horizontale (ligne « Vous », ligne « Claude » si la personne pilote un agent), créneaux vides en pointillé,
+  propositions en pointillé de couleur ; glisser sur le vide crée une entrée, glisser un bloc ou tirer ses bords
+  l'ajuste (entrées, propositions) ; clavier (Entrée, Retour arrière, flèches) ; panneau du bloc choisi avec
+  « Pourquoi ce bloc » ; « Tout confirmer » puis Annuler ; bilan du jour ; sept derniers jours en anneaux.
+- Pas dans cette version : assistant, agenda, temps actif sur le poste, commits, thème nuit propre à la page (l'app
+  suit le thème du système).
+
 ## Lots
 
 | Lot | Contenu | Taille | État |
@@ -89,7 +117,7 @@ Ce que cela demande :
 | 8 Équipe | Tableau des retards, relance par notification, approbation avec écart au planning | M | envisagé |
 | 9 Mobile chantier | « Comme hier », durée au pouce, dictée, glisser, badge hors ligne, pointage d'équipe repensé | M | envisagé |
 | 10 Identité visuelle | Polices, jetons de couleur, mode sombre, densité | S/M | envisagé |
-| 11 Journal automatique | Brouillons tirés des traces, frise manipulable (glisser, tirer les bords, clavier), « pourquoi ce bloc », validation en un geste ; dépend des lots 2 et 4 | L | envisagé |
+| 11 Journal automatique | Brouillons tirés des traces, frise manipulable (glisser, tirer les bords, clavier), « pourquoi ce bloc », validation en un geste ; première version sur l'historique, le planning et les sessions de Claude | L | en cours |
 | 12 Demander à Clockifai | Assistant ⌘J : questions sur les rapports, modifications avec aperçu et Annuler ; Claude par l'API, outils côté Flask | M/L | envisagé |
 | 13 Présence chantier | Géorepérage du chantier sur téléphone (opt-in), journée prête le soir, arrondi au planning selon l'entreprise | M/L | envisagé |
 

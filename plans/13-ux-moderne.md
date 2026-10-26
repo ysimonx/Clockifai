@@ -100,16 +100,29 @@ Ce que cela demande :
   propositions en pointillé de couleur ; glisser sur le vide crée une entrée, glisser un bloc ou tirer ses bords
   l'ajuste (entrées, propositions) ; clavier (Entrée, Retour arrière, flèches) ; panneau du bloc choisi avec
   « Pourquoi ce bloc » ; « Tout confirmer » puis Annuler ; bilan du jour ; sept derniers jours en anneaux.
-- Pas dans cette version : assistant, agenda, temps actif sur le poste, commits, thème nuit propre à la page (l'app
-  suit le thème du système).
+- Pas dans cette version : assistant, agenda, temps actif sur le poste, commits. Le thème sombre se choisit dans
+  Paramètres › Apparence (comme le système, claire ou sombre).
+
+### Lot 3, saisie express (faite dans « Aujourd'hui »)
+
+- Analyse pure `parseQuickEntry` (`features/today/quick_entry.dart`, testée) : plage (« 9h-10h30 », « 14:00 - 15:30 »,
+  « 9h à 11h »), sinon durée (« 1h20 », « 1,5h », « 1:30 », « 45min », « 90m ») ; jour (aujourd'hui, hier,
+  avant-hier, nom du jour : sa dernière occurrence ; aussi en anglais) ; `#tag` connu ; « non facturable », « #nf »,
+  « facturable » ; projet par les mots (3 lettres au moins) qui commencent un mot de son nom ou de celui de son
+  client (pas au milieu d'un mot : « appel » ne désigne pas « Rappels »), tâche de ce projet de même ; les mots du projet ou du client sortent de la description, ceux de la tâche
+  restent ; description vide : le nom de la tâche.
+- Placement : la plage dite, sinon le premier créneau vide assez grand du jour, hors propositions affichées (à
+  défaut, à la place de l'une d'elles), sinon après la dernière entrée du jour. Jours de calendrier et heures à
+  l'horloge (`addDays`, `atMinute`, `minuteOf`) : « hier » reste juste après un changement d'heure. Aperçu en étiquettes sous le champ ; Entrée
+  enregistre, Échap efface, Annuler dans le bandeau. Exemples cliquables tirés des projets et tâches.
 
 ## Lots
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Petits gains | Annuler au lieu des confirmations ; durées sans secondes ; description et projet modifiables sur place ; sélection multiple et barre d'actions ; raccourcis à une touche ; ⌘K (navigation et actions) | M | envisagé |
+| 1 Petits gains | Annuler au lieu des confirmations ; durées sans secondes ; description et projet modifiables sur place ; sélection multiple et barre d'actions ; raccourcis à une touche ; ⌘K (navigation et actions) | M | en cours (durées sans secondes : fait) |
 | 2 Journal du jour | Page « Aujourd'hui » (pistes Vous et Claude, trous, pause habituelle dans le profil, bilan du jour) ; remplace la vue jour de « Suivi du temps » et du calendrier | M/L | envisagé |
-| 3 Saisie express | Analyseur FR/EN (durée, plage, jour, projet et tâche flous, `#tag`, facturable), étiquettes à la frappe, placement dans les trous ; aussi dans la barre de menus (⌥⌘T) | M | envisagé |
+| 3 Saisie express | Analyseur FR/EN (durée, plage, jour, projet et tâche flous, `#tag`, facturable), étiquettes à la frappe, placement dans les trous ; aussi dans la barre de menus (⌥⌘T) | M | en cours (page « Aujourd'hui » : fait ; barre de menus : à faire) |
 | 4 Pistes | Moteur de suggestions : planning, habitudes, sessions de Claude et commits (rejoint le plan 10, lot 2, `time_suggestions`) ; agenda en option (Google, Microsoft) | M/L | envisagé |
 | 5 Semaine | Une page, trois vues ; copie de la semaine précédente, remplissage par le planning, suggestions en pointillé, liste avant soumission | M | envisagé |
 | 6 Fin de journée | Récapitulatif à heure réglable (barre de menus macOS, notification mobile) avec les pistes à cocher | S/M | envisagé |

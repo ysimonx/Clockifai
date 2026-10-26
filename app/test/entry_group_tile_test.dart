@@ -107,7 +107,7 @@ void main() {
 
       expect(find.text('3'), findsOneWidget);
       expect(find.text('Pose'), findsOneWidget);
-      expect(find.text(formatClock((30 + 15 + 45) * 60)), findsOneWidget);
+      expect(find.text(formatHm((30 + 15 + 45) * 60)), findsOneWidget);
       expect(find.byType(EntryTile), findsNothing);
       expect(find.byIcon(Icons.play_arrow), findsOneWidget);
 

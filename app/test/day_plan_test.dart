@@ -92,6 +92,16 @@ void main() {
     expect(planDay(day: at(10, 27, 0), now: now, mine: const [], history: history(), planning: planning).drafts, isEmpty);
   });
 
+  test('jours de changement d’heure : des jours de calendrier, des heures à l’horloge', () {
+    // Le 25 octobre 2026 compte 25 heures en Europe (passage à l’heure d’hiver) ; sans effet en UTC.
+    final sunday = at(10, 25, 0);
+    expect(addDays(at(10, 26, 0), -1), sunday);
+    expect(atMinute(sunday, 600), at(10, 25, 10));
+    expect(minuteOf(at(10, 25, 10), sunday), 600);
+    expect(minuteOf(at(10, 26, 0, 30), sunday), 1470);
+    expect(spanOf(entry('x', at(10, 25, 10), at(10, 25, 11)), sunday, now), const Span(600, 660));
+  });
+
   test('créneaux vides sans proposition possible', () {
     final plan = planDay(day: at(10, 26, 0), now: now, mine: mine, history: const []);
     // Valeurs par défaut : 08:30–12:30 et 14:00–17:30, coupé à 17:02.

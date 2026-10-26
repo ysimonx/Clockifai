@@ -123,11 +123,23 @@ int _snap(int m) => (m / 5).round() * 5;
 DateTime _midnight(DateTime d) => DateTime(d.year, d.month, d.day);
 String dayKey(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
+/// Le jour [days] jours après [d], à minuit : pas 24 h plus tard, un jour de changement d'heure en compte 23 ou 25.
+DateTime addDays(DateTime d, int days) => DateTime(d.year, d.month, d.day + days);
+
+/// L'heure [minutes] (depuis minuit, à l'horloge) du jour [day].
+DateTime atMinute(DateTime day, int minutes) => DateTime(day.year, day.month, day.day, 0, minutes);
+
+/// [t] en minutes depuis minuit le jour [day], à l'horloge : 10:00 vaut 600 même après une nuit de 23 ou 25 heures.
+int minuteOf(DateTime t, DateTime day) {
+  final l = t.toLocal();
+  final days = DateTime.utc(l.year, l.month, l.day).difference(DateTime.utc(day.year, day.month, day.day)).inDays;
+  return days * 1440 + l.hour * 60 + l.minute;
+}
+
 /// Plage d'une entrée dans la journée [day] (minuit local), en minutes ; une entrée en cours s'arrête à [now].
 Span? spanOf(TimeEntry e, DateTime day, DateTime now) {
-  final dayStart = _midnight(day);
-  final s = e.startAt.toLocal().difference(dayStart).inMinutes;
-  final end = (e.endAt ?? now).toLocal().difference(dayStart).inMinutes;
+  final s = minuteOf(e.startAt, day);
+  final end = minuteOf(e.endAt ?? now, day);
   final clipped = Span(s < 0 ? 0 : s, end > 1440 ? 1440 : end);
   return clipped.length > 0 ? clipped : null;
 }
@@ -218,7 +230,7 @@ DayPlan planDay({
   final d0 = _midnight(day);
   final isToday = d0 == _midnight(now);
   final isFuture = d0.isAfter(_midnight(now));
-  final nowMin = now.difference(d0).inMinutes;
+  final nowMin = minuteOf(now, d0);
   final typical = typicalDay(history.where((e) => e.startAt.toLocal().isBefore(d0)).toList(), now);
   final busy = [for (final e in mine) ?spanOf(e, d0, now)]..sort((a, b) => a.start.compareTo(b.start));
 
@@ -258,7 +270,7 @@ DayPlan planDay({
   final past = history.where((e) => e.endAt != null && e.startAt.toLocal().isBefore(d0)).toList();
   final workdays = {for (final e in past) if (_workday(_midnight(e.startAt.toLocal()))) dayKey(e.startAt.toLocal())}.toList()..sort();
   final lastWorkdays = workdays.reversed.take(10).toSet();
-  final sameWeekdays = [for (var i = 1; i <= 4; i++) dayKey(d0.subtract(Duration(days: 7 * i)))];
+  final sameWeekdays = [for (var i = 1; i <= 4; i++) dayKey(addDays(d0, -7 * i))];
   final groups = <String, List<TimeEntry>>{};
   for (final e in past) {
     if (e.projectId == null && e.description.trim().isEmpty) continue;
@@ -281,7 +293,7 @@ DayPlan planDay({
     } else {
       return;
     }
-    final starts = [for (final e in basis) e.startAt.toLocal().difference(_midnight(e.startAt.toLocal())).inMinutes];
+    final starts = [for (final e in basis) minuteOf(e.startAt, e.startAt.toLocal())];
     final lengths = [for (final e in basis) e.endAt!.difference(e.startAt).inMinutes];
     final start = _snap(_median(starts));
     habits.add((key: k, sample: basis.last, start: start, length: _median(lengths),

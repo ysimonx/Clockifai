@@ -22,6 +22,27 @@
   "agentRestored": "Agent restored: its pilot's Claude Code sessions record time again.",
   "agents": "Agents",
   "agentsHelp": "Claude agents: their time is recorded by Claude Code, one agent per person who connected a computer (Settings › Integrations).",
+  "quickEntry": "Quick entry",
+  "quickEntryHint": "What you did, in plain words: “1h20 weekly meeting internal”",
+  "quickEntryTry": "Try:",
+  "quickEntryHelp": "Duration (1h20, 45min) or range (9h-10h30), day (yesterday, friday), project or task, #tag, “non facturable”: in any order. Enter to save, Esc to clear.",
+  "quickDurationMissing": "duration?",
+  "quickProjectMissing": "project?",
+  "quickInGap": "in an empty slot",
+  "quickAdded": "Added: {description} · {day}, {range}",
+  "@quickAdded": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      },
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "appearance": "Appearance",
   "appearanceSystem": "Same as system",
   "appearanceLight": "Light",

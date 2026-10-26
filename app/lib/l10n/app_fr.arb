@@ -22,6 +22,27 @@
   "agentRestored": "Agent restauré : les sessions Claude Code de son pilote produisent de nouveau du temps.",
   "agents": "Agents",
   "agentsHelp": "Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).",
+  "quickEntry": "Saisie express",
+  "quickEntryHint": "Ce que vous avez fait, en clair : « 1h20 point hebdo interne »",
+  "quickEntryTry": "Essayer :",
+  "quickEntryHelp": "Durée (1h20, 45min) ou plage (9h-10h30), jour (hier, vendredi), projet ou tâche, #tag, « non facturable » : dans n’importe quel ordre. Entrée pour enregistrer, Échap pour effacer.",
+  "quickDurationMissing": "durée ?",
+  "quickProjectMissing": "projet ?",
+  "quickInGap": "dans un créneau vide",
+  "quickAdded": "Ajouté : {description} · {day}, {range}",
+  "@quickAdded": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      },
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "appearance": "Apparence",
   "appearanceSystem": "Comme le système",
   "appearanceLight": "Claire",

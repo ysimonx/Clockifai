@@ -83,6 +83,34 @@ class AppLocalizationsFr extends AppLocalizations {
       'Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).';
 
   @override
+  String get quickEntry => 'Saisie express';
+
+  @override
+  String get quickEntryHint =>
+      'Ce que vous avez fait, en clair : « 1h20 point hebdo interne »';
+
+  @override
+  String get quickEntryTry => 'Essayer :';
+
+  @override
+  String get quickEntryHelp =>
+      'Durée (1h20, 45min) ou plage (9h-10h30), jour (hier, vendredi), projet ou tâche, #tag, « non facturable » : dans n’importe quel ordre. Entrée pour enregistrer, Échap pour effacer.';
+
+  @override
+  String get quickDurationMissing => 'durée ?';
+
+  @override
+  String get quickProjectMissing => 'projet ?';
+
+  @override
+  String get quickInGap => 'dans un créneau vide';
+
+  @override
+  String quickAdded(String description, String day, String range) {
+    return 'Ajouté : $description · $day, $range';
+  }
+
+  @override
   String get appearance => 'Apparence';
 
   @override

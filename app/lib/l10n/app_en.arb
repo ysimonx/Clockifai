@@ -22,6 +22,189 @@
   "agentRestored": "Agent restored: its pilot's Claude Code sessions record time again.",
   "agents": "Agents",
   "agentsHelp": "Claude agents: their time is recorded by Claude Code, one agent per person who connected a computer (Settings › Integrations).",
+  "journalHeroPending": "Your day is almost ready",
+  "journalHeroPendingText": "{total} rebuilt, {proposed} of it proposed: {count, plural, =1{1 suggestion to confirm} other{{count} suggestions to confirm}}.",
+  "@journalHeroPendingText": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      },
+      "proposed": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "journalHeroGaps": "Some slots are still empty",
+  "journalHeroGapsText": "Tap a dashed slot to fill it, or drag across the “You” line.",
+  "journalHeroDone": "Day complete",
+  "journalHeroDoneText": "{total} logged, nothing to confirm.",
+  "@journalHeroDoneText": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "journalHeroNothing": "Nothing to suggest for this day",
+  "journalHeroNothingText": "{total} logged.",
+  "@journalHeroNothingText": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "journalConfirmAll": "Confirm all · {count}",
+  "@journalConfirmAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "journalReviewOne": "Review one by one",
+  "journalYou": "You",
+  "journalToFill": "{duration} to log",
+  "@journalToFill": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "journalHint": "Drag on empty space: create · drag an edge or the block: adjust · Enter: confirm · Backspace: dismiss · arrows: shift",
+  "journalProposed": "Suggested by Clockifai",
+  "journalSourceClaude": "During a Claude session",
+  "journalSourceHabit": "Habit",
+  "journalSourcePlanning": "Schedule",
+  "journalLogged": "Logged",
+  "journalRunning": "Running",
+  "journalNew": "New entry",
+  "journalWhy": "Why this block",
+  "journalReasonClaudeSession": "Claude was working on this project from {start} to {end}",
+  "@journalReasonClaudeSession": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonClaudePilot": "Time spent following its session and reviewing its work",
+  "journalReasonHabitWeekday": "Habit: {count} times in the last {of} weeks, same day, around {time}",
+  "@journalReasonHabitWeekday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "of": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonHabitDaily": "Habit: {count} of the last {of} working days, around {time}",
+  "@journalReasonHabitDaily": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "of": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonPlanned": "Schedule: {duration} planned on this project",
+  "@journalReasonPlanned": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonAlreadyLogged": "Already logged on this project today: {duration}",
+  "@journalReasonAlreadyLogged": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonNew": "Created on the timeline: pick the project, then save.",
+  "journalPrivacy": "Nothing from your files or messages: only times, your past entries, the schedule and Claude sessions.",
+  "journalConfirm": "Confirm",
+  "journalIgnore": "Dismiss",
+  "journalEditEntry": "Edit…",
+  "journalAdded": "{count, plural, =1{1 entry added} other{{count} entries added}} · {duration}",
+  "@journalAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "journalIgnored": "Suggestion dismissed",
+  "journalUndo": "Undo",
+  "journalSummary": "Day summary",
+  "journalConfirmed": "Confirmed",
+  "journalToConfirm": "To confirm",
+  "journalTarget": "of {duration}",
+  "@journalTarget": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "journalTypicalDay": "Typical day: {start} – {end}, from your past weeks",
+  "@journalTypicalDay": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "journalTypicalDefault": "Default typical day: {start} – {end}",
+  "@journalTypicalDefault": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "journalSelectHint": "Pick a block, or drag across the “You” line to create one.",
+  "journalDescriptionHint": "What did you do?",
+  "journalDayRing": "{day}: {percent}% logged",
+  "@journalDayRing": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "journalBackToToday": "Back to today",
   "aiUsage": "AI usage",
   "aiUsageHelp": "Tokens used by Claude and cost estimated at Anthropic API prices, in US dollars. With a Claude subscription (Pro, Max), this is not an actual expense.",
   "aiTokens": "{tokens} tokens",

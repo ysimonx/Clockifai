@@ -81,6 +81,189 @@ class AppLocalizationsEn extends AppLocalizations {
       'Claude agents: their time is recorded by Claude Code, one agent per person who connected a computer (Settings › Integrations).';
 
   @override
+  String get journalHeroPending => 'Your day is almost ready';
+
+  @override
+  String journalHeroPendingText(String total, String proposed, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count suggestions to confirm',
+      one: '1 suggestion to confirm',
+    );
+    return '$total rebuilt, $proposed of it proposed: $_temp0.';
+  }
+
+  @override
+  String get journalHeroGaps => 'Some slots are still empty';
+
+  @override
+  String get journalHeroGapsText =>
+      'Tap a dashed slot to fill it, or drag across the “You” line.';
+
+  @override
+  String get journalHeroDone => 'Day complete';
+
+  @override
+  String journalHeroDoneText(String total) {
+    return '$total logged, nothing to confirm.';
+  }
+
+  @override
+  String get journalHeroNothing => 'Nothing to suggest for this day';
+
+  @override
+  String journalHeroNothingText(String total) {
+    return '$total logged.';
+  }
+
+  @override
+  String journalConfirmAll(int count) {
+    return 'Confirm all · $count';
+  }
+
+  @override
+  String get journalReviewOne => 'Review one by one';
+
+  @override
+  String get journalYou => 'You';
+
+  @override
+  String journalToFill(String duration) {
+    return '$duration to log';
+  }
+
+  @override
+  String get journalHint =>
+      'Drag on empty space: create · drag an edge or the block: adjust · Enter: confirm · Backspace: dismiss · arrows: shift';
+
+  @override
+  String get journalProposed => 'Suggested by Clockifai';
+
+  @override
+  String get journalSourceClaude => 'During a Claude session';
+
+  @override
+  String get journalSourceHabit => 'Habit';
+
+  @override
+  String get journalSourcePlanning => 'Schedule';
+
+  @override
+  String get journalLogged => 'Logged';
+
+  @override
+  String get journalRunning => 'Running';
+
+  @override
+  String get journalNew => 'New entry';
+
+  @override
+  String get journalWhy => 'Why this block';
+
+  @override
+  String journalReasonClaudeSession(String start, String end) {
+    return 'Claude was working on this project from $start to $end';
+  }
+
+  @override
+  String get journalReasonClaudePilot =>
+      'Time spent following its session and reviewing its work';
+
+  @override
+  String journalReasonHabitWeekday(int count, int of, String time) {
+    return 'Habit: $count times in the last $of weeks, same day, around $time';
+  }
+
+  @override
+  String journalReasonHabitDaily(int count, int of, String time) {
+    return 'Habit: $count of the last $of working days, around $time';
+  }
+
+  @override
+  String journalReasonPlanned(String duration) {
+    return 'Schedule: $duration planned on this project';
+  }
+
+  @override
+  String journalReasonAlreadyLogged(String duration) {
+    return 'Already logged on this project today: $duration';
+  }
+
+  @override
+  String get journalReasonNew =>
+      'Created on the timeline: pick the project, then save.';
+
+  @override
+  String get journalPrivacy =>
+      'Nothing from your files or messages: only times, your past entries, the schedule and Claude sessions.';
+
+  @override
+  String get journalConfirm => 'Confirm';
+
+  @override
+  String get journalIgnore => 'Dismiss';
+
+  @override
+  String get journalEditEntry => 'Edit…';
+
+  @override
+  String journalAdded(int count, String duration) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries added',
+      one: '1 entry added',
+    );
+    return '$_temp0 · $duration';
+  }
+
+  @override
+  String get journalIgnored => 'Suggestion dismissed';
+
+  @override
+  String get journalUndo => 'Undo';
+
+  @override
+  String get journalSummary => 'Day summary';
+
+  @override
+  String get journalConfirmed => 'Confirmed';
+
+  @override
+  String get journalToConfirm => 'To confirm';
+
+  @override
+  String journalTarget(String duration) {
+    return 'of $duration';
+  }
+
+  @override
+  String journalTypicalDay(String start, String end) {
+    return 'Typical day: $start – $end, from your past weeks';
+  }
+
+  @override
+  String journalTypicalDefault(String start, String end) {
+    return 'Default typical day: $start – $end';
+  }
+
+  @override
+  String get journalSelectHint =>
+      'Pick a block, or drag across the “You” line to create one.';
+
+  @override
+  String get journalDescriptionHint => 'What did you do?';
+
+  @override
+  String journalDayRing(String day, int percent) {
+    return '$day: $percent% logged';
+  }
+
+  @override
+  String get journalBackToToday => 'Back to today';
+
+  @override
   String get aiUsage => 'AI usage';
 
   @override

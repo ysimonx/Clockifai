@@ -10,6 +10,13 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Aujourd'hui**, la journée proposée : votre journée sur une frise, avec les créneaux vides de votre journée
+  habituelle et des propositions tirées de vos habitudes, du planning et des sessions de Claude, à confirmer d'un
+  geste (ou une par une, avec « Pourquoi ce bloc ») ; glisser pour créer ou ajuster une entrée, raccourcis clavier,
+  sept derniers jours en anneaux (26 octobre 2026).
+
 ## [0.2.2] — 2026-10-26
 
 ### Ajouté

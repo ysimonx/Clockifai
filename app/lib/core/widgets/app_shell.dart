@@ -28,6 +28,8 @@ class _Dest {
 }
 
 final _allDestinations = <_Dest>[
+  // Journal automatique (plans/13-ux-moderne.md, lot 11) : la journée proposée, à valider.
+  _Dest('/today', Icons.wb_sunny_outlined, Icons.wb_sunny, (l) => l.today),
   _Dest('/', Icons.timer_outlined, Icons.timer, (l) => l.timeTracker),
   _Dest('/timesheet', Icons.grid_on_outlined, Icons.grid_on, (l) => l.timesheet),
   _Dest('/calendar', Icons.calendar_month_outlined, Icons.calendar_month, (l) => l.calendar),
@@ -83,7 +85,9 @@ class _AppShellState extends State<AppShell> {
 
   int _indexIn(List<_Dest> dests) {
     final i = dests.indexWhere((d) => d.path != '/' && widget.location.startsWith(d.path));
-    return i < 0 ? 0 : i;
+    if (i >= 0) return i;
+    final root = dests.indexWhere((d) => d.path == '/');
+    return root < 0 ? 0 : root;
   }
 
   @override

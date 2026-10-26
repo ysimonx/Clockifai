@@ -19,6 +19,7 @@ import 'features/team_entry/team_entry_page.dart';
 import 'features/time_off/time_off_page.dart';
 import 'features/time_entries/time_entries_page.dart';
 import 'features/timesheet/timesheet_page.dart';
+import 'features/today/today_page.dart';
 
 GoRouter buildRouter(SessionController session) {
   Page<void> page(Widget child) => NoTransitionPage(child: child);
@@ -43,6 +44,7 @@ GoRouter buildRouter(SessionController session) {
         builder: (context, state, child) => AppShell(location: state.uri.path, child: child),
         routes: [
           GoRoute(path: '/', pageBuilder: (_, _) => page(const TimeEntriesPage())),
+          GoRoute(path: '/today', pageBuilder: (_, _) => page(const TodayPage())),
           GoRoute(path: '/timesheet', pageBuilder: (_, _) => page(const TimesheetPage())),
           GoRoute(path: '/calendar', pageBuilder: (_, _) => page(const CalendarPage())),
           GoRoute(path: '/reports', pageBuilder: (_, _) => page(const ReportsPage())),

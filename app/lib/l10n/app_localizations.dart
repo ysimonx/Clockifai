@@ -230,6 +230,276 @@ abstract class AppLocalizations {
   /// **'Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).'**
   String get agentsHelp;
 
+  /// No description provided for @journalHeroPending.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre journée est presque prête'**
+  String get journalHeroPending;
+
+  /// No description provided for @journalHeroPendingText.
+  ///
+  /// In fr, this message translates to:
+  /// **'{total} reconstituées, dont {proposed} proposées : {count, plural, =1{1 proposition à confirmer} other{{count} propositions à confirmer}}.'**
+  String journalHeroPendingText(String total, String proposed, int count);
+
+  /// No description provided for @journalHeroGaps.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il reste des créneaux vides'**
+  String get journalHeroGaps;
+
+  /// No description provided for @journalHeroGapsText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Touchez un créneau en pointillé pour le remplir, ou glissez sur la ligne « Vous ».'**
+  String get journalHeroGapsText;
+
+  /// No description provided for @journalHeroDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Journée complète'**
+  String get journalHeroDone;
+
+  /// No description provided for @journalHeroDoneText.
+  ///
+  /// In fr, this message translates to:
+  /// **'{total} saisies, rien à confirmer.'**
+  String journalHeroDoneText(String total);
+
+  /// No description provided for @journalHeroNothing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien à proposer pour ce jour'**
+  String get journalHeroNothing;
+
+  /// No description provided for @journalHeroNothingText.
+  ///
+  /// In fr, this message translates to:
+  /// **'{total} saisies.'**
+  String journalHeroNothingText(String total);
+
+  /// No description provided for @journalConfirmAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout confirmer · {count}'**
+  String journalConfirmAll(int count);
+
+  /// No description provided for @journalReviewOne.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revoir une par une'**
+  String get journalReviewOne;
+
+  /// No description provided for @journalYou.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous'**
+  String get journalYou;
+
+  /// No description provided for @journalToFill.
+  ///
+  /// In fr, this message translates to:
+  /// **'{duration} à saisir'**
+  String journalToFill(String duration);
+
+  /// No description provided for @journalHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Glisser sur le vide : créer · tirer un bord ou le bloc : ajuster · Entrée : confirmer · Retour arrière : ignorer · flèches : décaler'**
+  String get journalHint;
+
+  /// No description provided for @journalProposed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Proposé par Clockifai'**
+  String get journalProposed;
+
+  /// No description provided for @journalSourceClaude.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pendant une session de Claude'**
+  String get journalSourceClaude;
+
+  /// No description provided for @journalSourceHabit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Habitude'**
+  String get journalSourceHabit;
+
+  /// No description provided for @journalSourcePlanning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Planning'**
+  String get journalSourcePlanning;
+
+  /// No description provided for @journalLogged.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisi'**
+  String get journalLogged;
+
+  /// No description provided for @journalRunning.
+  ///
+  /// In fr, this message translates to:
+  /// **'En cours'**
+  String get journalRunning;
+
+  /// No description provided for @journalNew.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle entrée'**
+  String get journalNew;
+
+  /// No description provided for @journalWhy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pourquoi ce bloc'**
+  String get journalWhy;
+
+  /// No description provided for @journalReasonClaudeSession.
+  ///
+  /// In fr, this message translates to:
+  /// **'Claude travaillait sur ce projet de {start} à {end}'**
+  String journalReasonClaudeSession(String start, String end);
+
+  /// No description provided for @journalReasonClaudePilot.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le temps de suivre sa session et de relire son travail'**
+  String get journalReasonClaudePilot;
+
+  /// No description provided for @journalReasonHabitWeekday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Habitude : {count} fois sur les {of} dernières semaines, le même jour, vers {time}'**
+  String journalReasonHabitWeekday(int count, int of, String time);
+
+  /// No description provided for @journalReasonHabitDaily.
+  ///
+  /// In fr, this message translates to:
+  /// **'Habitude : {count} jours sur les {of} derniers jours travaillés, vers {time}'**
+  String journalReasonHabitDaily(int count, int of, String time);
+
+  /// No description provided for @journalReasonPlanned.
+  ///
+  /// In fr, this message translates to:
+  /// **'Planning : {duration} prévues sur ce projet'**
+  String journalReasonPlanned(String duration);
+
+  /// No description provided for @journalReasonAlreadyLogged.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déjà saisi sur ce projet aujourd’hui : {duration}'**
+  String journalReasonAlreadyLogged(String duration);
+
+  /// No description provided for @journalReasonNew.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créé sur la frise : choisissez le projet, puis enregistrez.'**
+  String get journalReasonNew;
+
+  /// No description provided for @journalPrivacy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien de vos fichiers ni de vos messages : seulement des heures, vos entrées passées, le planning et les sessions de Claude.'**
+  String get journalPrivacy;
+
+  /// No description provided for @journalConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmer'**
+  String get journalConfirm;
+
+  /// No description provided for @journalIgnore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ignorer'**
+  String get journalIgnore;
+
+  /// No description provided for @journalEditEntry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier…'**
+  String get journalEditEntry;
+
+  /// No description provided for @journalAdded.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 entrée ajoutée} other{{count} entrées ajoutées}} · {duration}'**
+  String journalAdded(int count, String duration);
+
+  /// No description provided for @journalIgnored.
+  ///
+  /// In fr, this message translates to:
+  /// **'Proposition ignorée'**
+  String get journalIgnored;
+
+  /// No description provided for @journalUndo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annuler'**
+  String get journalUndo;
+
+  /// No description provided for @journalSummary.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bilan du jour'**
+  String get journalSummary;
+
+  /// No description provided for @journalConfirmed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmé'**
+  String get journalConfirmed;
+
+  /// No description provided for @journalToConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'À confirmer'**
+  String get journalToConfirm;
+
+  /// No description provided for @journalTarget.
+  ///
+  /// In fr, this message translates to:
+  /// **'sur {duration}'**
+  String journalTarget(String duration);
+
+  /// No description provided for @journalTypicalDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Journée type : {start} – {end}, d’après vos semaines passées'**
+  String journalTypicalDay(String start, String end);
+
+  /// No description provided for @journalTypicalDefault.
+  ///
+  /// In fr, this message translates to:
+  /// **'Journée type par défaut : {start} – {end}'**
+  String journalTypicalDefault(String start, String end);
+
+  /// No description provided for @journalSelectHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez un bloc, ou glissez sur la ligne « Vous » pour en créer un.'**
+  String get journalSelectHint;
+
+  /// No description provided for @journalDescriptionHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qu’avez-vous fait ?'**
+  String get journalDescriptionHint;
+
+  /// No description provided for @journalDayRing.
+  ///
+  /// In fr, this message translates to:
+  /// **'{day} : {percent} % saisi'**
+  String journalDayRing(String day, int percent);
+
+  /// No description provided for @journalBackToToday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revenir à aujourd’hui'**
+  String get journalBackToToday;
+
   /// No description provided for @aiUsage.
   ///
   /// In fr, this message translates to:

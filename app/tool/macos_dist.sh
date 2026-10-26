@@ -3,10 +3,11 @@
 #   make app-dist-macos              notarize   : signée Developer ID et notarisée, zip à installer sur n'importe quel Mac
 #   make app-dist-macos-testflight   testflight : envoyée à App Store Connect, installée par TestFlight sur Mac
 # (APPLE_TEAM=…, BUILD_NUMBER=… pour forcer.) S'appuie sur le compte développeur ajouté dans Xcode
-# (Réglages > Comptes) : aucun mot de passe ici. Avec -allowProvisioningUpdates, Xcode crée au besoin les
+# (Réglages > Comptes) ou sur une clé d'API App Store Connect (tool/apple_auth.sh) : aucun mot de passe ici. Avec -allowProvisioningUpdates, Xcode crée au besoin les
 # certificats et profils. Numéro de build croissant (exigé par TestFlight) : minutes depuis le 2026-01-01 UTC.
 set -eu
 cd "$(dirname "$0")/.."
+. tool/apple_auth.sh
 MODE=${1:-notarize}
 TEAM=${APPLE_TEAM:?"APPLE_TEAM manquant (identifiant d'équipe Apple)"}
 ARCHIVE=build/macos/Clockifai.xcarchive
@@ -20,9 +21,9 @@ case "$MODE" in notarize|testflight) ;; *) echo "Mode inconnu : $MODE (notarize 
 echo "[dist] compilation Flutter (prod) $VERSION ($BUILD)"
 fvm flutter build macos --release --dart-define-from-file=config/prod.json --build-number="$BUILD"
 
-echo "[dist] archive Xcode (équipe $TEAM, runtime renforcé exigé par la notarisation)"
+echo "[dist] archive Xcode (équipe $TEAM, $(asc_auth_label), runtime renforcé exigé par la notarisation)"
 rm -rf "$ARCHIVE" "$OUT"
-xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release \
+xcodebuild_asc -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release \
   -archivePath "$ARCHIVE" -allowProvisioningUpdates -quiet archive \
   DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic CODE_SIGN_IDENTITY="Apple Development" \
   ENABLE_HARDENED_RUNTIME=YES || {
@@ -55,13 +56,12 @@ if [ "$MODE" = testflight ]; then
   echo "[dist] signature Mac App Store et envoi à App Store Connect"
   export_options app-store-connect '
   <key>manageAppVersionAndBuildNumber</key><false/>'
-  if ! xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportPath "$OUT" \
+  if ! xcodebuild_asc -exportArchive -archivePath "$ARCHIVE" -exportPath "$OUT" \
     -exportOptionsPlist "$OUT/ExportOptions.plist" -allowProvisioningUpdates > "$OUT/export.log" 2>&1; then
     tail -5 "$OUT/export.log" >&2
     if grep -q "Failed to Use Accounts" "$OUT/export.log"; then
       # « Invalid credentials in keychain … missing Xcode-Token » : la session du compte dans Xcode a expiré.
-      echo "Envoi refusé : la connexion de Xcode au compte Apple a expiré. Xcode > Réglages > Comptes :" >&2
-      echo "reconnectez le compte (ou retirez-le et rajoutez-le), puis relancez." >&2
+      asc_expired_hint
     else
       echo "Envoi refusé. Si App Store Connect ne trouve pas d'app macOS : ajoutez la plateforme macOS à la fiche" >&2
       echo "« clockifai » (com.kysoe.clockifai) dans App Store Connect, puis relancez." >&2
@@ -74,12 +74,12 @@ fi
 
 echo "[dist] signature Developer ID et envoi au service de notarisation d'Apple"
 export_options developer-id ''
-xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportPath "$OUT" \
+xcodebuild_asc -exportArchive -archivePath "$ARCHIVE" -exportPath "$OUT" \
   -exportOptionsPlist "$OUT/ExportOptions.plist" -allowProvisioningUpdates
 
 echo "[dist] attente de la notarisation (en général quelques minutes)"
 i=0
-until xcodebuild -exportNotarizedApp -archivePath "$ARCHIVE" -exportPath "$OUT/notarized" > "$OUT/notarization.log" 2>&1; do
+until xcodebuild_asc -exportNotarizedApp -archivePath "$ARCHIVE" -exportPath "$OUT/notarized" > "$OUT/notarization.log" 2>&1; do
   # Tant qu'Apple traite l'archive : « … is processing and not ready for distribution ». Tout autre message = échec.
   if ! grep -q "is processing" "$OUT/notarization.log" || [ $i -ge 60 ]; then
     echo "Notarisation refusée ou interrompue (journaux Xcode : Organizer > Archives) :" >&2

@@ -143,6 +143,11 @@ Prérequis : `make app-config-prod HOST=…`. Côté Apple, le compte développe
 équipe `APPLE_TEAM`, `9SGKL7VUD3` par défaut) et la fiche « clockifai » (`com.kysoe.clockifai`, plateformes iOS et
 macOS) dans App Store Connect. Côté Google, la clé d'envoi créée une fois et **sauvegardée**.
 
+La session du compte dans Xcode expire (envoi refusé, « missing Xcode-Token »). Pour ne plus en dépendre : une clé
+d'API App Store Connect (Utilisateurs et accès > Intégrations > App Store Connect API, clé d'équipe, rôle Admin),
+rangée hors du dépôt dans `~/.config/clockifai/apple/` : `AuthKey_<ID>.p8` et `asc.env` (`ASC_KEY_ID=<ID>`,
+`ASC_ISSUER_ID=<émetteur>`). Les scripts l'emploient dès qu'elle est là (`app/tool/apple_auth.sh`).
+
 | Plateforme | Commande | Résultat |
 |---|---|---|
 | Web | `make prod-up` (serveur) | L'image du service `web` compile l'app avec les URLs de production |
@@ -151,6 +156,7 @@ macOS) dans App Store Connect. Côté Google, la clé d'envoi créée une fois e
 | macOS | `make app-dist-macos` | Zip signé Developer ID et notarisé par Apple, pour n'importe quel Mac (`app/build/macos/Clockifai-<version>.zip`) |
 | macOS | `make app-dist-macos-testflight` | Envoi à App Store Connect, installation et mises à jour par TestFlight sur Mac |
 | iPhone | `make app-dist-ios` | Envoi à App Store Connect, installation et mises à jour par TestFlight |
+| iPhone + Mac | `make app-dist-testflight` | Les deux envois à la suite |
 | Android | `make app-android-keystore` | Une fois : clé d'envoi Google Play dans `~/.config/clockifai/android/`, à sauvegarder |
 | Android | `make app-dist-android` | App bundle signé `app/build/Clockifai-<version>-<build>.aab`, à déposer dans la Play Console |
 

@@ -109,10 +109,10 @@ app-build-macos: ## Construit « Clockifai » pour macOS, branchée sur la prod 
 	@echo "→ app/build/macos/Build/Products/Release/Clockifai.app (make app-install-macos pour l'installer)"
 
 APPLE_TEAM ?= 9SGKL7VUD3
-app-dist-macos: ## « Clockifai » signée Developer ID et notarisée : zip pour d'autres Mac (compte ajouté dans Xcode)
+app-dist-macos: ## « Clockifai » signée Developer ID et notarisée : zip pour d'autres Mac (compte Xcode ou clé d'API)
 	APPLE_TEAM=$(APPLE_TEAM) sh app/tool/macos_dist.sh notarize
 
-app-dist-macos-testflight: ## « Clockifai » pour Mac : envoi à App Store Connect puis TestFlight (compte ajouté dans Xcode)
+app-dist-macos-testflight: ## « Clockifai » pour Mac : envoi à App Store Connect puis TestFlight (compte Xcode ou clé d'API)
 	APPLE_TEAM=$(APPLE_TEAM) sh app/tool/macos_dist.sh testflight
 
 # iOS et Android : Debug = « Clockifai Dev » (pile locale), Release = « Clockifai » (prod). plans/07-ios-android.md
@@ -122,8 +122,10 @@ app-ios: ## Lance « Clockifai Dev » sur le simulateur iOS (IOS_SIMULATOR=…),
 	open -a Simulator 2>/dev/null || open -a DeviceHub 2>/dev/null || true   # Xcode 27 : DeviceHub
 	cd app && fvm flutter run -d "$(IOS_SIMULATOR)" $(DEFINES)
 
-app-dist-ios: ## « Clockifai » pour iPhone : envoi à App Store Connect puis TestFlight (compte ajouté dans Xcode)
+app-dist-ios: ## « Clockifai » pour iPhone : envoi à App Store Connect puis TestFlight (compte Xcode ou clé d'API)
 	APPLE_TEAM=$(APPLE_TEAM) sh app/tool/ios_dist.sh
+
+app-dist-testflight: app-dist-ios app-dist-macos-testflight ## iPhone puis Mac vers TestFlight, en une commande
 
 ANDROID_HOME ?= $(HOME)/Library/Android/sdk
 ADB := $(ANDROID_HOME)/platform-tools/adb

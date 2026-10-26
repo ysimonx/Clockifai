@@ -22,6 +22,10 @@
   "agentRestored": "Agent restauré : les sessions Claude Code de son pilote produisent de nouveau du temps.",
   "agents": "Agents",
   "agentsHelp": "Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).",
+  "appearance": "Apparence",
+  "appearanceSystem": "Comme le système",
+  "appearanceLight": "Claire",
+  "appearanceDark": "Sombre",
   "journalHeroPending": "Votre journée est presque prête",
   "journalHeroPendingText": "{total} reconstituées, dont {proposed} proposées : {count, plural, =1{1 proposition à confirmer} other{{count} propositions à confirmer}}.",
   "@journalHeroPendingText": {

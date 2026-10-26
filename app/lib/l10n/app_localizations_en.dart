@@ -81,6 +81,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Claude agents: their time is recorded by Claude Code, one agent per person who connected a computer (Settings › Integrations).';
 
   @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get appearanceSystem => 'Same as system';
+
+  @override
+  String get appearanceLight => 'Light';
+
+  @override
+  String get appearanceDark => 'Dark';
+
+  @override
   String get journalHeroPending => 'Your day is almost ready';
 
   @override

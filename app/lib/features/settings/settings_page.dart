@@ -67,6 +67,7 @@ class SettingsPage extends StatelessWidget {
             onTap: () => _setPin(context, session.workspaceId!),
           ),
           const _LanguageTile(),
+          const _ThemeTile(),
           SwitchListTile(
             secondary: const Icon(Icons.layers_outlined),
             title: Text(l.groupSimilarEntries),
@@ -207,6 +208,31 @@ class _LanguageTile extends StatelessWidget {
           const DropdownMenuItem(value: 'en', child: Text('English')),
         ],
         onChanged: (v) => ctrl.set(v == null || v == 'system' ? null : Locale(v)),
+      ),
+    );
+  }
+}
+
+/// Apparence de l'app : celle du système, ou claire ou sombre (réglage de l'appareil).
+class _ThemeTile extends StatelessWidget {
+  const _ThemeTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final prefs = context.watch<DisplayPrefs>();
+    return ListTile(
+      leading: const Icon(Icons.dark_mode_outlined),
+      title: Text(l.appearance),
+      trailing: DropdownButton<ThemeMode>(
+        value: prefs.themeMode,
+        underline: const SizedBox.shrink(),
+        items: [
+          DropdownMenuItem(value: ThemeMode.system, child: Text(l.appearanceSystem)),
+          DropdownMenuItem(value: ThemeMode.light, child: Text(l.appearanceLight)),
+          DropdownMenuItem(value: ThemeMode.dark, child: Text(l.appearanceDark)),
+        ],
+        onChanged: (v) => prefs.setThemeMode(v ?? ThemeMode.system),
       ),
     );
   }

@@ -230,6 +230,30 @@ abstract class AppLocalizations {
   /// **'Agents Claude : leur temps est enregistré par Claude Code, un agent par personne qui a connecté un poste (Paramètres › Intégrations).'**
   String get agentsHelp;
 
+  /// No description provided for @appearance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apparence'**
+  String get appearance;
+
+  /// No description provided for @appearanceSystem.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comme le système'**
+  String get appearanceSystem;
+
+  /// No description provided for @appearanceLight.
+  ///
+  /// In fr, this message translates to:
+  /// **'Claire'**
+  String get appearanceLight;
+
+  /// No description provided for @appearanceDark.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sombre'**
+  String get appearanceDark;
+
   /// No description provided for @journalHeroPending.
   ///
   /// In fr, this message translates to:

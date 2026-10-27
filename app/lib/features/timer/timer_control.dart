@@ -209,6 +209,8 @@ class RunningTimerChip extends StatelessWidget {
               label: l.cmdStopTimer,
               child: Tooltip(
                 message: l.cmdStopTimer,
+                // Le libellé vient du Semantics ci-dessus : un seul « Arrêter le chronomètre » pour les lecteurs d'écran.
+                excludeFromSemantics: true,
                 child: Material(
                   color: theme.colorScheme.primary,
                   shape: const CircleBorder(),

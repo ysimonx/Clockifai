@@ -1198,7 +1198,7 @@ class _TodayPageState extends State<TodayPage> {
 
           // Une heure sur deux, ou sur trois, quand la place manque (téléphone) : jamais d'étiquettes qui se chevauchent.
           final perHour = hours.length < 2 ? width : x(60) - x(0);
-          final labelEvery = perHour >= 48 ? 1 : (perHour >= 24 ? 2 : (perHour >= 16 ? 3 : 4));
+          final labelEvery = perHour >= 60 ? 1 : (perHour >= 30 ? 2 : (perHour >= 20 ? 3 : 4));
           final ruler = SizedBox(
             width: width,
             height: 18,

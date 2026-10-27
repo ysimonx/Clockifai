@@ -235,7 +235,8 @@ Tous les plans, leur objet et leur statut sont dans l'index [README.md](README.m
 - `supabase/seed.sql` remplacé par `deploy/seed-demo.sql` (`make seed EMAIL=…`), qui cible un compte existant.
 - PIN kiosque et compteurs de facture rangés dans un schéma privé `clockifai_private` (jamais exposés à l'API ni à la réplication).
 
-Reste à faire (hors périmètre de cette itération ; revu le 23 octobre 2026) :
+Reste à faire (hors périmètre de cette itération ; revu le 23 octobre 2026 ; repris avec les autres écarts
+par rapport à Clockify dans [15-ecarts-avec-clockify.md](15-ecarts-avec-clockify.md)) :
 - Icônes et écran de démarrage (la publication sur les stores est faite : plans 06-macos et 07).
 - Fuseau horaire modifiable par l'utilisateur (`profiles.timezone`, Europe/Paris par défaut, sans écran). Le
   plan 10 recopie ce fuseau dans le profil des agents.

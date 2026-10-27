@@ -78,6 +78,7 @@ class _SyncIndicatorState extends State<SyncIndicator> {
       final theme = Theme.of(context);
       return Tooltip(
         message: text,
+        excludeFromSemantics: true,
         child: InkWell(
           borderRadius: BorderRadius.circular(Radii.control),
           onTap: details,

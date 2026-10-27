@@ -86,6 +86,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Enregistrer un export (CSV, Excel, PDF) sur l'iPhone. Clockifai ne lit pas vos photos.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Dicter une saisie de temps (« 2 h chantier Dupuis »).</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

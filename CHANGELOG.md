@@ -31,9 +31,15 @@ la date d'arrivée de chaque évolution.
   facturable ou non, dupliquer vers un autre jour, supprimer, avec Annuler (27 octobre 2026).
 - Mac : la **saisie express** dans le panneau de la barre de menus, avec aperçu ; ⌥⌘T l'ouvre depuis n'importe
   quelle application (27 octobre 2026).
+- Paramètres : **Ma journée type** (arrivée, pause, départ), pour les créneaux vides d'« Aujourd'hui » ; sans
+  réglage, elle reste déduite de vos semaines passées (27 octobre 2026).
+- **Voir la journée** : depuis « Suivi du temps » (le soleil à côté du jour) ou un jour du calendrier, la journée
+  s'ouvre sur la frise d'« Aujourd'hui » (27 octobre 2026).
 
 ### Modifié
 
+- **Aujourd'hui** devient l'écran d'accueil ; « Suivi du temps » reste la liste complète des entrées
+  (27 octobre 2026).
 - Suivi du temps : les durées et les totaux s'affichent à la minute (« 3:00 » au lieu de « 3:00:00 ») ; les
   secondes restent pour un chronomètre en cours (26 octobre 2026).
 - **Annuler plutôt que confirmer** : supprimer une entrée ou un groupe d'entrées, abandonner un chronomètre,

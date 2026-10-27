@@ -47,6 +47,10 @@ erDiagram
     text timezone "Europe/Paris par défaut"
     uuid default_workspace_id
     text claude_tasks "subject | session | off"
+    text day_start "journée type : 08:30, nulle = déduite"
+    text lunch_start
+    text lunch_end
+    text day_end
   }
   workspaces {
     uuid id PK

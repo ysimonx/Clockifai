@@ -26,7 +26,10 @@ import 'quick_place.dart';
 /// saisies, les créneaux vides et les propositions tirées des habitudes, du planning et des sessions de Claude, à
 /// confirmer d'un geste. Glisser sur le vide crée un bloc ; tirer un bloc ou ses bords l'ajuste.
 class TodayPage extends StatefulWidget {
-  const TodayPage({super.key, this.clock = DateTime.now});
+  const TodayPage({super.key, this.clock = DateTime.now, this.initialDay});
+
+  /// Jour affiché à l'ouverture (lien « Voir la journée », `/today?day=2026-10-23`) ; par défaut aujourd'hui.
+  final DateTime? initialDay;
 
   /// Heure courante (remplacée dans les tests).
   final DateTime Function() clock;
@@ -72,7 +75,7 @@ class _DraftEdit {
 enum _Drag { create, move, left, right }
 
 class _TodayPageState extends State<TodayPage> {
-  late DateTime _day = _midnight(widget.clock());
+  late DateTime _day = _midnight(widget.initialDay ?? widget.clock());
   String? _sel;
   final Map<String, _DraftEdit> _edits = {};
   final Map<String, Span> _override = {};
@@ -183,6 +186,7 @@ class _TodayPageState extends State<TodayPage> {
       required bool loading}) {
     final l = context.l10n;
     final now = widget.clock();
+    final typical = TypicalDay.ofProfile(context.read<SessionController>().profile);
     final dayEnd = addDays(_day, 1);
     final mineRows = rows.where((r) => !r.entry.startAt.toLocal().isBefore(_day) && r.entry.startAt.toLocal().isBefore(dayEnd)).toList();
     final history = [for (final r in rows) if (r.entry.startAt.toLocal().isBefore(_day)) r.entry];
@@ -194,6 +198,7 @@ class _TodayPageState extends State<TodayPage> {
       agentEntries: [for (final r in agentRows) r.entry],
       planning: planning,
       dismissed: prefs.dismissedSuggestions,
+      typical: typical,
     );
 
     final blocks = <_Block>[
@@ -429,7 +434,11 @@ class _TodayPageState extends State<TodayPage> {
     final q = parseQuick(_quick.text, catalog, now);
     final slot = q == null
         ? null
-        : placeQuick(q, now: now, entries: [for (final r in rows) r.entry], proposedOn: (day) => day == _day ? proposed : const []);
+        : placeQuick(q,
+            now: now,
+            entries: [for (final r in rows) r.entry],
+            typical: TypicalDay.ofProfile(context.read<SessionController>().profile),
+            proposedOn: (day) => day == _day ? proposed : const []);
     final ready = q != null && q.isComplete && slot != null;
     final project = catalog.project(q?.projectId);
     final task = catalog.task(q?.taskId);
@@ -1235,9 +1244,11 @@ class _TodayPageState extends State<TodayPage> {
           if (claude.isNotEmpty) line('Claude', formatHm(claudeMin * 60)),
           const SizedBox(height: 10),
           Text(
-            plan.typical.fromHistory
-                ? l.journalTypicalDay(hm(plan.typical.start), hm(plan.typical.end))
-                : l.journalTypicalDefault(hm(plan.typical.start), hm(plan.typical.end)),
+            plan.typical.fromProfile
+                ? l.journalTypicalProfile(hm(plan.typical.start), hm(plan.typical.end))
+                : plan.typical.fromHistory
+                    ? l.journalTypicalDay(hm(plan.typical.start), hm(plan.typical.end))
+                    : l.journalTypicalDefault(hm(plan.typical.start), hm(plan.typical.end)),
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
           ),
         ]),

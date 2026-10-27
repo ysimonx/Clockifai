@@ -714,6 +714,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String journalTypicalProfile(String start, String end) {
+    return 'Typical day: $start – $end, set in your settings';
+  }
+
+  @override
+  String get myDay => 'My typical day';
+
+  @override
+  String get myDayHelp =>
+      'Usual arrival, break and departure: the Today page uses them for empty slots. When not set, Clockifai infers them from your past weeks.';
+
+  @override
+  String get myDayAuto => 'Automatic, from your past weeks';
+
+  @override
+  String get myDayReset => 'Back to automatic';
+
+  @override
+  String get myDayInvalid =>
+      'Times must follow each other: arrival, break, departure.';
+
+  @override
+  String get dayStart => 'Arrival';
+
+  @override
+  String get lunchStart => 'Break starts';
+
+  @override
+  String get lunchEnd => 'Break ends';
+
+  @override
+  String get dayEnd => 'Departure';
+
+  @override
+  String get openDay => 'Open the day';
+
+  @override
   String get commandPalette => 'Commands';
 
   @override

@@ -481,6 +481,27 @@
     }
   },
   "undo": "Annuler",
+  "journalTypicalProfile": "Journée type : {start} – {end}, réglée dans vos paramètres",
+  "@journalTypicalProfile": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "myDay": "Ma journée type",
+  "myDayHelp": "Arrivée, pause et départ habituels : la page « Aujourd'hui » s'en sert pour les créneaux vides. Sans réglage, Clockifai les déduit de vos semaines passées.",
+  "myDayAuto": "Automatique, d'après vos semaines passées",
+  "myDayReset": "Revenir à l'automatique",
+  "myDayInvalid": "Les heures doivent se suivre : arrivée, pause, départ.",
+  "dayStart": "Arrivée",
+  "lunchStart": "Début de pause",
+  "lunchEnd": "Fin de pause",
+  "dayEnd": "Départ",
+  "openDay": "Voir la journée",
   "commandPalette": "Commandes",
   "commandPaletteTooltip": "Commandes ({shortcut})",
   "@commandPaletteTooltip": {

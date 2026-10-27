@@ -717,6 +717,43 @@ class AppLocalizationsFr extends AppLocalizations {
   String get undo => 'Annuler';
 
   @override
+  String journalTypicalProfile(String start, String end) {
+    return 'Journée type : $start – $end, réglée dans vos paramètres';
+  }
+
+  @override
+  String get myDay => 'Ma journée type';
+
+  @override
+  String get myDayHelp =>
+      'Arrivée, pause et départ habituels : la page « Aujourd\'hui » s\'en sert pour les créneaux vides. Sans réglage, Clockifai les déduit de vos semaines passées.';
+
+  @override
+  String get myDayAuto => 'Automatique, d\'après vos semaines passées';
+
+  @override
+  String get myDayReset => 'Revenir à l\'automatique';
+
+  @override
+  String get myDayInvalid =>
+      'Les heures doivent se suivre : arrivée, pause, départ.';
+
+  @override
+  String get dayStart => 'Arrivée';
+
+  @override
+  String get lunchStart => 'Début de pause';
+
+  @override
+  String get lunchEnd => 'Fin de pause';
+
+  @override
+  String get dayEnd => 'Départ';
+
+  @override
+  String get openDay => 'Voir la journée';
+
+  @override
   String get commandPalette => 'Commandes';
 
   @override

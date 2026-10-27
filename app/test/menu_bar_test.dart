@@ -38,6 +38,8 @@ class _Session extends ChangeNotifier implements SessionController {
   @override
   int get runningTimersLimit => workspace.maxRunningTimers ?? 1;
   @override
+  Profile? profile;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

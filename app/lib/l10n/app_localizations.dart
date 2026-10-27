@@ -1255,6 +1255,72 @@ abstract class AppLocalizations {
   /// **'Annuler'**
   String get undo;
 
+  /// No description provided for @journalTypicalProfile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Journée type : {start} – {end}, réglée dans vos paramètres'**
+  String journalTypicalProfile(String start, String end);
+
+  /// No description provided for @myDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ma journée type'**
+  String get myDay;
+
+  /// No description provided for @myDayHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrivée, pause et départ habituels : la page « Aujourd\'hui » s\'en sert pour les créneaux vides. Sans réglage, Clockifai les déduit de vos semaines passées.'**
+  String get myDayHelp;
+
+  /// No description provided for @myDayAuto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Automatique, d\'après vos semaines passées'**
+  String get myDayAuto;
+
+  /// No description provided for @myDayReset.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revenir à l\'automatique'**
+  String get myDayReset;
+
+  /// No description provided for @myDayInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les heures doivent se suivre : arrivée, pause, départ.'**
+  String get myDayInvalid;
+
+  /// No description provided for @dayStart.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrivée'**
+  String get dayStart;
+
+  /// No description provided for @lunchStart.
+  ///
+  /// In fr, this message translates to:
+  /// **'Début de pause'**
+  String get lunchStart;
+
+  /// No description provided for @lunchEnd.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fin de pause'**
+  String get lunchEnd;
+
+  /// No description provided for @dayEnd.
+  ///
+  /// In fr, this message translates to:
+  /// **'Départ'**
+  String get dayEnd;
+
+  /// No description provided for @openDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir la journée'**
+  String get openDay;
+
   /// No description provided for @commandPalette.
   ///
   /// In fr, this message translates to:

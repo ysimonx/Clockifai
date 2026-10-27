@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -12,6 +13,7 @@ import '../../core/widgets/common.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/entry_dialog.dart';
+import '../today/day_plan.dart' show dayKey;
 
 /// Vue calendrier (semaine sur grand écran, jour sur mobile) : les entrées sont des blocs
 /// positionnés sur la grille horaire ; un clic sur un créneau vide crée une entrée.
@@ -77,7 +79,12 @@ class _CalendarPageState extends State<CalendarPage> {
               const SizedBox(width: 48),
               for (final d in days)
                 Expanded(
-                  child: Padding(
+                  child: InkWell(
+                    // Sa propre journée sur la frise (page « Aujourd'hui ») ; pas pour un coéquipier.
+                    onTap: userId == context.read<SessionController>().userId ? () => context.go('/today?day=${dayKey(d)}') : null,
+                    child: Tooltip(
+                      message: userId == context.read<SessionController>().userId ? context.l10n.openDay : '',
+                      child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Column(children: [
                       Text(DateFormat.E(locale).format(d), style: Theme.of(context).textTheme.labelMedium),
@@ -93,6 +100,8 @@ class _CalendarPageState extends State<CalendarPage> {
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ]),
+                      ),
+                    ),
                   ),
                 ),
             ]),

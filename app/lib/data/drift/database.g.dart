@@ -93,6 +93,48 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _dayStartMeta = const VerificationMeta(
+    'dayStart',
+  );
+  @override
+  late final GeneratedColumn<String> dayStart = GeneratedColumn<String>(
+    'day_start',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lunchStartMeta = const VerificationMeta(
+    'lunchStart',
+  );
+  @override
+  late final GeneratedColumn<String> lunchStart = GeneratedColumn<String>(
+    'lunch_start',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lunchEndMeta = const VerificationMeta(
+    'lunchEnd',
+  );
+  @override
+  late final GeneratedColumn<String> lunchEnd = GeneratedColumn<String>(
+    'lunch_end',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dayEndMeta = const VerificationMeta('dayEnd');
+  @override
+  late final GeneratedColumn<String> dayEnd = GeneratedColumn<String>(
+    'day_end',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -126,6 +168,10 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     locale,
     defaultWorkspaceId,
     claudeTasks,
+    dayStart,
+    lunchStart,
+    lunchEnd,
+    dayEnd,
     createdAt,
     updatedAt,
   ];
@@ -197,6 +243,30 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         ),
       );
     }
+    if (data.containsKey('day_start')) {
+      context.handle(
+        _dayStartMeta,
+        dayStart.isAcceptableOrUnknown(data['day_start']!, _dayStartMeta),
+      );
+    }
+    if (data.containsKey('lunch_start')) {
+      context.handle(
+        _lunchStartMeta,
+        lunchStart.isAcceptableOrUnknown(data['lunch_start']!, _lunchStartMeta),
+      );
+    }
+    if (data.containsKey('lunch_end')) {
+      context.handle(
+        _lunchEndMeta,
+        lunchEnd.isAcceptableOrUnknown(data['lunch_end']!, _lunchEndMeta),
+      );
+    }
+    if (data.containsKey('day_end')) {
+      context.handle(
+        _dayEndMeta,
+        dayEnd.isAcceptableOrUnknown(data['day_end']!, _dayEndMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -250,6 +320,22 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         DriftSqlType.string,
         data['${effectivePrefix}claude_tasks'],
       ),
+      dayStart: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}day_start'],
+      ),
+      lunchStart: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}lunch_start'],
+      ),
+      lunchEnd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}lunch_end'],
+      ),
+      dayEnd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}day_end'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -278,6 +364,12 @@ class Profile extends DataClass implements Insertable<Profile> {
 
   /// Tâches de Claude (plan 10, D18) : `subject`, `session` ou `off` ; nul tant que la colonne n'est pas synchronisée.
   final String? claudeTasks;
+
+  /// Journée type (plan 13, lot 2) : « 08:30 », à l'horloge ; nulles = déduite des semaines passées.
+  final String? dayStart;
+  final String? lunchStart;
+  final String? lunchEnd;
+  final String? dayEnd;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   const Profile({
@@ -289,6 +381,10 @@ class Profile extends DataClass implements Insertable<Profile> {
     required this.locale,
     this.defaultWorkspaceId,
     this.claudeTasks,
+    this.dayStart,
+    this.lunchStart,
+    this.lunchEnd,
+    this.dayEnd,
     this.createdAt,
     this.updatedAt,
   });
@@ -310,6 +406,18 @@ class Profile extends DataClass implements Insertable<Profile> {
     }
     if (!nullToAbsent || claudeTasks != null) {
       map['claude_tasks'] = Variable<String>(claudeTasks);
+    }
+    if (!nullToAbsent || dayStart != null) {
+      map['day_start'] = Variable<String>(dayStart);
+    }
+    if (!nullToAbsent || lunchStart != null) {
+      map['lunch_start'] = Variable<String>(lunchStart);
+    }
+    if (!nullToAbsent || lunchEnd != null) {
+      map['lunch_end'] = Variable<String>(lunchEnd);
+    }
+    if (!nullToAbsent || dayEnd != null) {
+      map['day_end'] = Variable<String>(dayEnd);
     }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
@@ -338,6 +446,18 @@ class Profile extends DataClass implements Insertable<Profile> {
       claudeTasks: claudeTasks == null && nullToAbsent
           ? const Value.absent()
           : Value(claudeTasks),
+      dayStart: dayStart == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dayStart),
+      lunchStart: lunchStart == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lunchStart),
+      lunchEnd: lunchEnd == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lunchEnd),
+      dayEnd: dayEnd == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dayEnd),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -363,6 +483,10 @@ class Profile extends DataClass implements Insertable<Profile> {
         json['defaultWorkspaceId'],
       ),
       claudeTasks: serializer.fromJson<String?>(json['claudeTasks']),
+      dayStart: serializer.fromJson<String?>(json['dayStart']),
+      lunchStart: serializer.fromJson<String?>(json['lunchStart']),
+      lunchEnd: serializer.fromJson<String?>(json['lunchEnd']),
+      dayEnd: serializer.fromJson<String?>(json['dayEnd']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
     );
@@ -379,6 +503,10 @@ class Profile extends DataClass implements Insertable<Profile> {
       'locale': serializer.toJson<String>(locale),
       'defaultWorkspaceId': serializer.toJson<String?>(defaultWorkspaceId),
       'claudeTasks': serializer.toJson<String?>(claudeTasks),
+      'dayStart': serializer.toJson<String?>(dayStart),
+      'lunchStart': serializer.toJson<String?>(lunchStart),
+      'lunchEnd': serializer.toJson<String?>(lunchEnd),
+      'dayEnd': serializer.toJson<String?>(dayEnd),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
     };
@@ -393,6 +521,10 @@ class Profile extends DataClass implements Insertable<Profile> {
     String? locale,
     Value<String?> defaultWorkspaceId = const Value.absent(),
     Value<String?> claudeTasks = const Value.absent(),
+    Value<String?> dayStart = const Value.absent(),
+    Value<String?> lunchStart = const Value.absent(),
+    Value<String?> lunchEnd = const Value.absent(),
+    Value<String?> dayEnd = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
   }) => Profile(
@@ -406,6 +538,10 @@ class Profile extends DataClass implements Insertable<Profile> {
         ? defaultWorkspaceId.value
         : this.defaultWorkspaceId,
     claudeTasks: claudeTasks.present ? claudeTasks.value : this.claudeTasks,
+    dayStart: dayStart.present ? dayStart.value : this.dayStart,
+    lunchStart: lunchStart.present ? lunchStart.value : this.lunchStart,
+    lunchEnd: lunchEnd.present ? lunchEnd.value : this.lunchEnd,
+    dayEnd: dayEnd.present ? dayEnd.value : this.dayEnd,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
   );
@@ -425,6 +561,12 @@ class Profile extends DataClass implements Insertable<Profile> {
       claudeTasks: data.claudeTasks.present
           ? data.claudeTasks.value
           : this.claudeTasks,
+      dayStart: data.dayStart.present ? data.dayStart.value : this.dayStart,
+      lunchStart: data.lunchStart.present
+          ? data.lunchStart.value
+          : this.lunchStart,
+      lunchEnd: data.lunchEnd.present ? data.lunchEnd.value : this.lunchEnd,
+      dayEnd: data.dayEnd.present ? data.dayEnd.value : this.dayEnd,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -441,6 +583,10 @@ class Profile extends DataClass implements Insertable<Profile> {
           ..write('locale: $locale, ')
           ..write('defaultWorkspaceId: $defaultWorkspaceId, ')
           ..write('claudeTasks: $claudeTasks, ')
+          ..write('dayStart: $dayStart, ')
+          ..write('lunchStart: $lunchStart, ')
+          ..write('lunchEnd: $lunchEnd, ')
+          ..write('dayEnd: $dayEnd, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -457,6 +603,10 @@ class Profile extends DataClass implements Insertable<Profile> {
     locale,
     defaultWorkspaceId,
     claudeTasks,
+    dayStart,
+    lunchStart,
+    lunchEnd,
+    dayEnd,
     createdAt,
     updatedAt,
   );
@@ -472,6 +622,10 @@ class Profile extends DataClass implements Insertable<Profile> {
           other.locale == this.locale &&
           other.defaultWorkspaceId == this.defaultWorkspaceId &&
           other.claudeTasks == this.claudeTasks &&
+          other.dayStart == this.dayStart &&
+          other.lunchStart == this.lunchStart &&
+          other.lunchEnd == this.lunchEnd &&
+          other.dayEnd == this.dayEnd &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -485,6 +639,10 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
   final Value<String> locale;
   final Value<String?> defaultWorkspaceId;
   final Value<String?> claudeTasks;
+  final Value<String?> dayStart;
+  final Value<String?> lunchStart;
+  final Value<String?> lunchEnd;
+  final Value<String?> dayEnd;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
   final Value<int> rowid;
@@ -497,6 +655,10 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     this.locale = const Value.absent(),
     this.defaultWorkspaceId = const Value.absent(),
     this.claudeTasks = const Value.absent(),
+    this.dayStart = const Value.absent(),
+    this.lunchStart = const Value.absent(),
+    this.lunchEnd = const Value.absent(),
+    this.dayEnd = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -510,6 +672,10 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     this.locale = const Value.absent(),
     this.defaultWorkspaceId = const Value.absent(),
     this.claudeTasks = const Value.absent(),
+    this.dayStart = const Value.absent(),
+    this.lunchStart = const Value.absent(),
+    this.lunchEnd = const Value.absent(),
+    this.dayEnd = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -523,6 +689,10 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Expression<String>? locale,
     Expression<String>? defaultWorkspaceId,
     Expression<String>? claudeTasks,
+    Expression<String>? dayStart,
+    Expression<String>? lunchStart,
+    Expression<String>? lunchEnd,
+    Expression<String>? dayEnd,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -537,6 +707,10 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
       if (defaultWorkspaceId != null)
         'default_workspace_id': defaultWorkspaceId,
       if (claudeTasks != null) 'claude_tasks': claudeTasks,
+      if (dayStart != null) 'day_start': dayStart,
+      if (lunchStart != null) 'lunch_start': lunchStart,
+      if (lunchEnd != null) 'lunch_end': lunchEnd,
+      if (dayEnd != null) 'day_end': dayEnd,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -552,6 +726,10 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Value<String>? locale,
     Value<String?>? defaultWorkspaceId,
     Value<String?>? claudeTasks,
+    Value<String?>? dayStart,
+    Value<String?>? lunchStart,
+    Value<String?>? lunchEnd,
+    Value<String?>? dayEnd,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
     Value<int>? rowid,
@@ -565,6 +743,10 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
       locale: locale ?? this.locale,
       defaultWorkspaceId: defaultWorkspaceId ?? this.defaultWorkspaceId,
       claudeTasks: claudeTasks ?? this.claudeTasks,
+      dayStart: dayStart ?? this.dayStart,
+      lunchStart: lunchStart ?? this.lunchStart,
+      lunchEnd: lunchEnd ?? this.lunchEnd,
+      dayEnd: dayEnd ?? this.dayEnd,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -598,6 +780,18 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     if (claudeTasks.present) {
       map['claude_tasks'] = Variable<String>(claudeTasks.value);
     }
+    if (dayStart.present) {
+      map['day_start'] = Variable<String>(dayStart.value);
+    }
+    if (lunchStart.present) {
+      map['lunch_start'] = Variable<String>(lunchStart.value);
+    }
+    if (lunchEnd.present) {
+      map['lunch_end'] = Variable<String>(lunchEnd.value);
+    }
+    if (dayEnd.present) {
+      map['day_end'] = Variable<String>(dayEnd.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -621,6 +815,10 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
           ..write('locale: $locale, ')
           ..write('defaultWorkspaceId: $defaultWorkspaceId, ')
           ..write('claudeTasks: $claudeTasks, ')
+          ..write('dayStart: $dayStart, ')
+          ..write('lunchStart: $lunchStart, ')
+          ..write('lunchEnd: $lunchEnd, ')
+          ..write('dayEnd: $dayEnd, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -16257,6 +16455,10 @@ typedef $$ProfilesTableCreateCompanionBuilder = ProfilesCompanion Function({
   Value<String> locale,
   Value<String?> defaultWorkspaceId,
   Value<String?> claudeTasks,
+  Value<String?> dayStart,
+  Value<String?> lunchStart,
+  Value<String?> lunchEnd,
+  Value<String?> dayEnd,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
   Value<int> rowid,
@@ -16270,6 +16472,10 @@ typedef $$ProfilesTableUpdateCompanionBuilder = ProfilesCompanion Function({
   Value<String> locale,
   Value<String?> defaultWorkspaceId,
   Value<String?> claudeTasks,
+  Value<String?> dayStart,
+  Value<String?> lunchStart,
+  Value<String?> lunchEnd,
+  Value<String?> dayEnd,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
   Value<int> rowid,
@@ -16321,6 +16527,26 @@ class $$ProfilesTableFilterComposer
 
   ColumnFilters<String> get claudeTasks => $composableBuilder(
     column: $table.claudeTasks,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dayStart => $composableBuilder(
+    column: $table.dayStart,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lunchStart => $composableBuilder(
+    column: $table.lunchStart,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lunchEnd => $composableBuilder(
+    column: $table.lunchEnd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dayEnd => $composableBuilder(
+    column: $table.dayEnd,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16384,6 +16610,26 @@ class $$ProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get dayStart => $composableBuilder(
+    column: $table.dayStart,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lunchStart => $composableBuilder(
+    column: $table.lunchStart,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lunchEnd => $composableBuilder(
+    column: $table.lunchEnd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dayEnd => $composableBuilder(
+    column: $table.dayEnd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -16434,6 +16680,20 @@ class $$ProfilesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get dayStart =>
+      $composableBuilder(column: $table.dayStart, builder: (column) => column);
+
+  GeneratedColumn<String> get lunchStart => $composableBuilder(
+    column: $table.lunchStart,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get lunchEnd =>
+      $composableBuilder(column: $table.lunchEnd, builder: (column) => column);
+
+  GeneratedColumn<String> get dayEnd =>
+      $composableBuilder(column: $table.dayEnd, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -16477,6 +16737,10 @@ class $$ProfilesTableTableManager
                 Value<String> locale = const Value.absent(),
                 Value<String?> defaultWorkspaceId = const Value.absent(),
                 Value<String?> claudeTasks = const Value.absent(),
+                Value<String?> dayStart = const Value.absent(),
+                Value<String?> lunchStart = const Value.absent(),
+                Value<String?> lunchEnd = const Value.absent(),
+                Value<String?> dayEnd = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -16489,6 +16753,10 @@ class $$ProfilesTableTableManager
                 locale: locale,
                 defaultWorkspaceId: defaultWorkspaceId,
                 claudeTasks: claudeTasks,
+                dayStart: dayStart,
+                lunchStart: lunchStart,
+                lunchEnd: lunchEnd,
+                dayEnd: dayEnd,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -16503,6 +16771,10 @@ class $$ProfilesTableTableManager
                 Value<String> locale = const Value.absent(),
                 Value<String?> defaultWorkspaceId = const Value.absent(),
                 Value<String?> claudeTasks = const Value.absent(),
+                Value<String?> dayStart = const Value.absent(),
+                Value<String?> lunchStart = const Value.absent(),
+                Value<String?> lunchEnd = const Value.absent(),
+                Value<String?> dayEnd = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -16515,6 +16787,10 @@ class $$ProfilesTableTableManager
                 locale: locale,
                 defaultWorkspaceId: defaultWorkspaceId,
                 claudeTasks: claudeTasks,
+                dayStart: dayStart,
+                lunchStart: lunchStart,
+                lunchEnd: lunchEnd,
+                dayEnd: dayEnd,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

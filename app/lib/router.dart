@@ -25,14 +25,15 @@ GoRouter buildRouter(SessionController session) {
   Page<void> page(Widget child) => NoTransitionPage(child: child);
 
   return GoRouter(
-    initialLocation: '/',
+    // Accueil : la journée (plans/13-ux-moderne.md, lot 2) ; « Suivi du temps » reste la liste complète.
+    initialLocation: '/today',
     refreshListenable: session,
     redirect: (context, state) {
       final atLogin = state.matchedLocation == '/login';
       // Le mode kiosque fonctionne sans compte utilisateur (jeton d'appareil).
       if (state.matchedLocation == '/kiosk') return null;
       if (!session.isSignedIn) return atLogin ? null : '/login';
-      if (atLogin || state.matchedLocation == '/auth/callback') return '/';
+      if (atLogin || state.matchedLocation == '/auth/callback') return '/today';
       return null;
     },
     routes: [
@@ -44,7 +45,13 @@ GoRouter buildRouter(SessionController session) {
         builder: (context, state, child) => AppShell(location: state.uri.path, child: child),
         routes: [
           GoRoute(path: '/', pageBuilder: (_, _) => page(const TimeEntriesPage())),
-          GoRoute(path: '/today', pageBuilder: (_, _) => page(const TodayPage())),
+          GoRoute(
+            path: '/today',
+            pageBuilder: (_, state) {
+              final day = DateTime.tryParse(state.uri.queryParameters['day'] ?? '');
+              return page(TodayPage(key: ValueKey(day), initialDay: day));
+            },
+          ),
           GoRoute(path: '/timesheet', pageBuilder: (_, _) => page(const TimesheetPage())),
           GoRoute(path: '/calendar', pageBuilder: (_, _) => page(const CalendarPage())),
           GoRoute(path: '/reports', pageBuilder: (_, _) => page(const ReportsPage())),

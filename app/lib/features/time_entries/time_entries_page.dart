@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/catalog.dart';
@@ -16,6 +17,7 @@ import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../timer/timer_rules.dart';
+import '../today/day_plan.dart' show dayKey;
 import 'agents_banner.dart';
 import 'ai_usage.dart';
 import 'entry_dialog.dart';
@@ -269,6 +271,15 @@ class DayCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(children: [
               Text(dayLabel(context, day, today: l.today, yesterday: l.yesterday), style: theme.textTheme.titleSmall),
+              // La journée sur la frise (page « Aujourd'hui »).
+              if (inlineEdit)
+                IconButton(
+                  tooltip: l.openDay,
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 18,
+                  icon: const Icon(Icons.wb_sunny_outlined),
+                  onPressed: () => context.go('/today?day=${dayKey(day)}'),
+                ),
               const Spacer(),
               Text('${l.total}: ', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
               Text(formatHm(total), style: theme.textTheme.titleSmall),

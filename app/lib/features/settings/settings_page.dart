@@ -71,6 +71,7 @@ class SettingsPage extends StatelessWidget {
           const _LanguageTile(),
           const _ThemeTile(),
           const _MyDayTile(),
+          const _RecapTile(),
           SwitchListTile(
             secondary: const Icon(Icons.layers_outlined),
             title: Text(l.groupSimilarEntries),
@@ -237,6 +238,30 @@ class _ThemeTile extends StatelessWidget {
         ],
         onChanged: (v) => prefs.setThemeMode(v ?? ThemeMode.system),
       ),
+    );
+  }
+}
+
+/// Récapitulatif de fin de journée (plans/13-ux-moderne.md, lot 6) : activé ou non, à quelle heure ; sur chaque
+/// appareil (préférences locales).
+class _RecapTile extends StatelessWidget {
+  const _RecapTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final prefs = context.watch<DisplayPrefs>();
+    // Toucher la ligne : choisir l'heure (et activer) ; l'interrupteur : activer ou désactiver.
+    return ListTile(
+      leading: const Icon(Icons.nights_stay_outlined),
+      title: Text(l.recapSetting),
+      subtitle: Text('${prefs.dayRecap ? l.recapAt(prefs.dayRecapTime) : l.recapOff} · ${l.recapSettingHelp}'),
+      trailing: Switch(value: prefs.dayRecap, onChanged: (on) => prefs.setDayRecap(on)),
+      onTap: () async {
+        final t = parseHm(prefs.dayRecapTime) ?? 1050;
+        final picked = await showTimePicker(context: context, initialTime: TimeOfDay(hour: t ~/ 60, minute: t % 60));
+        if (picked != null) await prefs.setDayRecap(true, time: hm(picked.hour * 60 + picked.minute));
+      },
     );
   }
 }

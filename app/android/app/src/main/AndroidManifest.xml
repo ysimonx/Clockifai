@@ -3,6 +3,8 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Notification « chronomètre en cours » (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Récapitulatif de fin de journée, programmé chaque jour ouvré : reprogrammé au redémarrage -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"
@@ -36,6 +38,16 @@
                 <data android:scheme="clockifai" android:host="login-callback"/>
             </intent-filter>
         </activity>
+        <!-- Notifications programmées (flutter_local_notifications) : récapitulatif de fin de journée -->
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

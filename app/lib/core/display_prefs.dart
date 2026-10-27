@@ -8,6 +8,9 @@ class DisplayPrefs extends ChangeNotifier {
   static const _groupSimilarKey = 'group_similar_entries';
   static const _dismissedKey = 'journal_dismissed';
   static const _themeKey = 'theme_mode';
+  static const _recapKey = 'day_recap';
+  static const _recapTimeKey = 'day_recap_time';
+  static const _recapShownKey = 'day_recap_shown';
   final SharedPreferences _prefs;
 
   /// Suivi du temps : entrées similaires d'une journée réunies sur une ligne dépliable (activé par défaut).
@@ -24,6 +27,23 @@ class DisplayPrefs extends ChangeNotifier {
         'dark' => ThemeMode.dark,
         _ => ThemeMode.system,
       };
+
+  /// Récapitulatif de fin de journée (plans/13-ux-moderne.md, lot 6) : activé par défaut, sur chaque appareil.
+  bool get dayRecap => _prefs.getBool(_recapKey) ?? true;
+
+  /// Heure du récapitulatif, « 17:30 » par défaut.
+  String get dayRecapTime => _prefs.getString(_recapTimeKey) ?? '17:30';
+
+  /// Dernier jour (« 2026-10-27 ») où le récapitulatif a été présenté : une fois par jour.
+  String? get dayRecapShown => _prefs.getString(_recapShownKey);
+
+  Future<void> setDayRecap(bool enabled, {String? time}) async {
+    await _prefs.setBool(_recapKey, enabled);
+    if (time != null) await _prefs.setString(_recapTimeKey, time);
+    notifyListeners();
+  }
+
+  Future<void> markDayRecapShown(String day) => _prefs.setString(_recapShownKey, day);
 
   Future<void> setThemeMode(ThemeMode mode) async {
     if (mode == ThemeMode.system) {

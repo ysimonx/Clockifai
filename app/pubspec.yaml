@@ -39,6 +39,7 @@ dependencies:
   file_saver: ^0.7.0
   http: ^1.4.0
   cupertino_icons: ^1.0.8
+  timezone: ^0.11.2
 
 dev_dependencies:
   flutter_test:

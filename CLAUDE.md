@@ -98,7 +98,8 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - Icône dans la barre de menus : panneau natif SwiftUI (`macos/Runner/MenuBar*.swift`) sans accès aux données ;
   `MacMenuBar` (`features/timer/menu_bar.dart`, monté dans `MaterialApp.builder`) lui envoie l'état par le canal
   `clockifai/menu_bar` et exécute ses commandes (`start`, `stop`, `setDescription`, `setProject`, `continue`,
-  `previewQuick` et `quickEntry` pour la saisie express, ouverte aussi par ⌥⌘T, raccourci Carbon) sur la base locale.
+  `previewQuick` et `quickEntry` pour la saisie express, ouverte aussi par ⌥⌘T, raccourci Carbon ; `openToday` pour
+  la fin de journée) sur la base locale.
 - Fermer la fenêtre ne quitte pas l'app (le moteur Flutter et la sync continuent) ; l'icône du Dock suit la fenêtre
   (`LSUIElement`, `MainFlutterWindow.present()`). Démarrage à l'ouverture de session : `LaunchAtLogin.swift`
   (`SMAppService`, macOS 13+), canal `clockifai/launch_at_login`, réglage dans Paramètres et clic droit sur l'icône.

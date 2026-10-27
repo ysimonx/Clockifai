@@ -54,6 +54,8 @@ sequenceDiagram
 - Clic droit sur l'icône : ouvrir l'app, démarrage à l'ouverture de session (canal
   `clockifai/launch_at_login`, `SMAppService`, macOS 13+), quitter.
 - `setProject` retire la tâche (propre à l'ancien projet) et recalcule facturable et taux.
+- Fin de journée (plan 13, lot 6) : `recap` dans l'état (la ligne du récapitulatif quand il est dû) ; « Revoir »
+  envoie `openToday`, et le panneau ramène la fenêtre sur « Aujourd'hui ».
 - Saisie express : analyse et placement partagés avec la page « Aujourd'hui » (`features/today/quick_place.dart`) ;
   ⌥⌘T est un raccourci global Carbon (`RegisterEventHotKey`), sans autorisation d'accessibilité.
 

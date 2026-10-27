@@ -1255,6 +1255,84 @@ abstract class AppLocalizations {
   /// **'Annuler'**
   String get undo;
 
+  /// No description provided for @recapTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fin de journée'**
+  String get recapTitle;
+
+  /// No description provided for @recapLine.
+  ///
+  /// In fr, this message translates to:
+  /// **'{logged} saisies sur {target} · {count, plural, =1{1 proposition à confirmer} other{{count} propositions à confirmer}}'**
+  String recapLine(String logged, String target, int count);
+
+  /// No description provided for @recapLineDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'{logged} saisies sur {target}, rien à confirmer'**
+  String recapLineDone(String logged, String target);
+
+  /// No description provided for @recapNothing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien à confirmer : votre journée est complète.'**
+  String get recapNothing;
+
+  /// No description provided for @recapOpenDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir la frise'**
+  String get recapOpenDay;
+
+  /// No description provided for @recapConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{Confirmer 1 entrée} other{Confirmer {count} entrées}}'**
+  String recapConfirm(int count);
+
+  /// No description provided for @recapLater.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plus tard'**
+  String get recapLater;
+
+  /// No description provided for @recapReview.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revoir'**
+  String get recapReview;
+
+  /// No description provided for @recapSetting.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récapitulatif de fin de journée'**
+  String get recapSetting;
+
+  /// No description provided for @recapSettingHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque jour ouvré, à l\'heure choisie : le temps saisi et les propositions à confirmer d\'un geste. Réglé sur chaque appareil.'**
+  String get recapSettingHelp;
+
+  /// No description provided for @recapOff.
+  ///
+  /// In fr, this message translates to:
+  /// **'Désactivé'**
+  String get recapOff;
+
+  /// No description provided for @recapAt.
+  ///
+  /// In fr, this message translates to:
+  /// **'À {time}'**
+  String recapAt(String time);
+
+  /// No description provided for @recapNotificationBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre journée vous attend : vérifiez-la et confirmez les propositions.'**
+  String get recapNotificationBody;
+
   /// No description provided for @weekGrid.
   ///
   /// In fr, this message translates to:

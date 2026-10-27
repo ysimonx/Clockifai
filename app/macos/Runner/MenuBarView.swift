@@ -46,6 +46,8 @@ final class MenuBarModel: ObservableObject {
   @Published var running: MenuBarEntry?
   @Published var runningStart: Date?
   @Published var recent: [MenuBarEntry] = []
+  /// Fin de journée : la ligne du récapitulatif, quand il est dû.
+  @Published var recap: String?
   @Published var projects: [MenuBarProject] = []
   @Published var labels: [String: String] = [:]
 
@@ -90,6 +92,7 @@ final class MenuBarModel: ObservableObject {
       runningStart = nil
     }
     recent = (state["recent"] as? [Any] ?? []).compactMap(MenuBarEntry.init)
+    recap = state["recap"] as? String
     projects = (state["projects"] as? [Any] ?? []).compactMap(MenuBarProject.init)
     if let l = state["labels"] as? [String: String] { labels = l }
     // Projet archivé ou d'un autre workspace (changement de workspace) : le brouillon l'oublie.
@@ -171,6 +174,12 @@ final class MenuBarModel: ObservableObject {
     }
   }
 
+  /// « Revoir » : la page « Aujourd'hui » dans la fenêtre.
+  func openToday() {
+    perform("openToday", [:])
+    openApp()
+  }
+
   func continueEntry(_ id: String) {
     guard !busy else { return }
     perform("continue", ["id": id])
@@ -237,6 +246,10 @@ struct MenuBarView: View {
       header
       Divider()
       if model.signedIn && model.ready {
+        if let recap = model.recap {
+          recapRow(recap).padding(12)
+          Divider()
+        }
         timer.padding(12)
         Divider()
         quick.padding(12)
@@ -256,6 +269,23 @@ struct MenuBarView: View {
     .frame(width: 340)
     .onChange(of: model.quickFocusRequest) { _ in
       DispatchQueue.main.async { quickFocused = true }
+    }
+  }
+
+  /// Fin de journée : le temps saisi et les propositions ; « Revoir » ouvre la journée dans la fenêtre.
+  private func recapRow(_ recap: String) -> some View {
+    HStack(spacing: 10) {
+      Image(systemName: "moon.stars").foregroundColor(clockifaiBlue)
+      VStack(alignment: .leading, spacing: 2) {
+        Text(model.label("recapTitle").uppercased())
+          .font(.caption2.weight(.semibold))
+          .foregroundColor(.secondary)
+        Text(recap)
+          .font(.caption)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      Spacer(minLength: 4)
+      Button(model.label("recapReview"), action: model.openToday)
     }
   }
 

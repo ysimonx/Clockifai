@@ -717,6 +717,67 @@ class AppLocalizationsFr extends AppLocalizations {
   String get undo => 'Annuler';
 
   @override
+  String get recapTitle => 'Fin de journée';
+
+  @override
+  String recapLine(String logged, String target, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count propositions à confirmer',
+      one: '1 proposition à confirmer',
+    );
+    return '$logged saisies sur $target · $_temp0';
+  }
+
+  @override
+  String recapLineDone(String logged, String target) {
+    return '$logged saisies sur $target, rien à confirmer';
+  }
+
+  @override
+  String get recapNothing => 'Rien à confirmer : votre journée est complète.';
+
+  @override
+  String get recapOpenDay => 'Voir la frise';
+
+  @override
+  String recapConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Confirmer $count entrées',
+      one: 'Confirmer 1 entrée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recapLater => 'Plus tard';
+
+  @override
+  String get recapReview => 'Revoir';
+
+  @override
+  String get recapSetting => 'Récapitulatif de fin de journée';
+
+  @override
+  String get recapSettingHelp =>
+      'Chaque jour ouvré, à l\'heure choisie : le temps saisi et les propositions à confirmer d\'un geste. Réglé sur chaque appareil.';
+
+  @override
+  String get recapOff => 'Désactivé';
+
+  @override
+  String recapAt(String time) {
+    return 'À $time';
+  }
+
+  @override
+  String get recapNotificationBody =>
+      'Votre journée vous attend : vérifiez-la et confirmez les propositions.';
+
+  @override
   String get weekGrid => 'Grille';
 
   @override

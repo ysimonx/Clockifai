@@ -13,6 +13,7 @@ import '../../core/session.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../today/day_plan.dart' show TypicalDay, addDays;
+import '../today/day_recap.dart' show recapNotice;
 import '../today/quick_place.dart';
 import 'timer_rules.dart';
 
@@ -25,8 +26,11 @@ import 'timer_rules.dart';
 /// lui envoie l'état (`update`) et exécute ses commandes sur la base locale, comme la barre du
 /// chronomètre. Il fonctionne fenêtre fermée : le moteur Flutter reste actif tant que l'app tourne.
 class MacMenuBar extends StatefulWidget {
-  const MacMenuBar({super.key, required this.child});
+  const MacMenuBar({super.key, required this.child, this.onOpenToday});
   final Widget child;
+
+  /// « Revoir » de la fin de journée : la page « Aujourd'hui » (le panneau ramène la fenêtre au premier plan).
+  final VoidCallback? onOpenToday;
 
   static bool get supported => !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
 
@@ -53,6 +57,7 @@ class _MacMenuBarState extends State<MacMenuBar> {
   void initState() {
     super.initState();
     if (MacMenuBar.supported) _channel.setMethodCallHandler(_onCall);
+    recapNotice.addListener(_schedulePush);
   }
 
   @override
@@ -88,6 +93,7 @@ class _MacMenuBarState extends State<MacMenuBar> {
   @override
   void dispose() {
     if (MacMenuBar.supported) _channel.setMethodCallHandler(null);
+    recapNotice.removeListener(_schedulePush);
     _runningSub?.cancel();
     _recentSub?.cancel();
     super.dispose();
@@ -130,6 +136,8 @@ class _MacMenuBarState extends State<MacMenuBar> {
       'ready': _session.workspace != null,
       'running': running == null ? null : {..._entry(running), 'start': running.startAt.millisecondsSinceEpoch},
       'recent': [for (final r in _recent) _entry(r.entry)],
+      // Fin de journée (plan 13, lot 6) : la ligne du récapitulatif, quand il est dû.
+      'recap': recapNotice.value,
       'projects': [
         for (final p in _catalog.activeProjects)
           {'id': p.id, 'name': p.name, 'client': _catalog.client(p.clientId)?.name, 'color': p.color},
@@ -151,6 +159,8 @@ class _MacMenuBarState extends State<MacMenuBar> {
         'launchAtLogin': l.launchAtLogin,
         'quickEntry': l.quickEntry,
         'quickEntryHint': l.quickEntryHint,
+        'recapTitle': l.recapTitle,
+        'recapReview': l.recapReview,
       },
     };
     // L'état de sync et le référentiel notifient souvent sans rien changer pour le panneau.
@@ -188,6 +198,10 @@ class _MacMenuBarState extends State<MacMenuBar> {
         return _setProject(userId, args['projectId'] as String?);
       case 'continue':
         return _continue(args['id'] as String?);
+      case 'openToday':
+        recapNotice.value = null;
+        widget.onOpenToday?.call();
+        return null;
       case 'previewQuick':
         return _quick(ws, userId, args['text'] as String? ?? '', save: false);
       case 'quickEntry':

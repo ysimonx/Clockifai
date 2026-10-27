@@ -10,56 +10,62 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.6] — 2026-10-27
+
 ### Ajouté
 
 - **Rapports › Présence** : arrivée, départ, pauses et temps travaillé de chaque personne, jour par jour, face à sa
   capacité journalière (hors week-ends, jours fériés et absences) : heures sup ou heures manquantes sur la période.
-  Question « Heures sup du mois » et export « Présence (CSV) », même hors ligne.
+  Question « Heures sup du mois » et export « Présence (CSV) », même hors ligne (27 octobre 2026).
 - **Équipe › Taux et capacité** : la capacité par jour ouvré de chaque personne se règle (administrateurs) ; elle
-  sert à la Présence et au Planning.
+  sert à la Présence et au Planning (27 octobre 2026).
 - **Budgets et alertes** : budget en montant pour un projet et estimation pour une tâche (sous-tâches comprises),
   avec leurs jauges ; « À surveiller » en tête des Projets pour les managers (80 % et plus), et un email aux
-  managers au passage de 80 % puis de 100 %.
+  managers au passage de 80 % puis de 100 % (27 octobre 2026).
 - **Rapports partagés** : un manager partage le rapport affiché par un lien public en lecture seule, sans compte
   (client, comptable) : totaux par projet et tâche, montants et détail des entrées au choix, PDF. La période se
   recalcule à chaque ouverture ; le lien se change, se ferme ou se supprime. Envoi par email chaque semaine ou
-  chaque mois, à des adresses au choix, avec le PDF en pièce jointe (si l'installation envoie des emails).
+  chaque mois, à des adresses au choix, avec le PDF en pièce jointe (si l'installation envoie des emails)
+  (27 octobre 2026).
 
 ### Modifié
 
 - **Factures** : chaque durée suit l'arrondi du workspace (Paramètres › Arrondi des durées), comme le bloc
-  « À facturer » des rapports ; le montant de la facture créée est celui annoncé.
+  « À facturer » des rapports ; le montant de la facture créée est celui annoncé (27 octobre 2026).
 - **Taux des entrées** : posé par le serveur (celui du projet, sinon de la personne) ; seul un manager peut le
-  changer.
+  changer (27 octobre 2026).
 
 ### Corrigé
 
 - **Exports Excel et PDF** : heures dans le fuseau de votre profil (elles étaient décalées d'une ou deux heures), et
-  une entrée commencée après minuit compte pour le bon jour ; un membre exporte aussi le temps de son agent Claude.
+  une entrée commencée après minuit compte pour le bon jour ; un membre exporte aussi le temps de son agent Claude
+  (27 octobre 2026).
 - **Chronomètre** : démarrer un chronomètre arrête l'ancien même quand celui-ci est verrouillé par une approbation
-  (le nouveau était perdu).
+  (le nouveau était perdu) (27 octobre 2026).
 - **Droits** : une demande d'absence ne peut plus s'appuyer sur la politique d'un autre espace ; seul un
   propriétaire nomme un propriétaire ; une relance ne peut plus être effacée par la personne relancée ; factures et
-  tags restent dans leur espace.
+  tags restent dans leur espace (27 octobre 2026).
 - **Aujourd'hui, saisie express et récapitulatif** : les règles de l'espace s'appliquent (projet ou description
   obligatoire, période verrouillée ou approuvée), un double clic ne crée plus d'entrée en double, une saisie faite en
-  regardant un autre jour ne se pose plus sur les entrées du jour, et une entrée verrouillée ne se déplace plus.
+  regardant un autre jour ne se pose plus sur les entrées du jour, et une entrée verrouillée ne se déplace plus
+  (27 octobre 2026).
 - **Chronomètres** : le panneau des chronomètres en cours suit les arrêts ; arrêter deux fois ne rallonge plus une
-  entrée.
+  entrée (27 octobre 2026).
 - **Semaines** : la navigation et les totaux ne se décalent plus au changement d'heure (semaine commençant le
-  dimanche, Planning, Calendrier, Rapports).
+  dimanche, Planning, Calendrier, Rapports) (27 octobre 2026).
 - **Entrées** : le menu ⋮ ne propose plus de modifier ou supprimer une entrée verrouillée ; l'assistant n'applique
-  ses propositions qu'aux entrées que vous pouvez modifier.
-- **Projets** : supprimer une tâche se rattrape avec Annuler.
+  ses propositions qu'aux entrées que vous pouvez modifier (27 octobre 2026).
+- **Projets** : supprimer une tâche se rattrape avec Annuler (27 octobre 2026).
 - **Chef d'équipe** : le Planning montre les affectations et les absences de son équipe ; « Qui n'a pas soumis » et
-  le Planning ignorent les personnes désactivées.
+  le Planning ignorent les personnes désactivées (27 octobre 2026).
 - **Claude Code** : une session ne peut plus être modifiée par un autre membre ; « Une tâche par session » avec des
   étapes ne bloque plus le chronomètre de Claude ; une sous-tâche renommée à la main reste celle de l'entrée ; le
-  plugin résiste à un poste dont la langue n'est pas en UTF-8 (`claude plugin update clockifai@clockifai`).
+  plugin résiste à un poste dont la langue n'est pas en UTF-8 (`claude plugin update clockifai@clockifai`)
+  (27 octobre 2026).
 - **Agents Claude** : désactiver ou retirer un agent arrête son entrée en cours à sa dernière activité (elle restait
-  ouverte).
+  ouverte) (27 octobre 2026).
 - **Agenda** : la lecture d'un agenda ne peut plus être détournée vers le réseau interne par un nom de domaine qui
-  changerait d'adresse.
+  changerait d'adresse (27 octobre 2026).
 
 ## [0.2.5] — 2026-10-27
 

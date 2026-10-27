@@ -387,6 +387,69 @@
     }
   },
   "undo": "Undo",
+  "commandPalette": "Commands",
+  "commandPaletteTooltip": "Commands ({shortcut})",
+  "@commandPaletteTooltip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "keyEscape": "Esc",
+  "commandPaletteHint": "An action, a page, a project…",
+  "commandNoResult": "No command",
+  "cmdGoTo": "Go to",
+  "cmdStartTimer": "Start the timer",
+  "cmdStopTimer": "Stop the timer",
+  "cmdStartOnProject": "Start the timer on this project",
+  "cmdResume": "Resume",
+  "cmdThemeDark": "Appearance: dark",
+  "cmdThemeLight": "Appearance: light",
+  "cmdThemeSystem": "Appearance: system",
+  "shortcutsTitle": "Keyboard shortcuts",
+  "shortcutsEverywhere": "Everywhere",
+  "shortcutsHelp": "A single key works when you are not typing in a field.",
+  "kbPalette": "Commands: pages, timer, projects",
+  "kbNewEntry": "New entry",
+  "kbTimer": "Start or stop the timer",
+  "kbUndo": "Undo the last action",
+  "kbHelp": "This help",
+  "kbMove": "Next, previous entry",
+  "kbSelect": "Select",
+  "kbEdit": "Edit",
+  "kbDuplicate": "Duplicate",
+  "kbDelete": "Delete (the selection, or the entry)",
+  "kbClear": "Clear the selection",
+  "kbTodayConfirm": "Confirm the chosen block",
+  "kbTodayIgnore": "Dismiss the suggestion",
+  "kbTodayShift": "Shift by 5 minutes (Shift: lengthen or shorten)",
+  "selectedCount": "{count, plural, =1{1 selected} other{{count} selected}}",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectEntry": "Select",
+  "duplicateTo": "Duplicate to…",
+  "entriesUpdated": "{count, plural, =1{1 entry updated} other{{count} entries updated}}",
+  "@entriesUpdated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "entriesDuplicated": "{count, plural, =1{1 entry duplicated} other{{count} entries duplicated}}",
+  "@entriesDuplicated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "entryDeleted": "Entry deleted",
   "entriesDeleted": "{count, plural, =1{1 entry deleted} other{{count} entries deleted}}",
   "@entriesDeleted": {

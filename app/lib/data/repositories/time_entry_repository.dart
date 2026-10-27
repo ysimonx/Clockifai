@@ -389,6 +389,28 @@ class TimeEntryRepository {
     if (tagIds != null) await _replaceTags(entry, tagIds);
   }
 
+  /// Même modification sur plusieurs entrées (barre de sélection du « Suivi du temps »), en une transaction.
+  Future<void> updateEach(
+    List<TimeEntry> entries, {
+    String? projectId,
+    bool clearProject = false,
+    String? taskId,
+    bool clearTask = false,
+    bool? billable,
+    int? Function(TimeEntry entry)? hourlyRateFor,
+  }) =>
+      db.transaction(() async {
+        for (final e in entries) {
+          await _updateOne(e,
+              projectId: projectId,
+              clearProject: clearProject,
+              taskId: taskId,
+              clearTask: clearTask,
+              billable: billable,
+              hourlyRateCents: hourlyRateFor?.call(e));
+        }
+      });
+
   /// Suppression logique : le serveur garde la trace, les clients la retirent. Renvoie l'entrée telle qu'avant,
   /// pour [restore] (Annuler).
   Future<List<TimeEntry>> delete(String entryId) => deleteMany([entryId]);

@@ -717,6 +717,139 @@ class AppLocalizationsFr extends AppLocalizations {
   String get undo => 'Annuler';
 
   @override
+  String get commandPalette => 'Commandes';
+
+  @override
+  String commandPaletteTooltip(String shortcut) {
+    return 'Commandes ($shortcut)';
+  }
+
+  @override
+  String get keyEscape => 'Échap';
+
+  @override
+  String get commandPaletteHint => 'Une action, une page, un projet…';
+
+  @override
+  String get commandNoResult => 'Aucune commande';
+
+  @override
+  String get cmdGoTo => 'Aller à';
+
+  @override
+  String get cmdStartTimer => 'Démarrer le chronomètre';
+
+  @override
+  String get cmdStopTimer => 'Arrêter le chronomètre';
+
+  @override
+  String get cmdStartOnProject => 'Démarrer le chronomètre sur ce projet';
+
+  @override
+  String get cmdResume => 'Reprendre';
+
+  @override
+  String get cmdThemeDark => 'Apparence : sombre';
+
+  @override
+  String get cmdThemeLight => 'Apparence : claire';
+
+  @override
+  String get cmdThemeSystem => 'Apparence : comme le système';
+
+  @override
+  String get shortcutsTitle => 'Raccourcis clavier';
+
+  @override
+  String get shortcutsEverywhere => 'Partout';
+
+  @override
+  String get shortcutsHelp =>
+      'Une touche seule agit quand vous n\'écrivez pas dans un champ.';
+
+  @override
+  String get kbPalette => 'Commandes : pages, chronomètre, projets';
+
+  @override
+  String get kbNewEntry => 'Nouvelle entrée';
+
+  @override
+  String get kbTimer => 'Démarrer ou arrêter le chronomètre';
+
+  @override
+  String get kbUndo => 'Annuler la dernière action';
+
+  @override
+  String get kbHelp => 'Cette aide';
+
+  @override
+  String get kbMove => 'Entrée suivante, précédente';
+
+  @override
+  String get kbSelect => 'Sélectionner';
+
+  @override
+  String get kbEdit => 'Modifier';
+
+  @override
+  String get kbDuplicate => 'Dupliquer';
+
+  @override
+  String get kbDelete => 'Supprimer (la sélection, sinon l\'entrée)';
+
+  @override
+  String get kbClear => 'Tout désélectionner';
+
+  @override
+  String get kbTodayConfirm => 'Confirmer le bloc choisi';
+
+  @override
+  String get kbTodayIgnore => 'Ignorer la proposition';
+
+  @override
+  String get kbTodayShift =>
+      'Décaler de 5 minutes (Maj : allonger ou raccourcir)';
+
+  @override
+  String selectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sélectionnées',
+      one: '1 sélectionnée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get selectEntry => 'Sélectionner';
+
+  @override
+  String get duplicateTo => 'Dupliquer vers…';
+
+  @override
+  String entriesUpdated(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entrées modifiées',
+      one: '1 entrée modifiée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String entriesDuplicated(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entrées dupliquées',
+      one: '1 entrée dupliquée',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get entryDeleted => 'Entrée supprimée';
 
   @override

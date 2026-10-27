@@ -714,6 +714,138 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String get commandPalette => 'Commands';
+
+  @override
+  String commandPaletteTooltip(String shortcut) {
+    return 'Commands ($shortcut)';
+  }
+
+  @override
+  String get keyEscape => 'Esc';
+
+  @override
+  String get commandPaletteHint => 'An action, a page, a project…';
+
+  @override
+  String get commandNoResult => 'No command';
+
+  @override
+  String get cmdGoTo => 'Go to';
+
+  @override
+  String get cmdStartTimer => 'Start the timer';
+
+  @override
+  String get cmdStopTimer => 'Stop the timer';
+
+  @override
+  String get cmdStartOnProject => 'Start the timer on this project';
+
+  @override
+  String get cmdResume => 'Resume';
+
+  @override
+  String get cmdThemeDark => 'Appearance: dark';
+
+  @override
+  String get cmdThemeLight => 'Appearance: light';
+
+  @override
+  String get cmdThemeSystem => 'Appearance: system';
+
+  @override
+  String get shortcutsTitle => 'Keyboard shortcuts';
+
+  @override
+  String get shortcutsEverywhere => 'Everywhere';
+
+  @override
+  String get shortcutsHelp =>
+      'A single key works when you are not typing in a field.';
+
+  @override
+  String get kbPalette => 'Commands: pages, timer, projects';
+
+  @override
+  String get kbNewEntry => 'New entry';
+
+  @override
+  String get kbTimer => 'Start or stop the timer';
+
+  @override
+  String get kbUndo => 'Undo the last action';
+
+  @override
+  String get kbHelp => 'This help';
+
+  @override
+  String get kbMove => 'Next, previous entry';
+
+  @override
+  String get kbSelect => 'Select';
+
+  @override
+  String get kbEdit => 'Edit';
+
+  @override
+  String get kbDuplicate => 'Duplicate';
+
+  @override
+  String get kbDelete => 'Delete (the selection, or the entry)';
+
+  @override
+  String get kbClear => 'Clear the selection';
+
+  @override
+  String get kbTodayConfirm => 'Confirm the chosen block';
+
+  @override
+  String get kbTodayIgnore => 'Dismiss the suggestion';
+
+  @override
+  String get kbTodayShift => 'Shift by 5 minutes (Shift: lengthen or shorten)';
+
+  @override
+  String selectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected',
+      one: '1 selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get selectEntry => 'Select';
+
+  @override
+  String get duplicateTo => 'Duplicate to…';
+
+  @override
+  String entriesUpdated(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries updated',
+      one: '1 entry updated',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String entriesDuplicated(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries duplicated',
+      one: '1 entry duplicated',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get entryDeleted => 'Entry deleted';
 
   @override

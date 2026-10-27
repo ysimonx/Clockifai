@@ -13,6 +13,7 @@ import '../../core/display_prefs.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/text_search.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../data/drift/database.dart';
@@ -462,7 +463,7 @@ class _TodayPageState extends State<TodayPage> {
       if (!ready) return;
       final billable = q.billable ?? catalog.billableFor(projectId: q.projectId, userId: me);
       final added = l.quickAdded(q.description.isEmpty ? (project?.name ?? '') : q.description,
-          dayLabel(context, slot.day, today: l.today, yesterday: l.yesterday), '${hm(slot.span.start)} → ${hm(slot.span.end)}');
+          dayLabel(context, slot.day, today: l.today, yesterday: l.yesterday, now: now), '${hm(slot.span.start)} → ${hm(slot.span.end)}');
       final id = await entriesRepo.createManual(
         workspaceId: ws,
         userId: me,
@@ -550,7 +551,7 @@ class _TodayPageState extends State<TodayPage> {
               if (q.description.isNotEmpty && fold(q.description) != fold(task?.name ?? '')) chip('« ${q.description} »'),
               for (final id in q.tagIds) chip('#${catalog.tag(id)?.name ?? ''}'),
               if (slot != null) ...[
-                chip(dayLabel(context, slot.day, today: l.today, yesterday: l.yesterday)),
+                chip(dayLabel(context, slot.day, today: l.today, yesterday: l.yesterday, now: now)),
                 chip('${hm(slot.span.start)} → ${hm(slot.span.end)}${slot.inGap ? ' · ${l.quickInGap}' : ''}', mono: true),
               ],
               chip((q.billable ?? catalog.billableFor(projectId: q.projectId, userId: me)) ? l.billable : l.nonBillable),

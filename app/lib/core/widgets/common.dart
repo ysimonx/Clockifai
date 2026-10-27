@@ -193,18 +193,43 @@ Future<bool> confirm(BuildContext context,
   return res ?? false;
 }
 
+/// La dernière action encore annulable (son bandeau est affiché), pour ⌘Z.
+Future<void> Function()? _pendingUndo;
+
 /// « Annuler plutôt que confirmer » (plans/13-ux-moderne.md, principe 5) : l'action est déjà faite, le bandeau propose
-/// de la défaire quelques secondes. `persist: false` : sinon un bandeau à action reste affiché jusqu'à un clic.
+/// de la défaire quelques secondes ; ⌘Z fait de même ([undoLast]). `persist: false` : sinon un bandeau à action
+/// reste affiché jusqu'à un clic.
 void showUndo(BuildContext context, String message, Future<void> Function() undo) {
   final l = context.l10n;
-  ScaffoldMessenger.maybeOf(context)
-    ?..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content: Text(message),
-      persist: false,
-      duration: const Duration(seconds: 8),
-      action: SnackBarAction(label: l.undo, onPressed: () => undo()),
-    ));
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  if (messenger == null) return;
+  late final Future<void> Function() once;
+  once = () {
+    if (_pendingUndo == once) _pendingUndo = null;
+    return undo();
+  };
+  messenger.hideCurrentSnackBar();
+  _pendingUndo = once;
+  messenger
+      .showSnackBar(SnackBar(
+        content: Text(message),
+        persist: false,
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(label: l.undo, onPressed: () => once()),
+      ))
+      .closed
+      .then((_) {
+    if (_pendingUndo == once) _pendingUndo = null;
+  });
+}
+
+/// ⌘Z : défait la dernière action dont le bandeau « Annuler » est encore affiché. Faux s'il n'y en a pas.
+bool undoLast(BuildContext context) {
+  final undo = _pendingUndo;
+  if (undo == null) return false;
+  ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
+  undo();
+  return true;
 }
 
 void showSnack(BuildContext context, String message) {

@@ -23,6 +23,12 @@ la date d'arrivée de chaque évolution.
   (26 octobre 2026).
 - Suivi du temps : la **description** et le **projet** d'une entrée se modifient sur place, d'un clic ; Entrée
   enregistre, Échap abandonne, et le bandeau propose Annuler (26 octobre 2026).
+- **Commandes (⌘K / Ctrl K)**, ou la loupe en haut : pages, démarrer ou arrêter le chronomètre, nouvelle entrée,
+  dernières entrées à reprendre, démarrer sur un projet, apparence ; recherche sans accents (27 octobre 2026).
+- **Raccourcis clavier** : N nouvelle entrée, S chronomètre, ⌘Z annuler, ? l'aide ; dans « Suivi du temps », J / K,
+  X sélectionner, E modifier, D dupliquer, ⌫ supprimer, Échap (27 octobre 2026).
+- Suivi du temps : **sélection multiple** (case au survol, appui long sur téléphone) et barre d'actions : projet,
+  facturable ou non, dupliquer vers un autre jour, supprimer, avec Annuler (27 octobre 2026).
 
 ### Modifié
 

@@ -1,15 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/powersync/connector.dart';
+import '../../features/commands/command_palette.dart';
+import '../../features/commands/shortcuts_help.dart';
+import '../../features/time_entries/entry_dialog.dart';
 import '../../features/timer/timer_bar.dart';
 import '../di.dart';
 import '../guide.dart';
 import '../l10n.dart';
 import '../session.dart';
+import '../shortcuts.dart';
 import '../team_rights.dart';
 import 'common.dart';
 import 'sync_indicator.dart';
@@ -48,6 +53,18 @@ final _allDestinations = <_Dest>[
 
 bool _canEditOthers(TeamRights r) => r.canEditOthers;
 bool _seesTeam(TeamRights r) => r.seesTeam;
+
+List<_Dest> _visible(SessionController session, TeamRights rights) =>
+    _allDestinations.where((d) => d.visibleIf?.call(rights) ?? (!d.managerOnly || session.isManager)).toList();
+
+/// Pages accessibles, dans l'ordre du menu (palette ⌘K : « Aller à »).
+List<({String path, IconData icon, String label})> navDestinations(BuildContext context) {
+  final l = context.l10n;
+  return [
+    for (final d in _visible(context.read<SessionController>(), TeamRights.read(context)))
+      (path: d.path, icon: d.icon, label: d.label(l)),
+  ];
+}
 
 /// Nombre de destinations affichées dans la barre du bas sur mobile (le reste dans « Plus »).
 const _mobileMain = 4;
@@ -90,8 +107,38 @@ class _AppShellState extends State<AppShell> {
     return root < 0 ? 0 : root;
   }
 
+  /// Raccourcis de toute l'app (plans/13-ux-moderne.md, lot 1) ; ceux des pages passent avant ([PageShortcuts]).
+  bool _onKey(KeyEvent event) {
+    final key = event.logicalKey;
+    if (commandPressed && key == LogicalKeyboardKey.keyK) {
+      showCommandPalette(context);
+      return true;
+    }
+    if (commandPressed && key == LogicalKeyboardKey.keyZ && !isTyping()) return undoLast(context);
+    if (!plainKey(event) || event is KeyRepeatEvent) return false;
+    if (key == LogicalKeyboardKey.keyN) {
+      showEntryDialog(context);
+      return true;
+    }
+    if (key == LogicalKeyboardKey.keyS) {
+      toggleTimer();
+      return true;
+    }
+    if (event.character == '?') {
+      showShortcutsHelp(context);
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final session = context.watch<SessionController>();
+    if (session.waitingForFirstSync || session.workspace == null) return _build(context);
+    return AppShortcuts(onKey: _onKey, child: _build(context));
+  }
+
+  Widget _build(BuildContext context) {
     final l = context.l10n;
     final session = context.watch<SessionController>();
     if (session.waitingForFirstSync) {
@@ -135,10 +182,12 @@ class _AppShellState extends State<AppShell> {
       ),
     );
 
-    final rights = TeamRights.of(context);
-    final destinations = _allDestinations
-        .where((d) => d.visibleIf?.call(rights) ?? (!d.managerOnly || session.isManager))
-        .toList();
+    final destinations = _visible(session, TeamRights.of(context));
+    final commands = IconButton(
+      tooltip: l.commandPaletteTooltip('${commandKeyLabel}K'),
+      icon: const Icon(Icons.search),
+      onPressed: () => showCommandPalette(context),
+    );
     if (wide) {
       final index = _indexIn(destinations);
       return Scaffold(
@@ -195,6 +244,7 @@ class _AppShellState extends State<AppShell> {
                     const SizedBox(width: 8),
                     Flexible(child: workspaceSwitcher),
                     const Spacer(),
+                    commands,
                     const SyncIndicator(),
                     Padding(
                       padding: const EdgeInsets.only(right: 12),
@@ -216,7 +266,7 @@ class _AppShellState extends State<AppShell> {
 
     final idx = _indexIn(destinations);
     return Scaffold(
-      appBar: AppBar(title: workspaceSwitcher, titleSpacing: 8, actions: const [SyncIndicator()]),
+      appBar: AppBar(title: workspaceSwitcher, titleSpacing: 8, actions: [commands, const SyncIndicator()]),
       body: content,
       bottomNavigationBar: NavigationBar(
         selectedIndex: idx < _mobileMain ? idx : _mobileMain,

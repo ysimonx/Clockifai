@@ -1,6 +1,6 @@
 """Suivi de Claude Code et de mon activité (plan 10). Jeton personnel `clk_…` ou JWT de l'app.
 
-  POST /api/activity/events  {events: [...]}        → 202 {accepted, duplicates, rejected}
+  POST /api/activity/events  {events: [...]}        → 202 {accepted, duplicates, rejected, ask_ticket}
   GET  /api/activity/today                          → mon temps, celui de Claude, la durée calendaire, sessions en cours
   GET  /api/activity/projects                       → projets et tâches actifs du workspace
   POST /api/activity/rules   {remote_key | path_prefix | time_entry_id, project_id, task_id?}
@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import UTC, datetime, time
 
@@ -22,6 +23,7 @@ from ..services.activity import (
     process_session,
     repo_name,
     store_events,
+    ticket_wanted,
     write_agent_entry,
 )
 from ..services.agents import active_agent
@@ -50,6 +52,11 @@ def events():
         else:
             rows.append(row)
     sessions = sorted({r["session_id"] for r in rows if r["actor"] == "agent" and r["session_id"]})
+    # Sessions qui démarrent (hors compaction) : le plugin fait demander le ticket du client si le projet est facturé
+    # par ticket (plans/19-tickets-clients.md). {session_id: nom du projet}.
+    starting = sorted({r["session_id"] for r in rows if r["kind"] == "session_start" and r["session_id"]
+                       and (json.loads(r["payload"]) if r["payload"] else {}).get("source") != "compact"})
+    ask_ticket = {}
     with connection() as conn:
         inserted = store_events(conn, g.workspace_id, g.user.id, g.token_id, rows)
         for session_id in sessions:
@@ -58,8 +65,15 @@ def events():
                     process_session(conn, g.workspace_id, g.user.id, session_id, now)
             except Exception:
                 log.exception("session %s : recalcul impossible", session_id)
+        for session_id in starting:
+            try:
+                with conn.transaction():
+                    if project := ticket_wanted(conn, g.workspace_id, g.user.id, session_id, now):
+                        ask_ticket[session_id] = project
+            except Exception:
+                log.exception("session %s : ticket demandé ou non, inconnu", session_id)
         conn.commit()
-    return jsonify(accepted=inserted, duplicates=len(rows) - inserted, rejected=rejected), 202
+    return jsonify(accepted=inserted, duplicates=len(rows) - inserted, rejected=rejected, ask_ticket=ask_ticket), 202
 
 
 def _union_seconds(spans: list[tuple[datetime, datetime]]) -> int:

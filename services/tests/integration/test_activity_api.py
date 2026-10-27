@@ -126,7 +126,7 @@ def test_events_are_validated_and_idempotent(team):
     status, res = api("POST", "/api/activity/events", team["token"], {"events": [ok, bad]})
     assert status == 202 and res["accepted"] == 1 and res["rejected"][0]["index"] == 1
     status, res = api("POST", "/api/activity/events", team["token"], {"events": [ok]})
-    assert res == {"accepted": 0, "duplicates": 1, "rejected": []}
+    assert res == {"accepted": 0, "duplicates": 1, "rejected": [], "ask_ticket": {}}
 
 
 def test_a_session_becomes_an_entry_closed_at_its_last_activity(team):
@@ -768,3 +768,111 @@ def test_hook_script_end_to_end(team, tmp_path):
                            "&select=name", SERVICE)
     assert repos == [{"name": "plugin-e2e"}]
     assert [(u["requests"], u["cost_micros"]) for u in _usage(entry["id"])] == [(1, 265_040)]
+
+
+def test_a_client_ticket_is_the_task_and_claude_s_subjects_its_subtasks(team):
+    """Plan 19, lot 2 : le ticket donné par Claude (set_current_task) devient la tâche, collante pour la session, et
+    chaque sujet une sous-tâche ; la clé de la branche vaut ticket dans un projet facturé par ticket ; un ticket qui a
+    déjà sa tâche dans un autre projet y emmène la session ; au démarrage, le serveur fait demander le ticket."""
+    owner_t, _ = team["people"]["owner"]
+    wid = team["wid"]
+
+    def project(name: str, remote_key: str) -> str:
+        pid = str(uuid.uuid4())
+        assert rest("POST", "projects", owner_t, {"id": pid, "workspace_id": wid, "name": name})[0] == 201
+        assert api("POST", "/api/activity/rules", team["token"], {"remote_key": remote_key, "project_id": pid})[0] == 201
+        return pid
+
+    site = project("Site Acme", "github.com/acme/site")
+    interne = project("Interne", "github.com/acme/interne")
+    appli = str(uuid.uuid4())
+    assert rest("POST", "projects", owner_t, {"id": appli, "workspace_id": wid, "name": "Appli Acme"})[0] == 201
+    paiement = str(uuid.uuid4())
+    assert rest("POST", "tasks", owner_t, {"id": paiement, "workspace_id": wid, "project_id": appli,
+                                            "name": "ENG-900 · Paiement", "ticket_key": "ENG-900"})[0] == 201
+
+    def at(minutes: float, kind: str, session: str, repo: str = "site", branch: str = "main", **payload) -> dict:
+        extra = {"payload": payload} if payload else {}
+        return _event(kind, _ago(minutes), session, remote_key=f"github.com/acme/{repo}", cwd=f"/Users/y/dev/{repo}",
+                      git_branch=branch, **extra)
+
+    def send(*events) -> dict:
+        status, body = api("POST", "/api/activity/events", team["token"], {"events": list(events)})
+        assert status == 202, body
+        return body
+
+    def entry_at(minutes: float) -> dict:
+        return next(e for e in _agent_entries(team["agent"]) if e["start_at"].startswith(iso(_ago(minutes))[:16]))
+
+    def task(tid: str) -> dict:
+        _, rows = rest("GET", f"tasks?id=eq.{tid}&select=name,project_id,parent_id,ticket_key,ticket_url", SERVICE)
+        return rows[0]
+
+    def ticket_tasks(key: str) -> list[dict]:
+        _, rows = rest("GET", f"tasks?workspace_id=eq.{wid}&ticket_key=eq.{key}&deleted_at=is.null&select=id,name",
+                       SERVICE)
+        return rows
+
+    # Ticket donné dans le premier message : sa tâche, et le sujet en sous-tâche ; le sujet décrit l'entrée.
+    url = "https://linear.app/acme/issue/ENG-501/formulaire"
+    s1 = str(uuid.uuid4())
+    send(at(480, "prompt", s1), at(479.9, "session_task", s1, task_name="Validation des champs", ticket=url,
+                                   ticket_title="Formulaire de commande"),
+         at(479, "agent_tool", s1), at(476, "agent_stop", s1))
+    [ticket] = ticket_tasks("ENG-501")
+    assert task(ticket["id"]) == {"name": "ENG-501 · Formulaire de commande", "project_id": site, "parent_id": None,
+                                  "ticket_key": "ENG-501", "ticket_url": url}
+    first = entry_at(480)
+    assert first["project_id"] == site and first["description"] == "Validation des champs"
+    assert task(first["task_id"])["parent_id"] == ticket["id"] and task(first["task_id"])["name"] == "Validation des champs"
+
+    # Nouveau sujet sans ticket : le ticket reste, nouvelle sous-tâche.
+    send(at(474, "prompt", s1), at(473.9, "session_task", s1, task_name="Tests du paiement"), at(472, "agent_stop", s1))
+    second = entry_at(474)
+    assert task(second["task_id"]) | {"project_id": None} == {"name": "Tests du paiement", "project_id": None,
+                                                             "parent_id": ticket["id"], "ticket_key": None,
+                                                             "ticket_url": None}
+
+    # Une autre session, la clé seule : la même tâche, pas de doublon.
+    s2 = str(uuid.uuid4())
+    send(at(468, "prompt", s2), at(467.9, "session_task", s2, task_name="Relecture", ticket="eng-501"),
+         at(466, "agent_stop", s2))
+    assert task(entry_at(468)["task_id"])["parent_id"] == ticket["id"] and len(ticket_tasks("ENG-501")) == 1
+
+    # Clé dans le nom de la branche, projet facturé par ticket : la tâche « ENG-502 », complétée par un titre ensuite.
+    assert rest("PATCH", f"projects?id=eq.{site}", owner_t, {"billed_by_ticket": True})[0] == 200
+    s3 = str(uuid.uuid4())
+    send(at(462, "prompt", s3, branch="yannick/eng-502-menu"),
+         at(461.9, "session_task", s3, branch="yannick/eng-502-menu", task_name="Menu mobile"),
+         at(460, "agent_stop", s3, branch="yannick/eng-502-menu"))
+    [menu] = ticket_tasks("ENG-502")
+    assert menu["name"] == "ENG-502" and task(entry_at(462)["task_id"])["parent_id"] == menu["id"]
+    send(at(459.9, "session_task", s3, branch="yannick/eng-502-menu", task_name="Menu mobile", ticket="ENG-502",
+            ticket_title="Menu sur mobile"), at(459, "agent_stop", s3, branch="yannick/eng-502-menu"))
+    assert task(menu["id"])["name"] == "ENG-502 · Menu sur mobile", "un titre complète le nom posé par le serveur"
+
+    # Projet non facturé par ticket : « plan-77-lot-1 » n'est pas un ticket.
+    s4 = str(uuid.uuid4())
+    send(at(456, "prompt", s4, repo="interne", branch="plan-77-lot-1"),
+         at(455.9, "session_task", s4, repo="interne", branch="plan-77-lot-1", task_name="Plan 77"),
+         at(454, "agent_stop", s4, repo="interne", branch="plan-77-lot-1"))
+    assert not ticket_tasks("PLAN-77") and task(entry_at(456)["task_id"]) | {"project_id": None} == {
+        "name": "Plan 77", "project_id": None, "parent_id": None, "ticket_key": None, "ticket_url": None}
+    assert entry_at(456)["project_id"] == interne
+
+    # Ticket qui a déjà sa tâche dans un autre projet : la session y va.
+    s5 = str(uuid.uuid4())
+    send(at(450, "prompt", s5), at(449.9, "session_task", s5, task_name="Acompte", ticket="ENG-900"),
+         at(448, "agent_stop", s5))
+    moved = entry_at(450)
+    assert moved["project_id"] == appli and task(moved["task_id"])["parent_id"] == paiement
+
+    # Démarrage d'une session : le ticket est demandé dans un projet facturé par ticket, sans clé dans la branche,
+    # et pas pour une session qui en a déjà un.
+    s6 = str(uuid.uuid4())
+    assert send(at(1, "session_start", s6, source="startup"))["ask_ticket"] == {s6: "Site Acme"}
+    assert send(at(1, "session_start", str(uuid.uuid4()), branch="yannick/eng-503-x", source="startup"))[
+        "ask_ticket"] == {}
+    assert send(at(1, "session_start", str(uuid.uuid4()), repo="interne", source="startup"))["ask_ticket"] == {}
+    assert send(at(1, "session_start", s1, source="resume"))["ask_ticket"] == {}
+    assert send(at(1, "session_start", str(uuid.uuid4()), source="compact"))["ask_ticket"] == {}

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Serveur MCP local du plugin Clockifai (stdio) : l'outil `set_current_task`, par lequel Claude nomme l'objectif en
-cours et son étape (plans/10-suivi-claude-code.md, D18 ; plans/16-sous-taches.md : l'étape devient une sous-tâche).
+cours et son étape (plans/10-suivi-claude-code.md, D18 ; plans/16-sous-taches.md : l'étape devient une sous-tâche), et
+le ticket du client s'il y en a un (plans/19-tickets-clients.md : le ticket devient la tâche, l'objectif sa
+sous-tâche).
 
 N'appelle jamais le réseau et ne lit aucun réglage : il renvoie le nom reçu. Le hook (PostToolUse) le relaie à
 Clockifai avec le jeton et l'identifiant de session, que lui seul connaît : un serveur MCP ne reçoit pas la session.
@@ -13,6 +15,7 @@ import json
 import sys
 
 NAME_MAX = 80  # comme le serveur (TASK_NAME_MAX)
+TICKET_MAX = 500  # URL d'un ticket (tasks.ticket_url)
 TOOL = "set_current_task"
 
 INSTRUCTIONS = (
@@ -23,8 +26,11 @@ INSTRUCTIONS = (
     "numéro et son titre, par exemple « Plan 14 · Coller aux maquettes ») ; `step`, l'étape en cours de cet "
     "objectif. À chaque nouvelle étape, rappelle l'outil avec le même `name` et la nouvelle `step`. Ne change de "
     "`name` que si l'utilisateur passe à un tout autre objectif, et reprends exactement le même `name` pour un "
-    "objectif déjà nommé. Un nom plus précis donné juste après renomme. Pas de nom de personne ni de donnée "
-    "confidentielle. Inutile de le signaler à l'utilisateur."
+    "objectif déjà nommé. Un nom plus précis donné juste après renomme. Si l'utilisateur donne le ticket d'un client "
+    "(adresse Jira, Linear ou GitHub, ou clé comme ENG-123), passe-le dans `ticket` dès le premier appel, avec "
+    "`ticket_title`, un titre court tiré de son message ou du ticket si tu peux le lire : le ticket devient la tâche "
+    "et `name` sa sous-tâche, pour toute la session ; inutile de le répéter ensuite, sauf autre ticket. Pas de nom "
+    "de personne ni de donnée confidentielle. Inutile de le signaler à l'utilisateur."
 )
 
 TOOLS = [{
@@ -40,6 +46,10 @@ TOOLS = [{
             "name": {"type": "string", "description": "Objectif d'ensemble, stable (3 à 6 mots)", "maxLength": NAME_MAX},
             "step": {"type": "string", "description": "Étape en cours de cet objectif (3 à 6 mots), facultative",
                      "maxLength": NAME_MAX},
+            "ticket": {"type": "string", "description": "Ticket du client donné par l'utilisateur : son adresse "
+                       "(Jira, Linear, GitHub) ou sa clé (ENG-123), facultatif", "maxLength": TICKET_MAX},
+            "ticket_title": {"type": "string", "description": "Titre court du ticket (3 à 8 mots), facultatif",
+                             "maxLength": NAME_MAX},
         },
         "required": ["name"],
     },
@@ -73,7 +83,10 @@ def handle(msg: dict) -> dict | None:
         args = args if isinstance(args, dict) else {}
         name = " ".join(str(args.get("name") or "").split())[:NAME_MAX]
         step = " ".join(str(args.get("step") or "").split())[:NAME_MAX]
+        ticket = str(args.get("ticket") or "").strip()[:TICKET_MAX]
         noted = f"« {name} » › « {step} »" if step else f"« {name} »"
+        if ticket:
+            noted = f"{noted}, ticket {ticket}"
         result = text(f"Tâche {noted} notée : le temps de cette session y est rangé.") if name else text(
             "Nom de tâche vide : rien n'est changé.", error=True)
     else:

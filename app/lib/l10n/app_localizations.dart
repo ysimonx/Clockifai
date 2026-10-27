@@ -5171,6 +5171,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Titre (facultatif)'**
   String get ticketTitle;
+
+  /// No description provided for @billedByTicket.
+  ///
+  /// In fr, this message translates to:
+  /// **'Facturé par ticket'**
+  String get billedByTicket;
+
+  /// No description provided for @billedByTicketHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque tâche est le ticket d\'un client. Claude Code demande le ticket au début de chaque session dans les dépôts de ce projet, s\'il n\'est pas dans votre message ni dans le nom de la branche.'**
+  String get billedByTicketHelp;
 }
 
 class _AppLocalizationsDelegate

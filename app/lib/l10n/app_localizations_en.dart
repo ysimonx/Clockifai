@@ -3091,4 +3091,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ticketTitle => 'Title (optional)';
+
+  @override
+  String get billedByTicket => 'Billed by ticket';
+
+  @override
+  String get billedByTicketHelp =>
+      'Each task is a client\'s ticket. Claude Code asks for the ticket at the start of each session in this project\'s repositories, unless it is in your message or the branch name.';
 }

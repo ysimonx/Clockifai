@@ -3903,6 +3903,20 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
       'CHECK ("agent_billable" IN (0, 1))',
     ),
   );
+  static const VerificationMeta _billedByTicketMeta = const VerificationMeta(
+    'billedByTicket',
+  );
+  @override
+  late final GeneratedColumn<bool> billedByTicket = GeneratedColumn<bool>(
+    'billed_by_ticket',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("billed_by_ticket" IN (0, 1))',
+    ),
+  );
   static const VerificationMeta _siteLatMeta = const VerificationMeta(
     'siteLat',
   );
@@ -3985,6 +3999,7 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
     archived,
     note,
     agentBillable,
+    billedByTicket,
     siteLat,
     siteLng,
     siteRadius,
@@ -4101,6 +4116,15 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
         ),
       );
     }
+    if (data.containsKey('billed_by_ticket')) {
+      context.handle(
+        _billedByTicketMeta,
+        billedByTicket.isAcceptableOrUnknown(
+          data['billed_by_ticket']!,
+          _billedByTicketMeta,
+        ),
+      );
+    }
     if (data.containsKey('site_lat')) {
       context.handle(
         _siteLatMeta,
@@ -4198,6 +4222,10 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
         DriftSqlType.bool,
         data['${effectivePrefix}agent_billable'],
       ),
+      billedByTicket: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}billed_by_ticket'],
+      ),
       siteLat: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}site_lat'],
@@ -4248,6 +4276,9 @@ class Project extends DataClass implements Insertable<Project> {
   /// Temps des agents sur ce projet : null = comme le workspace, sinon facturable ou non (plan 10, D16).
   final bool? agentBillable;
 
+  /// Facturé par ticket : Claude Code demande le ticket du client à chaque session (plans/19-tickets-clients.md).
+  final bool? billedByTicket;
+
   /// Chantier : position et rayon en mètres, pour la présence détectée par le téléphone (plan 13, lot 13).
   final double? siteLat;
   final double? siteLng;
@@ -4269,6 +4300,7 @@ class Project extends DataClass implements Insertable<Project> {
     required this.archived,
     this.note,
     this.agentBillable,
+    this.billedByTicket,
     this.siteLat,
     this.siteLng,
     this.siteRadius,
@@ -4303,6 +4335,9 @@ class Project extends DataClass implements Insertable<Project> {
     }
     if (!nullToAbsent || agentBillable != null) {
       map['agent_billable'] = Variable<bool>(agentBillable);
+    }
+    if (!nullToAbsent || billedByTicket != null) {
+      map['billed_by_ticket'] = Variable<bool>(billedByTicket);
     }
     if (!nullToAbsent || siteLat != null) {
       map['site_lat'] = Variable<double>(siteLat);
@@ -4350,6 +4385,9 @@ class Project extends DataClass implements Insertable<Project> {
       agentBillable: agentBillable == null && nullToAbsent
           ? const Value.absent()
           : Value(agentBillable),
+      billedByTicket: billedByTicket == null && nullToAbsent
+          ? const Value.absent()
+          : Value(billedByTicket),
       siteLat: siteLat == null && nullToAbsent
           ? const Value.absent()
           : Value(siteLat),
@@ -4390,6 +4428,7 @@ class Project extends DataClass implements Insertable<Project> {
       archived: serializer.fromJson<bool>(json['archived']),
       note: serializer.fromJson<String?>(json['note']),
       agentBillable: serializer.fromJson<bool?>(json['agentBillable']),
+      billedByTicket: serializer.fromJson<bool?>(json['billedByTicket']),
       siteLat: serializer.fromJson<double?>(json['siteLat']),
       siteLng: serializer.fromJson<double?>(json['siteLng']),
       siteRadius: serializer.fromJson<int?>(json['siteRadius']),
@@ -4415,6 +4454,7 @@ class Project extends DataClass implements Insertable<Project> {
       'archived': serializer.toJson<bool>(archived),
       'note': serializer.toJson<String?>(note),
       'agentBillable': serializer.toJson<bool?>(agentBillable),
+      'billedByTicket': serializer.toJson<bool?>(billedByTicket),
       'siteLat': serializer.toJson<double?>(siteLat),
       'siteLng': serializer.toJson<double?>(siteLng),
       'siteRadius': serializer.toJson<int?>(siteRadius),
@@ -4438,6 +4478,7 @@ class Project extends DataClass implements Insertable<Project> {
     bool? archived,
     Value<String?> note = const Value.absent(),
     Value<bool?> agentBillable = const Value.absent(),
+    Value<bool?> billedByTicket = const Value.absent(),
     Value<double?> siteLat = const Value.absent(),
     Value<double?> siteLng = const Value.absent(),
     Value<int?> siteRadius = const Value.absent(),
@@ -4464,6 +4505,9 @@ class Project extends DataClass implements Insertable<Project> {
     agentBillable: agentBillable.present
         ? agentBillable.value
         : this.agentBillable,
+    billedByTicket: billedByTicket.present
+        ? billedByTicket.value
+        : this.billedByTicket,
     siteLat: siteLat.present ? siteLat.value : this.siteLat,
     siteLng: siteLng.present ? siteLng.value : this.siteLng,
     siteRadius: siteRadius.present ? siteRadius.value : this.siteRadius,
@@ -4498,6 +4542,9 @@ class Project extends DataClass implements Insertable<Project> {
       agentBillable: data.agentBillable.present
           ? data.agentBillable.value
           : this.agentBillable,
+      billedByTicket: data.billedByTicket.present
+          ? data.billedByTicket.value
+          : this.billedByTicket,
       siteLat: data.siteLat.present ? data.siteLat.value : this.siteLat,
       siteLng: data.siteLng.present ? data.siteLng.value : this.siteLng,
       siteRadius: data.siteRadius.present
@@ -4525,6 +4572,7 @@ class Project extends DataClass implements Insertable<Project> {
           ..write('archived: $archived, ')
           ..write('note: $note, ')
           ..write('agentBillable: $agentBillable, ')
+          ..write('billedByTicket: $billedByTicket, ')
           ..write('siteLat: $siteLat, ')
           ..write('siteLng: $siteLng, ')
           ..write('siteRadius: $siteRadius, ')
@@ -4550,6 +4598,7 @@ class Project extends DataClass implements Insertable<Project> {
     archived,
     note,
     agentBillable,
+    billedByTicket,
     siteLat,
     siteLng,
     siteRadius,
@@ -4574,6 +4623,7 @@ class Project extends DataClass implements Insertable<Project> {
           other.archived == this.archived &&
           other.note == this.note &&
           other.agentBillable == this.agentBillable &&
+          other.billedByTicket == this.billedByTicket &&
           other.siteLat == this.siteLat &&
           other.siteLng == this.siteLng &&
           other.siteRadius == this.siteRadius &&
@@ -4596,6 +4646,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
   final Value<bool> archived;
   final Value<String?> note;
   final Value<bool?> agentBillable;
+  final Value<bool?> billedByTicket;
   final Value<double?> siteLat;
   final Value<double?> siteLng;
   final Value<int?> siteRadius;
@@ -4617,6 +4668,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     this.archived = const Value.absent(),
     this.note = const Value.absent(),
     this.agentBillable = const Value.absent(),
+    this.billedByTicket = const Value.absent(),
     this.siteLat = const Value.absent(),
     this.siteLng = const Value.absent(),
     this.siteRadius = const Value.absent(),
@@ -4639,6 +4691,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     this.archived = const Value.absent(),
     this.note = const Value.absent(),
     this.agentBillable = const Value.absent(),
+    this.billedByTicket = const Value.absent(),
     this.siteLat = const Value.absent(),
     this.siteLng = const Value.absent(),
     this.siteRadius = const Value.absent(),
@@ -4662,6 +4715,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     Expression<bool>? archived,
     Expression<String>? note,
     Expression<bool>? agentBillable,
+    Expression<bool>? billedByTicket,
     Expression<double>? siteLat,
     Expression<double>? siteLng,
     Expression<int>? siteRadius,
@@ -4684,6 +4738,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
       if (archived != null) 'archived': archived,
       if (note != null) 'note': note,
       if (agentBillable != null) 'agent_billable': agentBillable,
+      if (billedByTicket != null) 'billed_by_ticket': billedByTicket,
       if (siteLat != null) 'site_lat': siteLat,
       if (siteLng != null) 'site_lng': siteLng,
       if (siteRadius != null) 'site_radius': siteRadius,
@@ -4708,6 +4763,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     Value<bool>? archived,
     Value<String?>? note,
     Value<bool?>? agentBillable,
+    Value<bool?>? billedByTicket,
     Value<double?>? siteLat,
     Value<double?>? siteLng,
     Value<int?>? siteRadius,
@@ -4730,6 +4786,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
       archived: archived ?? this.archived,
       note: note ?? this.note,
       agentBillable: agentBillable ?? this.agentBillable,
+      billedByTicket: billedByTicket ?? this.billedByTicket,
       siteLat: siteLat ?? this.siteLat,
       siteLng: siteLng ?? this.siteLng,
       siteRadius: siteRadius ?? this.siteRadius,
@@ -4782,6 +4839,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     if (agentBillable.present) {
       map['agent_billable'] = Variable<bool>(agentBillable.value);
     }
+    if (billedByTicket.present) {
+      map['billed_by_ticket'] = Variable<bool>(billedByTicket.value);
+    }
     if (siteLat.present) {
       map['site_lat'] = Variable<double>(siteLat.value);
     }
@@ -4822,6 +4882,7 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
           ..write('archived: $archived, ')
           ..write('note: $note, ')
           ..write('agentBillable: $agentBillable, ')
+          ..write('billedByTicket: $billedByTicket, ')
           ..write('siteLat: $siteLat, ')
           ..write('siteLng: $siteLng, ')
           ..write('siteRadius: $siteRadius, ')
@@ -19154,6 +19215,7 @@ typedef $$ProjectsTableCreateCompanionBuilder = ProjectsCompanion Function({
   Value<bool> archived,
   Value<String?> note,
   Value<bool?> agentBillable,
+  Value<bool?> billedByTicket,
   Value<double?> siteLat,
   Value<double?> siteLng,
   Value<int?> siteRadius,
@@ -19176,6 +19238,7 @@ typedef $$ProjectsTableUpdateCompanionBuilder = ProjectsCompanion Function({
   Value<bool> archived,
   Value<String?> note,
   Value<bool?> agentBillable,
+  Value<bool?> billedByTicket,
   Value<double?> siteLat,
   Value<double?> siteLng,
   Value<int?> siteRadius,
@@ -19256,6 +19319,11 @@ class $$ProjectsTableFilterComposer
 
   ColumnFilters<bool> get agentBillable => $composableBuilder(
     column: $table.agentBillable,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get billedByTicket => $composableBuilder(
+    column: $table.billedByTicket,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19364,6 +19432,11 @@ class $$ProjectsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get billedByTicket => $composableBuilder(
+    column: $table.billedByTicket,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get siteLat => $composableBuilder(
     column: $table.siteLat,
     builder: (column) => ColumnOrderings(column),
@@ -19455,6 +19528,11 @@ class $$ProjectsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get billedByTicket => $composableBuilder(
+    column: $table.billedByTicket,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<double> get siteLat =>
       $composableBuilder(column: $table.siteLat, builder: (column) => column);
 
@@ -19517,6 +19595,7 @@ class $$ProjectsTableTableManager
                 Value<bool> archived = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool?> agentBillable = const Value.absent(),
+                Value<bool?> billedByTicket = const Value.absent(),
                 Value<double?> siteLat = const Value.absent(),
                 Value<double?> siteLng = const Value.absent(),
                 Value<int?> siteRadius = const Value.absent(),
@@ -19538,6 +19617,7 @@ class $$ProjectsTableTableManager
                 archived: archived,
                 note: note,
                 agentBillable: agentBillable,
+                billedByTicket: billedByTicket,
                 siteLat: siteLat,
                 siteLng: siteLng,
                 siteRadius: siteRadius,
@@ -19561,6 +19641,7 @@ class $$ProjectsTableTableManager
                 Value<bool> archived = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool?> agentBillable = const Value.absent(),
+                Value<bool?> billedByTicket = const Value.absent(),
                 Value<double?> siteLat = const Value.absent(),
                 Value<double?> siteLng = const Value.absent(),
                 Value<int?> siteRadius = const Value.absent(),
@@ -19582,6 +19663,7 @@ class $$ProjectsTableTableManager
                 archived: archived,
                 note: note,
                 agentBillable: agentBillable,
+                billedByTicket: billedByTicket,
                 siteLat: siteLat,
                 siteLng: siteLng,
                 siteRadius: siteRadius,

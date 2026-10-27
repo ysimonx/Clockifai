@@ -3117,4 +3117,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ticketTitle => 'Titre (facultatif)';
+
+  @override
+  String get billedByTicket => 'Facturé par ticket';
+
+  @override
+  String get billedByTicketHelp =>
+      'Chaque tâche est le ticket d\'un client. Claude Code demande le ticket au début de chaque session dans les dépôts de ce projet, s\'il n\'est pas dans votre message ni dans le nom de la branche.';
 }

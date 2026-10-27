@@ -553,6 +553,15 @@
             <span class="ui">Pas de tâche</span> (le projet seulement). Si Claude précise le nom juste après l’avoir
             donné, la tâche est renommée au lieu d’en créer une autre. Sans projet, le nom sert de description en
             attendant ; une tâche que vous choisissez, ou que vous renommez, n’est jamais remplacée.</li>
+          <li id="claude-tickets">Travail sur le <a href="manager.html#tickets">ticket d’un client</a> : donnez son
+            adresse Jira, Linear ou GitHub (ou sa clé, « ENG-123 ») dans votre premier message. Le ticket devient la
+            tâche (« ENG-123 · Formulaire de commande », le titre tiré de votre message ou du ticket), pour toute la
+            session, et chaque sujet de Claude une sous-tâche. Une branche dont le nom porte la clé
+            (« yannick/eng-123-formulaire ») suffit dans un projet <span class="ui">Facturé par ticket</span>, ou pour
+            un ticket qui a déjà sa tâche. Si le ticket a déjà sa tâche dans un autre projet, la session y va. Dans un
+            projet facturé par ticket, Claude vous demande le ticket au début de chaque session s’il ne le trouve ni dans
+            votre message ni dans le nom de la branche ; répondez « aucun » s’il n’y en a pas. Mettez à jour le plugin
+            (<code>claude plugin update clockifai@clockifai</code>).</li>
           <li>Vous pouvez aussi donner une tâche à la session : dans la fenêtre de l’entrée, une fois le
             projet choisi, <span class="ui">Nouvelle tâche</span> la crée et la sélectionne. Si la session reprend plus
             tard, même le lendemain, son temps continue dans cette tâche, tant que la branche git ne change pas.</li>

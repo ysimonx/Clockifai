@@ -2,12 +2,14 @@
 """Hook Claude Code → Clockifai (plans/10-suivi-claude-code.md, §6.1, D6, D7, D13, D17).
 
 Lit l'événement du hook sur stdin et n'en garde que la liste blanche (D6) : session, dépôt, branche, dossier,
-durée de l'outil. Jamais le prompt, les entrées ou sorties des outils, ni la transcription, sauf l'objectif et
-l'étape que Claude passe à l'outil `set_current_task` du plugin (D18, plan 16). La commande d'un outil Bash est lue
+durée de l'outil. Jamais le prompt, les entrées ou sorties des outils, ni la transcription, sauf l'objectif, l'étape
+et le ticket du client que Claude passe à l'outil `set_current_task` du plugin (D18, plans 16 et 19). La commande d'un outil Bash est lue
 sur le poste pour y repérer un `git commit` (D13), jamais envoyée. La transcription est lue sur le poste pour en tirer l'usage de
 l'API (D17) : seuls partent des totaux par modèle, effort et vitesse, jamais le texte des messages.
 
-N'écrit jamais sur stdout (Claude Code l'ajouterait au contexte) et sort toujours avec le code 0.
+N'écrit sur stdout (que Claude Code ajoute au contexte) qu'au démarrage d'une session d'un projet facturé par ticket,
+quand le serveur le demande : la consigne de demander le ticket (plans/19-tickets-clients.md), un texte fixe du plugin
+où seul le nom du projet vient du serveur. Sort toujours avec le code 0.
 Réglages : CLAUDE_PLUGIN_OPTION_URL et CLAUDE_PLUGIN_OPTION_TOKEN (userConfig du plugin). Sans adresse réglée,
 celle que l'instance a posée par défaut dans plugin.json : Claude Code ne transmet pas une valeur par défaut.
 Python 3.9 et bibliothèque standard seulement : c'est le python3 livré avec macOS.
@@ -34,7 +36,7 @@ try:
 except ImportError:  # Windows : pas de verrou, au mieux
     fcntl = None
 
-HTTP_TIMEOUT = 2                 # secondes par requête : un hook asynchrone n'a pas de délai imposé
+HTTP_TIMEOUT = 2                 # secondes par requête : SessionStart, synchrone, retarde la première réponse
 TOOL_EVERY = 60                  # un agent_tool par minute et par session (D7.3)
 LONG_TOOL_MS = 60_000            # un outil long part toujours : il peut prolonger l'entrée (D7.6)
 UNCLAIMED_AFTER = 600            # commits que nulle session ne revendique : envoyés sans session (D13)
@@ -53,6 +55,14 @@ USAGE_HOOKS = ("Stop", "SubagentStop", "SessionEnd")
 # Claude Code le nomme mcp__plugin_<plugin>_<serveur>__set_current_task.
 TASK_TOOL = re.compile(r"^mcp__plugin_clockifai_[\w-]+__set_current_task$")
 TASK_NAME_MAX = 80
+TICKET_MAX = 500                 # URL d'un ticket client (plans/19-tickets-clients.md)
+PROJECT_NAME_MAX = 80
+ASK_TICKET = (
+    "Clockifai : ce dépôt est rattaché au projet « {project} », facturé par ticket. Si le premier message de "
+    "l'utilisateur ne donne pas le ticket du client (adresse Jira, Linear ou GitHub, ou clé comme ENG-123), "
+    "demande-le-lui en une phrase avant de commencer ; s'il n'y en a pas, continue sans. Passe le ticket à l'outil "
+    "set_current_task (`ticket`, et `ticket_title`, un titre court tiré de son message ou du ticket)."
+)
 
 KINDS = {"SessionStart": "session_start", "UserPromptSubmit": "prompt", "PostToolUse": "agent_tool",
          "Stop": "agent_stop", "SubagentStop": "agent_stop", "Notification": "agent_wait",
@@ -430,8 +440,14 @@ def collect(data: dict, now: float) -> list[dict]:
             tool_input = tool_input if isinstance(tool_input, dict) else {}
             name = " ".join(str(tool_input.get("name") or "").split())[:TASK_NAME_MAX]
             step = " ".join(str(tool_input.get("step") or "").split())[:TASK_NAME_MAX]
+            ticket = "".join(str(tool_input.get("ticket") or "").split())[:TICKET_MAX]
+            title = " ".join(str(tool_input.get("ticket_title") or "").split())[:TASK_NAME_MAX]
             if name:
                 payload = {"task_name": name, "step_name": step} if step else {"task_name": name}
+                if ticket:
+                    payload["ticket"] = ticket
+                    if title:
+                        payload["ticket_title"] = title
                 events.append(dict(base, id=str(uuid.uuid4()), kind="session_task", occurred_at=iso(now),
                                    payload=payload))
     else:
@@ -474,14 +490,21 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 _OPENER = urllib.request.build_opener(_NoRedirect)
 
 
-def post(url: str, token: str, events: list[dict]) -> bool | None:
-    """True : reçu. False : à réessayer (réseau, 5xx, 429, adresse erronée). None : refusé (400, 401, 403)."""
+def post(url: str, token: str, events: list[dict], answer: dict | None = None) -> bool | None:
+    """True : reçu. False : à réessayer (réseau, 5xx, 429, adresse erronée). None : refusé (400, 401, 403).
+    [answer] reçoit la réponse du serveur (JSON), si on la demande."""
     request = urllib.request.Request(
         url.rstrip("/") + "/api/activity/events", data=json.dumps({"events": events}).encode(), method="POST",
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json",
                  "User-Agent": "clockifai-claude-code"})
     try:
-        with _OPENER.open(request, timeout=HTTP_TIMEOUT):
+        with _OPENER.open(request, timeout=HTTP_TIMEOUT) as response:
+            if answer is not None:
+                try:
+                    body = json.loads(response.read(100_000))
+                    answer.update(body if isinstance(body, dict) else {})
+                except ValueError:
+                    pass
             return True
     except urllib.error.HTTPError as e:
         hint = " : vérifier l'adresse (https://…, sans /api)" if e.code < 400 or e.code in (404, 405) else ""
@@ -538,11 +561,15 @@ def take_spool(now: float) -> list[dict]:
     return events
 
 
-def deliver(url: str, token: str, events: list[dict], now: float) -> None:
+def deliver(url: str, token: str, events: list[dict], now: float, answer: dict | None = None) -> None:
+    """Envoie les événements, puis la file locale ; [answer] : la réponse du serveur au premier lot. Au démarrage
+    d'une session ([answer] demandé), la file attend le hook suivant : Claude attend ce hook-ci."""
     for i in range(0, len(events), BATCH):  # la première lecture d'une longue transcription peut dépasser un lot
-        if post(url, token, events[i:i + BATCH]) is False:
+        if post(url, token, events[i:i + BATCH], answer if i == 0 else None) is False:
             spool(events[i:])
             return
+    if answer is not None:
+        return
     pending = take_spool(now)
     for i in range(0, len(pending), BATCH):
         if post(url, token, pending[i:i + BATCH]) is False:
@@ -564,7 +591,18 @@ def main() -> None:
         log_error("réglage manquant : " + ", ".join(n for n, v in (("url", url), ("token", token)) if not v))
         return
     now = time.time()
-    deliver(url, token, collect(data, now), now)
+    starting = data.get("hook_event_name") == "SessionStart" and data.get("source") != "compact"
+    answer: dict | None = {} if starting else None
+    deliver(url, token, collect(data, now), now, answer)
+    asked = answer.get("ask_ticket") if answer else None
+    project = asked.get(data.get("session_id")) if isinstance(asked, dict) else None
+    if isinstance(project, str) and project.strip():
+        # Seule écriture sur stdout : la consigne fixe du plugin, avec le nom du projet (une ligne, bornée).
+        name = " ".join(project.split())[:PROJECT_NAME_MAX].replace("»", "")
+        context = {"hookSpecificOutput": {"hookEventName": "SessionStart",
+                                          "additionalContext": ASK_TICKET.format(project=name)}}
+        sys.stdout.buffer.write((json.dumps(context) + "\n").encode("ascii"))  # \u… : sûr quelle que soit la locale
+        sys.stdout.buffer.flush()
 
 
 if __name__ == "__main__":

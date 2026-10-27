@@ -93,6 +93,7 @@ const schema = Schema([
     Column.integer('archived'),
     Column.text('note'),
     Column.integer('agent_billable'),
+    Column.integer('billed_by_ticket'),
     Column.real('site_lat'),
     Column.real('site_lng'),
     Column.integer('site_radius'),

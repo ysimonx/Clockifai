@@ -1,3 +1,4 @@
+import 'package:clockifai/core/tickets.dart';
 import 'package:clockifai/data/drift/database.dart';
 import 'package:clockifai/data/repositories/catalog_repository.dart';
 import 'package:clockifai/data/repositories/modules_repository.dart';
@@ -157,6 +158,42 @@ void main() {
       ('cvad', 1.5, 14285), // sans tâche, et tâche supprimée
       ('cvad — Audit', 0.5, 14285),
       ('cvad — Export PDF', 0.5, 14285),
+    ]);
+  });
+
+  test('facture par tâche : une ligne par ticket du client, sous-tâches comprises, avec son adresse', () async {
+    final client = await catalog.createClient(ws, name: 'ACME');
+    final site = await catalog.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'Site', clientId: Value(client)));
+    const url = 'https://linear.app/acme/issue/ENG-123/formulaire';
+    final ticket = await catalog.createTask(ws, site, 'ENG-123 · Formulaire',
+        ticket: const TicketRef(key: 'ENG-123', url: url));
+    final validation = await catalog.createTask(ws, site, 'Validation', parentId: ticket);
+    final reunion = await catalog.createTask(ws, site, 'Réunion');
+    final etape = await catalog.createTask(ws, site, 'Compte rendu', parentId: reunion);
+    Future<void> add(int hour, String task) => entries.createManual(
+          workspaceId: ws,
+          userId: me,
+          draft: EntryDraft(projectId: site, taskId: task, hourlyRateCents: 10000, billable: true),
+          start: DateTime.utc(2026, 10, 23, hour),
+          end: DateTime.utc(2026, 10, 23, hour, 30),
+        );
+    await add(8, ticket);
+    await add(9, validation);
+    await add(10, reunion);
+    await add(11, etape);
+
+    final id = await modules.createInvoiceFromTime(
+      workspaceId: ws, userId: me, clientId: client,
+      from: DateTime.utc(2026, 10, 1), to: DateTime.utc(2026, 11, 1),
+      currency: 'EUR', taxPercent: 20, projectNames: {site: 'Site'}, byTask: true,
+      // Comme catalog.taskPaths : les sous-tâches en « Tâche › Sous-tâche ».
+      taskNames: {ticket: 'ENG-123 · Formulaire', validation: 'ENG-123 · Formulaire › Validation', reunion: 'Réunion',
+          etape: 'Réunion › Compte rendu'},
+    );
+    final items = await modules.watchItems(id!).first;
+    expect([for (final i in items) (i.description, i.quantity)], [
+      ('Site — ENG-123 · Formulaire\n$url', 1.0),
+      ('Site — Réunion', 1.0),
     ]);
   });
 

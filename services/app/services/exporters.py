@@ -11,13 +11,19 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-_HEADERS = ["Utilisateur", "Type", "Client", "Projet", "Tâche", "Sous-tâche", "Description", "Tags",
+_HEADERS = ["Utilisateur", "Type", "Client", "Projet", "Tâche", "Sous-tâche", "Ticket", "Description", "Tags",
             "Début", "Fin", "Durée (h)", "Facturable", "Montant", "Tokens IA", "Coût IA estimé (USD)"]
+_TICKET_COL = _HEADERS.index("Ticket") + 1
 
 
 def member_kind_label(row: dict) -> str:
     """Colonne « Type » : temps d'un agent Claude ou d'une personne (plans/10-suivi-claude-code.md)."""
     return "agent" if row.get("user_kind") == "agent" else "humain"
+
+
+def ticket_of(row: dict) -> str:
+    """Colonne « Ticket » : l'adresse du ticket du client de la tâche, sinon sa clé (plans/19-tickets-clients.md)."""
+    return row.get("ticket_url") or row.get("ticket_key") or ""
 
 
 def ai_cost(row: dict) -> float:
@@ -48,7 +54,7 @@ def build_xlsx(rows: list[dict], start: date, end: date, *, tz: tzinfo = UTC) ->
     for r in rows:
         ws.append([
             r["user_name"], member_kind_label(r), r["client_name"] or "", r["project_name"] or "", r["task_name"] or "",
-            r.get("subtask_name") or "", r["description"], r["tags"],
+            r.get("subtask_name") or "", ticket_of(r), r["description"], r["tags"],
             r["start_at"].astimezone(tz).replace(tzinfo=None) if r["start_at"] else None,
             r["end_at"].astimezone(tz).replace(tzinfo=None) if r["end_at"] else None,
             round((r["duration_seconds"] or 0) / 3600, 2),
@@ -57,10 +63,16 @@ def build_xlsx(rows: list[dict], start: date, end: date, *, tz: tzinfo = UTC) ->
             r.get("ai_tokens") or None,
             round(ai_cost(r), 4) if r.get("ai_cost_micros") is not None else None,
         ])
-    for row in ws.iter_rows(min_row=4, min_col=9, max_col=10):
+    start_col = _HEADERS.index("Début") + 1
+    for row in ws.iter_rows(min_row=4, min_col=start_col, max_col=start_col + 1):
         for cell in row:
             cell.number_format = "yyyy-mm-dd hh:mm"
-    for col, width in enumerate([22, 9, 18, 22, 18, 18, 40, 18, 17, 17, 10, 10, 12, 12, 14], start=1):
+    # Adresse du ticket cliquable.
+    for (cell,) in ws.iter_rows(min_row=4, min_col=_TICKET_COL, max_col=_TICKET_COL):
+        if isinstance(cell.value, str) and cell.value.startswith(("https://", "http://")):
+            cell.hyperlink = cell.value
+            cell.font = Font(color="1D4ED8", underline="single")
+    for col, width in enumerate([22, 9, 18, 22, 18, 18, 24, 40, 18, 17, 17, 10, 10, 12, 12, 14], start=1):
         ws.column_dimensions[get_column_letter(col)].width = width
     ws.freeze_panes = "A4"
 
@@ -126,14 +138,16 @@ _PDF_TEMPLATE = """
 
 <table>
   <thead><tr>
-    <th>Utilisateur</th><th>Type</th><th>Client</th><th>Projet</th><th>Tâche</th><th>Sous-tâche</th><th>Description</th><th>Tags</th>
+    <th>Utilisateur</th><th>Type</th><th>Client</th><th>Projet</th><th>Tâche</th><th>Sous-tâche</th><th>Ticket</th><th>Description</th><th>Tags</th>
     <th>Début</th><th>Fin</th><th class="num">Durée (h)</th><th>Fact.</th><th class="num">Montant</th>
   </tr></thead>
   <tbody>
   {% for r in rows %}
   <tr>
     <td>{{ r.user_name }}</td><td>{{ kind(r) }}</td><td>{{ r.client_name or '' }}</td><td>{{ r.project_name or '' }}</td><td>{{ r.task_name or '' }}</td>
-    <td>{{ r.subtask_name or '' }}</td><td>{{ r.description }}</td><td>{{ r.tags }}</td>
+    <td>{{ r.subtask_name or '' }}</td>
+    <td>{% if r.ticket_url %}<a href="{{ r.ticket_url }}">{{ r.ticket_key or 'lien' }}</a>{% else %}{{ r.ticket_key or '' }}{% endif %}</td>
+    <td>{{ r.description }}</td><td>{{ r.tags }}</td>
     <td>{{ r.start_at.astimezone(tz).strftime('%d/%m %H:%M') }}</td><td>{{ r.end_at.astimezone(tz).strftime('%d/%m %H:%M') if r.end_at else '' }}</td>
     <td class="num">{{ '%.2f' % ((r.duration_seconds or 0) / 3600) }}</td>
     <td>{{ 'oui' if r.billable else 'non' }}</td>

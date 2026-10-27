@@ -17,6 +17,7 @@ import '../../core/session.dart';
 import '../../core/team_rights.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/ticket_link.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/ai_usage.dart';
@@ -317,12 +318,12 @@ class _ReportsPageState extends State<ReportsPage> {
                     ListTile(
                       onTap: g.children.isEmpty ? null : () => setState(() => _openTasks.contains(g.key) ? _openTasks.remove(g.key) : _openTasks.add(g.key)),
                       leading: g.color == null ? null : ColorDot(g.color!, size: 12),
-                      title: g.aiTokens == 0
-                          ? Text(g.label)
-                          : Wrap(spacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                              Text(g.label),
-                              AiUsageText(tokens: g.aiTokens, costMicros: g.aiCostMicros),
-                            ]),
+                      // Groupé par tâche : le lien du ticket du client (plans/19-tickets-clients.md).
+                      title: Wrap(spacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                        Text(g.label),
+                        if (_groupBy == GroupBy.task && catalog.task(g.key)?.ticketUrl != null) TicketLink(task: catalog.task(g.key), size: 16),
+                        if (g.aiTokens != 0) AiUsageText(tokens: g.aiTokens, costMicros: g.aiCostMicros),
+                      ]),
                       subtitle: LinearProgressIndicator(
                         value: totals.total == 0 ? 0 : g.seconds / totals.total,
                         color: g.color == null ? null : colorFromHex(g.color!),

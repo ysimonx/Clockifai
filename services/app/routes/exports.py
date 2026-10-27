@@ -17,7 +17,7 @@ from flask import Blueprint, Response, abort, g, request
 
 from ..auth import MANAGER_ROLES, readable_user_ids, require_user, require_workspace
 from ..db import connection
-from ..services.exporters import ai_cost, build_pdf, build_xlsx, member_kind_label
+from ..services.exporters import ai_cost, build_pdf, build_xlsx, member_kind_label, ticket_of
 from ..services.profiles import user_tz
 from ..services.report_rows import detailed_rows
 
@@ -57,13 +57,14 @@ def export_report():
     if fmt == "csv":
         buf = io.StringIO()
         writer = csv.writer(buf, delimiter=";")
-        writer.writerow(["Utilisateur", "Email", "Type", "Client", "Projet", "Tâche", "Sous-tâche", "Description", "Tags",
+        writer.writerow(["Utilisateur", "Email", "Type", "Client", "Projet", "Tâche", "Sous-tâche", "Ticket",
+                         "Description", "Tags",
                          "Début", "Fin", "Durée (h)", "Facturable", "Taux horaire", "Tokens IA",
                          "Coût IA estimé (USD)"])
         for r in rows:
             writer.writerow([
                 r["user_name"], r["user_email"], member_kind_label(r), r["client_name"] or "", r["project_name"] or "",
-                r["task_name"] or "", r.get("subtask_name") or "", r["description"], r["tags"],
+                r["task_name"] or "", r.get("subtask_name") or "", ticket_of(r), r["description"], r["tags"],
                 _fmt_dt(r["start_at"], tz), _fmt_dt(r["end_at"], tz),
                 f"{(r['duration_seconds'] or 0) / 3600:.2f}".replace(".", ","),
                 "oui" if r["billable"] else "non",

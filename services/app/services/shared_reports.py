@@ -171,8 +171,9 @@ def _money(value: float, currency: str, lang: str) -> str:
 
 
 def summarize(rows: list[dict]) -> list[dict]:
-    """Projets (les plus longs d'abord), chacun avec ses tâches ; une sous-tâche compte dans sa tâche."""
-    projects: dict = defaultdict(lambda: {"seconds": 0, "amount": 0.0, "tasks": defaultdict(lambda: [0, 0.0])})
+    """Projets (les plus longs d'abord), chacun avec ses tâches ; une sous-tâche compte dans sa tâche. Une tâche de
+    ticket client garde l'adresse du ticket (plans/19-tickets-clients.md)."""
+    projects: dict = defaultdict(lambda: {"seconds": 0, "amount": 0.0, "tasks": defaultdict(lambda: [0, 0.0, None])})
     for r in rows:
         p = projects[(r["project_name"], r["client_name"])]
         seconds, amount = r["duration_seconds"] or 0, entry_amount(r)
@@ -181,9 +182,11 @@ def summarize(rows: list[dict]) -> list[dict]:
         t = p["tasks"][r["task_name"]]
         t[0] += seconds
         t[1] += amount
+        t[2] = t[2] or r.get("ticket_url")
     out = []
     for (name, client), p in sorted(projects.items(), key=lambda kv: -kv[1]["seconds"]):
-        tasks = [{"name": t, "seconds": v[0], "amount": v[1]} for t, v in sorted(p["tasks"].items(), key=lambda kv: -kv[1][0])]
+        tasks = [{"name": t, "seconds": v[0], "amount": v[1], "url": v[2]}
+                 for t, v in sorted(p["tasks"].items(), key=lambda kv: -kv[1][0])]
         if len(tasks) == 1 and tasks[0]["name"] is None:
             tasks = []  # projet sans tâches : rien à détailler
         out.append({"name": name, "client": client, "seconds": p["seconds"], "amount": p["amount"], "tasks": tasks})
@@ -349,7 +352,7 @@ _TEMPLATE = """<!doctype html>
     <tr class="project"><td>{{ p.name or t.no_project }}{% if p.client %} <span class="client">· {{ p.client }}</span>{% endif %}</td>
       <td class="num">{{ hm(p.seconds) }}</td>{% if amounts %}<td class="num">{{ money(p.amount) }}</td>{% endif %}</tr>
     {% for task in p.tasks %}
-    <tr class="task"><td>{{ task.name or t.no_task }}</td><td class="num">{{ hm(task.seconds) }}</td>
+    <tr class="task"><td>{% if task.url %}<a href="{{ task.url }}" rel="noopener noreferrer">{{ task.name }}</a>{% else %}{{ task.name or t.no_task }}{% endif %}</td><td class="num">{{ hm(task.seconds) }}</td>
       {% if amounts %}<td class="num">{{ money(task.amount) }}</td>{% endif %}</tr>
     {% endfor %}
     {% endfor %}

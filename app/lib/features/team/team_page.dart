@@ -458,7 +458,7 @@ class _AdminMenu extends StatelessWidget {
             CheckedPopupMenuItem(value: r, checked: member.role == r, child: Text(roleLabel(context, r))),
           const PopupMenuDivider(),
         ],
-        PopupMenuItem(value: 'rate', child: Text(l.editRates)),
+        PopupMenuItem(value: 'rate', child: Text(agent ? l.editRates : l.editRatesAndCapacity)),
         if (agent)
           PopupMenuItem(value: 'rename', child: Text(l.rename))
         else
@@ -475,16 +475,26 @@ class _AdminMenu extends StatelessWidget {
     final l = context.l10n;
     final hourly = TextEditingController(text: centsToText(member.hourlyRateCents));
     final cost = TextEditingController(text: centsToText(member.costRateCents));
+    // Capacité : les heures prévues d'un jour ouvré (Présence, Planning) ; sans objet pour un agent.
+    final capacity = TextEditingController(text: formatQuantity(member.capacityHoursPerDay));
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l.editRates),
+        title: Text(agent ? l.editRates : l.editRatesAndCapacity),
         content: SizedBox(
           width: 360,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             TextField(controller: hourly, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: InputDecoration(labelText: l.billableRate)),
             const SizedBox(height: 12),
             TextField(controller: cost, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: InputDecoration(labelText: l.costRate)),
+            if (!agent) ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: capacity,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(labelText: l.capacityPerDay, suffixText: 'h', helperText: l.capacityPerDayHelp, helperMaxLines: 2),
+              ),
+            ],
           ]),
         ),
         actions: [
@@ -495,9 +505,14 @@ class _AdminMenu extends StatelessWidget {
     );
     if (ok != true) return;
     final rate = textToCents(hourly.text);
+    final hours = parseDecimal(capacity.text);
     await workspaceRepo.updateMember(
       member.id,
-      WorkspaceMembersCompanion(hourlyRateCents: Value(rate), costRateCents: Value(textToCents(cost.text))),
+      WorkspaceMembersCompanion(
+        hourlyRateCents: Value(rate),
+        costRateCents: Value(textToCents(cost.text)),
+        capacityHoursPerDay: hours != null && hours >= 0 && hours <= 24 && !agent ? Value(hours) : const Value.absent(),
+      ),
     );
     if (rate == member.hourlyRateCents || !context.mounted) return;
     // Le taux du membre ne vaut que sur les projets sans taux.

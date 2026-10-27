@@ -420,6 +420,50 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get attendance => 'Attendance';
+
+  @override
+  String get attendanceHelp =>
+      'All of each person\'s time, whatever the project or client. Expected: the daily capacity on working days, minus holidays and approved time off.';
+
+  @override
+  String get attendanceArrival => 'Arrival';
+
+  @override
+  String get attendanceDeparture => 'Departure';
+
+  @override
+  String get attendanceBreaks => 'Breaks';
+
+  @override
+  String get attendanceWorked => 'Worked';
+
+  @override
+  String get attendanceExpected => 'Expected';
+
+  @override
+  String get attendanceDifference => 'Difference';
+
+  @override
+  String attendanceOvertime(String time) {
+    return 'Overtime: $time';
+  }
+
+  @override
+  String attendanceMissing(String time) {
+    return 'Short: $time';
+  }
+
+  @override
+  String get attendanceHoliday => 'Holiday';
+
+  @override
+  String get attendanceTimeOff => 'Time off';
+
+  @override
+  String get exportAttendanceCsv => 'Attendance (CSV)';
+
+  @override
   String get approvals => 'Approvals';
 
   @override
@@ -943,6 +987,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get qAiCost => 'AI usage at cost';
+
+  @override
+  String get qOvertime => 'Overtime this month';
 
   @override
   String get qCompare => 'Compare with the previous period';
@@ -1537,6 +1584,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editRates => 'Edit rates';
+
+  @override
+  String get editRatesAndCapacity => 'Rates and capacity';
+
+  @override
+  String get capacityPerDay => 'Capacity per working day';
+
+  @override
+  String get capacityPerDayHelp =>
+      'Hours expected Monday to Friday: Attendance (overtime) and Schedule.';
 
   @override
   String editSimilarEntries(int count) {

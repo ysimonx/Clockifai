@@ -717,6 +717,58 @@ class AppLocalizationsFr extends AppLocalizations {
   String get undo => 'Annuler';
 
   @override
+  String get reportQuestions => 'Questions :';
+
+  @override
+  String get qMyWeek => 'Mon temps cette semaine';
+
+  @override
+  String get qTeamWeek => 'Le temps de l\'équipe cette semaine';
+
+  @override
+  String get qClientsMonth => 'Par client, ce mois-ci';
+
+  @override
+  String get qWhoWhat => 'Qui a fait quoi cette semaine';
+
+  @override
+  String get qReadyToBill => 'Prêt à facturer';
+
+  @override
+  String get qAiCost => 'Usage IA au coût';
+
+  @override
+  String get qCompare => 'Comparer à la période précédente';
+
+  @override
+  String qDelta(String delta) {
+    return '$delta vs période précédente';
+  }
+
+  @override
+  String qBefore(String duration) {
+    return 'avant : $duration';
+  }
+
+  @override
+  String get readyToBillTitle => 'À facturer';
+
+  @override
+  String get readyToBillHelp =>
+      'Temps facturable pas encore facturé, par client, sur les douze derniers mois (arrondi du workspace appliqué).';
+
+  @override
+  String get readyToBillNone => 'Tout est facturé.';
+
+  @override
+  String readyToBillSince(String day) {
+    return 'depuis $day';
+  }
+
+  @override
+  String get invoiceNow => 'Facturer';
+
+  @override
   String get assistantTitle => 'Demander à Clockifai';
 
   @override

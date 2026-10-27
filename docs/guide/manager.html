@@ -133,6 +133,9 @@
           utilisateur, tag, jour ou description. Les bases sont décrites dans la page
           <a href="membre.html#rapports">Membre</a>.</p>
         <ul>
+          <li>Questions d’un geste en plus pour vous : <span class="ui">Le temps de l’équipe cette semaine</span>,
+            <span class="ui">Qui a fait quoi cette semaine</span>, et <span class="ui">Prêt à facturer</span> (voir
+            <a href="#factures">Facturer</a>).</li>
           <li><span class="ui">Exporter</span> en Excel (.xlsx) pour la paie : une ligne par entrée, avec la personne, le
             client, le projet, la tâche, les horaires et la durée. Existe aussi en CSV et en PDF.</li>
           <li>Si l’entreprise a défini un <span class="ui">Arrondi des durées</span>, l’option « Arrondi … min »
@@ -187,7 +190,11 @@
 
       <section aria-labelledby="factures">
         <h2 id="factures">Facturer</h2>
-        <p>L’écran <span class="ui">Factures</span> transforme le temps facturable en factures.</p>
+        <p>L’écran <span class="ui">Factures</span> transforme le temps facturable en factures. Plus direct : dans les
+          <span class="ui">Rapports</span>, la question <span class="ui">Prêt à facturer</span> affiche
+          <span class="ui">À facturer</span>, le temps facturable pas encore facturé par client sur les douze derniers
+          mois, avec son montant ; <span class="ui">Facturer</span> crée la facture du client (détaillée par tâche, TVA
+          par défaut) et l’ouvre.</p>
         <ol class="steps">
           <li><span class="ui">Nouvelle facture</span> : choisissez le client, la période et la
             <span class="ui">TVA</span>, puis <span class="ui">Générer</span>. Les lignes sont créées à partir du temps

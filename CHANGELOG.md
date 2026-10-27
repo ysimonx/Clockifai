@@ -47,6 +47,9 @@ la date d'arrivée de chaque évolution.
 - **Demander à Clockifai** (⌘J) : questions en clair sur le temps passé, réponses de Claude à partir de vos totaux
   (jamais vos descriptions), corrections proposées en aperçu puis appliquées d'un clic. Facultatif : s'active avec
   une clé d'API Anthropic dans `deploy/.env` (27 octobre 2026).
+- Rapports : **questions toutes faites** (le temps de la semaine, par client ce mois-ci, qui a fait quoi, usage IA
+  au coût), **comparaison** avec la période précédente, et **À facturer** : le temps non facturé par client, facturé
+  d'un clic (27 octobre 2026).
 
 ### Modifié
 

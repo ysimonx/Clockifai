@@ -387,6 +387,42 @@
     }
   },
   "undo": "Undo",
+  "reportQuestions": "Questions:",
+  "qMyWeek": "My time this week",
+  "qTeamWeek": "The team's time this week",
+  "qClientsMonth": "By client, this month",
+  "qWhoWhat": "Who did what this week",
+  "qReadyToBill": "Ready to bill",
+  "qAiCost": "AI usage at cost",
+  "qCompare": "Compare with the previous period",
+  "qDelta": "{delta} vs previous period",
+  "@qDelta": {
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "qBefore": "before: {duration}",
+  "@qBefore": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "readyToBillTitle": "To bill",
+  "readyToBillHelp": "Billable time not yet invoiced, by client, over the last twelve months (workspace rounding applied).",
+  "readyToBillNone": "Everything is invoiced.",
+  "readyToBillSince": "since {day}",
+  "@readyToBillSince": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "invoiceNow": "Invoice",
   "assistantTitle": "Ask Clockifai",
   "assistantTooltip": "Ask Clockifai ({shortcut})",
   "@assistantTooltip": {

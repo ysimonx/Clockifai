@@ -1255,6 +1255,96 @@ abstract class AppLocalizations {
   /// **'Annuler'**
   String get undo;
 
+  /// No description provided for @reportQuestions.
+  ///
+  /// In fr, this message translates to:
+  /// **'Questions :'**
+  String get reportQuestions;
+
+  /// No description provided for @qMyWeek.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mon temps cette semaine'**
+  String get qMyWeek;
+
+  /// No description provided for @qTeamWeek.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le temps de l\'équipe cette semaine'**
+  String get qTeamWeek;
+
+  /// No description provided for @qClientsMonth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par client, ce mois-ci'**
+  String get qClientsMonth;
+
+  /// No description provided for @qWhoWhat.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qui a fait quoi cette semaine'**
+  String get qWhoWhat;
+
+  /// No description provided for @qReadyToBill.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prêt à facturer'**
+  String get qReadyToBill;
+
+  /// No description provided for @qAiCost.
+  ///
+  /// In fr, this message translates to:
+  /// **'Usage IA au coût'**
+  String get qAiCost;
+
+  /// No description provided for @qCompare.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comparer à la période précédente'**
+  String get qCompare;
+
+  /// No description provided for @qDelta.
+  ///
+  /// In fr, this message translates to:
+  /// **'{delta} vs période précédente'**
+  String qDelta(String delta);
+
+  /// No description provided for @qBefore.
+  ///
+  /// In fr, this message translates to:
+  /// **'avant : {duration}'**
+  String qBefore(String duration);
+
+  /// No description provided for @readyToBillTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'À facturer'**
+  String get readyToBillTitle;
+
+  /// No description provided for @readyToBillHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Temps facturable pas encore facturé, par client, sur les douze derniers mois (arrondi du workspace appliqué).'**
+  String get readyToBillHelp;
+
+  /// No description provided for @readyToBillNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout est facturé.'**
+  String get readyToBillNone;
+
+  /// No description provided for @readyToBillSince.
+  ///
+  /// In fr, this message translates to:
+  /// **'depuis {day}'**
+  String readyToBillSince(String day);
+
+  /// No description provided for @invoiceNow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Facturer'**
+  String get invoiceNow;
+
   /// No description provided for @assistantTitle.
   ///
   /// In fr, this message translates to:

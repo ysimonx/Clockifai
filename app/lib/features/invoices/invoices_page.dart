@@ -155,9 +155,13 @@ class InvoicesPage extends StatelessWidget {
     );
     if (!context.mounted) return;
     if (id == null) return showSnack(context, l.nothingToInvoice);
-    await showDialog<void>(context: context, builder: (_) => _InvoiceDialog(invoiceId: id));
+    await showInvoice(context, id);
   }
 }
+
+/// Ouvre une facture (rapports : « Facturer » depuis « À facturer »).
+Future<void> showInvoice(BuildContext context, String invoiceId) =>
+    showDialog<void>(context: context, builder: (_) => _InvoiceDialog(invoiceId: invoiceId));
 
 class _InvoiceDialog extends StatelessWidget {
   const _InvoiceDialog({required this.invoiceId});

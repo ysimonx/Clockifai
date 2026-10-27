@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/l10n.dart';
 import '../../core/shortcuts.dart';
+import '../../core/theme.dart';
 
 /// Une touche, dessinée comme sur le clavier.
 class KeyCap extends StatelessWidget {
@@ -18,7 +19,7 @@ class KeyCap extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         color: theme.colorScheme.surfaceContainerHighest,
       ),
-      child: Text(label, style: theme.textTheme.labelMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
+      child: Text(label, style: theme.textTheme.labelMedium?.copyWith(fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()])),
     );
   }
 }

@@ -79,6 +79,32 @@
       <section aria-labelledby="premiers-pas">
         <h2 id="premiers-pas">Premiers pas</h2>
 
+        <figure class="video" id="video">
+          <video data-video="0-premiers-pas" src="videos/0-premiers-pas.mp4" controls preload="metadata" playsinline aria-describedby="video-texte"></video>
+          <p class="video-missing">La vidéo n’est pas encore publiée sur cette installation. Le guide ci-dessous reste
+            valable sans elle.</p>
+          <figcaption id="video-texte">Deux minutes pour tout le monde : Léo démarre son compteur, l’arrête et ajoute
+            des heures oubliées ; Hugo, sur son téléphone, reprend la journée d’hier d’un geste et démarre son
+            compteur avec le bouton <span class="ui">+</span>.</figcaption>
+          <ol class="chapters" aria-label="Chapitres de la vidéo">
+            <li><a class="scene" data-video="0-premiers-pas" data-scene="démarrer" href="videos/0-premiers-pas.mp4">Démarrer le compteur</a></li>
+            <li><a class="scene" data-video="0-premiers-pas" data-scene="arrêter" href="videos/0-premiers-pas.mp4">L’arrêter</a></li>
+            <li><a class="scene" data-video="0-premiers-pas" data-scene="ajouter du temps" href="videos/0-premiers-pas.mp4">Ajouter des heures après coup</a></li>
+            <li><a class="scene" data-video="0-premiers-pas" data-scene="téléphone" href="videos/0-premiers-pas.mp4">Sur téléphone</a></li>
+          </ol>
+        </figure>
+
+        <h3 id="compter">Compter son temps, en bref</h3>
+        <ul>
+          <li><strong>En direct</strong> : <span class="ui">Démarrer</span>, en haut à droite, puis ce que vous faites
+            et le projet. Le compteur devient une pastille ; son carré noir l’arrête.</li>
+          <li><strong>Après coup</strong> : <span class="ui">Ajouter du temps</span>, juste à côté : une description, un
+            projet, une durée.</li>
+          <li><strong>Sur téléphone</strong> : le gros bouton <span class="ui">+</span> en bas fait l’un ou l’autre, et
+            une journée vide propose <span class="ui">Reprendre la journée</span> de la veille.</li>
+        </ul>
+        <p>Le détail est dans la page <a href="membre.html#chronometre">Membre</a>.</p>
+
         <h3 id="ouvrir">Ouvrir Clockifai</h3>
         <p>Sur un ordinateur, ouvrez dans votre navigateur l’adresse de votre installation, celle que votre entreprise
           vous a communiquée (par exemple <code>https://temps.mon-entreprise.fr</code>). Il n’y a rien à installer.
@@ -179,11 +205,12 @@
 
       <section aria-labelledby="videos">
         <h2 id="videos">Les vidéos</h2>
-        <p>Six vidéos muettes, avec des bandeaux explicatifs. Les cinq premières sont tournées sur une entreprise
-          fictive, « Échafaudages du Nord », la sixième chez Alex, développeur indépendant qui travaille avec Claude
-          Code. Chaque page de rôle commence par la sienne ; les liens
-          <span class="ui">▶</span> du texte vous emmènent directement au bon passage.</p>
+        <p>Des vidéos avec des bandeaux explicatifs, tournées sur une entreprise fictive, « Échafaudages du Nord »,
+          et chez Alex, développeur indépendant qui travaille avec Claude Code. Chaque page de rôle commence par la
+          sienne ; les liens <span class="ui">▶</span> du texte vous emmènent directement au bon passage.</p>
         <ol>
+          <li><a href="#video">Premiers pas</a> : démarrer son compteur, ajouter des heures, sur ordinateur et
+            téléphone.</li>
           <li><a href="membre.html#video">Camille, membre</a> : saisir et suivre son propre temps.</li>
           <li><a href="chef-equipe.html#video">Karim, chef d’équipe</a> : pointer et valider pour son équipe.</li>
           <li><a href="manager.html#video">Julien, manager</a> : toute l’entreprise, sans les réglages.</li>

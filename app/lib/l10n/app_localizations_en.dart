@@ -1713,13 +1713,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Existing users are added right away. Otherwise an invitation link is created.';
 
   @override
-  String get inviteLinkMessage =>
-      'No email server is configured. Send this link to the invitee:';
-
-  @override
-  String get inviteLinkTitle => 'Invitation link';
-
-  @override
   String get inviteMember => 'Invite a member';
 
   @override
@@ -2733,4 +2726,104 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yourName => 'Your name';
+
+  @override
+  String get navWeek => 'Week';
+
+  @override
+  String get navPeople => 'People';
+
+  @override
+  String get navProjectsClients => 'Projects and clients';
+
+  @override
+  String get searchOrAct => 'Search or act';
+
+  @override
+  String get syncedWorksOffline => 'Synced · works offline';
+
+  @override
+  String get addTime => 'Add time';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get inviteByEmail => 'Send the invitation by email';
+
+  @override
+  String get inviteNoMail =>
+      'No mail server on this installation: you will copy the link.';
+
+  @override
+  String get inviteReady => 'Invitation ready';
+
+  @override
+  String inviteEmailedTo(String email) {
+    return 'An invitation email was sent to $email. You can also send them this link:';
+  }
+
+  @override
+  String inviteShareWith(String email) {
+    return 'Send this link to $email:';
+  }
+
+  @override
+  String get copyLink => 'Copy link';
+
+  @override
+  String get linkCopied => 'Link copied';
+
+  @override
+  String get journalToComplete => 'To complete';
+
+  @override
+  String get journalFill => 'Fill';
+
+  @override
+  String get journalNothingToday => 'Nothing logged today';
+
+  @override
+  String get journalNothingThatDay => 'Nothing logged that day';
+
+  @override
+  String likeDayQuestion(String label) {
+    return '$label?';
+  }
+
+  @override
+  String resumeDay(String duration) {
+    return 'Repeat that day · $duration';
+  }
+
+  @override
+  String get journalFromPlanning => 'From the schedule';
+
+  @override
+  String get journalSomethingElse => 'Something else';
+
+  @override
+  String get journalYourDay => 'Your day';
+
+  @override
+  String get change => 'Change';
+
+  @override
+  String get descriptionOptional => 'Description (optional)';
+
+  @override
+  String get minus15 => 'Remove 15 minutes';
+
+  @override
+  String get plus15 => 'Add 15 minutes';
+
+  @override
+  String quickAddSaved(String duration, String range) {
+    return 'Added: $duration · $range';
+  }
+
+  @override
+  String saveDuration(String duration) {
+    return 'Save · $duration';
+  }
 }

@@ -1134,8 +1134,6 @@
   "invitationSent": "Invitation envoyée.",
   "invite": "Inviter",
   "inviteHelp": "Si la personne a déjà un compte, elle est ajoutée immédiatement. Sinon, un lien d'invitation est créé.",
-  "inviteLinkMessage": "Aucun serveur d'email n'est configuré. Transmettez ce lien à la personne invitée :",
-  "inviteLinkTitle": "Lien d'invitation",
   "inviteMember": "Inviter un membre",
   "invoice": "Facture",
   "invoiceByTask": "Détailler par tâche",
@@ -1620,5 +1618,79 @@
   "workspaces": "Workspaces",
   "year": "an",
   "yesterday": "Hier",
-  "yourName": "Votre nom"
+  "yourName": "Votre nom",
+  "navWeek": "Semaine",
+  "navPeople": "Personnes",
+  "navProjectsClients": "Projets et clients",
+  "searchOrAct": "Rechercher ou agir",
+  "syncedWorksOffline": "Synchronisé · fonctionne hors ligne",
+  "addTime": "Ajouter du temps",
+  "add": "Ajouter",
+  "inviteByEmail": "Envoyer l'invitation par email",
+  "inviteNoMail": "Pas de serveur de mail sur cette installation : vous copierez le lien.",
+  "inviteReady": "Invitation prête",
+  "inviteEmailedTo": "Un email d'invitation est parti à {email}. Vous pouvez aussi lui transmettre ce lien :",
+  "@inviteEmailedTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteShareWith": "Transmettez ce lien à {email} :",
+  "@inviteShareWith": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "copyLink": "Copier le lien",
+  "linkCopied": "Lien copié",
+  "journalToComplete": "À compléter",
+  "journalFill": "Remplir",
+  "journalNothingToday": "Rien de saisi aujourd'hui",
+  "journalNothingThatDay": "Rien de saisi ce jour-là",
+  "likeDayQuestion": "{label} ?",
+  "@likeDayQuestion": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "resumeDay": "Reprendre la journée · {duration}",
+  "@resumeDay": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "journalFromPlanning": "Selon le planning",
+  "journalSomethingElse": "Autre chose",
+  "journalYourDay": "Votre journée",
+  "change": "Changer",
+  "descriptionOptional": "Description (facultative)",
+  "minus15": "Retirer 15 minutes",
+  "plus15": "Ajouter 15 minutes",
+  "quickAddSaved": "Ajouté : {duration} · {range}",
+  "@quickAddSaved": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "saveDuration": "Enregistrer · {duration}",
+  "@saveDuration": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  }
 }

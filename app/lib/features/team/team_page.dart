@@ -145,69 +145,96 @@ class _TeamPageState extends State<TeamPage> {
     );
   }
 
+  /// Inviter : par email si l'installation a un serveur de mail (case à décocher), et toujours le lien à copier
+  /// pour le transmettre soi-même (plans/14-coller-aux-maquettes.md, lot 6).
   Future<void> _invite(BuildContext context) async {
     final l = context.l10n;
     final session = context.read<SessionController>();
     final email = TextEditingController();
     var role = 'member';
+    var mailReady = false;
+    var sendEmail = true;
+    final options = ServicesApi.get('/api/invitations/options', {'workspace_id': session.workspaceId!}).then((res) {
+      mailReady = res['email'] == true;
+    }).catchError((_) {});
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          title: Text(l.inviteMember),
-          content: SizedBox(
-            width: 400,
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: email, autofocus: true, keyboardType: TextInputType.emailAddress, decoration: InputDecoration(labelText: l.email)),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: role,
-                decoration: InputDecoration(labelText: l.role),
-                items: [for (final r in const ['member', 'manager', 'admin']) DropdownMenuItem(value: r, child: Text(roleLabel(context, r)))],
-                onChanged: (v) => setState(() => role = v!),
-              ),
-              const SizedBox(height: 12),
-              Text(l.inviteHelp, style: Theme.of(ctx).textTheme.bodySmall),
-            ]),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.invite)),
-          ],
-        ),
+        builder: (ctx, setState) {
+          return AlertDialog(
+            title: Text(l.inviteMember),
+            content: SizedBox(
+              width: 420,
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                TextField(controller: email, autofocus: true, keyboardType: TextInputType.emailAddress, decoration: InputDecoration(labelText: l.email)),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: role,
+                  decoration: InputDecoration(labelText: l.role),
+                  items: [for (final r in const ['member', 'manager', 'admin']) DropdownMenuItem(value: r, child: Text(roleLabel(context, r)))],
+                  onChanged: (v) => setState(() => role = v!),
+                ),
+                const SizedBox(height: 8),
+                FutureBuilder<void>(
+                  future: options,
+                  builder: (ctx, snap) => CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    value: mailReady && sendEmail,
+                    onChanged: mailReady ? (v) => setState(() => sendEmail = v ?? true) : null,
+                    title: Text(l.inviteByEmail),
+                    subtitle: mailReady || snap.connectionState != ConnectionState.done ? null : Text(l.inviteNoMail),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(l.inviteHelp, style: Theme.of(ctx).textTheme.bodySmall),
+              ]),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
+              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.invite)),
+            ],
+          );
+        },
       ),
     );
-    if (ok != true || email.text.trim().isEmpty || !context.mounted) return;
+    final to = email.text.trim();
+    if (ok != true || to.isEmpty || !context.mounted) return;
     try {
       final res = await ServicesApi.post('/api/invitations', {
         'workspace_id': session.workspaceId,
-        'email': email.text.trim(),
+        'email': to,
         'role': role,
+        'send_email': mailReady && sendEmail,
       });
       if (!context.mounted) return;
-      final link = res['invite_link'] as String?;
-      if (link != null && res['emailed'] != true) {
-        await showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l.inviteLinkTitle),
-            content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(l.inviteLinkMessage),
+      final link = (res['invite_link'] ?? res['app_url']) as String?;
+      if (link == null) return showSnack(context, l.invitationSent);
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l.inviteReady),
+          content: SizedBox(
+            width: 420,
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(res['emailed'] == true ? l.inviteEmailedTo(to) : l.inviteShareWith(to)),
               const SizedBox(height: 12),
               SelectableText(link, style: Theme.of(ctx).textTheme.bodySmall),
             ]),
-            actions: [
-              TextButton(
-                onPressed: () => Clipboard.setData(ClipboardData(text: link)),
-                child: Text(l.copy),
-              ),
-              FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(l.close)),
-            ],
           ),
-        );
-      } else {
-        showSnack(context, l.invitationSent);
-      }
+          actions: [
+            OutlinedButton.icon(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: link));
+                if (ctx.mounted) showSnack(ctx, l.linkCopied);
+              },
+              icon: const Icon(Icons.copy, size: 18),
+              label: Text(l.copyLink),
+            ),
+            FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(l.close)),
+          ],
+        ),
+      );
     } on ServicesException catch (e) {
       if (context.mounted) showSnack(context, l.invitationFailed(e.message));
     } catch (e) {

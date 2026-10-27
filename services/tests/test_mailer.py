@@ -57,5 +57,11 @@ def test_expediteur_sans_nom(app):
 def test_sans_smtp_rien_n_est_envoye(app):
     app.config["SMTP_HOST"] = "supabase-mail"
     with app.app_context():
+        assert not mailer.mail_configured()
         assert not mailer.send_mail("camille@example.com", "Invitation", "Bonjour")
     assert FakeSMTP.sent == []
+
+
+def test_smtp_configure(app):
+    with app.app_context():
+        assert mailer.mail_configured()

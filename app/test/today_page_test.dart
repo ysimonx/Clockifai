@@ -163,7 +163,7 @@ void main() {
     expect(find.text('Traces'), findsOneWidget);
     await tester.tap(find.text('Point client site').first);
     await settle(tester);
-    expect(find.text('Agenda'), findsOneWidget);
+    expect(find.text('Agenda'), findsWidgets, reason: 'dans « À compléter » et le panneau du bloc');
     expect(find.textContaining('Dans votre agenda, de 15:00 à 16:00'), findsOneWidget);
     await close(tester);
   });
@@ -185,7 +185,7 @@ void main() {
 
   testWidgets('une proposition ignorée ne revient pas', (tester) async {
     await open(tester);
-    await tester.tap(find.text('Courriels'));
+    await tester.tap(find.text('Courriels').first);
     await settle(tester);
     expect(find.text('Proposé par Clockifai'), findsOneWidget);
     expect(find.textContaining('Habitude : 10 jours sur les 10 derniers jours travaillés, vers 08:30'), findsOneWidget);
@@ -253,7 +253,9 @@ void main() {
   testWidgets('journée vide : « Comme vendredi » recopie la dernière journée travaillée, Annuler la retire', (tester) async {
     await tester.runAsync(() => (db.delete(db.timeEntries)..where((t) => t.description.equals('Maquettes'))).go());
     await open(tester);
-    await tester.tap(find.text('Comme vendredi'));
+    expect(find.text('Comme vendredi ?'), findsOneWidget);
+    expect(find.text("Rien de saisi aujourd'hui"), findsOneWidget);
+    await tester.tap(find.text('Reprendre la journée · 8:00'));
     await settle(tester);
     Future<List<TimeEntry>> monday() async => (await tester.runAsync(() => (db.select(db.timeEntries)
           ..where((t) => t.deletedAt.isNull() & t.startAt.isBiggerOrEqualValue(at(26, 0).toUtc())))
@@ -262,7 +264,7 @@ void main() {
     expect({for (final e in copies) e.description: e.startAt.toLocal()},
         {'Courriels': at(26, 8, 30), 'Site, matin du 23': at(26, 9), 'Site, après-midi du 23': at(26, 13, 30)});
     expect(find.text('3 entrées dupliquées'), findsOneWidget);
-    expect(find.text('Comme vendredi'), findsNothing, reason: 'la journée n’est plus vide');
+    expect(find.text('Comme vendredi ?'), findsNothing, reason: 'la journée n’est plus vide');
 
     await tester.pump(const Duration(milliseconds: 500));
     await tester.tap(find.text('Annuler'));
@@ -273,7 +275,7 @@ void main() {
 
   testWidgets('« Comme hier » le lendemain d’une journée saisie ; rien sur une journée déjà commencée', (tester) async {
     await open(tester, body: TodayPage(clock: () => DateTime(2026, 10, 27, 8)));
-    expect(find.text('Comme hier'), findsOneWidget);
+    expect(find.text('Comme hier ?'), findsOneWidget);
     await close(tester);
     await open(tester);
     expect(find.textContaining(RegExp(r'^Comme (hier|vendredi|le )')), findsNothing, reason: 'lundi 26 a déjà « Maquettes »');
@@ -289,7 +291,7 @@ void main() {
     await open(tester);
     await tester.tap(find.text('Site, après-midi du 23').first);
     await settle(tester);
-    expect(find.text('Chantier'), findsOneWidget);
+    expect(find.text('Chantier'), findsWidgets, reason: 'dans « À compléter » et le panneau du bloc');
     expect(find.textContaining("Sur le chantier de 13:25 à 17:00, d'après ce téléphone"), findsOneWidget);
     await close(tester);
   });

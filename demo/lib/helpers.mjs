@@ -271,7 +271,25 @@ export function helpers(page, failures, clock = null) {
   };
   /** Les entrées de menu ont un libellé d'accessibilité supplémentaire (« Onglet 2 sur 13 ») : on compare le début. */
   const navRe = (label) => new RegExp(`^${esc(label)}(\\s|$)`);
-  const nav = async (label, pause = 1800) => clickFound(navRe(label), { which: 'first' }, pause);
+  // Pages regroupées dans une rubrique du menu (plans/14-coller-aux-maquettes.md) : la rubrique, puis son onglet.
+  const SECTIONS = {
+    'Suivi du temps': ['Semaine', 'Liste'],
+    'Feuille de temps': ['Semaine', 'Grille'],
+    Calendrier: ['Semaine', 'Calendrier'],
+    Planning: ['Équipe', 'Planning'],
+    Absences: ['Équipe', 'Absences'],
+    Approbations: ['Équipe', 'Approbations'],
+    "Pointage d'équipe": ['Équipe', "Pointage d'équipe"],
+    Projets: ['Projets et clients', 'Projets'],
+    Clients: ['Projets et clients', 'Clients'],
+    Tags: ['Projets et clients', 'Tags'],
+  };
+  const nav = async (label, pause = 1800) => {
+    const [section, tab] = SECTIONS[label] ?? [label];
+    if (!tab) return clickFound(navRe(section), { which: 'first' }, pause);
+    await clickFound(navRe(section), { which: 'first' }, 1200);
+    await clickFound(new RegExp(`^${esc(tab)}$`), { which: 'top' }, pause);
+  };
   /** Cases de la feuille de temps (champs étroits, étiquetés « – » ou sans étiquette) alignées sur la hauteur [y], de gauche à droite. */
   const inputsAt = (y) => page.evaluate((yy) => [...document.querySelectorAll('input')]
     .map((n) => n.getBoundingClientRect())

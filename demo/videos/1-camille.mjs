@@ -36,15 +36,14 @@ export async function run(browser, failures) {
 
     await h.scene('accueil', async () => {
       await h.nav('Suivi du temps');
-      await h.caption(C('Suivi du temps'), 'Ses heures, jour par jour', 'Chaque ligne : la description, le projet et la tâche, les horaires et la durée. Total par jour et par semaine.', ROLE, 5000);
+      await h.caption(C('Semaine'), 'Ses heures, jour par jour', '« Semaine », vue « Liste » : la description, le projet et la tâche, les horaires et la durée. Total par jour et par semaine.', ROLE, 5000);
       await h.hover(/saisi par Karim Haddad/).catch(() => {});
-      await h.caption(C('Suivi du temps'), '« saisi par Karim Haddad »', 'Jeudi, son chef d’équipe a pointé toute l’équipe. Les heures sont bien à Camille : elle peut les corriger si besoin.', ROLE, 5500);
+      await h.caption(C('Semaine'), '« saisi par Karim Haddad »', 'Jeudi, son chef d’équipe a pointé toute l’équipe. Les heures sont bien à Camille : elle peut les corriger si besoin.', ROLE, 5500);
     });
 
     await h.scene('saisie après coup', async () => {
-      await h.caption(C('Saisie après coup'), 'Déclarer des heures déjà faites', 'Menu « ⋯ » puis « Ajouter une entrée ».', ROLE, 2500);
-      await h.clickTop(/^Afficher le menu$/, 700);
-      await h.menuItem('Ajouter une entrée', 1200);
+      await h.caption(C('Saisie après coup'), 'Déclarer des heures déjà faites', '« Ajouter du temps », en haut à droite.', ROLE, 2500);
+      await h.click(/^Ajouter du temps$/, 1200);
       await h.typeInto('Description', 'Contrôle des ancrages');
       await h.click('Sans projet', 900);
       await h.typeInto('Rechercher un projet, une tâche, un client', 'unité');
@@ -62,20 +61,21 @@ export async function run(browser, failures) {
     });
 
     await h.scene('chronomètre et tâche à la volée', async () => {
-      await h.caption(C('Chronomètre'), 'Ou en direct, avec le chronomètre', 'Elle décrit ce qu’elle fait et choisit le projet.', ROLE, 2500);
+      await h.caption(C('Chronomètre'), 'Ou en direct, avec le chronomètre', '« Démarrer » : elle décrit ce qu’elle fait et choisit le projet.', ROLE, 2500);
+      await h.click(/^Démarrer$/, 1200);
       await h.typeInto('Sur quoi travaillez-vous ?', 'Rangement du dépôt');
       await h.click(/^Projet$/, 900);
       await h.typeInto('Rechercher un projet, une tâche, un client', 'Rangement dépôt');
       await h.caption(C('Chronomètre'), 'La tâche n’existe pas ? On la crée sur place', 'Il suffit de choisir le projet dans lequel la ranger.', ROLE, 3000);
       await h.pick(/^Interne/, 1200);
-      await h.click(/^DÉMARRER$/, 1500);
-      await h.caption(C('Chronomètre'), 'Le chronomètre tourne', 'Il continue si l’app est fermée, et Camille le retrouve sur son téléphone.', ROLE, 4000);
-      await h.click(/^ARRÊTER$/, 2000);
+      await h.clickLast(/^Démarrer$/, 1500);
+      await h.caption(C('Chronomètre'), 'Le chronomètre tourne', 'Une pastille en haut à droite. Il continue si l’app est fermée, et Camille le retrouve sur son téléphone.', ROLE, 4000);
+      await h.click(/^Arrêter le chronomètre$/, 2000);
     });
 
     await h.scene('feuille de temps', async () => {
       await h.nav('Feuille de temps');
-      await h.caption(C('Feuille de temps'), 'La semaine en une grille', 'Une ligne par projet, une colonne par jour : on tape les heures directement dans les cases.', ROLE, 4000);
+      await h.caption(C('Semaine'), 'La semaine en une grille', 'La feuille de temps : une ligne par projet, une colonne par jour ; on tape les heures directement dans les cases.', ROLE, 4000);
       await h.click(/^Ajouter une ligne$/, 900);
       await h.typeInto('Rechercher un projet, une tâche, un client', 'Arrêt');
       await h.pick(/^Arrêt de tranche 2026/, 1200);
@@ -128,13 +128,12 @@ export async function run(browser, failures) {
       await h.caption(C('Hors ligne'), 'Pas de réseau sur le chantier ?', 'On coupe le réseau du navigateur pour la démonstration…', ROLE, 2500);
       await offline(page, async () => {
         await h.wait(2500);
-        await h.clickTop(/^Afficher le menu$/, 700);
-        await h.menuItem('Ajouter une entrée', 1000);
+        await h.click(/^Ajouter du temps$/, 1000);
         await h.typeInto('Description', 'Montage niveau 5 (sans réseau)');
         await h.typeInto('Durée', '3:00', 150);
         await h.click(/^Enregistrer$/, 1500);
         await h.click(/^(Synchronisé|Synchronisation…|Hors ligne)( · .*)?$/, 1500);
-        await h.caption(C('Hors ligne'), 'La saisie attend dans le téléphone', 'Un chiffre sur l’icône compte les « Modifications en attente d’envoi » : rien n’est perdu.', ROLE, 4000);
+        await h.caption(C('Hors ligne'), 'La saisie attend sur l’appareil', '« Hors ligne · 1 modification en attente », en bas du menu : rien n’est perdu.', ROLE, 4000);
         await h.clickLast(/^Fermer$/, 500);
       });
       await h.caption(C('Hors ligne'), 'Le réseau revient…', 'L’envoi se fait tout seul, sans rien faire.', ROLE, 9000);
@@ -150,8 +149,8 @@ export async function run(browser, failures) {
     await h.wait(3500);
     await h.scene('mobile', async () => {
       await h.login('camille@demo.clockifai.fr');
-      await h.caption('Camille · Sur téléphone', 'La même app dans sa poche', 'iPhone ou Android : menu en bas, mêmes données. Le micro de la saisie express permet de dicter ses heures.', ROLE, 5000, 92);
-      await h.click(h.navRe('Feuille de temps'), 2000);
+      await h.caption('Camille · Sur téléphone', 'La même app dans sa poche', 'iPhone ou Android, mêmes données. En bas : Aujourd’hui, Semaine, « + » pour ajouter du temps ou démarrer le compteur, Équipe.', ROLE, 5000, 92);
+      await h.click(h.navRe('Semaine'), 2000);
       await h.caption('Camille · Sur téléphone', 'Sa feuille de temps', 'On fait glisser la grille pour voir toute la semaine.', ROLE, 4000, 92);
     });
   });

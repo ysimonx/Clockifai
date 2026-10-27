@@ -34,7 +34,8 @@ class WeekViews extends StatelessWidget {
       selected: {current},
       onSelectionChanged: (v) => context.go(switch (v.single) {
         'calendar' => '/calendar?week=$w',
-        'list' => '/timesheet?view=list&week=$w',
+        // La liste complète (Suivi du temps) : regroupement, sélection multiple, glisser sur téléphone.
+        'list' => '/',
         _ => '/timesheet?week=$w',
       }),
     );

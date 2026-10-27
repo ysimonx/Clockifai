@@ -308,19 +308,27 @@ def test_invitations(alice, alice_ws):
                          {"workspace_id": alice_ws, "email": _email_of(token_f), "role": "manager"})
     assert status == 201, body
     assert body["created"] is False and body["user_id"] == fid
+    assert body["invite_link"] is None and body["app_url"].startswith("http")
     _, rows = rest("GET", f"workspace_members?workspace_id=eq.{alice_ws}&user_id=eq.{fid}&select=role", alice["token"])
     assert rows == [{"role": "manager"}]
 
-    # Nouveau compte : lien d'invitation renvoyé (pas de SMTP en dev).
-    email = f"newbie-{uuid.uuid4().hex[:8]}@test.local"
-    status, body = _call("POST", f"{SERVICES}/api/invitations", alice["token"],
-                         {"workspace_id": alice_ws, "email": email})
-    assert status == 201, body
-    assert body["created"] is True and body["invite_link"].startswith("http")
+    # Pas de SMTP en dev : l'app le sait avant d'inviter.
+    status, body = _call("GET", f"{SERVICES}/api/invitations/options?workspace_id={alice_ws}", alice["token"])
+    assert status == 200 and body == {"email": False}
+
+    # Nouveau compte : lien d'invitation renvoyé, avec ou sans email demandé.
+    for send_email in (True, False):
+        email = f"newbie-{uuid.uuid4().hex[:8]}@test.local"
+        status, body = _call("POST", f"{SERVICES}/api/invitations", alice["token"],
+                             {"workspace_id": alice_ws, "email": email, "send_email": send_email})
+        assert status == 201, body
+        assert body["created"] is True and body["emailed"] is False and body["invite_link"].startswith("http")
 
     # Un simple membre ne peut pas inviter.
     status, _ = _call("POST", f"{SERVICES}/api/invitations", token_f,
                       {"workspace_id": alice_ws, "email": "x@test.local"})
+    assert status == 403
+    status, _ = _call("GET", f"{SERVICES}/api/invitations/options?workspace_id={alice_ws}", token_f)
     assert status == 403
 
 

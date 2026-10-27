@@ -15,10 +15,15 @@ log = logging.getLogger(__name__)
 _PLACEHOLDER_HOSTS = {"", "supabase-mail", "localhost"}
 
 
+def mail_configured() -> bool:
+    """Vrai si l'installation a un vrai serveur SMTP (pas l'hôte de remplacement de la pile locale)."""
+    return current_app.config.get("SMTP_HOST", "") not in _PLACEHOLDER_HOSTS
+
+
 def send_mail(to: str, subject: str, text: str) -> bool:
     cfg = current_app.config
     host = cfg.get("SMTP_HOST", "")
-    if host in _PLACEHOLDER_HOSTS:
+    if not mail_configured():
         log.info("SMTP non configuré : email non envoyé à %s (%s)", to, subject)
         return False
     msg = EmailMessage()

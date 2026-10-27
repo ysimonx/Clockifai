@@ -97,6 +97,9 @@ Ce que cela demande :
      manager, position lue sur le téléphone seulement, jamais envoyée ; seules des propositions d'arrivée et de
      départ en sortent, à confirmer comme les autres.
 
+- **27 octobre 2026** : la version en ligne ne ressemble pas assez aux maquettes (retour de Yannick) ; les choix 1 et
+  4 ci-dessus et la police du lot 10 sont repris par `plans/14-coller-aux-maquettes.md`.
+
 ### Lot 10, identité visuelle (fait)
 
 - Le bleu reste la couleur de marque (décision 4). Pas de police embarquée : celle du système, hors ligne et sans

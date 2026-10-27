@@ -1,11 +1,13 @@
 """Invitations dans un workspace (admin+).
 
-POST /api/invitations  {"workspace_id", "email", "role"?: "member"|"manager"|"admin", "display_name"?}
+GET  /api/invitations/options?workspace_id=…  → {"email": bool} (un SMTP est-il configuré ?)
+POST /api/invitations  {"workspace_id", "email", "role"?: "member"|"manager"|"admin", "display_name"?,
+                        "send_email"?: bool}
 
 * Compte existant : ajout direct au workspace (ou réactivation).
-* Nouveau compte : lien d'invitation généré par l'API admin GoTrue (`generate_link`),
-  envoyé par email si un SMTP est configuré, et toujours renvoyé à l'admin pour qu'il
-  puisse le transmettre lui-même (installations sans SMTP).
+* Nouveau compte : lien d'invitation généré par l'API admin GoTrue (`generate_link`).
+* Email envoyé si un SMTP est configuré et que l'admin le demande (`send_email`, vrai par défaut). Le lien
+  (activation, ou adresse de l'app pour un compte existant) est toujours renvoyé, pour être copié et transmis.
 """
 
 from __future__ import annotations
@@ -17,12 +19,19 @@ from flask import Blueprint, abort, current_app, g, jsonify, request
 from ..auth import require_user, require_workspace
 from ..db import connection
 from ..services.gotrue import gotrue_admin
-from ..services.mailer import send_mail
+from ..services.mailer import mail_configured, send_mail
 
 log = logging.getLogger(__name__)
 bp = Blueprint("invitations", __name__)
 
 _ROLES = ("member", "manager", "admin")
+
+
+@bp.get("/options")
+@require_user
+@require_workspace("admin")
+def options():
+    return jsonify(email=mail_configured())
 
 
 @bp.post("")
@@ -37,6 +46,7 @@ def invite():
     if role not in _ROLES:
         abort(400, f"role must be one of {_ROLES}")
     display_name = (body.get("display_name") or email.split("@")[0]).strip()
+    send_email = body.get("send_email") is not False
 
     with connection() as conn:
         ws = conn.execute("select name from public.workspaces where id = %s", (g.workspace_id,)).fetchone()
@@ -83,6 +93,6 @@ def invite():
     else:
         subject = f"Vous avez été ajouté(e) à « {ws_name} » sur Clockifai"
         text = f"Bonjour,\n\nVous avez maintenant accès à l'espace « {ws_name} » : {app_url}\n"
-    emailed = send_mail(email, subject, text)
+    emailed = send_mail(email, subject, text) if send_email else False
 
-    return jsonify(user_id=user_id, created=created, emailed=emailed, invite_link=link), 201
+    return jsonify(user_id=user_id, created=created, emailed=emailed, invite_link=link, app_url=app_url), 201

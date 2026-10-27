@@ -20,7 +20,7 @@ import '../../data/repositories/time_entry_repository.dart';
 import '../assistant/assistant.dart';
 import '../time_entries/entry_dialog.dart';
 import '../time_entries/time_entries_page.dart' show continueEntry;
-import '../timer/timer_bar.dart' show toggleTimer;
+import '../timer/timer_control.dart' show toggleTimer;
 import '../timer/timer_rules.dart';
 import 'shortcuts_help.dart';
 

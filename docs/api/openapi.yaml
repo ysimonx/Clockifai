@@ -213,6 +213,31 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
 
+  /api/invitations/options:
+    get:
+      tags: [invitations]
+      operationId: invitationOptions
+      summary: Ce que l'invitation peut faire sur cette installation (admin+)
+      description: |
+        `email` : un vrai serveur SMTP est configuré (`SMTP_HOST`), l'app propose alors d'envoyer l'invitation
+        par email ; sinon elle annonce que le lien sera à copier.
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+      responses:
+        "200":
+          description: Options.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [email]
+                properties:
+                  email: { type: boolean }
+              example: { email: true }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/AdminRequired" }
+
   /api/invitations:
     post:
       tags: [invitations]
@@ -220,12 +245,12 @@ paths:
       summary: Inviter une personne dans le workspace (admin+)
       description: |
         - **Compte existant** : ajouté au workspace (ou réactivé s'il en était sorti), avec le rôle demandé ;
-          un owner garde son rôle. `invite_link` vaut `null`.
+          un owner garde son rôle. `invite_link` vaut `null` ; `app_url` est l'adresse à lui transmettre.
         - **Nouveau compte** : créé par l'API admin de GoTrue (`/auth/v1/admin/generate_link`, type `invite`,
           redirection vers `APP_PUBLIC_URL`), puis ajouté au workspace. Le lien d'activation est **toujours
-          renvoyé**, pour que l'admin le transmette lui-même quand aucun SMTP n'est configuré.
+          renvoyé**, pour que l'admin puisse le copier et le transmettre lui-même.
 
-        Un email est envoyé dans les deux cas si un SMTP est configuré (`emailed`).
+        Un email part dans les deux cas si un SMTP est configuré et que `send_email` n'est pas `false` (`emailed`).
       requestBody:
         required: true
         content:
@@ -1157,10 +1182,14 @@ components:
         display_name:
           type: string
           description: "Nom affiché d'un nouveau compte. Défaut : partie de l'email avant `@`."
+        send_email:
+          type: boolean
+          default: true
+          description: "`false` : pas d'email, l'admin transmet lui-même le lien."
 
     InvitationResult:
       type: object
-      required: [user_id, created, emailed, invite_link]
+      required: [user_id, created, emailed, invite_link, app_url]
       properties:
         user_id: { type: string, format: uuid }
         created:
@@ -1172,6 +1201,9 @@ components:
         invite_link:
           type: [string, "null"]
           description: Lien d'activation d'un nouveau compte ; `null` pour un compte existant.
+        app_url:
+          type: string
+          description: Adresse de l'app (`APP_PUBLIC_URL`), à transmettre à un compte existant.
 
     KioskDevice:
       type: object

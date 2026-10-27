@@ -55,7 +55,7 @@
         <video data-video="5-admin-installation" src="videos/5-admin-installation.mp4" controls preload="metadata" playsinline aria-describedby="video-texte"></video>
         <p class="video-missing">La vidéo n’est pas encore publiée sur cette installation. Le guide ci-dessous reste
           valable sans elle.</p>
-        <figcaption id="video-texte">Vidéo sans son, avec bandeaux explicatifs : l’administrateur de l’installation
+        <figcaption id="video-texte">l’administrateur de l’installation
           parcourt Supabase Studio (comptes de toute l’installation, tables de Clockifai, requête SQL de statistiques),
           puis le fichier de paramétrage du serveur et les commandes d’exploitation, et termine par un récapitulatif
           des rôles.</figcaption>
@@ -150,7 +150,7 @@
               <tr><th scope="row"><code>APP_DOMAIN</code>, <code>SUPABASE_DOMAIN</code>, <code>SYNC_DOMAIN</code></th><td>Les trois noms de domaine du serveur ; HTTPS automatique.</td></tr>
               <tr><th scope="row"><code>DISABLE_SIGNUP</code></th><td><code>true</code> : inscriptions fermées, accès sur invitation seulement.</td></tr>
               <tr><th scope="row"><code>ENABLE_EMAIL_AUTOCONFIRM</code></th><td><code>false</code> : l’adresse email doit être confirmée à l’inscription.</td></tr>
-              <tr><th scope="row"><code>SMTP_HOST</code>, <code>SMTP_USER</code>…</th><td>Envoi des emails (invitations, liens de connexion). Sans serveur d’email, l’application affiche les liens d’invitation à transmettre à la main.</td></tr>
+              <tr><th scope="row"><code>SMTP_HOST</code>, <code>SMTP_USER</code>…</th><td>Envoi des emails (invitations, liens de connexion). Sans serveur d’email, l’invitation ne propose pas l’envoi : le lien affiché est à transmettre à la main.</td></tr>
               <tr><th scope="row"><code>JWT_EXPIRY</code></th><td>Durée d’une session, en secondes.</td></tr>
               <tr><th scope="row"><code>BACKUP_KEEP_DAYS</code>, <code>BACKUP_HOUR</code></th><td>Sauvegarde chaque nuit, gardée 14 jours par défaut.</td></tr>
               <tr><th scope="row"><code>JOBS_ENABLED</code></th><td>Tâches automatiques, comme l’arrêt des chronomètres oubliés.</td></tr>

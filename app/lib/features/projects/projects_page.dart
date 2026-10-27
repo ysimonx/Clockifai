@@ -11,6 +11,8 @@ import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../core/widgets/rate_change.dart';
 import '../../data/drift/database.dart';
+import '../presence/presence_log.dart' show Site;
+import '../presence/presence_settings.dart';
 
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
@@ -197,6 +199,10 @@ class _ProjectDialogState extends State<_ProjectDialog> {
   late final _rate = TextEditingController(text: _centsToText(widget.project?.hourlyRateCents));
   late final _budget = TextEditingController(text: widget.project?.budgetHours?.toString() ?? '');
   late final _note = TextEditingController(text: widget.project?.note ?? '');
+  // Chantier (plan 13, lot 13) : position et rayon, pour la présence détectée par le téléphone.
+  late final _site = TextEditingController(
+      text: widget.project?.siteLat == null ? '' : formatSite(widget.project!.siteLat!, widget.project!.siteLng!));
+  late final _radius = TextEditingController(text: '${widget.project?.siteRadius ?? Site.defaultRadius}');
   late String? _clientId = widget.project?.clientId;
   late String _color = widget.project?.color ?? projectPalette[DateTime.now().millisecond % projectPalette.length];
   late bool _billable = widget.project?.billableDefault ?? true;
@@ -216,11 +222,16 @@ class _ProjectDialogState extends State<_ProjectDialog> {
     _rate.dispose();
     _budget.dispose();
     _note.dispose();
+    _site.dispose();
+    _radius.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     if (_name.text.trim().isEmpty) return;
+    final site = parseSite(_site.text);
+    if (_site.text.trim().isNotEmpty && site == null) return;
+    final radius = (int.tryParse(_radius.text.trim()) ?? Site.defaultRadius).clamp(30, 5000);
     final ws = context.read<SessionController>().workspaceId!;
     final data = ProjectsCompanion(
       name: Value(_name.text.trim()),
@@ -232,6 +243,9 @@ class _ProjectDialogState extends State<_ProjectDialog> {
       hourlyRateCents: Value(_textToCents(_rate.text)),
       budgetHours: Value(int.tryParse(_budget.text.trim())),
       note: Value(_note.text.trim().isEmpty ? null : _note.text.trim()),
+      siteLat: Value(site?.$1),
+      siteLng: Value(site?.$2),
+      siteRadius: Value(site == null ? null : radius),
     );
     if (widget.project == null) {
       await catalogRepo.createProject(ws, data);
@@ -327,6 +341,8 @@ class _ProjectDialogState extends State<_ProjectDialog> {
               onChanged: (v) => setState(() => _public = v),
             ),
             TextField(controller: _note, maxLines: 3, decoration: InputDecoration(labelText: l.note)),
+            const SizedBox(height: 12),
+            SiteFields(position: _site, radius: _radius),
           ]),
         ),
       ),

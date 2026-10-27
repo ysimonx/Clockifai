@@ -1255,6 +1255,138 @@ abstract class AppLocalizations {
   /// **'Annuler'**
   String get undo;
 
+  /// No description provided for @presenceTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Présence chantier'**
+  String get presenceTitle;
+
+  /// No description provided for @presenceHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce téléphone note votre arrivée et votre départ sur les chantiers ; Aujourd\'hui vous les propose, à confirmer. Votre position reste sur le téléphone : seules les heures servent.'**
+  String get presenceHelp;
+
+  /// No description provided for @presenceOn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Présence chantier activée sur ce téléphone.'**
+  String get presenceOn;
+
+  /// No description provided for @presenceDenied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès à la position refusé : autorisez-le dans les réglages du téléphone.'**
+  String get presenceDenied;
+
+  /// No description provided for @presenceServiceOff.
+  ///
+  /// In fr, this message translates to:
+  /// **'Localisation indisponible : activez-la sur l\'appareil.'**
+  String get presenceServiceOff;
+
+  /// No description provided for @presenceForget.
+  ///
+  /// In fr, this message translates to:
+  /// **'Oublier les heures notées'**
+  String get presenceForget;
+
+  /// No description provided for @presenceForgotten.
+  ///
+  /// In fr, this message translates to:
+  /// **'Heures de présence effacées de ce téléphone.'**
+  String get presenceForgotten;
+
+  /// No description provided for @presenceNotification.
+  ///
+  /// In fr, this message translates to:
+  /// **'Présence chantier : arrivée et départ notés sur ce téléphone'**
+  String get presenceNotification;
+
+  /// No description provided for @presenceRounding.
+  ///
+  /// In fr, this message translates to:
+  /// **'Heures de présence chantier'**
+  String get presenceRounding;
+
+  /// No description provided for @presenceRoundingHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce que proposent les téléphones des personnes qui ont activé la présence chantier.'**
+  String get presenceRoundingHelp;
+
+  /// No description provided for @presenceRoundingActual.
+  ///
+  /// In fr, this message translates to:
+  /// **'Telles que détectées (à 5 minutes près)'**
+  String get presenceRoundingActual;
+
+  /// No description provided for @presenceRoundingPlanning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Calées sur la journée type, à moins de 30 minutes'**
+  String get presenceRoundingPlanning;
+
+  /// No description provided for @sitePosition.
+  ///
+  /// In fr, this message translates to:
+  /// **'Position du chantier'**
+  String get sitePosition;
+
+  /// No description provided for @sitePositionHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Latitude et longitude, copiées d\'une carte, ou « Ici » sur place. Sert à la présence chantier.'**
+  String get sitePositionHelp;
+
+  /// No description provided for @sitePositionInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Attendu : latitude, longitude (48.8566, 2.3522)'**
+  String get sitePositionInvalid;
+
+  /// No description provided for @siteOnMap.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir sur la carte'**
+  String get siteOnMap;
+
+  /// No description provided for @siteRadius.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rayon'**
+  String get siteRadius;
+
+  /// No description provided for @siteHere.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ici'**
+  String get siteHere;
+
+  /// No description provided for @journalSourcePresence.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chantier'**
+  String get journalSourcePresence;
+
+  /// No description provided for @journalReasonPresence.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur le chantier de {from} à {to}, d\'après ce téléphone'**
+  String journalReasonPresence(String from, String to);
+
+  /// No description provided for @journalReasonPresenceSince.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur le chantier depuis {from}, d\'après ce téléphone'**
+  String journalReasonPresenceSince(String from);
+
+  /// No description provided for @journalReasonPresenceRounded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Heures calées sur votre journée type (règle de l\'entreprise)'**
+  String get journalReasonPresenceRounded;
+
   /// No description provided for @pendingCount.
   ///
   /// In fr, this message translates to:

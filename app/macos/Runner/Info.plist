@@ -59,5 +59,9 @@
 	<string>Dicter une saisie de temps (« 2 h chantier Dupuis »).</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Transformer la dictée en saisie de temps.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>La présence chantier ne sert que sur téléphone ; l'app Mac ne lit pas la position.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>La présence chantier ne sert que sur téléphone ; l'app Mac ne lit pas la position.</string>
 </dict>
 </plist>

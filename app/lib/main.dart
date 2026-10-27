@@ -18,6 +18,7 @@ import 'core/l10n.dart';
 import 'core/locale_controller.dart';
 import 'core/session.dart';
 import 'core/theme.dart';
+import 'features/presence/presence.dart';
 import 'features/timer/menu_bar.dart';
 import 'features/today/day_recap.dart';
 import 'router.dart';
@@ -76,7 +77,18 @@ class _ClockifaiAppState extends State<ClockifaiApp> {
     RecapNotifications.instance.onOpen = () => _router.go('/today');
     _session.addListener(_scheduleRecap);
     _display.addListener(_scheduleRecap);
+    // Présence chantier (plan 13, lot 13) : réglage et journal de la personne connectée, chantiers du workspace.
+    _session.addListener(_bindPresence);
+    _catalog.addListener(_bindSites);
+    _bindPresence();
   }
+
+  void _bindPresence() {
+    PresenceTracker.instance.locale = _session.profile?.locale ?? 'fr';
+    PresenceTracker.instance.bindUser(widget.prefs, _session.userId);
+  }
+
+  void _bindSites() => PresenceTracker.instance.setSites(_catalog.projects);
 
   void _bindCatalog() => _catalog.bind(_session.workspaceId);
 
@@ -103,6 +115,8 @@ class _ClockifaiAppState extends State<ClockifaiApp> {
     _session.removeListener(_bindCatalog);
     _session.removeListener(_scheduleRecap);
     _display.removeListener(_scheduleRecap);
+    _session.removeListener(_bindPresence);
+    _catalog.removeListener(_bindSites);
     _session.dispose();
     _catalog.dispose();
     _locale.dispose();

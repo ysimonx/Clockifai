@@ -90,5 +90,13 @@
 	<string>Dicter une saisie de temps (« 2 h chantier Dupuis »).</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Transformer la dictée en saisie de temps.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Présence chantier : noter l'arrivée et le départ sur un chantier. La position reste sur le téléphone.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Présence chantier : noter l'arrivée et le départ même téléphone en poche. La position reste sur le téléphone ; seules les heures servent.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

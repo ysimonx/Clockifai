@@ -57,6 +57,10 @@ la date d'arrivée de chaque évolution.
   saisie express (micro) ; durée au pouce (±15 min, 30 min à 4 h, matin, après-midi) et tâches en pastilles dans
   une entrée ; glisser une ligne pour la dupliquer sur aujourd'hui ou la supprimer ; nombre de modifications en
   attente sur l'icône de synchronisation (27 octobre 2026).
+- **Présence chantier** (téléphone, réglage personnel) : le téléphone note l'arrivée et le départ sur un chantier
+  placé par un manager (position du projet), et « Aujourd'hui » propose la journée, à confirmer ; heures détectées
+  ou calées sur la journée type selon la règle de l'entreprise. La position reste sur le téléphone
+  (27 octobre 2026).
 - **Pointage d'équipe** : présents cochés d'office, absences validées exclues, journée déjà saisie décochée ;
   exceptions « Arrivée à… », « Départ à… » ; Annuler après la création (27 octobre 2026).
 

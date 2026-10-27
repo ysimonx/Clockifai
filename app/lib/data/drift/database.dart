@@ -68,6 +68,8 @@ class Workspaces extends Table {
   IntColumn get maxRunningTimers => integer().nullable()();
   /// Temps des agents Claude : 'like_humans' | 'never' (plan 10, D16 ; nullable côté client : rempli par la sync).
   TextColumn get agentBilling => text().nullable()();
+  /// Présence chantier : null ou 'actual' (heures détectées), 'planning' (calées sur la journée type ; plan 13, lot 13).
+  TextColumn get presenceRounding => text().nullable()();
   TextColumn get createdBy => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
@@ -135,6 +137,10 @@ class Projects extends Table {
   TextColumn get note => text().nullable()();
   /// Temps des agents sur ce projet : null = comme le workspace, sinon facturable ou non (plan 10, D16).
   BoolColumn get agentBillable => boolean().nullable()();
+  /// Chantier : position et rayon en mètres, pour la présence détectée par le téléphone (plan 13, lot 13).
+  RealColumn get siteLat => real().nullable()();
+  RealColumn get siteLng => real().nullable()();
+  IntColumn get siteRadius => integer().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();

@@ -64,6 +64,8 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - Une colonne non nulle ajoutée à une table existante n'est répliquée qu'au prochain changement de ligne : la migration « touche » les lignes (`update … set col = col`) et la colonne Drift reste nullable.
 - Une insertion PowerSync (PUT) n'envoie pas les colonnes nulles ; remettre une colonne à nul passe par une mise à jour (PATCH). « Annuler » rétablit une ligne par `AppDatabase.restoreRow` (réinsérée si la sync l'a déjà retirée). Pas de transaction Drift imbriquée sur sqlite_async.
 - Dates sans heure (`period_start`, `start_date`, `date`…) : texte `yyyy-MM-dd` côté client (`dayKey()` / `parseDay()` dans `modules_repository.dart`).
+- Présence chantier (`features/presence/`, plan 13, lot 13) : la position ne quitte jamais le téléphone ; seul le
+  journal d'heures `PresenceLog` (préférences locales, par utilisateur) alimente les propositions d'« Aujourd'hui ».
 - Le worker web PowerSync est **compilé depuis l'app** (`make app-web-assets`), pas téléchargé : le worker publié peut être en décalage de version avec `sqlite_async`.
 
 ### Base de données

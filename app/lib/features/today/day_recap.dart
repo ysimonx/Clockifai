@@ -16,6 +16,7 @@ import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../core/widgets/common.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import '../presence/presence.dart' show PresenceTracker;
 import 'day_plan.dart';
 import 'quick_place.dart';
 import 'traces.dart';
@@ -55,6 +56,8 @@ Future<DayPlan> loadTodayPlan(BuildContext context, DateTime now) async {
     typical: TypicalDay.ofProfile(session.profile),
     calendar: traces.events,
     commits: traces.commits,
+    presence: [for (final v in PresenceTracker.instance.log.value.visitsOn(day)) if (catalog.project(v.projectId) != null) v],
+    presenceRounding: session.workspace?.presenceRounding,
     guessProject: (text) {
       final q = parseQuick(text, catalog, now);
       return q?.projectId == null ? null : (projectId: q!.projectId, taskId: q.taskId);

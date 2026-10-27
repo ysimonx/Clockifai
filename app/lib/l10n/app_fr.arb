@@ -481,6 +481,45 @@
     }
   },
   "undo": "Annuler",
+  "presenceTitle": "Présence chantier",
+  "presenceHelp": "Ce téléphone note votre arrivée et votre départ sur les chantiers ; Aujourd'hui vous les propose, à confirmer. Votre position reste sur le téléphone : seules les heures servent.",
+  "presenceOn": "Présence chantier activée sur ce téléphone.",
+  "presenceDenied": "Accès à la position refusé : autorisez-le dans les réglages du téléphone.",
+  "presenceServiceOff": "Localisation indisponible : activez-la sur l'appareil.",
+  "presenceForget": "Oublier les heures notées",
+  "presenceForgotten": "Heures de présence effacées de ce téléphone.",
+  "presenceNotification": "Présence chantier : arrivée et départ notés sur ce téléphone",
+  "presenceRounding": "Heures de présence chantier",
+  "presenceRoundingHelp": "Ce que proposent les téléphones des personnes qui ont activé la présence chantier.",
+  "presenceRoundingActual": "Telles que détectées (à 5 minutes près)",
+  "presenceRoundingPlanning": "Calées sur la journée type, à moins de 30 minutes",
+  "sitePosition": "Position du chantier",
+  "sitePositionHelp": "Latitude et longitude, copiées d'une carte, ou « Ici » sur place. Sert à la présence chantier.",
+  "sitePositionInvalid": "Attendu : latitude, longitude (48.8566, 2.3522)",
+  "siteOnMap": "Voir sur la carte",
+  "siteRadius": "Rayon",
+  "siteHere": "Ici",
+  "journalSourcePresence": "Chantier",
+  "journalReasonPresence": "Sur le chantier de {from} à {to}, d'après ce téléphone",
+  "@journalReasonPresence": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonPresenceSince": "Sur le chantier depuis {from}, d'après ce téléphone",
+  "@journalReasonPresenceSince": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonPresenceRounded": "Heures calées sur votre journée type (règle de l'entreprise)",
   "pendingCount": "{count, plural, =1{1 modification en attente} other{{count} modifications en attente}}",
   "@pendingCount": {
     "placeholders": {

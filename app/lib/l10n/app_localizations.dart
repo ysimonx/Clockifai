@@ -1255,6 +1255,90 @@ abstract class AppLocalizations {
   /// **'Annuler'**
   String get undo;
 
+  /// No description provided for @lateTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Semaine dernière'**
+  String get lateTitle;
+
+  /// No description provided for @lateHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qui n\'a pas encore soumis sa feuille de temps de la semaine du {date}.'**
+  String lateHelp(String date);
+
+  /// No description provided for @lateAllGood.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout le monde a soumis sa semaine.'**
+  String get lateAllGood;
+
+  /// No description provided for @lateLine.
+  ///
+  /// In fr, this message translates to:
+  /// **'{logged} saisies sur {planned} prévues'**
+  String lateLine(String logged, String planned);
+
+  /// No description provided for @lateLineNoPlan.
+  ///
+  /// In fr, this message translates to:
+  /// **'{logged} saisies'**
+  String lateLineNoPlan(String logged);
+
+  /// No description provided for @lateNotSubmitted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas soumise'**
+  String get lateNotSubmitted;
+
+  /// No description provided for @remind.
+  ///
+  /// In fr, this message translates to:
+  /// **'Relancer'**
+  String get remind;
+
+  /// No description provided for @reminded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Relancé'**
+  String get reminded;
+
+  /// No description provided for @remindedSnack.
+  ///
+  /// In fr, this message translates to:
+  /// **'Relance envoyée à {name}'**
+  String remindedSnack(String name);
+
+  /// No description provided for @reminderTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Feuille de temps'**
+  String get reminderTitle;
+
+  /// No description provided for @reminderBanner.
+  ///
+  /// In fr, this message translates to:
+  /// **'{who} vous rappelle de soumettre votre semaine du {date}'**
+  String reminderBanner(String who, String date);
+
+  /// No description provided for @reminderOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir la feuille'**
+  String get reminderOpen;
+
+  /// No description provided for @reminderOk.
+  ///
+  /// In fr, this message translates to:
+  /// **'OK'**
+  String get reminderOk;
+
+  /// No description provided for @plannedVsSubmitted.
+  ///
+  /// In fr, this message translates to:
+  /// **'{planned} prévues · écart {delta}'**
+  String plannedVsSubmitted(String planned, String delta);
+
   /// No description provided for @reportQuestions.
   ///
   /// In fr, this message translates to:

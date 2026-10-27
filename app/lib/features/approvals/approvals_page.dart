@@ -13,6 +13,9 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/modules_repository.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/time_entries_page.dart';
+import '../timesheet/week_tools.dart' show plannedMinutes;
+import '../today/day_plan.dart' show addDays;
+import 'late_board.dart';
 import 'submission_bar.dart';
 
 /// Validation des feuilles de temps soumises : managers (tout le workspace), chefs d'équipe (leur périmètre).
@@ -48,15 +51,14 @@ class _ApprovalsPageState extends State<ApprovalsPage> {
               .where((s) => rights.canApproveTimesheetOf(s.userId))
               .where((s) => _history ? s.status != 'submitted' : true)
               .toList();
-          if (subs.isEmpty) {
-            return EmptyState(icon: Icons.task_alt, title: _history ? l.noHistory : l.nothingToApprove);
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: subs.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, i) => _SubmissionCard(sub: subs[i]),
-          );
+          return ListView(padding: const EdgeInsets.all(16), children: [
+            // Qui n'a pas soumis sa semaine dernière, et « Relancer » (plan 13, lot 8).
+            if (!_history) ...[const LateBoard(), const SizedBox(height: 12)],
+            if (subs.isEmpty)
+              EmptyState(icon: Icons.task_alt, title: _history ? l.noHistory : l.nothingToApprove)
+            else
+              for (final s in subs) Padding(padding: const EdgeInsets.only(bottom: 8), child: _SubmissionCard(sub: s)),
+          ]);
         },
       ),
     );
@@ -94,6 +96,22 @@ class _SubmissionCard extends StatelessWidget {
         title: Text(member?.displayName ?? sub.userId.substring(0, 8)),
         subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${fmt.format(start)} – ${fmt.format(end)} · ${formatHm(sub.totalSeconds ?? 0)}'),
+          // Écart au planning de la période (plan 13, lot 8).
+          StreamBuilder<List<ScheduleAssignment>>(
+            stream: modulesRepo.watchAssignments(sub.workspaceId, userId: sub.userId, from: start, to: end),
+            builder: (context, snap) {
+              final plan = snap.data ?? const <ScheduleAssignment>[];
+              final days = end.difference(start).inDays + 1;
+              final planned = [
+                for (var i = 0; i < days; i++)
+                  for (final p in {for (final a in plan) a.projectId}) plannedMinutes(plan, p, addDays(start, i)),
+              ].fold(0, (s, v) => s + v);
+              if (planned == 0) return const SizedBox.shrink();
+              final delta = (sub.totalSeconds ?? 0) - planned * 60;
+              return Text(l.plannedVsSubmitted(formatHm(planned * 60), '${delta < 0 ? '−' : '+'}${formatHm(delta.abs())}'),
+                  style: theme.textTheme.bodySmall?.copyWith(color: delta < 0 ? theme.colorScheme.error : null));
+            },
+          ),
           Text(statusLabel, style: TextStyle(color: statusColor, fontWeight: FontWeight.w600)),
           if (sub.note?.isNotEmpty ?? false) Text('« ${sub.note} »', style: theme.textTheme.bodySmall),
           if (sub.decisionNote?.isNotEmpty ?? false) Text('${l.decision} : ${sub.decisionNote}', style: theme.textTheme.bodySmall),

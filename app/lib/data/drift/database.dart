@@ -362,6 +362,25 @@ class ScheduleAssignments extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Relance d'un membre qui n'a pas soumis sa semaine (plan 13, lot 8) ; [userId] : la personne relancée.
+@DataClassName('Reminder')
+class Reminders extends Table {
+  TextColumn get id => text().clientDefault(newId)();
+  TextColumn get workspaceId => text()();
+  TextColumn get userId => text()();
+  TextColumn get kind => text().clientDefault(() => 'timesheet')();
+  /// Lundi de la semaine visée, `yyyy-MM-dd`.
+  TextColumn get periodStart => text()();
+  TextColumn get createdBy => text().nullable()();
+  DateTimeColumn get seenAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('Invoice')
 class Invoices extends Table {
   TextColumn get id => text().clientDefault(newId)();
@@ -492,6 +511,7 @@ class InvoiceEntries extends Table {
   TimeEntryTags,
   AgentUsage,
   TimesheetSubmissions,
+  Reminders,
   TimeOffPolicies,
   TimeOffAllowances,
   TimeOffRequests,

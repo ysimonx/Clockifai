@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/powersync/connector.dart';
+import '../../features/approvals/reminder_banner.dart';
 import '../../features/assistant/assistant.dart';
 import '../../features/commands/command_palette.dart';
 import '../../features/commands/shortcuts_help.dart';
@@ -171,6 +172,7 @@ class _AppShellState extends State<AppShell> {
     final content = Column(children: [
       const TimerBar(),
       const Divider(height: 1),
+      const ReminderBanner(),
       const DayRecapBanner(),
       Expanded(child: widget.child),
     ]);

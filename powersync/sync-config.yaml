@@ -67,6 +67,8 @@ streams:
       - SELECT * FROM time_off_requests WHERE deleted_at IS NULL AND user_id = auth.user_id()
       - SELECT * FROM time_off_allowances WHERE deleted_at IS NULL AND user_id = auth.user_id()
       - SELECT * FROM schedule_assignments WHERE deleted_at IS NULL AND user_id = auth.user_id()
+      # Relances de feuille de temps reçues (plan 13, lot 8)
+      - SELECT * FROM reminders WHERE deleted_at IS NULL AND user_id = auth.user_id()
 
   # Données des collaborateurs encadrés par un chef d'équipe (team_scope, recalculé côté serveur).
   # Jointure sur (workspace_id, user_id) : rien ne fuit d'un autre workspace du collaborateur.
@@ -93,6 +95,13 @@ streams:
       - SELECT time_off_allowances.* FROM time_off_allowances
           JOIN team_scope ON team_scope.workspace_id = time_off_allowances.workspace_id AND team_scope.user_id = time_off_allowances.user_id
         WHERE team_scope.manager_id = auth.user_id() AND time_off_allowances.deleted_at IS NULL
+      # Planning et relances de l'équipe (plan 13, lot 8 : tableau des retards, écart au planning)
+      - SELECT schedule_assignments.* FROM schedule_assignments
+          JOIN team_scope ON team_scope.workspace_id = schedule_assignments.workspace_id AND team_scope.user_id = schedule_assignments.user_id
+        WHERE team_scope.manager_id = auth.user_id() AND schedule_assignments.deleted_at IS NULL
+      - SELECT reminders.* FROM reminders
+          JOIN team_scope ON team_scope.workspace_id = reminders.workspace_id AND team_scope.user_id = reminders.user_id
+        WHERE team_scope.manager_id = auth.user_id() AND reminders.deleted_at IS NULL
 
   # Données de toute l'équipe d'un workspace : souscription à la demande (écrans équipe, rapports,
   # approbations, absences, planning, factures), réservée aux rôles owner/admin/manager.
@@ -135,6 +144,12 @@ streams:
                                WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
                                  AND role != 'member')
       - SELECT * FROM schedule_assignments
+        WHERE deleted_at IS NULL
+          AND workspace_id = subscription.parameter('workspace_id')
+          AND workspace_id IN (SELECT workspace_id FROM workspace_members
+                               WHERE user_id = auth.user_id() AND status = 'active' AND deleted_at IS NULL
+                                 AND role != 'member')
+      - SELECT * FROM reminders
         WHERE deleted_at IS NULL
           AND workspace_id = subscription.parameter('workspace_id')
           AND workspace_id IN (SELECT workspace_id FROM workspace_members

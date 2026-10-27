@@ -50,6 +50,9 @@ la date d'arrivée de chaque évolution.
 - Rapports : **questions toutes faites** (le temps de la semaine, par client ce mois-ci, qui a fait quoi, usage IA
   au coût), **comparaison** avec la période précédente, et **À facturer** : le temps non facturé par client, facturé
   d'un clic (27 octobre 2026).
+- Approbations : **Semaine dernière**, qui n'a pas soumis sa feuille (heures saisies et prévues), et **Relancer** :
+  un bandeau et une notification chez la personne ; l'**écart au planning** sous chaque feuille soumise
+  (27 octobre 2026).
 
 ### Modifié
 

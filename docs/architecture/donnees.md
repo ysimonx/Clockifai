@@ -132,6 +132,7 @@ erDiagram
 ```mermaid
 erDiagram
   workspaces ||--o{ timesheet_submissions : ""
+  workspaces ||--o{ reminders : "relances"
   workspaces ||--o{ time_off_policies : ""
   time_off_policies ||--o{ time_off_requests : "demandes"
   time_off_policies ||--o{ time_off_allowances : "soldes"
@@ -150,6 +151,13 @@ erDiagram
   workspaces ||--o{ team_scope : "périmètre dérivé"
   workspaces ||--o{ kiosk_devices : ""
 
+  reminders {
+    uuid id PK
+    uuid user_id FK "la personne relancée"
+    date period_start "semaine visée"
+    uuid created_by "posé par le serveur"
+    timestamptz seen_at
+  }
   timesheet_submissions {
     uuid id PK
     uuid user_id FK
@@ -338,9 +346,9 @@ Ce que chaque utilisateur connecté reçoit dans sa base locale. Toutes les requ
 |---|---|---|---|---|
 | `my_profile` | automatique | 0 | `profiles` | sa propre ligne |
 | `workspace_core` | automatique | 1 | `workspaces`, `workspace_members`, `clients`, `projects`, `tasks`, `tags`, `time_off_policies`, `holidays`, `user_groups`, `user_group_members`, `team_manager_assignments`, `team_scope` | tous les workspaces où l'on est membre actif |
-| `my_time_entries` | automatique | 2 | `time_entries`, `time_entry_tags`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments` | `user_id` = soi, dans tous ses workspaces |
-| `managed_team` | automatique | 3 | `time_entries`, `time_entry_tags`, `agent_usage`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances` | lignes des collaborateurs encadrés : jointure sur `team_scope` par `(workspace_id, user_id)` avec `manager_id` = soi, rien d'un autre workspace du collaborateur |
-| `team_data` | à la demande, paramètre `workspace_id` | 3 | `time_entries`, `time_entry_tags`, `agent_usage`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments`, `invoices`, `invoice_items`, `invoice_entries` | tout le workspace demandé, si l'on y a un rôle autre que `member` |
+| `my_time_entries` | automatique | 2 | `time_entries`, `time_entry_tags`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments`, `reminders` | `user_id` = soi, dans tous ses workspaces |
+| `managed_team` | automatique | 3 | `time_entries`, `time_entry_tags`, `agent_usage`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments`, `reminders` | lignes des collaborateurs encadrés : jointure sur `team_scope` par `(workspace_id, user_id)` avec `manager_id` = soi, rien d'un autre workspace du collaborateur |
+| `team_data` | à la demande, paramètre `workspace_id` | 3 | `time_entries`, `time_entry_tags`, `agent_usage`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments`, `reminders`, `invoices`, `invoice_items`, `invoice_entries` | tout le workspace demandé, si l'on y a un rôle autre que `member` |
 
 `SessionController` souscrit `team_data` pour le workspace courant quand le rôle est owner, admin ou manager, et
 change de souscription avec le workspace. Ne sont jamais synchronisés : `kiosk_devices` (géré par Flask),
@@ -412,6 +420,7 @@ non nul) : Flask, connecté en rôle `postgres`, et les triggers internes qui po
 | `activity_rules` | `activity_rules_guard` | avec un JWT, seul `deleted_at` change |
 | `tasks` | `tasks_guard` (0010) | hors managers : création d'une tâche active sans estimation, puis renommage seulement |
 | `timesheet_submissions` | `timesheet_submissions_guard` | une feuille commence `submitted` ; période et propriétaire immuables ; sans `manages()`, seulement `submitted` / `withdrawn` et pas de retour sur une feuille approuvée ; `decided_by` / `decided_at` posés |
+| `reminders` | `reminders_guard` (0019) | auteur posé depuis le JWT ; personne, semaine et auteur immuables. RLS : relancer ceux qu'on encadre (`manages()`), jamais soi ; lire les siennes et celles de son équipe ; marquer vue la sienne |
 | `timesheet_submissions` | `timesheet_submissions_apply` | approuver verrouille les entrées de la période (date locale), rouvrir les déverrouille (avec `bypass_guard`) |
 | `time_off_requests` | `time_off_requests_guard` | une demande commence `pending`, approuvée d'office si la politique n'exige pas d'approbation ; le demandeur ne peut que modifier une demande en attente ou l'annuler ; décision par `can_decide_time_off()` ; `decided_by` / `decided_at` posés |
 | `invoices` | `invoices_before_write` | numéro `<invoice_prefix>-<année>-0001` continu par workspace et par année (`clockifai_private.invoice_counters`) ; échéance = émission + `invoice_due_days` ; sous-total, remise, TVA et total recalculés depuis les lignes |

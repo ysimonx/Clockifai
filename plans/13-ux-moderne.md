@@ -1,6 +1,6 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
-> Statut : **en cours** (lots 1 à 7, 11 et 12 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
+> Statut : **en cours** (lots 1 à 8, 11 et 12 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
 > (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
@@ -163,6 +163,17 @@ Ce que cela demande :
 - « À facturer » (`ReadyToBill`) : temps facturable non facturé par client, douze derniers mois, arrondi appliqué ;
   « Facturer » crée la facture (`createInvoiceFromTime`, par tâche, TVA par défaut) et l'ouvre.
 
+### Lot 8, équipe (fait)
+
+- Tableau des retards (`LateBoard`, en tête des Approbations) : la semaine dernière de chaque personne qu'on
+  approuve, si elle n'est ni soumise ni approuvée : heures saisies et prévues, statut, « Relancer ».
+- Relances : table `reminders` (migration 0019 ; RLS : relancer ceux qu'on encadre, jamais soi ; auteur posé par le
+  serveur ; personne et semaine immuables), dans `my_time_entries`, `managed_team` et `team_data` ; bandeau chez la
+  personne (« Ouvrir la feuille », « OK » la marque vue) et notification sur Mac et téléphone quand l'app est
+  ouverte. Pas d'email ni de notification poussée (pas de service push) : la relance arrive à la synchronisation.
+- Écart au planning sous chaque feuille soumise ; le planning de l'équipe rejoint `managed_team` pour les chefs
+  d'équipe.
+
 ### Lot 11, première version (faite)
 
 - Page **Aujourd'hui** (`/today`, `features/today/today_page.dart`), en tête du menu ; l'accueil reste
@@ -244,7 +255,7 @@ Ce que cela demande :
 | 5 Semaine | Une page, trois vues ; copie de la semaine précédente, remplissage par le planning, suggestions en pointillé, liste avant soumission | M | fait |
 | 6 Fin de journée | Récapitulatif à heure réglable (barre de menus macOS, notification mobile) avec les pistes à cocher | S/M | fait |
 | 7 Rapports par questions | Questions toutes faites, comparaison, prêt à facturer et facture en un clic, usage IA au coût | M | fait |
-| 8 Équipe | Tableau des retards, relance par notification, approbation avec écart au planning | M | envisagé |
+| 8 Équipe | Tableau des retards, relance par notification, approbation avec écart au planning | M | fait |
 | 9 Mobile chantier | « Comme hier », durée au pouce, dictée, glisser, badge hors ligne, pointage d'équipe repensé | M | envisagé |
 | 10 Identité visuelle | Polices, jetons de couleur, mode sombre, densité | S/M | envisagé |
 | 11 Journal automatique | Brouillons tirés des traces, frise manipulable (glisser, tirer les bords, clavier), « pourquoi ce bloc », validation en un geste ; première version sur l'historique, le planning et les sessions de Claude | L | fait (traces : agenda, commits ; pas d'activité du poste) |

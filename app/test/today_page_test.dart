@@ -8,7 +8,9 @@ import 'package:clockifai/data/repositories/modules_repository.dart';
 import 'package:clockifai/data/repositories/team_repository.dart';
 import 'package:clockifai/data/repositories/time_entry_repository.dart';
 import 'package:clockifai/data/repositories/workspace_repository.dart';
+import 'package:clockifai/features/today/day_plan.dart' show CalendarEvent;
 import 'package:clockifai/features/today/today_page.dart';
+import 'package:clockifai/features/today/traces.dart';
 import 'package:clockifai/l10n/app_localizations.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:flutter/material.dart';
@@ -47,6 +49,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     prefs = DisplayPrefs(await SharedPreferences.getInstance());
     session = _Session();
+    TracesApi.override = (_, _) async => DayTraces.empty;
     db = TestDb();
     getIt
       ..registerSingleton<TimeEntryRepository>(TimeEntryRepository(db))
@@ -71,6 +74,7 @@ void main() {
   });
 
   tearDown(() async {
+    TracesApi.override = null;
     catalog.dispose();
     await getIt.reset();
     await db.close();
@@ -139,6 +143,19 @@ void main() {
     await open(tester);
     expect(find.text('Journée type : 09:00 – 18:00, réglée dans vos paramètres'), findsOneWidget);
     expect(find.text('Courriels'), findsNothing, reason: 'l’habitude de 08:30 tombe avant l’arrivée réglée');
+    await close(tester);
+  });
+
+  testWidgets('agenda : la réunion devient une proposition, et la ligne « Traces » la montre', (tester) async {
+    TracesApi.override = (_, day) async => DayTraces(calendar: 'ok', events: [
+          CalendarEvent(id: 'ev', start: at(26, 15).toUtc(), end: at(26, 16).toUtc(), title: 'Point client site'),
+        ]);
+    await open(tester);
+    expect(find.text('Traces'), findsOneWidget);
+    await tester.tap(find.text('Point client site').first);
+    await settle(tester);
+    expect(find.text('Agenda'), findsOneWidget);
+    expect(find.textContaining('Dans votre agenda, de 15:00 à 16:00'), findsOneWidget);
     await close(tester);
   });
 

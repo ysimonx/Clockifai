@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../data/drift/database.dart';
 
 /// Journal automatique (plans/13-ux-moderne.md, lot 11) : la journée se remplit à partir de ce que Clockifai sait
@@ -37,7 +39,26 @@ int? parseHm(String? s) {
 
 String hm(int m) => '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
 
-enum DraftSource { claude, habit, planning }
+enum DraftSource { claude, calendar, commits, habit, planning }
+
+/// Un événement de l'agenda de la personne (heure et titre seulement), lu par le serveur (plan 13, lot 4).
+class CalendarEvent {
+  const CalendarEvent({required this.id, required this.start, required this.end, required this.title});
+  final String id;
+  final DateTime start;
+  final DateTime end;
+  final String title;
+}
+
+/// Un de ses commits (code_commits), avec le dépôt et le projet du dépôt.
+class CommitTrace {
+  const CommitTrace({required this.sha, required this.subject, required this.at, required this.repository, this.projectId});
+  final String sha;
+  final String subject;
+  final DateTime at;
+  final String repository;
+  final String? projectId;
+}
 
 /// Pourquoi une proposition existe, à traduire par l'interface.
 enum ReasonKind {
@@ -49,6 +70,10 @@ enum ReasonKind {
   habitWeekday,
   /// Habitude quotidienne : [count] jours sur les [of] derniers jours travaillés, vers [a].
   habitDaily,
+  /// Dans l'agenda : de [a] à [b].
+  calendar,
+  /// [count] commits dans le dépôt [text], de [a] à [b].
+  commits,
   /// Planning : [count] minutes prévues sur ce projet ce jour.
   planned,
   /// Déjà saisi sur ce projet aujourd'hui : [count] minutes.
@@ -56,12 +81,13 @@ enum ReasonKind {
 }
 
 class DraftReason {
-  const DraftReason(this.kind, {this.a = 0, this.b = 0, this.count = 0, this.of = 0});
+  const DraftReason(this.kind, {this.a = 0, this.b = 0, this.count = 0, this.of = 0, this.text = ''});
   final ReasonKind kind;
   final int a;
   final int b;
   final int count;
   final int of;
+  final String text;
 }
 
 /// Une entrée proposée, pas encore enregistrée.
@@ -250,6 +276,9 @@ DayPlan planDay({
   List<ScheduleAssignment> planning = const [],
   Set<String> dismissed = const {},
   TypicalDay? typical,
+  List<CalendarEvent> calendar = const [],
+  List<CommitTrace> commits = const [],
+  ({String? projectId, String? taskId})? Function(String text)? guessProject,
 }) {
   final d0 = _midnight(day);
   final isToday = d0 == _midnight(now);
@@ -289,7 +318,61 @@ DayPlan planDay({
     }
   }
 
-  // 2. Habitudes : même activité, à la même heure, la plupart des jours (ou le même jour de la semaine).
+  // 2. Agenda : réunions et rendez-vous, sur les créneaux de travail encore libres ; projet deviné d'après le titre.
+  for (final ev in calendar) {
+    final sp = Span(math.max(0, minuteOf(ev.start, d0)), math.min(1440, minuteOf(ev.end, d0)));
+    if (sp.length <= 0 || sp.length > 600) continue;
+    final guess = guessProject?.call(ev.title);
+    for (final f in [...free]) {
+      final piece = f.intersect(sp);
+      if (piece == null || piece.length < _minDraft) continue;
+      place(Draft(
+        key: 'cal:${ev.id}:${piece.start}',
+        source: DraftSource.calendar,
+        span: piece,
+        description: ev.title,
+        projectId: guess?.projectId,
+        taskId: guess?.taskId,
+        reasons: [DraftReason(ReasonKind.calendar, a: sp.start, b: sp.end)],
+      ));
+    }
+  }
+
+  // 3. Commits : par dépôt, les commits à moins de 90 minutes les uns des autres forment une séance de travail,
+  // de 30 minutes avant le premier jusqu'au dernier ; description : le message du dernier, projet : celui du dépôt.
+  final byRepo = <String, List<CommitTrace>>{};
+  for (final c in [...commits]..sort((x, y) => x.at.compareTo(y.at))) {
+    (byRepo[c.repository] ??= []).add(c);
+  }
+  byRepo.forEach((repo, list) {
+    final clusters = <List<CommitTrace>>[];
+    for (final c in list) {
+      if (clusters.isNotEmpty && c.at.difference(clusters.last.last.at).inMinutes <= 90) {
+        clusters.last.add(c);
+      } else {
+        clusters.add([c]);
+      }
+    }
+    for (final cl in clusters) {
+      final first = minuteOf(cl.first.at, d0), last = minuteOf(cl.last.at, d0);
+      final sp = Span(math.max(0, first - 30), math.min(1440, math.max(last, first - 30 + _minDraft)));
+      final subject = cl.lastWhere((c) => c.subject.trim().isNotEmpty, orElse: () => cl.last).subject.trim();
+      for (final f in [...free]) {
+        final piece = f.intersect(sp);
+        if (piece == null || piece.length < _minDraft) continue;
+        place(Draft(
+          key: 'git:${cl.first.sha.length > 12 ? cl.first.sha.substring(0, 12) : cl.first.sha}:${piece.start}',
+          source: DraftSource.commits,
+          span: piece,
+          description: subject.isEmpty ? repo : subject,
+          projectId: cl.first.projectId,
+          reasons: [DraftReason(ReasonKind.commits, count: cl.length, a: first, b: last, text: repo)],
+        ));
+      }
+    }
+  });
+
+  // 4. Habitudes : même activité, à la même heure, la plupart des jours (ou le même jour de la semaine).
   final loggedKeys = {for (final e in mine) _habitKey(e)};
   final past = history.where((e) => e.endAt != null && e.startAt.toLocal().isBefore(d0)).toList();
   final workdays = {for (final e in past) if (_workday(_midnight(e.startAt.toLocal()))) dayKey(e.startAt.toLocal())}.toList()..sort();
@@ -343,7 +426,7 @@ DayPlan planDay({
     ));
   }
 
-  // 3. Planning : le reste des heures prévues sur le projet, dans les créneaux libres restants.
+  // 5. Planning : le reste des heures prévues sur le projet, dans les créneaux libres restants.
   final dateKey = dayKey(d0);
   for (final a in planning) {
     if (a.projectId == null || a.startDate.compareTo(dateKey) > 0 || a.endDate.compareTo(dateKey) < 0) continue;

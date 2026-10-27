@@ -97,6 +97,7 @@ Les écritures client passent par **upsert** : la politique SELECT doit accepter
 | Facture et PDF | [facture-pdf.md](sequences/facture-pdf.md) |
 | Barre de menus macOS | [barre-de-menus-macos.md](sequences/barre-de-menus-macos.md) |
 | Suivi de Claude Code : jeton, hooks, entrées de l'agent | [claude-code.md](sequences/claude-code.md) |
+| Journal du jour : propositions, agenda, commits | [journal.md](sequences/journal.md) |
 | Fidwork (prévu, non implémenté) | [fidwork.md](sequences/fidwork.md) |
 
 ## Tenir à jour

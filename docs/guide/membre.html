@@ -115,11 +115,19 @@
         <ul>
           <li>Les propositions viennent de ce que Clockifai sait déjà : vos <strong>habitudes</strong> (la même activité,
             à la même heure, la plupart des jours ou le même jour chaque semaine), votre <strong>planning</strong> (les
-            heures prévues sur un projet, moins ce qui est déjà saisi) et, si vous utilisez Claude Code, les
-            <strong>sessions de Claude</strong> (le temps passé à suivre son travail). Rien n’est mesuré sur votre
-            ordinateur : ni vos applications, ni vos fichiers.</li>
-          <li>Votre journée habituelle (arrivée, pause de midi, départ) est déduite de vos semaines passées ; elle
-            s’affiche dans <span class="ui">Bilan du jour</span>.</li>
+            heures prévues sur un projet, moins ce qui est déjà saisi), si vous utilisez Claude Code, les
+            <strong>sessions de Claude</strong> (le temps passé à suivre son travail) et vos <strong>commits</strong>
+            (une série de commits dans un dépôt devient une séance de travail sur son projet), et, si vous l’avez relié,
+            votre <strong>agenda</strong> (vos réunions, avec le projet deviné d’après leur titre). Rien n’est mesuré
+            sur votre ordinateur : ni vos applications, ni vos fichiers.</li>
+          <li>La ligne <span class="ui">Traces</span> montre les événements de votre agenda et vos commits de la journée,
+            d’où viennent ces propositions. Pour relier votre agenda : <span class="ui">Paramètres</span> ›
+            <span class="ui">Intégrations</span> › <span class="ui">Agenda</span>, puis collez son adresse iCal
+            privée (Google Agenda : paramètres de l’agenda, « Adresse secrète au format iCal » ; Outlook :
+            Calendriers partagés, Publier). Clockifai n’en lit que l’heure et le titre des événements.</li>
+          <li>Votre journée habituelle (arrivée, pause de midi, départ) est déduite de vos semaines passées, ou réglée
+            dans <span class="ui">Paramètres</span> › <span class="ui">Ma journée type</span> ; elle s’affiche dans
+            <span class="ui">Bilan du jour</span>.</li>
           <li><span class="ui">Tout confirmer</span> enregistre toutes les propositions d’un coup ;
             <span class="ui">Annuler</span>, dans le bandeau qui suit, les retire. Ou bien touchez un bloc :
             <span class="ui">Pourquoi ce bloc</span> explique d’où il vient, et vous pouvez changer sa description ou
@@ -489,7 +497,9 @@
             <span class="ui">Démarrer à l’ouverture de session</span>.</dd>
           <dt>Intégrations</dt>
           <dd><span class="ui">Claude Code</span> : connecter vos ordinateurs pour enregistrer le temps de Claude (voir
-            <a href="#claude-code">Le temps de Claude Code</a>).</dd>
+            <a href="#claude-code">Le temps de Claude Code</a>). <span class="ui">Agenda</span> : relier votre agenda
+            par son adresse iCal privée, pour que vos réunions soient proposées dans
+            <a href="#aujourdhui">Aujourd’hui</a> ; <span class="ui">Retirer l’agenda</span> le détache.</dd>
           <dt>Workspaces</dt>
           <dd>Vos workspaces et votre rôle dans chacun ; touchez-en un pour y basculer.
             <span class="ui">Créer un workspace</span> ouvre un nouvel espace dont vous êtes propriétaire.</dd>

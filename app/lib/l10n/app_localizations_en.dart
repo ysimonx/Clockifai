@@ -714,6 +714,79 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String get journalSourceCalendar => 'Calendar';
+
+  @override
+  String get journalSourceCommits => 'Commits';
+
+  @override
+  String journalReasonCalendar(String start, String end) {
+    return 'In your calendar, from $start to $end';
+  }
+
+  @override
+  String journalReasonCommits(
+    int count,
+    String repository,
+    String start,
+    String end,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count commits',
+      one: '1 commit',
+    );
+    return '$_temp0 in $repository, from $start to $end';
+  }
+
+  @override
+  String get journalTraces => 'Traces';
+
+  @override
+  String get calendarTitle => 'Calendar';
+
+  @override
+  String get calendarHelp =>
+      'Paste the private iCal address of your calendar: Google Calendar, calendar settings › “Secret address in iCal format”; Outlook, Settings › Calendar › Shared calendars › Publish; Apple, right-click the calendar › Share. Clockifai only reads the time and title of events, to suggest your meetings in Today.';
+
+  @override
+  String get calendarUrl => 'Private iCal address';
+
+  @override
+  String get calendarNone => 'No calendar linked';
+
+  @override
+  String calendarLinked(String host) {
+    return 'Linked: $host';
+  }
+
+  @override
+  String get calendarRemove => 'Remove the calendar';
+
+  @override
+  String get calendarOffline => 'Can only be set while online.';
+
+  @override
+  String get calendarErrorHttps =>
+      'The address must start with https:// (or webcal://).';
+
+  @override
+  String get calendarErrorHost =>
+      'This address is not reachable from the Internet.';
+
+  @override
+  String get calendarErrorUnreachable =>
+      'Calendar unreachable: check the address.';
+
+  @override
+  String get calendarErrorFormat =>
+      'This address does not lead to an iCal calendar.';
+
+  @override
+  String get calendarErrorTooLarge => 'Calendar too large.';
+
+  @override
   String journalTypicalProfile(String start, String end) {
     return 'Typical day: $start – $end, set in your settings';
   }

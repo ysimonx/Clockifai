@@ -116,6 +116,35 @@ void main() {
     expect(plan.windows, [const Span(540, 720), const Span(780, 1022)]);
   });
 
+  test('agenda et commits : propositions sur les créneaux libres, après Claude, avant les habitudes', () {
+    DateTime utc(int h, [int m = 0]) => at(10, 26, h, m).toUtc();
+    final plan = planDay(
+      day: at(10, 26, 0),
+      now: now,
+      mine: mine,
+      history: history(),
+      agentEntries: claude,
+      calendar: [
+        CalendarEvent(id: 'ev1', start: utc(8, 30), end: utc(9), title: 'Point client boulangerie'),
+        CalendarEvent(id: 'ev2', start: utc(20), end: utc(21), title: 'Dîner'), // hors de la journée de travail
+      ],
+      commits: [
+        CommitTrace(sha: 'aaaaaaaaaaaaaaaa', subject: 'Maquette du panier', at: utc(13, 50), repository: 'site', projectId: 'p2'),
+        CommitTrace(sha: 'bbbbbbbbbbbbbbbb', subject: '', at: utc(13, 55), repository: 'site', projectId: 'p2'),
+      ],
+      guessProject: (text) => text.contains('boulangerie') ? (projectId: 'boul', taskId: null) : null,
+    );
+    final byKey = {for (final d in plan.drafts) d.source: d};
+    final cal = byKey[DraftSource.calendar]!;
+    expect((cal.span, cal.description, cal.projectId), (const Span(510, 540), 'Point client boulangerie', 'boul'));
+    expect(cal.reasons.single.kind, ReasonKind.calendar);
+    expect(plan.drafts.where((d) => d.description == 'Courriels'), isEmpty, reason: 'la réunion a pris le créneau de l’habitude');
+    final git = byKey[DraftSource.commits]!;
+    expect((git.span, git.description, git.projectId), (const Span(810, 835), 'Maquette du panier', 'p2'));
+    expect((git.reasons.single.count, git.reasons.single.text), (2, 'site'));
+    expect(plan.drafts.any((d) => d.description == 'Dîner'), isFalse);
+  });
+
   test('créneaux vides sans proposition possible', () {
     final plan = planDay(day: at(10, 26, 0), now: now, mine: mine, history: const []);
     // Valeurs par défaut : 08:30–12:30 et 14:00–17:30, coupé à 17:02.

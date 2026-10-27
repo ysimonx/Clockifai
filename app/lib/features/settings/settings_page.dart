@@ -16,6 +16,7 @@ import '../../core/session.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../data/drift/database.dart';
+import '../integrations/calendar_tile.dart';
 import '../integrations/claude_code.dart';
 import '../today/day_plan.dart' show TypicalDay, hm, parseHm;
 
@@ -123,7 +124,7 @@ class SettingsPage extends StatelessWidget {
         ],
         if (session.workspace != null) ...[
           const SizedBox(height: 16),
-          _Section(title: l.integrations, children: const [ClaudeCodeTile()]),
+          _Section(title: l.integrations, children: const [ClaudeCodeTile(), CalendarTile()]),
         ],
         const SizedBox(height: 16),
         _Section(title: l.help, children: [

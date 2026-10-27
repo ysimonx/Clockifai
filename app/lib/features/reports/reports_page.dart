@@ -45,6 +45,8 @@ class _ReportsPageState extends State<ReportsPage> {
   bool _detailed = false;
   // Rapports par questions (plan 13, lot 7).
   bool _compare = false;
+  // Tâches dont les sous-tâches sont dépliées (« Grouper par tâche »).
+  final Set<String?> _openTasks = {};
   bool _toBill = false;
 
   /// Une question toute faite : règle la période, le regroupement et les filtres d'un geste.
@@ -96,6 +98,7 @@ class _ReportsPageState extends State<ReportsPage> {
     final l = context.l10n;
     return switch (g) {
       GroupBy.project => l.project,
+      GroupBy.task => l.task,
       GroupBy.client => l.client,
       GroupBy.user => l.user,
       GroupBy.tag => l.tag,
@@ -181,11 +184,12 @@ class _ReportsPageState extends State<ReportsPage> {
             noTag: l.noTag,
             noDescription: l.noDescription,
             dayLabel: (d) => DateFormat.MMMEd(locale).format(d),
+            noTask: l.noTask,
           );
           final previousGroups = {
             for (final g in calc.group(previous, _groupBy,
                 noProject: l.noProject, noClient: l.noClient, noTag: l.noTag, noDescription: l.noDescription,
-                dayLabel: (d) => DateFormat.MMMEd(locale).format(d)))
+                dayLabel: (d) => DateFormat.MMMEd(locale).format(d), noTask: l.noTask))
               g.key: g.seconds,
           };
           final hasAgents = rights.visibleMembers.any((m) => catalog.isAgent(m.userId)) || catalog.agentsOf(session.userId).isNotEmpty;
@@ -274,8 +278,9 @@ class _ReportsPageState extends State<ReportsPage> {
             else
               Card(
                 child: Column(children: [
-                  for (final g in groups)
+                  for (final g in groups) ...[
                     ListTile(
+                      onTap: g.children.isEmpty ? null : () => setState(() => _openTasks.contains(g.key) ? _openTasks.remove(g.key) : _openTasks.add(g.key)),
                       leading: g.color == null ? null : ColorDot(g.color!, size: 12),
                       title: g.aiTokens == 0
                           ? Text(g.label)
@@ -305,10 +310,27 @@ class _ReportsPageState extends State<ReportsPage> {
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.outline)),
                             ),
                           Text(formatHm(g.seconds), style: const TextStyle(fontWeight: FontWeight.w600)),
+                          if (g.children.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: Icon(_openTasks.contains(g.key) ? Icons.expand_less : Icons.expand_more, size: 20),
+                            ),
                         ]),
                         ),
                       ),
                     ),
+                    // Sous-tâches de la tâche, dépliées : leur temps est déjà compté dans la tâche.
+                    if (_openTasks.contains(g.key))
+                      for (final c in g.children)
+                        ListTile(
+                          dense: true,
+                          contentPadding: const EdgeInsets.only(left: 48, right: 16),
+                          leading: Icon(Icons.subdirectory_arrow_right, size: 16, color: Theme.of(context).colorScheme.outline),
+                          minLeadingWidth: 16,
+                          title: Text(c.label),
+                          trailing: Text(formatHm(c.seconds)),
+                        ),
+                  ],
                 ]),
               ),
           ]);
@@ -425,7 +447,7 @@ class _ReportsPageState extends State<ReportsPage> {
             catalog.isAgent(e.userId) ? 'agent' : 'human',
             q(catalog.clientOfProject(e.projectId)?.name ?? ''),
             q(catalog.project(e.projectId)?.name ?? ''),
-            q(catalog.task(e.taskId)?.name ?? ''),
+            q(catalog.taskPath(e.taskId) ?? ''),
             q(e.description),
             e.startAt.toLocal().toIso8601String(),
             e.endAt?.toLocal().toIso8601String() ?? '',

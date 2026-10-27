@@ -568,7 +568,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get claudeTasksHelp =>
-      'Claude nomme la tâche de son travail, et le temps de vos sessions y est rangé, dans le projet du dépôt. Un nom plus précis renomme la tâche au lieu d\'en créer une autre ; une tâche que vous choisissez reste.';
+      'Claude nomme l\'objectif de son travail (une tâche, par exemple le plan en cours) et chaque étape (une sous-tâche) : le temps de vos sessions y est rangé, dans le projet du dépôt. Un nom plus précis renomme au lieu d\'en créer un autre ; une tâche que vous choisissez reste.';
 
   @override
   String get claudeTasksOff => 'Pas de tâche : le projet seulement';
@@ -577,7 +577,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get claudeTasksSession => 'Une tâche par session Claude Code';
 
   @override
-  String get claudeTasksSubject => 'Une tâche par sujet (même nom, même tâche)';
+  String get claudeTasksSubject =>
+      'Une tâche par objectif, une sous-tâche par étape';
 
   @override
   String get client => 'Client';
@@ -2847,4 +2848,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String saveDuration(String duration) {
     return 'Enregistrer · $duration';
   }
+
+  @override
+  String subtaskCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sous-tâches',
+      one: '1 sous-tâche',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get createSubtask => 'Ajouter une sous-tâche';
+
+  @override
+  String newSubtaskIn(String task) {
+    return 'Nouvelle sous-tâche de $task';
+  }
+
+  @override
+  String get subtasks => 'Sous-tâches';
+
+  @override
+  String get task => 'Tâche';
+
+  @override
+  String get noTask => 'Sans tâche';
 }

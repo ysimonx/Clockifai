@@ -272,6 +272,42 @@ void main() {
     catalog.dispose();
   });
 
+  test('sous-tâches : catalogue, libellés et rapport par tâche (plans/16-sous-taches.md)', () async {
+    final catalogRepo = CatalogRepository(db);
+    final p1 = await catalogRepo.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'Clockifai'));
+    final plan = await catalogRepo.createTask(ws, p1, 'Plan 16 · Sous-tâches');
+    final migration = await catalogRepo.createTask(ws, p1, 'Migration', parentId: plan);
+    final ecran = await catalogRepo.createTask(ws, p1, 'Écran des projets', parentId: plan);
+    final other = await catalogRepo.createTask(ws, p1, 'Support');
+    Future<void> add(String task, int h, int minutes) => repo.createManual(
+          workspaceId: ws, userId: me, draft: EntryDraft(projectId: p1, taskId: task),
+          start: DateTime.utc(2026, 10, 27, h), end: DateTime.utc(2026, 10, 27, h, minutes));
+    await add(migration, 8, 30);
+    await add(ecran, 9, 45);
+    await add(plan, 10, 15);
+    await add(other, 11, 20);
+    final catalog = CatalogController(catalogRepo, WorkspaceRepository(db), TeamRepository(db))..bind(ws);
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    expect(catalog.tasksOf(p1).map((t) => t.name), ['Plan 16 · Sous-tâches', 'Support'], reason: 'premier niveau seulement');
+    expect(catalog.subtasksOf(plan).map((t) => t.name), unorderedEquals(['Écran des projets', 'Migration']));
+    expect(catalog.rootTask(migration)?.id, plan);
+    expect(catalog.taskPath(migration), 'Plan 16 · Sous-tâches › Migration');
+    expect(catalog.taskPath(plan), 'Plan 16 · Sous-tâches');
+
+    final rows = await repo.watchEntries(workspaceId: ws, from: DateTime.utc(2026, 10, 27), to: DateTime.utc(2026, 10, 28)).first;
+    final groups = ReportCalculator(catalog: catalog, roundingMinutes: 0, applyRounding: false).group(rows, GroupBy.task,
+        noProject: '—', noClient: '—', noTag: '—', noDescription: '—', dayLabel: (d) => '$d', noTask: 'Sans tâche');
+    expect(groups.map((g) => (g.label, g.seconds ~/ 60)), [('Plan 16 · Sous-tâches', 90), ('Support', 20)]);
+    expect(groups.first.children.map((c) => (c.label, c.seconds ~/ 60)), [('Écran des projets', 45), ('Migration', 30)],
+        reason: 'le temps posé sur la tâche elle-même compte dans la tâche, pas dans une sous-tâche');
+
+    await catalogRepo.deleteTask(plan);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(catalog.task(migration), isNull, reason: 'les sous-tâches partent avec leur tâche');
+    catalog.dispose();
+  });
+
   test('usage IA d\'une entrée d\'agent : cumulé sur la ligne et dans le rapport (plan 10, D17)', () async {
     final catalogRepo = CatalogRepository(db);
     final claude = await repo.createManual(

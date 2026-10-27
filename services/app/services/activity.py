@@ -282,6 +282,32 @@ def task_name(payload: dict) -> str | None:
     return name or None
 
 
+# Sujet d'une entrée : l'objectif, et l'étape s'il y en a une (plans/16-sous-taches.md). Le chronomètre (agent_clock)
+# compare des sujets entiers : une nouvelle étape commence une nouvelle entrée, sur la sous-tâche de l'étape.
+_STEP_SEP = "\u241f"
+
+
+def session_subject(payload: dict) -> str | None:
+    """Objectif et étape donnés par Claude (`session_task` `{task_name, step_name}`), en un seul sujet."""
+    name = task_name(payload)
+    step = " ".join(str(payload.get("step_name") or "").split())[:TASK_NAME_MAX]
+    return f"{name}{_STEP_SEP}{step}" if name and step else name
+
+
+def split_subject(subject: str | None) -> tuple[str | None, str | None]:
+    """(objectif, étape) d'un sujet ; l'étape vaut None quand Claude n'en a pas donné."""
+    if not subject:
+        return None, None
+    name, _, step = subject.partition(_STEP_SEP)
+    return name, step or None
+
+
+def subject_label(subject: str | None) -> str | None:
+    """« Objectif · étape », pour décrire une entrée sans tâche possible."""
+    name, step = split_subject(subject)
+    return f"{name} · {step}" if step else name
+
+
 _PARIS = ZoneInfo("Europe/Paris")
 _MONTHS = {"fr": ("janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."),
            "en": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")}
@@ -315,25 +341,28 @@ def _lock_name(conn, project_id: str, name: str) -> None:
 
 
 def _task_named(conn, workspace_id: str, project_id: str, name: str, *, active_only: bool = True,
-                exclude: str | None = None) -> str | None:
+                exclude: str | None = None, parent_id: str | None = None) -> str | None:
+    """Tâche de ce nom au premier niveau du projet, ou sous-tâche de ce nom sous [parent_id]."""
     row = conn.execute(
         "select id from public.tasks where workspace_id = %s and project_id = %s and lower(name) = lower(%s) "
         "and deleted_at is null and (not %s or status = 'active') and id is distinct from %s::uuid "
-        "order by created_at limit 1",
-        (workspace_id, project_id, name, active_only, exclude),
+        "and parent_id is not distinct from %s::uuid order by created_at limit 1",
+        (workspace_id, project_id, name, active_only, exclude, parent_id),
     ).fetchone()
     return str(row["id"]) if row else None
 
 
-def _create_task(conn, workspace_id: str, project_id: str, session_id: str, name: str) -> str | None:
-    """Nouvelle tâche, si le workspace laisse tout le monde en créer ; notée dans agent_tasks pour la session."""
+def _create_task(conn, workspace_id: str, project_id: str, session_id: str, name: str,
+                 parent_id: str | None = None) -> str | None:
+    """Nouvelle tâche (ou sous-tâche de [parent_id]), si le workspace laisse tout le monde en créer ; notée dans
+    agent_tasks pour la session."""
     ws = conn.execute("select task_creation from public.workspaces where id = %s", (workspace_id,)).fetchone()
     if not ws or (ws["task_creation"] or "everyone") != "everyone":
         return None
     row = conn.execute(
-        "insert into public.tasks (workspace_id, project_id, name) select %s, id, %s from public.projects "
+        "insert into public.tasks (workspace_id, project_id, name, parent_id) select %s, id, %s, %s from public.projects "
         "where id = %s and workspace_id = %s and deleted_at is null returning id",
-        (workspace_id, name, project_id, workspace_id),
+        (workspace_id, name, parent_id, project_id, workspace_id),
     ).fetchone()
     if row is None:
         return None
@@ -358,13 +387,14 @@ def _own_task(conn, workspace_id: str, session_id: str, task_id: str | None, *, 
     if whole_session:
         used = conn.execute(
             "select 1 from public.time_entries te left join clockifai_private.agent_entries ae on ae.time_entry_id = te.id "
-            "where te.task_id = %s and te.deleted_at is null and ae.session_id is distinct from %s limit 1",
-            (task_id, session_id),
+            "where te.task_id in (select id from public.tasks where id = %s or parent_id = %s) and te.deleted_at is null "
+            "and ae.session_id is distinct from %s limit 1",
+            (task_id, task_id, session_id),
         ).fetchone()
     else:
         used = conn.execute(
-            "select 1 from public.time_entries where task_id = %s and deleted_at is null and id is distinct from %s::uuid "
-            "limit 1", (task_id, entry_id),
+            "select 1 from public.time_entries where task_id in (select id from public.tasks where id = %s or parent_id = %s) "
+            "and deleted_at is null and id is distinct from %s::uuid limit 1", (task_id, task_id, entry_id),
         ).fetchone()
     return None if used else row
 
@@ -433,6 +463,38 @@ def subject_task(conn, workspace_id: str, session_id: str, project_id: str | Non
     return _create_task(conn, workspace_id, project_id, session_id, name), None
 
 
+def step_task(conn, workspace_id: str, session_id: str, project_id: str | None, parent_id: str | None,
+              step: str | None, current_task_id: str | None, *, entry_id: str | None = None) -> tuple[str | None, str | None]:
+    """Sous-tâche de l'étape [step] sous l'objectif [parent_id] (plans/16-sous-taches.md), reprise par son nom ou créée,
+    et sous-tâche devenue vide à supprimer. Comme pour l'objectif, préciser l'étape renomme la sous-tâche créée pour
+    cette entrée. (None, None) sans étape ou sans droit de création : l'entrée reste sur l'objectif."""
+    if not project_id or not parent_id or not step:
+        return None, None
+    _lock_name(conn, parent_id, step)
+    own = None
+    if entry_id and current_task_id and current_task_id != parent_id:
+        row = conn.execute("select parent_id from public.tasks where id = %s", (current_task_id,)).fetchone()
+        if row and row["parent_id"] and str(row["parent_id"]) == parent_id:
+            own = _own_task(conn, workspace_id, session_id, current_task_id, entry_id=entry_id, whole_session=False)
+    existing = _task_named(conn, workspace_id, project_id, step, parent_id=parent_id)
+    if own and own["name"].casefold() != step.casefold():
+        if existing:
+            return existing, str(own["id"])
+        _rename(conn, str(own["id"]), step)
+        return str(own["id"]), None
+    if existing:
+        return existing, None
+    return _create_task(conn, workspace_id, project_id, session_id, step, parent_id=parent_id), None
+
+
+def _root_task(conn, task_id: str | None) -> str | None:
+    """La tâche de premier niveau : la tâche elle-même, ou le parent d'une sous-tâche."""
+    if not task_id:
+        return None
+    row = conn.execute("select parent_id from public.tasks where id = %s", (task_id,)).fetchone()
+    return str(row["parent_id"]) if row and row["parent_id"] else task_id
+
+
 def _valid_task(conn, workspace_id: str, project_id: str | None, task_id: str | None) -> tuple[str | None, str | None]:
     """Tâche donnée par la session (set_current_task) : le projet se déduit de la tâche ; un id inconnu est ignoré."""
     if task_id:
@@ -492,7 +554,7 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
     by_id = {str(r["id"]): r for r in existing_rows}
     prefs = task_prefs(conn, pilot_id)
     events = [Event(r["kind"], r["occurred_at"], _payload(r).get("duration_ms"), str(r["id"]),
-                    task_name(_payload(r)) if r["kind"] == "session_task" and prefs.mode != "off" else None)
+                    session_subject(_payload(r)) if r["kind"] == "session_task" and prefs.mode != "off" else None)
               for r in rows if r["kind"] in CLOCK_KINDS]
     existing = [Existing(str(r["id"]), r["start_at"], r["end_at"], r["deleted_at"], r["server_start_at"],
                          r["server_end_at"]) for r in existing_rows]
@@ -502,6 +564,7 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
     for op in plan_session(events, existing, now, split_subjects=prefs.mode != "session"):
         iv = op.interval
         until = iv.end or now
+        goal, step = split_subject(iv.subject)
         ctx = _context(rows, until)
         task_ev = _payload(_latest(rows, "session_task", until))
         desc_ev = _payload(_latest(rows, "session_description", until))
@@ -517,10 +580,12 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                     task_id = str(prev[-1]["task_id"]) if prev[-1]["task_id"] else None
                 else:
                     project_id, task_id = project_for(conn, workspace_id, rules, ctx)
-            # Sujet nommé par Claude pendant cette entrée : il prime sur la tâche reprise de la précédente (D18).
-            named, emptied = subject_task(conn, workspace_id, session_id, project_id, iv.subject, task_id, prefs,
-                                          iv.start)
-            task_id = named or task_id
+            # Sujet nommé par Claude pendant cette entrée : il prime sur la tâche reprise de la précédente (D18) ;
+            # son étape en est la sous-tâche (plan 16).
+            named, emptied = subject_task(conn, workspace_id, session_id, project_id, goal, _root_task(conn, task_id),
+                                          prefs, iv.start)
+            sub, emptied_step = step_task(conn, workspace_id, session_id, project_id, named, step, task_id)
+            task_id = sub or named or task_id
             cur = None
             server_project = (project_id, task_id)
         else:
@@ -543,9 +608,12 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
             # Sujet nommé par Claude (D18), y compris dans un projet choisi à la main, sauf tâche choisie à la main.
             human_task = cur["task_id"] is not None and cur["task_id"] != cur["server_task_id"]
             named, emptied = (None, None) if human_task else subject_task(
-                conn, workspace_id, session_id, project_id, iv.subject, task_id, prefs, start, entry_id=entry_id)
+                conn, workspace_id, session_id, project_id, goal, _root_task(conn, task_id), prefs, start,
+                entry_id=entry_id)
+            sub, emptied_step = step_task(conn, workspace_id, session_id, project_id, named, step, task_id,
+                                          entry_id=entry_id) if named else (None, None)
             if named:
-                task_id, server_project = named, (server_project[0], named)
+                task_id, server_project = sub or named, (server_project[0], sub or named)
 
         # Description (D10) : saisie humaine > Claude > commits > dépôt et branche.
         if cur is not None and cur["description"] != cur["server_description"]:
@@ -556,7 +624,7 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                 description, desc_source = str(desc_ev["description"])[:DESCRIPTION_MAX], "claude"
             elif iv.subject and task_id is None:
                 # Sujet nommé sans tâche possible (pas de projet, ou création réservée) : il décrit l'entrée.
-                description, desc_source = iv.subject, "claude"
+                description, desc_source = subject_label(iv.subject), "claude"
             else:
                 subjects = [r["subject"] for r in rows if r["kind"] == "commit" and r["subject"]
                             and iv.start <= r["occurred_at"] <= until]
@@ -597,10 +665,14 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
             log.info("entrée d'agent %s non écrite : %s", entry_id, status)
             continue
         written += 1
-        if emptied:  # tâche créée pour l'entrée puis remplacée par celle du sujet : vide, elle disparaît
-            conn.execute(
-                "update public.tasks set deleted_at = now() where id = %s and deleted_at is null and not exists "
-                "(select 1 from public.time_entries where task_id = %s and deleted_at is null)", (emptied, emptied))
+        for gone in (emptied_step, emptied):
+            # Tâche (ou sous-tâche) créée pour l'entrée puis remplacée par celle du sujet : vide, elle disparaît, avec
+            # ses sous-tâches vides.
+            if gone:
+                conn.execute(
+                    "update public.tasks set deleted_at = now() where id = %s and deleted_at is null and not exists "
+                    "(select 1 from public.time_entries where deleted_at is null and task_id in "
+                    "(select id from public.tasks where id = %s or parent_id = %s))", (gone, gone, gone))
         _save_state(conn, entry_id, workspace_id, agent_id, session_id, ctx, iv, start=server_start, end=end,
                     project_id=server_project[0], task_id=server_project[1], description=server_description,
                     description_source=desc_source)

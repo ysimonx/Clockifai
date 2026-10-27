@@ -37,6 +37,15 @@ def test_xlsx_type_column():
     assert ws.cell(4, header.index("Montant") + 1).value == 50.0
 
 
+def test_xlsx_subtask_column():
+    """Plan 16 : la tâche de premier niveau, puis la sous-tâche."""
+    row = dict(_row("Claude · Yannick", "agent"), task_name="Plan 16 · Sous-tâches", subtask_name="Migration")
+    ws = load_workbook(io.BytesIO(build_xlsx([row], date(2026, 10, 1), date(2026, 10, 31))))["Détail"]
+    header = [c.value for c in ws[3]]
+    assert header[4:6] == ["Tâche", "Sous-tâche"]
+    assert (ws.cell(4, 5).value, ws.cell(4, 6).value) == ("Plan 16 · Sous-tâches", "Migration")
+
+
 def test_xlsx_ai_usage_columns():
     claude = dict(_row("Claude · Yannick", "agent"), ai_tokens=1_234_567, ai_cost_micros=4_560_000)
     data = build_xlsx([_row("Yannick", "human"), claude], date(2026, 10, 1), date(2026, 10, 31))

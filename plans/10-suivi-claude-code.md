@@ -527,6 +527,12 @@ sur `main` n'a pas de branche pour distinguer ses sujets, et la tâche de D9 ne 
   en début d'entrée renomme la tâche que le serveur a créée pour elle (`clockifai_private.agent_tasks`, 0014),
   ou bascule sur la tâche existante de ce nom en supprimant la tâche vide. Une tâche renommée à la main ou
   utilisée par une autre entrée n'est jamais touchée.
+- **Objectif et étape** (plan 16, 27 octobre 2026) : `set_current_task(name, step)`. `name` est l'objectif
+  d'ensemble, stable d'une session à l'autre (le titre du plan s'il y en a un), `step` l'étape en cours. Le hook
+  relaie `session_task {task_name, step_name}` ; le serveur fait de l'objectif la tâche et de l'étape une
+  sous-tâche (`tasks.parent_id`, 0021), reprise par son nom ou créée (`agent_tasks` aussi) ; le sujet du
+  chronomètre est le couple objectif-étape, donc une nouvelle étape commence une nouvelle entrée sans nouvelle
+  tâche, et une étape précisée juste après renomme sa sous-tâche. Sans `step` (plugin plus ancien), rien ne change.
 - **Réglage « Tâches de Claude »** de chaque pilote (`profiles.claude_tasks`, 0015 ; Paramètres › Intégrations ›
   Claude Code) : « Une tâche par sujet » (défaut, ci-dessus), « Une tâche par session Claude Code » (toujours une
   nouvelle tâche, datée si le nom est pris, « Export PDF (25 oct.) » ; jamais de coupure ; un nom plus précis la

@@ -313,6 +313,85 @@ def test_a_refined_subject_renames_its_task_instead_of_adding_one(team):
     assert task_ids("Partagée") == [partagee] and entry_at(134)["task_id"] == v2
 
 
+def test_steps_become_subtasks_of_the_goal(team):
+    """Plan 16 : l'objectif nommé par Claude est la tâche, chaque étape une sous-tâche ; une nouvelle étape coupe
+    l'entrée sans ajouter de tâche ; une étape précisée juste après renomme sa sous-tâche ; le même objectif dans une
+    autre session reprend la même tâche et ses sous-tâches ; sans étape (ancien plugin), l'entrée va sur la tâche."""
+    repo = {"remote_key": "github.com/ysimonx/etapes", "cwd": "/Users/y/dev/etapes"}
+    assert api("POST", "/api/activity/rules", team["token"],
+               {"remote_key": repo["remote_key"], "project_id": team["project"]})[0] == 201
+    goal_name = "Plan 16 · Sous-tâches"
+
+    def at(minutes: float, kind: str, session: str, name: str | None = None, step: str | None = None) -> dict:
+        payload = {"task_name": name, **({"step_name": step} if step else {})}
+        return _event(kind, _ago(minutes), session, **repo, **({"payload": payload} if name else {}))
+
+    def send(*events) -> None:
+        assert api("POST", "/api/activity/events", team["token"], {"events": list(events)})[0] == 202
+
+    def entry_at(minutes: float) -> dict:
+        return next(e for e in _agent_entries(team["agent"]) if e["start_at"].startswith(iso(_ago(minutes))[:16]))
+
+    def named(name: str, parent: str | None = None) -> list[dict]:
+        _, rows = rest("GET", f"tasks?project_id=eq.{team['project']}&deleted_at=is.null&select=id,name,parent_id",
+                       SERVICE)
+        return [r for r in rows if r["name"].lower() == name.lower() and r["parent_id"] == parent]
+
+    s1 = str(uuid.uuid4())
+    send(at(154, "prompt", s1), at(153.9, "session_task", s1, goal_name, "Migration"), at(153, "agent_tool", s1),
+         at(151, "agent_stop", s1))
+    [goal] = named(goal_name)
+    [migration] = named("Migration", goal["id"])
+    assert entry_at(154)["task_id"] == migration["id"]
+
+    # Étape suivante, quatre minutes plus tard : nouvelle entrée, nouvelle sous-tâche, la même tâche.
+    send(at(150, "prompt", s1), at(149.9, "session_task", s1, goal_name, "Écran des projets"), at(148, "agent_stop", s1))
+    [ecran] = named("Écran des projets", goal["id"])
+    assert entry_at(154)["end_at"].startswith(iso(_ago(150))[:16])
+    assert entry_at(150)["task_id"] == ecran["id"] and len(named(goal_name)) == 1
+
+    # L'étape précisée juste après : sa sous-tâche, créée pour cette entrée, est renommée.
+    send(at(149.5, "session_task", s1, goal_name, "Écran des projets et sous-tâches"))
+    assert named("Écran des projets", goal["id"]) == []
+    assert [t["id"] for t in named("Écran des projets et sous-tâches", goal["id"])] == [ecran["id"]]
+
+    # Le même objectif dans une autre session : la même tâche, et l'étape déjà nommée reprend sa sous-tâche.
+    s2 = str(uuid.uuid4())
+    send(at(145, "prompt", s2), at(144.9, "session_task", s2, "plan 16 · sous-tâches", "migration"),
+         at(143, "agent_stop", s2))
+    assert entry_at(145)["task_id"] == migration["id"] and len(named(goal_name)) == 1
+
+    # Ancien plugin, sans étape : l'entrée va sur la tâche de l'objectif.
+    s3 = str(uuid.uuid4())
+    send(at(140, "prompt", s3), at(139.9, "session_task", s3, goal_name), at(138, "agent_stop", s3))
+    assert entry_at(140)["task_id"] == goal["id"]
+
+
+def test_subtask_rules(team):
+    """Migration 0021 : un seul niveau, le projet du parent ; supprimer une tâche emporte ses sous-tâches, la
+    restaurer les rend."""
+    owner_t, _ = team["people"]["owner"]
+    status, [parent] = rest("POST", "tasks", owner_t, {"workspace_id": team["wid"], "project_id": team["project"],
+                                                       "name": "Chantier"}, prefer="return=representation")
+    assert status == 201
+    status, [child] = rest("POST", "tasks", owner_t, {"workspace_id": team["wid"], "project_id": team["project"],
+                                                      "name": "Niveau 3", "parent_id": parent["id"]},
+                           prefer="return=representation")
+    assert status == 201
+    status, _ = rest("POST", "tasks", owner_t, {"workspace_id": team["wid"], "project_id": team["project"],
+                                                "name": "Trop profond", "parent_id": child["id"]})
+    assert status == 400, "un seul niveau de sous-tâches"
+    status, _ = rest("PATCH", f"tasks?id=eq.{parent['id']}", owner_t, {"parent_id": team["task"]})
+    assert status == 400, "une tâche qui a des sous-tâches n'en devient pas une"
+    stamp = iso(_ago(0))
+    assert rest("PATCH", f"tasks?id=eq.{parent['id']}", owner_t, {"deleted_at": stamp})[0] == 200
+    _, [row] = rest("GET", f"tasks?id=eq.{child['id']}&select=deleted_at", SERVICE)
+    assert row["deleted_at"] is not None, "la sous-tâche part avec sa tâche"
+    assert rest("PATCH", f"tasks?id=eq.{parent['id']}", owner_t, {"deleted_at": None})[0] == 200
+    _, [row] = rest("GET", f"tasks?id=eq.{child['id']}&select=deleted_at", SERVICE)
+    assert row["deleted_at"] is None, "et revient avec elle"
+
+
 def test_task_per_session_and_no_task_settings(team):
     """Réglage « Tâches de Claude » du pilote (profiles.claude_tasks, D18) : une tâche par session, toujours
     nouvelle (datée si le nom est pris) et renommée quand Claude précise ; « off » : aucune tâche."""

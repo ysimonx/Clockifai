@@ -127,7 +127,7 @@ class _ReadyToBillState extends State<ReadyToBill> {
       taxPercent: ws.defaultTaxPercent,
       projectNames: {for (final p in catalog.projects) p.id: p.name},
       byTask: true,
-      taskNames: {for (final t in catalog.tasks) t.id: t.name},
+      taskNames: {for (final t in catalog.tasks) t.id: catalog.taskPath(t.id)!},
     );
     if (!mounted) return;
     setState(() => _busy = null);

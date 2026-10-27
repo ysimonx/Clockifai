@@ -151,7 +151,8 @@ paths:
           description: |
             Fichier en pièce jointe, nommé `clockifai-<from>_<to>.<format>`.
             CSV : séparateur `;`, UTF-8 avec BOM, décimales à virgule, heures dans le fuseau du serveur ;
-            colonnes Utilisateur, Email, Client, Projet, Tâche, Description, Tags, Début, Fin, Durée (h),
+            colonnes Utilisateur, Email, Client, Projet, Tâche (de premier niveau), Sous-tâche, Description, Tags,
+            Début, Fin, Durée (h),
             Facturable, Taux horaire.
           headers:
             Content-Disposition:

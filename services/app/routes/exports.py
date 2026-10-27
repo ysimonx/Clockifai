@@ -40,7 +40,9 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
                coalesce(te.hourly_rate_cents, p.hourly_rate_cents, wm.hourly_rate_cents) as hourly_rate_cents,
                wm.display_name as user_name, wm.email as user_email,
                wm.kind as user_kind,
-               p.name as project_name, c.name as client_name, t.name as task_name,
+               -- Tâche de premier niveau, et sous-tâche s'il y a lieu (plans/16-sous-taches.md).
+               p.name as project_name, c.name as client_name, coalesce(pt.name, t.name) as task_name,
+               case when pt.id is not null then t.name end as subtask_name,
                coalesce(string_agg(tg.name, ', ' order by tg.name), '') as tags,
                -- Usage IA des entrées d'agent (plan 10, D17) : tokens et coût estimé, en millionièmes de dollar.
                (select sum(au.input_tokens + au.output_tokens + au.cache_write_5m_tokens + au.cache_write_1h_tokens
@@ -53,6 +55,7 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
           left join public.projects p on p.id = te.project_id
           left join public.clients c on c.id = p.client_id
           left join public.tasks t on t.id = te.task_id
+          left join public.tasks pt on pt.id = t.parent_id
           left join public.time_entry_tags tet on tet.time_entry_id = te.id
           left join public.tags tg on tg.id = tet.tag_id
          where te.workspace_id = %(wid)s and te.deleted_at is null and te.end_at is not null
@@ -76,7 +79,7 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
         sql += " and wm.kind = %(member_kind)s"
         params["member_kind"] = filters["member_kind"]
     sql += (" group by te.id, wm.display_name, wm.email, wm.kind, wm.hourly_rate_cents, p.name, p.hourly_rate_cents,"
-            " c.name, t.name order by te.start_at")
+            " c.name, t.name, pt.id, pt.name order by te.start_at")
     return fetch_all(sql, params)
 
 
@@ -104,13 +107,13 @@ def export_report():
     if fmt == "csv":
         buf = io.StringIO()
         writer = csv.writer(buf, delimiter=";")
-        writer.writerow(["Utilisateur", "Email", "Type", "Client", "Projet", "Tâche", "Description", "Tags",
+        writer.writerow(["Utilisateur", "Email", "Type", "Client", "Projet", "Tâche", "Sous-tâche", "Description", "Tags",
                          "Début", "Fin", "Durée (h)", "Facturable", "Taux horaire", "Tokens IA",
                          "Coût IA estimé (USD)"])
         for r in rows:
             writer.writerow([
                 r["user_name"], r["user_email"], member_kind_label(r), r["client_name"] or "", r["project_name"] or "",
-                r["task_name"] or "", r["description"], r["tags"],
+                r["task_name"] or "", r.get("subtask_name") or "", r["description"], r["tags"],
                 _fmt_dt(r["start_at"]), _fmt_dt(r["end_at"]),
                 f"{(r['duration_seconds'] or 0) / 3600:.2f}".replace(".", ","),
                 "oui" if r["billable"] else "non",

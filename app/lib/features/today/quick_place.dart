@@ -100,7 +100,7 @@ List<String> quickSummary(BuildContext context, QuickEntry q, QuickSlot? slot, C
   final task = catalog.task(q.taskId);
   return [
     q.duration == null ? l.quickDurationMissing : formatHm(q.duration! * 60),
-    if (project != null) [project.name, ?task?.name].join(' — ') else if (q.description.isEmpty) l.quickProjectMissing,
+    if (project != null) [project.name, ?catalog.taskPath(q.taskId)].join(' — ') else if (q.description.isEmpty) l.quickProjectMissing,
     if (q.description.isNotEmpty && fold(q.description) != fold(task?.name ?? '')) '« ${q.description} »',
     for (final id in q.tagIds) '#${catalog.tag(id)?.name ?? ''}',
     if (slot != null)

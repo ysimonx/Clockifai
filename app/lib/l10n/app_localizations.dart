@@ -976,7 +976,7 @@ abstract class AppLocalizations {
   /// No description provided for @claudeTasksHelp.
   ///
   /// In fr, this message translates to:
-  /// **'Claude nomme la tâche de son travail, et le temps de vos sessions y est rangé, dans le projet du dépôt. Un nom plus précis renomme la tâche au lieu d\'en créer une autre ; une tâche que vous choisissez reste.'**
+  /// **'Claude nomme l\'objectif de son travail (une tâche, par exemple le plan en cours) et chaque étape (une sous-tâche) : le temps de vos sessions y est rangé, dans le projet du dépôt. Un nom plus précis renomme au lieu d\'en créer un autre ; une tâche que vous choisissez reste.'**
   String get claudeTasksHelp;
 
   /// No description provided for @claudeTasksOff.
@@ -994,7 +994,7 @@ abstract class AppLocalizations {
   /// No description provided for @claudeTasksSubject.
   ///
   /// In fr, this message translates to:
-  /// **'Une tâche par sujet (même nom, même tâche)'**
+  /// **'Une tâche par objectif, une sous-tâche par étape'**
   String get claudeTasksSubject;
 
   /// No description provided for @client.
@@ -4739,6 +4739,42 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Enregistrer · {duration}'**
   String saveDuration(String duration);
+
+  /// No description provided for @subtaskCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 sous-tâche} other{{count} sous-tâches}}'**
+  String subtaskCount(int count);
+
+  /// No description provided for @createSubtask.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter une sous-tâche'**
+  String get createSubtask;
+
+  /// No description provided for @newSubtaskIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle sous-tâche de {task}'**
+  String newSubtaskIn(String task);
+
+  /// No description provided for @subtasks.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sous-tâches'**
+  String get subtasks;
+
+  /// No description provided for @task.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tâche'**
+  String get task;
+
+  /// No description provided for @noTask.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sans tâche'**
+  String get noTask;
 }
 
 class _AppLocalizationsDelegate

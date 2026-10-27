@@ -97,8 +97,27 @@ class CatalogController extends ChangeNotifier {
 
   List<Project> get activeProjects => projects.where((p) => !p.archived).toList();
   List<Tag> get activeTags => tags.where((t) => !t.archived).toList();
+  /// Tâches actives de premier niveau d'un projet ; leurs sous-tâches : [subtasksOf] (plans/16-sous-taches.md).
   List<Task> tasksOf(String? projectId) =>
-      tasks.where((t) => t.projectId == projectId && t.status == 'active').toList();
+      tasks.where((t) => t.projectId == projectId && t.parentId == null && t.status == 'active').toList();
+
+  /// Sous-tâches actives d'une tâche.
+  List<Task> subtasksOf(String? taskId) =>
+      taskId == null ? const [] : tasks.where((t) => t.parentId == taskId && t.status == 'active').toList();
+
+  /// La tâche de premier niveau : la tâche elle-même, ou le parent d'une sous-tâche.
+  Task? rootTask(String? id) {
+    final t = task(id);
+    return t?.parentId == null ? t : (task(t!.parentId) ?? t);
+  }
+
+  /// « Tâche › Sous-tâche », ou le nom de la tâche.
+  String? taskPath(String? id) {
+    final t = task(id);
+    if (t == null) return null;
+    final parent = task(t.parentId);
+    return parent == null ? t.name : '${parent.name} › ${t.name}';
+  }
 
   /// Membres actifs d'un groupe.
   List<WorkspaceMember> membersOfGroup(String groupId) => [

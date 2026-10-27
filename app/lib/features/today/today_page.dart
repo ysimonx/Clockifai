@@ -534,7 +534,7 @@ class _TodayPageState extends State<TodayPage> {
   // ------------------------------------------------------------------ saisie express (lot 3)
   List<String> _examples(CatalogController catalog) {
     String word(String name) => name.split(RegExp(r'\s+')).firstWhere((w) => w.length >= 5, orElse: () => name.split(' ').last).toLowerCase();
-    final tasks = catalog.tasks.where((t) => t.status == 'active' && catalog.project(t.projectId)?.archived == false).toList();
+    final tasks = catalog.tasks.where((t) => t.status == 'active' && t.parentId == null && catalog.project(t.projectId)?.archived == false).toList();
     final projects = catalog.activeProjects;
     return [
       if (tasks.isNotEmpty) '1h30 ${tasks.first.name.toLowerCase()} ${word(catalog.project(tasks.first.projectId)!.name)}',
@@ -645,7 +645,7 @@ class _TodayPageState extends State<TodayPage> {
             Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
               chip(q.duration == null ? l.quickDurationMissing : formatHm(q.duration! * 60), missing: q.duration == null, mono: true),
               chip(project?.name ?? l.quickProjectMissing, dot: project == null ? null : colorFromHex(project.color), missing: project == null && q.description.isEmpty),
-              if (task != null) chip(task.name),
+              if (task != null) chip(catalog.taskPath(task.id)!),
               // La description seule quand elle dit autre chose que le nom de la tâche.
               if (q.description.isNotEmpty && fold(q.description) != fold(task?.name ?? '')) chip('« ${q.description} »'),
               for (final id in q.tagIds) chip('#${catalog.tag(id)?.name ?? ''}'),

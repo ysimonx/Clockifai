@@ -357,20 +357,25 @@ def test_mcp_server_names_the_task_without_any_network():
          "params": {"name": "set_current_task", "arguments": {"name": "  Export   PDF  "}}},
         {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "set_current_task", "arguments": {}}},
         {"jsonrpc": "2.0", "id": 5, "method": "resources/list"},
+        {"jsonrpc": "2.0", "id": 6, "method": "tools/call",
+         "params": {"name": "set_current_task", "arguments": {"name": "Plan 16 · Sous-tâches", "step": " Migration "}}},
     ]
     stdin = "\n".join(json.dumps(x) for x in lines) + "\npas du json\n"
     out = subprocess.run([PYTHON, str(PLUGIN / "scripts" / "clockifai_mcp.py")], input=stdin, capture_output=True,
                          text=True, check=True, timeout=20, env={"PATH": os.environ.get("PATH", "")})
     replies = {r["id"]: r for r in map(json.loads, out.stdout.splitlines())}
-    assert sorted(replies) == [1, 2, 3, 4, 5] and out.stderr == "", "une réponse par requête, rien d'autre"
+    assert sorted(replies) == [1, 2, 3, 4, 5, 6] and out.stderr == "", "une réponse par requête, rien d'autre"
     init = replies[1]["result"]
     assert init["protocolVersion"] == "2025-11-25" and init["capabilities"] == {"tools": {}}
     assert "set_current_task" in init["instructions"] and "simple salutation" in init["instructions"]
+    assert "`step`" in init["instructions"] and "plan numéroté" in init["instructions"], "l'objectif, puis l'étape"
     [tool] = replies[2]["result"]["tools"]
     assert tool["name"] == "set_current_task" and tool["inputSchema"]["required"] == ["name"]
+    assert set(tool["inputSchema"]["properties"]) == {"name", "step"}
     assert replies[3]["result"]["content"][0]["text"].startswith("Tâche « Export PDF »")
     assert replies[3]["result"]["isError"] is False and replies[4]["result"]["isError"] is True
     assert replies[5]["error"]["code"] == -32601
+    assert replies[6]["result"]["content"][0]["text"].startswith("Tâche « Plan 16 · Sous-tâches » › « Migration »")
 
 
 def test_hook_relays_the_task_name_and_nothing_else(tmp_path):
@@ -383,10 +388,14 @@ def test_hook_relays_the_task_name_and_nothing_else(tmp_path):
         named = [e for _, _, body in server.received for e in body["events"] if e["kind"] == "session_task"]
         assert [e["payload"] for e in named] == [{"task_name": "Export PDF"}] * 2
         assert "secret" not in json.dumps([body for _, _, body in server.received])
+        step = ev("PostToolUse", tmp_path, tool_name=TASK_TOOL, tool_input={"name": "Plan 16", "step": " Migration  SQL "})
+        run_hook(step, server.url, tmp_path / "cache")
+        named = [e for _, _, body in server.received for e in body["events"] if e["kind"] == "session_task"]
+        assert named[-1]["payload"] == {"task_name": "Plan 16", "step_name": "Migration SQL"}, "l'étape suit l'objectif"
         other = ev("PostToolUse", tmp_path, tool_name="mcp__autre__set_current_task", tool_input={"name": "X"})
         run_hook(other, server.url, tmp_path / "cache")
         kinds = [e["kind"] for _, _, body in server.received for e in body["events"]]
-        assert kinds.count("session_task") == 2, "seul l'outil du plugin Clockifai nomme la tâche"
+        assert kinds.count("session_task") == 3, "seul l'outil du plugin Clockifai nomme la tâche"
     finally:
         server.close()
 

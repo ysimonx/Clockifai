@@ -4871,6 +4871,17 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _parentIdMeta = const VerificationMeta(
+    'parentId',
+  );
+  @override
+  late final GeneratedColumn<String> parentId = GeneratedColumn<String>(
+    'parent_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -4940,6 +4951,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     id,
     workspaceId,
     projectId,
+    parentId,
     name,
     estimateSeconds,
     status,
@@ -4980,6 +4992,12 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
       );
     } else if (isInserting) {
       context.missing(_projectIdMeta);
+    }
+    if (data.containsKey('parent_id')) {
+      context.handle(
+        _parentIdMeta,
+        parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta),
+      );
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -5043,6 +5061,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         DriftSqlType.string,
         data['${effectivePrefix}project_id'],
       )!,
+      parentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}parent_id'],
+      ),
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -5080,6 +5102,9 @@ class Task extends DataClass implements Insertable<Task> {
   final String id;
   final String workspaceId;
   final String projectId;
+
+  /// Tâche parente d'une sous-tâche (plans/16-sous-taches.md) : un seul niveau.
+  final String? parentId;
   final String name;
   final int? estimateSeconds;
   final String status;
@@ -5090,6 +5115,7 @@ class Task extends DataClass implements Insertable<Task> {
     required this.id,
     required this.workspaceId,
     required this.projectId,
+    this.parentId,
     required this.name,
     this.estimateSeconds,
     required this.status,
@@ -5103,6 +5129,9 @@ class Task extends DataClass implements Insertable<Task> {
     map['id'] = Variable<String>(id);
     map['workspace_id'] = Variable<String>(workspaceId);
     map['project_id'] = Variable<String>(projectId);
+    if (!nullToAbsent || parentId != null) {
+      map['parent_id'] = Variable<String>(parentId);
+    }
     map['name'] = Variable<String>(name);
     if (!nullToAbsent || estimateSeconds != null) {
       map['estimate_seconds'] = Variable<int>(estimateSeconds);
@@ -5125,6 +5154,9 @@ class Task extends DataClass implements Insertable<Task> {
       id: Value(id),
       workspaceId: Value(workspaceId),
       projectId: Value(projectId),
+      parentId: parentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parentId),
       name: Value(name),
       estimateSeconds: estimateSeconds == null && nullToAbsent
           ? const Value.absent()
@@ -5151,6 +5183,7 @@ class Task extends DataClass implements Insertable<Task> {
       id: serializer.fromJson<String>(json['id']),
       workspaceId: serializer.fromJson<String>(json['workspaceId']),
       projectId: serializer.fromJson<String>(json['projectId']),
+      parentId: serializer.fromJson<String?>(json['parentId']),
       name: serializer.fromJson<String>(json['name']),
       estimateSeconds: serializer.fromJson<int?>(json['estimateSeconds']),
       status: serializer.fromJson<String>(json['status']),
@@ -5166,6 +5199,7 @@ class Task extends DataClass implements Insertable<Task> {
       'id': serializer.toJson<String>(id),
       'workspaceId': serializer.toJson<String>(workspaceId),
       'projectId': serializer.toJson<String>(projectId),
+      'parentId': serializer.toJson<String?>(parentId),
       'name': serializer.toJson<String>(name),
       'estimateSeconds': serializer.toJson<int?>(estimateSeconds),
       'status': serializer.toJson<String>(status),
@@ -5179,6 +5213,7 @@ class Task extends DataClass implements Insertable<Task> {
     String? id,
     String? workspaceId,
     String? projectId,
+    Value<String?> parentId = const Value.absent(),
     String? name,
     Value<int?> estimateSeconds = const Value.absent(),
     String? status,
@@ -5189,6 +5224,7 @@ class Task extends DataClass implements Insertable<Task> {
     id: id ?? this.id,
     workspaceId: workspaceId ?? this.workspaceId,
     projectId: projectId ?? this.projectId,
+    parentId: parentId.present ? parentId.value : this.parentId,
     name: name ?? this.name,
     estimateSeconds: estimateSeconds.present
         ? estimateSeconds.value
@@ -5205,6 +5241,7 @@ class Task extends DataClass implements Insertable<Task> {
           ? data.workspaceId.value
           : this.workspaceId,
       projectId: data.projectId.present ? data.projectId.value : this.projectId,
+      parentId: data.parentId.present ? data.parentId.value : this.parentId,
       name: data.name.present ? data.name.value : this.name,
       estimateSeconds: data.estimateSeconds.present
           ? data.estimateSeconds.value
@@ -5222,6 +5259,7 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('id: $id, ')
           ..write('workspaceId: $workspaceId, ')
           ..write('projectId: $projectId, ')
+          ..write('parentId: $parentId, ')
           ..write('name: $name, ')
           ..write('estimateSeconds: $estimateSeconds, ')
           ..write('status: $status, ')
@@ -5237,6 +5275,7 @@ class Task extends DataClass implements Insertable<Task> {
     id,
     workspaceId,
     projectId,
+    parentId,
     name,
     estimateSeconds,
     status,
@@ -5251,6 +5290,7 @@ class Task extends DataClass implements Insertable<Task> {
           other.id == this.id &&
           other.workspaceId == this.workspaceId &&
           other.projectId == this.projectId &&
+          other.parentId == this.parentId &&
           other.name == this.name &&
           other.estimateSeconds == this.estimateSeconds &&
           other.status == this.status &&
@@ -5263,6 +5303,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<String> id;
   final Value<String> workspaceId;
   final Value<String> projectId;
+  final Value<String?> parentId;
   final Value<String> name;
   final Value<int?> estimateSeconds;
   final Value<String> status;
@@ -5274,6 +5315,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.id = const Value.absent(),
     this.workspaceId = const Value.absent(),
     this.projectId = const Value.absent(),
+    this.parentId = const Value.absent(),
     this.name = const Value.absent(),
     this.estimateSeconds = const Value.absent(),
     this.status = const Value.absent(),
@@ -5286,6 +5328,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.id = const Value.absent(),
     required String workspaceId,
     required String projectId,
+    this.parentId = const Value.absent(),
     required String name,
     this.estimateSeconds = const Value.absent(),
     this.status = const Value.absent(),
@@ -5300,6 +5343,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<String>? id,
     Expression<String>? workspaceId,
     Expression<String>? projectId,
+    Expression<String>? parentId,
     Expression<String>? name,
     Expression<int>? estimateSeconds,
     Expression<String>? status,
@@ -5312,6 +5356,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (id != null) 'id': id,
       if (workspaceId != null) 'workspace_id': workspaceId,
       if (projectId != null) 'project_id': projectId,
+      if (parentId != null) 'parent_id': parentId,
       if (name != null) 'name': name,
       if (estimateSeconds != null) 'estimate_seconds': estimateSeconds,
       if (status != null) 'status': status,
@@ -5326,6 +5371,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<String>? id,
     Value<String>? workspaceId,
     Value<String>? projectId,
+    Value<String?>? parentId,
     Value<String>? name,
     Value<int?>? estimateSeconds,
     Value<String>? status,
@@ -5338,6 +5384,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       id: id ?? this.id,
       workspaceId: workspaceId ?? this.workspaceId,
       projectId: projectId ?? this.projectId,
+      parentId: parentId ?? this.parentId,
       name: name ?? this.name,
       estimateSeconds: estimateSeconds ?? this.estimateSeconds,
       status: status ?? this.status,
@@ -5359,6 +5406,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
     }
     if (projectId.present) {
       map['project_id'] = Variable<String>(projectId.value);
+    }
+    if (parentId.present) {
+      map['parent_id'] = Variable<String>(parentId.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -5390,6 +5440,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('id: $id, ')
           ..write('workspaceId: $workspaceId, ')
           ..write('projectId: $projectId, ')
+          ..write('parentId: $parentId, ')
           ..write('name: $name, ')
           ..write('estimateSeconds: $estimateSeconds, ')
           ..write('status: $status, ')
@@ -19474,6 +19525,7 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   Value<String> id,
   required String workspaceId,
   required String projectId,
+  Value<String?> parentId,
   required String name,
   Value<int?> estimateSeconds,
   Value<String> status,
@@ -19486,6 +19538,7 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<String> id,
   Value<String> workspaceId,
   Value<String> projectId,
+  Value<String?> parentId,
   Value<String> name,
   Value<int?> estimateSeconds,
   Value<String> status,
@@ -19515,6 +19568,11 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<String> get projectId => $composableBuilder(
     column: $table.projectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get parentId => $composableBuilder(
+    column: $table.parentId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19573,6 +19631,11 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get parentId => $composableBuilder(
+    column: $table.parentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get name => $composableBuilder(
     column: $table.name,
     builder: (column) => ColumnOrderings(column),
@@ -19623,6 +19686,9 @@ class $$TasksTableAnnotationComposer
 
   GeneratedColumn<String> get projectId =>
       $composableBuilder(column: $table.projectId, builder: (column) => column);
+
+  GeneratedColumn<String> get parentId =>
+      $composableBuilder(column: $table.parentId, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
@@ -19676,6 +19742,7 @@ class $$TasksTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> workspaceId = const Value.absent(),
                 Value<String> projectId = const Value.absent(),
+                Value<String?> parentId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<int?> estimateSeconds = const Value.absent(),
                 Value<String> status = const Value.absent(),
@@ -19687,6 +19754,7 @@ class $$TasksTableTableManager
                 id: id,
                 workspaceId: workspaceId,
                 projectId: projectId,
+                parentId: parentId,
                 name: name,
                 estimateSeconds: estimateSeconds,
                 status: status,
@@ -19700,6 +19768,7 @@ class $$TasksTableTableManager
                 Value<String> id = const Value.absent(),
                 required String workspaceId,
                 required String projectId,
+                Value<String?> parentId = const Value.absent(),
                 required String name,
                 Value<int?> estimateSeconds = const Value.absent(),
                 Value<String> status = const Value.absent(),
@@ -19711,6 +19780,7 @@ class $$TasksTableTableManager
                 id: id,
                 workspaceId: workspaceId,
                 projectId: projectId,
+                parentId: parentId,
                 name: name,
                 estimateSeconds: estimateSeconds,
                 status: status,

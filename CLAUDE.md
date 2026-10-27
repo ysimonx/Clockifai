@@ -85,7 +85,8 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 ### Plugin Claude Code (`plans/10-suivi-claude-code.md`)
 - `integrations/claude-code/scripts/clockifai_hook.py` tourne avec le `python3` de macOS : **Python 3.9, bibliothèque standard** (ruff le vérifie avec `integrations/claude-code/ruff.toml`). Il n'écrit jamais sur stdout et sort toujours avec 0.
 - Liste blanche (D6) : jamais le prompt, `tool_input`, `tool_response` ni le texte de la transcription, sauf le nom de tâche passé à l'outil `set_current_task` (D18). La transcription (et celles des sous-agents) est relue sur le poste au `Stop` pour l'usage IA (D17) : seuls partent des totaux `agent_usage` par tranche de 5 minutes, modèle, effort et vitesse. Ajouter un fichier au plugin, c'est aussi l'ajouter à `PLUGIN_FILES` (`routes/claude.py`).
-- `scripts/clockifai_mcp.py` : serveur MCP local (stdio, `.mcp.json`), même contrainte Python 3.9 ; il n'appelle pas le réseau, le hook relaie le nom (`session_task` `{task_name}`).
+- `scripts/clockifai_mcp.py` : serveur MCP local (stdio, `.mcp.json`), même contrainte Python 3.9 ; il n'appelle pas le réseau, le hook relaie l'objectif et l'étape (`session_task` `{task_name, step_name}`) : l'objectif devient la tâche, l'étape une sous-tâche (plan 16).
+- Sous-tâches (`tasks.parent_id`, 0021, plan 16) : un seul niveau, même projet (trigger) ; côté app, `catalog.tasksOf` ne rend que le premier niveau, `subtasksOf`, `rootTask` et `taskPath` (« Tâche › Sous-tâche ») le reste.
 
 ### Flutter
 - Organisation par fonctionnalité dans `lib/features/<feature>/` ; transverse dans `lib/core/`.

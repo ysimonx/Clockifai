@@ -11,11 +11,9 @@ import '../../core/team_rights.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
-import '../../data/repositories/modules_repository.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/time_entries_page.dart';
 import '../timesheet/week_tools.dart' show plannedMinutes;
-import '../today/day_plan.dart' show addDays;
 import 'late_board.dart';
 import 'submission_bar.dart';
 
@@ -144,7 +142,7 @@ class _SubmissionCard extends StatelessWidget {
               workspaceId: sub.workspaceId,
               userId: sub.userId,
               from: start,
-              to: end.add(const Duration(days: 1)),
+              to: addDays(end, 1),
             ),
             builder: (context, snap) {
               final rows = snap.data ?? const <EntryRow>[];

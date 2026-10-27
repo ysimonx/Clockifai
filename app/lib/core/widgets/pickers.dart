@@ -322,6 +322,7 @@ class _TagPickerDialogState extends State<_TagPickerDialog> {
                   title: Text(l.createTagNamed(_query.trim())),
                   onTap: () async {
                     final id = await catalogRepo.createTag(session.workspaceId!, _query.trim());
+                    if (!mounted) return;
                     setState(() {
                       _selected.add(id);
                       _query = '';

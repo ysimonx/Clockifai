@@ -13,7 +13,6 @@ import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
-import '../../data/repositories/modules_repository.dart';
 
 String invoiceStatusLabel(BuildContext context, String status) {
   final l = context.l10n;
@@ -95,7 +94,7 @@ class InvoicesPage extends StatelessWidget {
     if (clients.isEmpty) return showSnack(context, l.noClients);
     var clientId = clients.first.id;
     final now = DateTime.now();
-    var range = DateTimeRange(start: DateTime(now.year, now.month - 1), end: DateTime(now.year, now.month).subtract(const Duration(days: 1)));
+    var range = DateTimeRange(start: DateTime(now.year, now.month - 1), end: DateTime(now.year, now.month, 0));
     final tax = TextEditingController(text: ws.defaultTaxPercent.toString());
     var byTask = true;
     final ok = await showDialog<bool>(
@@ -147,7 +146,7 @@ class InvoicesPage extends StatelessWidget {
       userId: session.userId!,
       clientId: clientId,
       from: startOfDay(range.start),
-      to: startOfDay(range.end).add(const Duration(days: 1)),
+      to: addDays(range.end, 1),
       currency: client?.currencyOverride ?? ws.currency,
       taxPercent: double.tryParse(tax.text.replaceAll(',', '.')) ?? ws.defaultTaxPercent,
       projectNames: {for (final p in catalog.projects) p.id: p.name},

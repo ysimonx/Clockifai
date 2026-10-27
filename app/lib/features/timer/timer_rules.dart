@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/di.dart';
+import '../../core/format.dart' show startOfDay;
 import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../core/widgets/common.dart';
@@ -14,6 +15,19 @@ import '../../data/repositories/time_entry_repository.dart';
 String? timerRuleViolation(AppLocalizations l, Workspace ws, {required String description, required String? projectId}) {
   if (ws.requireProject && projectId == null) return l.projectRequired;
   if (ws.requireDescription && description.trim().isEmpty) return l.descriptionRequired;
+  return null;
+}
+
+/// Ce qui empêche d'ajouter une entrée de [userId] le jour [day] : règles du workspace, puis, hors admins, période
+/// verrouillée ou déjà approuvée (le serveur refuserait). Message, ou null si rien ne bloque. Partagé par
+/// « Aujourd'hui », la saisie express et le récapitulatif de fin de journée.
+Future<String?> newEntryViolation(AppLocalizations l, SessionController session,
+    {required String userId, required DateTime day, required String description, required String? projectId}) async {
+  final ws = session.workspace!;
+  final rule = timerRuleViolation(l, ws, description: description, projectId: projectId);
+  if (rule != null || session.isAdmin) return rule;
+  if (inLockedPeriod(session, startOfDay(day))) return l.periodLocked;
+  if (await modulesRepo.isDayApproved(ws.id, userId, day)) return l.periodApproved;
   return null;
 }
 

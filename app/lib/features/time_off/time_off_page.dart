@@ -12,7 +12,6 @@ import '../../core/team_rights.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
-import '../../data/repositories/modules_repository.dart';
 import '../approvals/submission_bar.dart' show askDecisionNote;
 
 /// Jours ouvrés (lundi–vendredi hors jours fériés) entre deux dates incluses.

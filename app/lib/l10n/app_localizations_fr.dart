@@ -2865,4 +2865,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noTask => 'Sans tâche';
+
+  @override
+  String get periodLocked =>
+      'Période verrouillée : seule une personne administratrice peut y saisir du temps.';
+
+  @override
+  String get periodApproved =>
+      'Période déjà approuvée : demandez sa réouverture pour y ajouter du temps.';
+
+  @override
+  String taskDeleted(String name) {
+    return 'Tâche « $name » supprimée, avec ses sous-tâches ; ses entrées restent';
+  }
 }

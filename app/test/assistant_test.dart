@@ -25,6 +25,12 @@ class _Session extends ChangeNotifier implements SessionController {
   @override
   String? get userId => me;
   @override
+  String get role => 'owner';
+  @override
+  bool get isAdmin => true;
+  @override
+  Workspace? get workspace => null;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

@@ -14,11 +14,10 @@ import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../data/drift/database.dart' show Task;
-import '../../data/repositories/time_entry_repository.dart';
 import '../timer/timer_control.dart' show showStartTimer;
-import '../timer/timer_rules.dart' show timerRuleViolation;
 import '../today/day_plan.dart';
 import 'duration_chips.dart';
+import 'own_entries.dart';
 
 /// « + » du téléphone (maquette « Téléphone : saisir sans clavier », plans/14-coller-aux-maquettes.md) : la durée au
 /// pouce, le matin ou l'après-midi, le projet de la dernière entrée et ses tâches en pastilles, une description
@@ -76,28 +75,23 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
     super.dispose();
   }
 
+  bool _busy = false;
+
   Future<void> _save() async {
+    if (_busy) return;
     final l = context.l10n;
-    final session = context.read<SessionController>();
-    final catalog = context.read<CatalogController>();
-    final blocked = timerRuleViolation(l, session.workspace!, description: _description.text, projectId: _projectId);
-    if (blocked != null) return showSnack(context, blocked);
-    final me = session.userId!;
-    final start = atMinute(_day, _start), end = atMinute(_day, _start + _minutes);
-    final id = await entriesRepo.createManual(
-      workspaceId: session.workspaceId!,
-      userId: me,
-      start: start,
-      end: end,
-      createdBy: me,
-      draft: EntryDraft(
-        description: _description.text.trim(),
-        projectId: _projectId,
-        taskId: _taskId,
-        billable: catalog.billableFor(projectId: _projectId, userId: me),
-        hourlyRateCents: catalog.rateFor(projectId: _projectId, userId: me),
-      ),
-    );
+    _busy = true;
+    final List<String>? ids;
+    try {
+      ids = await createOwnEntries(context, [
+        OwnEntry(start: atMinute(_day, _start), end: atMinute(_day, _start + _minutes), description: _description.text,
+            projectId: _projectId, taskId: _taskId),
+      ]);
+    } finally {
+      _busy = false;
+    }
+    if (ids == null) return;
+    final id = ids.single;
     if (!mounted) return;
     Navigator.pop(context);
     final outer = widget.outer;

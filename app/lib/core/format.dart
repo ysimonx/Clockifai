@@ -41,13 +41,17 @@ int? parseDuration(String input) {
 }
 
 /// Début de semaine (minuit local) ; [weekStart] ISO : 1 = lundi … 7 = dimanche.
-DateTime startOfWeek(DateTime date, int weekStart) {
-  final d = DateTime(date.year, date.month, date.day);
-  final diff = (d.weekday - weekStart) % 7;
-  return d.subtract(Duration(days: diff));
-}
+DateTime startOfWeek(DateTime date, int weekStart) => addDays(date, -((date.weekday - weekStart) % 7));
 
 DateTime startOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
+
+/// Le jour [days] jours après [d], à minuit : pas 24 h plus tard, un jour de changement d'heure en compte 23 ou 25.
+DateTime addDays(DateTime d, int days) => DateTime(d.year, d.month, d.day + days);
+
+/// Jour sans heure en texte `yyyy-MM-dd`, comme les colonnes `date` de la base (`period_start`, `start_date`…).
+String dayKey(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+DateTime parseDay(String s) => DateTime.parse(s);
 
 bool sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 

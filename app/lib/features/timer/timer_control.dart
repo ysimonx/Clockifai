@@ -115,34 +115,55 @@ class _TimerControlState extends State<TimerControl> {
   /// Les chronomètres en cours : modifier, arrêter, abandonner ; en démarrer un autre si l'espace le permet.
   void _showRunning(BuildContext context) {
     final l = context.l10n;
-    final parallel = context.read<SessionController>().runningTimersLimit != 1;
+    final session = context.read<SessionController>();
+    final parallel = session.runningTimersLimit != 1;
+    // Le panneau suit les chronomètres : arrêté ici (ou ailleurs), un chronomètre en sort ; le dernier le ferme.
+    final running = entriesRepo.watchRunningAll(session.workspaceId!, session.userId!);
     showPanel<void>(
       context,
       title: l.runningTimersCount(_running.length),
-      builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        for (final e in _running) RunningTimerRow(key: ValueKey(e.id), entry: e),
-        const SizedBox(height: 8),
-        Wrap(alignment: WrapAlignment.spaceBetween, spacing: 8, runSpacing: 8, children: [
-          TextButton.icon(
+      builder: (ctx) => StreamBuilder<List<TimeEntry>>(
+        stream: running,
+        initialData: _running,
+        builder: (ctx, snap) {
+          final rows = snap.data ?? const <TimeEntry>[];
+          if (rows.isEmpty && snap.connectionState == ConnectionState.active) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final route = ctx.mounted ? ModalRoute.of(ctx) : null;
+              if (route != null && route.isActive) Navigator.of(ctx).removeRoute(route);
+            });
+          }
+          return _runningPanel(context, ctx, rows, parallel);
+        },
+      ),
+    );
+  }
+
+  Widget _runningPanel(BuildContext context, BuildContext ctx, List<TimeEntry> rows, bool parallel) {
+    final l = context.l10n;
+    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      for (final e in rows) RunningTimerRow(key: ValueKey(e.id), entry: e),
+      const SizedBox(height: 8),
+      Wrap(alignment: WrapAlignment.spaceBetween, spacing: 8, runSpacing: 8, children: [
+        TextButton.icon(
+          onPressed: () {
+            Navigator.pop(ctx);
+            showEntryDialog(context);
+          },
+          icon: const Icon(Icons.add),
+          label: Text(l.addManualEntry),
+        ),
+        if (parallel)
+          FilledButton.icon(
             onPressed: () {
               Navigator.pop(ctx);
-              showEntryDialog(context);
+              showStartTimer(context);
             },
-            icon: const Icon(Icons.add),
-            label: Text(l.addManualEntry),
+            icon: const Icon(Icons.play_arrow, size: 20),
+            label: Text(l.start),
           ),
-          if (parallel)
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                showStartTimer(context);
-              },
-              icon: const Icon(Icons.play_arrow, size: 20),
-              label: Text(l.start),
-            ),
-        ]),
       ]),
-    );
+    ]);
   }
 }
 

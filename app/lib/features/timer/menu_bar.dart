@@ -56,7 +56,8 @@ class _MacMenuBarState extends State<MacMenuBar> {
   @override
   void initState() {
     super.initState();
-    if (MacMenuBar.supported) _channel.setMethodCallHandler(_onCall);
+    if (!MacMenuBar.supported) return; // ailleurs, _session et _catalog ne sont jamais posés
+    _channel.setMethodCallHandler(_onCall);
     recapNotice.addListener(_schedulePush);
   }
 
@@ -92,8 +93,10 @@ class _MacMenuBarState extends State<MacMenuBar> {
 
   @override
   void dispose() {
-    if (MacMenuBar.supported) _channel.setMethodCallHandler(null);
-    recapNotice.removeListener(_schedulePush);
+    if (MacMenuBar.supported) {
+      _channel.setMethodCallHandler(null);
+      recapNotice.removeListener(_schedulePush);
+    }
     _runningSub?.cancel();
     _recentSub?.cancel();
     super.dispose();
@@ -269,6 +272,9 @@ class _MacMenuBarState extends State<MacMenuBar> {
     final ready = q.isComplete && slot != null;
     if (!save) return {'preview': quickSummary(context, q, slot, _catalog, userId, now).join(' · '), 'ready': ready};
     if (!ready) return {'ok': false, 'message': q.duration == null ? _l.quickDurationMissing : _l.quickProjectMissing};
+    final blocked = await newEntryViolation(_l, _session,
+        userId: userId, day: slot.day, description: q.description, projectId: q.projectId);
+    if (blocked != null || !mounted) return {'ok': false, 'message': blocked};
     final message = quickAddedMessage(context, q, slot, _catalog, now);
     await saveQuick(q, slot, catalog: _catalog, workspaceId: ws.id, userId: userId);
     return {'ok': true, 'message': message};

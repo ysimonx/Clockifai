@@ -4757,6 +4757,24 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Sans tâche'**
   String get noTask;
+
+  /// No description provided for @periodLocked.
+  ///
+  /// In fr, this message translates to:
+  /// **'Période verrouillée : seule une personne administratrice peut y saisir du temps.'**
+  String get periodLocked;
+
+  /// No description provided for @periodApproved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Période déjà approuvée : demandez sa réouverture pour y ajouter du temps.'**
+  String get periodApproved;
+
+  /// No description provided for @taskDeleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tâche « {name} » supprimée, avec ses sous-tâches ; ses entrées restent'**
+  String taskDeleted(String name);
 }
 
 class _AppLocalizationsDelegate

@@ -22,6 +22,8 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../presence/presence.dart' show PresenceTracker;
 import '../time_entries/entry_dialog.dart';
+import '../time_entries/own_entries.dart';
+import '../timer/timer_rules.dart' show newEntryViolation;
 import '../timesheet/week_tools.dart' show copyDay;
 import 'day_plan.dart';
 import 'quick_place.dart';
@@ -47,7 +49,8 @@ enum _Kind { logged, draft, fresh }
 
 /// Un bloc de la ligne « Vous » : entrée saisie, proposition ou nouvelle entrée en cours de création.
 class _Block {
-  _Block({required this.id, required this.kind, required this.span, required this.title, this.projectId, this.taskId, this.entry, this.draft});
+  _Block({required this.id, required this.kind, required this.span, required this.title, this.projectId, this.taskId, this.entry, this.draft,
+      this.fixed = false});
   final String id;
   final _Kind kind;
   final Span span;
@@ -57,8 +60,12 @@ class _Block {
   final TimeEntry? entry;
   final Draft? draft;
 
+  /// Entrée qu'on ne déplace pas ici : verrouillée, dans une période verrouillée, d'une autre personne sans droit, ou à
+  /// cheval sur un autre jour (sa plage est coupée à minuit).
+  final bool fixed;
+
   bool get running => entry != null && entry!.endAt == null;
-  bool get movable => kind != _Kind.logged || (!running && !entry!.locked);
+  bool get movable => kind != _Kind.logged || (!running && !fixed);
 }
 
 class _DraftEdit {
@@ -82,6 +89,12 @@ enum _Drag { create, move, left, right }
 class _TodayPageState extends State<TodayPage> {
   late DateTime _day = _midnight(widget.initialDay ?? widget.clock());
   String? _sel;
+
+  /// Un enregistrement à la fois : un double clic ou Entrée puis le bouton ne font pas de doublon.
+  bool _busy = false;
+
+  /// La dictée a été lancée depuis cette page.
+  bool _dictating = false;
   final Map<String, _DraftEdit> _edits = {};
   final Map<String, Span> _override = {};
   Span? _fresh;
@@ -152,6 +165,7 @@ class _TodayPageState extends State<TodayPage> {
 
   @override
   void dispose() {
+    if (_dictating) Dictation.instance.stop(); // micro ouvert par cette page : on le coupe en partant
     _tick?.cancel();
     PresenceTracker.instance.log.removeListener(_onPresence);
     _focus.dispose();
@@ -214,7 +228,8 @@ class _TodayPageState extends State<TodayPage> {
       required bool loading}) {
     final l = context.l10n;
     final now = widget.clock();
-    final typical = TypicalDay.ofProfile(context.read<SessionController>().profile);
+    final session = context.read<SessionController>();
+    final typical = TypicalDay.ofProfile(session.profile);
     final dayEnd = addDays(_day, 1);
     final mineRows = rows.where((r) => !r.entry.startAt.toLocal().isBefore(_day) && r.entry.startAt.toLocal().isBefore(dayEnd)).toList();
     final history = [for (final r in rows) if (r.entry.startAt.toLocal().isBefore(_day)) r.entry];
@@ -248,6 +263,8 @@ class _TodayPageState extends State<TodayPage> {
             projectId: r.entry.projectId,
             taskId: r.entry.taskId,
             entry: r.entry,
+            fixed: (r.entry.locked && !session.isAdmin) || inLockedPeriod(session, r.entry.startAt.toLocal())
+                || minuteOf(r.entry.startAt, _day) < 0 || minuteOf(r.entry.endAt ?? now, _day) > 1440,
           ),
       for (final d in plan.drafts)
         _Block(
@@ -284,24 +301,19 @@ class _TodayPageState extends State<TodayPage> {
     final range = Span((starts.reduce(math.min) ~/ 60) * 60, math.min(1440, ((ends.reduce(math.max) + 59) ~/ 60) * 60));
 
     Future<void> confirmDrafts(List<_Block> list) async {
-      final ids = <String>[];
-      for (final b in list) {
-        ids.add(await entriesRepo.createManual(
-          workspaceId: ws,
-          userId: me,
-          start: _at(b.span.start),
-          end: _at(b.span.end),
-          createdBy: me,
-          draft: EntryDraft(
-            description: b.title,
-            projectId: b.projectId,
-            taskId: b.taskId,
-            billable: catalog.billableFor(projectId: b.projectId, userId: me),
-            hourlyRateCents: catalog.rateFor(projectId: b.projectId, userId: me),
-          ),
-        ));
+      if (_busy || list.isEmpty) return;
+      _busy = true;
+      final List<String>? ids;
+      try {
+        ids = await createOwnEntries(this.context, [
+          for (final b in list)
+            OwnEntry(start: _at(b.span.start), end: _at(b.span.end), description: b.title, projectId: b.projectId, taskId: b.taskId),
+        ]);
+      } finally {
+        _busy = false;
       }
-      if (!mounted) return;
+      if (ids == null || !mounted) return;
+      final created = ids;
       final next = drafts.where((d) => !list.contains(d)).firstOrNull;
       setState(() {
         for (final b in list) {
@@ -310,7 +322,7 @@ class _TodayPageState extends State<TodayPage> {
         _sel = next?.id;
       });
       final minutes = list.fold(0, (a, b) => a + b.span.length);
-      showUndo(this.context, l.journalAdded(list.length, formatHm(minutes * 60)), () => entriesRepo.deleteMany(ids));
+      showUndo(this.context, l.journalAdded(list.length, formatHm(minutes * 60)), () => entriesRepo.deleteMany(created));
     }
 
     Future<void> dismiss(_Block b) async {
@@ -324,21 +336,18 @@ class _TodayPageState extends State<TodayPage> {
 
     Future<void> saveFresh() async {
       final sp = _fresh;
-      if (sp == null) return;
-      final id = await entriesRepo.createManual(
-        workspaceId: ws,
-        userId: me,
-        start: _at(sp.start),
-        end: _at(sp.end),
-        createdBy: me,
-        draft: EntryDraft(
-          description: _freshTitle,
-          projectId: _freshProject,
-          taskId: _freshTask,
-          billable: catalog.billableFor(projectId: _freshProject, userId: me),
-          hourlyRateCents: catalog.rateFor(projectId: _freshProject, userId: me),
-        ),
-      );
+      if (sp == null || _busy) return;
+      _busy = true;
+      final List<String>? ids;
+      try {
+        ids = await createOwnEntries(this.context, [
+          OwnEntry(start: _at(sp.start), end: _at(sp.end), description: _freshTitle, projectId: _freshProject, taskId: _freshTask),
+        ]);
+      } finally {
+        _busy = false;
+      }
+      if (ids == null) return;
+      final id = ids.single;
       if (!mounted) return;
       setState(() {
         _fresh = null;
@@ -566,9 +575,34 @@ class _TodayPageState extends State<TodayPage> {
     final task = catalog.task(q?.taskId);
 
     Future<void> save() async {
-      if (!ready) return;
-      final added = quickAddedMessage(context, q, slot, catalog, now);
-      final id = await saveQuick(q, slot, catalog: catalog, workspaceId: ws, userId: me);
+      if (!ready || _busy) return;
+      final session = context.read<SessionController>();
+      final day = addDays(now, q.dayOffset);
+      if (await newEntryViolation(l, session, userId: me, day: day, description: q.description, projectId: q.projectId)
+          case final blocked?) {
+        if (mounted) showSnack(this.context, blocked);
+        return;
+      }
+      _busy = true;
+      final String id;
+      final String added;
+      try {
+        // Rangée parmi les entrées du jour visé, relues : la page peut afficher un autre jour (« hier » depuis lundi).
+        final fresh = await entriesRepo
+            .watchEntries(workspaceId: ws, userId: me, from: addDays(day, -35), to: addDays(day, 1), includeRunning: true)
+            .first;
+        if (!mounted) return;
+        final placed = placeQuick(q,
+                now: now,
+                entries: [for (final r in fresh) r.entry],
+                typical: TypicalDay.ofProfile(session.profile),
+                proposedOn: (d) => d == _day ? proposed : const []) ??
+            slot;
+        added = quickAddedMessage(this.context, q, placed, catalog, now);
+        id = await saveQuick(q, placed, catalog: catalog, workspaceId: ws, userId: me);
+      } finally {
+        _busy = false;
+      }
       if (!mounted) return;
       _quick.clear();
       setState(() {});
@@ -675,6 +709,7 @@ class _TodayPageState extends State<TodayPage> {
         icon: Icon(listening ? Icons.mic : Icons.mic_none, color: listening ? Theme.of(context).colorScheme.error : null),
         onPressed: () async {
           if (listening) return dictation.stop();
+          _dictating = true;
           final ok = await dictation.start(context.localeTag, (text, done) {
             if (!mounted) return;
             setState(() {
@@ -1095,11 +1130,17 @@ class _TodayPageState extends State<TodayPage> {
 
             void endDrag(DragEndDetails _) {
               final sp = b.kind == _Kind.logged ? _override[b.id] : null;
+              final origin = _dragOrigin;
               setState(() {
                 _drag = null;
                 _dragOrigin = null;
               });
-              if (sp != null && sp != _dragOrigin) commitSpan(b, sp);
+              if (sp == null) return;
+              if (sp != origin) {
+                commitSpan(b, sp);
+              } else {
+                setState(() => _override.remove(b.id)); // revenu au point de départ : rien à écrire
+              }
             }
 
             Widget handle(_Drag side) => Positioned(

@@ -1,11 +1,9 @@
 import 'package:drift/drift.dart';
-import 'package:intl/intl.dart';
 
+import '../../core/format.dart' show addDays, dayKey;
 import '../drift/database.dart';
 
-final _day = DateFormat('yyyy-MM-dd');
-String dayKey(DateTime d) => _day.format(d);
-DateTime parseDay(String s) => DateTime.parse(s);
+export '../../core/format.dart' show dayKey, parseDay;
 
 /// Approbations, absences, planning et facturation (base locale, règles vérifiées par le serveur).
 class ModulesRepository {
@@ -36,7 +34,7 @@ class ModulesRepository {
         if (unseen) e = e & t.seenAt.isNull();
         return e;
       })
-      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+      ..orderBy([(t) => OrderingTerm.desc(epoch(t.createdAt))]);
     return q.watch();
   }
 
@@ -241,7 +239,7 @@ class ModulesRepository {
   // ======================================================== facturation
   Stream<List<Invoice>> watchInvoices(String workspaceId) => (db.select(db.invoices)
         ..where((t) => t.workspaceId.equals(workspaceId) & t.deletedAt.isNull())
-        ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        ..orderBy([(t) => OrderingTerm.desc(epoch(t.createdAt))]))
       .watch();
 
   Stream<List<InvoiceItem>> watchItems(String invoiceId) => (db.select(db.invoiceItems)
@@ -351,7 +349,7 @@ class ModulesRepository {
             taxPercent: Value(taxPercent),
             issueDate: Value(dayKey(DateTime.now())),
             periodStart: Value(dayKey(from)),
-            periodEnd: Value(dayKey(to.subtract(const Duration(days: 1)))),
+            periodEnd: Value(dayKey(addDays(to, -1))),
             createdBy: Value(userId),
           ));
       var position = 0;

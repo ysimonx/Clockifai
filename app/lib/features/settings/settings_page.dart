@@ -684,9 +684,10 @@ class _KioskDevicesDialogState extends State<_KioskDevicesDialog> {
   Future<void> _load() async {
     try {
       final res = await ServicesApi.get('/api/kiosk/devices', {'workspace_id': widget.workspaceId});
+      if (!mounted) return;
       setState(() => _devices = (res['devices'] as List).cast<Map<String, dynamic>>());
     } catch (e) {
-      setState(() => _error = context.l10n.onlineOnly);
+      if (mounted) setState(() => _error = context.l10n.onlineOnly);
     }
   }
 
@@ -726,7 +727,12 @@ class _KioskDevicesDialogState extends State<_KioskDevicesDialog> {
                 tooltip: l.revoke,
                 icon: const Icon(Icons.delete_outline),
                 onPressed: () async {
-                  await ServicesApi.delete('/api/kiosk/devices/${d['id']}', {'workspace_id': widget.workspaceId});
+                  try {
+                    await ServicesApi.delete('/api/kiosk/devices/${d['id']}', {'workspace_id': widget.workspaceId});
+                  } catch (_) {
+                    if (context.mounted) showSnack(context, l.onlineOnly);
+                    return;
+                  }
                   await _load();
                 },
               ),

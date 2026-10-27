@@ -8,10 +8,11 @@ import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
+import '../../core/widgets/teammates.dart' show memberName;
 import '../../data/drift/database.dart';
-import '../../data/repositories/modules_repository.dart';
 
 /// Planning : affectations (projet × membre × jours), absences approuvées, jours fériés,
 /// et charge prévue au regard de la capacité quotidienne de chaque membre.
@@ -34,8 +35,11 @@ class _SchedulePageState extends State<SchedulePage> {
     final ws = session.workspace!;
     final start = _weekStart ??= startOfWeek(DateTime.now(), ws.weekStart);
     final days = [for (var i = 0; i < 7 * _weeks; i++) DateTime(start.year, start.month, start.day + i)];
-    final members = session.isManager
-        ? catalog.humans.where((m) => m.status == 'active').toList()
+    // Lecture comme les absences et les rapports : un chef d'équipe voit aussi ses collaborateurs (flux managed_team) ;
+    // l'édition reste aux managers.
+    final rights = TeamRights.of(context);
+    final members = rights.seesTeam
+        ? rights.visibleMembers.where((m) => m.status == 'active' && !catalog.isAgent(m.userId)).toList()
         : catalog.members.where((m) => m.userId == session.userId).toList();
     final locale = context.localeTag;
 
@@ -43,12 +47,12 @@ class _SchedulePageState extends State<SchedulePage> {
       title: l.schedule,
       maxWidth: 1600,
       actions: [
-        IconButton(onPressed: () => setState(() => _weekStart = start.subtract(const Duration(days: 7))), icon: const Icon(Icons.chevron_left)),
+        IconButton(onPressed: () => setState(() => _weekStart = addDays(start, -7)), icon: const Icon(Icons.chevron_left)),
         TextButton(
           onPressed: () => setState(() => _weekStart = startOfWeek(DateTime.now(), ws.weekStart)),
           child: Text('${DateFormat.MMMd(locale).format(days.first)} – ${DateFormat.MMMd(locale).format(days.last)}'),
         ),
-        IconButton(onPressed: () => setState(() => _weekStart = start.add(const Duration(days: 7))), icon: const Icon(Icons.chevron_right)),
+        IconButton(onPressed: () => setState(() => _weekStart = addDays(start, 7)), icon: const Icon(Icons.chevron_right)),
         DropdownButton<int>(
           value: _weeks,
           underline: const SizedBox.shrink(),
@@ -61,9 +65,9 @@ class _SchedulePageState extends State<SchedulePage> {
         ],
       ],
       child: StreamBuilder<List<ScheduleAssignment>>(
-        stream: modulesRepo.watchAssignments(ws.id, userId: session.isManager ? null : session.userId, from: days.first, to: days.last),
+        stream: modulesRepo.watchAssignments(ws.id, userId: rights.seesTeam ? null : session.userId, from: days.first, to: days.last),
         builder: (context, aSnap) => StreamBuilder<List<TimeOffRequest>>(
-          stream: modulesRepo.watchRequests(ws.id, userId: session.isManager ? null : session.userId),
+          stream: modulesRepo.watchRequests(ws.id, userId: rights.seesTeam ? null : session.userId),
           builder: (context, rSnap) => StreamBuilder<List<Holiday>>(
             stream: modulesRepo.watchHolidays(ws.id),
             builder: (context, hSnap) => StreamBuilder<List<TimeOffPolicy>>(
@@ -248,7 +252,10 @@ Future<void> showAssignmentDialog(BuildContext context, {ScheduleAssignment? ass
   final session = context.read<SessionController>();
   final catalog = context.read<CatalogController>();
   final a = assignment;
-  var user = a?.userId ?? userId ?? (catalog.humans.isNotEmpty ? catalog.humans.first.userId : session.userId!);
+  final active = catalog.humans.where((m) => m.status == 'active').toList();
+  var user = a?.userId ?? userId ?? (active.isNotEmpty ? active.first.userId : session.userId!);
+  // Affectation d'une personne désactivée depuis : elle reste dans la liste pour que le champ garde sa valeur.
+  final choices = [...active, if (!active.any((m) => m.userId == user)) ?catalog.memberOf(user)];
   var projectId = a?.projectId;
   var range = DateTimeRange(
     start: a == null ? (initialDay ?? DateTime.now()) : parseDay(a.startDate),
@@ -268,7 +275,7 @@ Future<void> showAssignmentDialog(BuildContext context, {ScheduleAssignment? ass
             DropdownButtonFormField<String>(
               initialValue: user,
               decoration: InputDecoration(labelText: l.member),
-              items: [for (final m in catalog.humans.where((m) => m.status == 'active')) DropdownMenuItem(value: m.userId, child: Text(m.displayName))],
+              items: [for (final m in choices) DropdownMenuItem(value: m.userId, child: Text(memberName(m)))],
               onChanged: (v) => setState(() => user = v!),
             ),
             const SizedBox(height: 12),

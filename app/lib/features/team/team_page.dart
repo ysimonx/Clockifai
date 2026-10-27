@@ -64,7 +64,7 @@ class _TeamPageState extends State<TeamPage> {
         workspaceId: ws.id,
         userId: rights.seesOthers ? null : session.userId,
         from: weekStart,
-        to: weekStart.add(const Duration(days: 7)),
+        to: addDays(weekStart, 7),
         includeRunning: true,
       ),
       builder: (context, snap) {

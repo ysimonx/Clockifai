@@ -8,7 +8,6 @@ import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
-import '../../data/repositories/modules_repository.dart';
 import '../timesheet/week_tools.dart';
 
 /// Bandeau de la feuille de temps : état d'approbation de la période et action de soumission.

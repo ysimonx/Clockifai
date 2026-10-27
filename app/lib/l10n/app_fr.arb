@@ -1702,5 +1702,15 @@
   },
   "subtasks": "Sous-tâches",
   "task": "Tâche",
-  "noTask": "Sans tâche"
+  "noTask": "Sans tâche",
+  "periodLocked": "Période verrouillée : seule une personne administratrice peut y saisir du temps.",
+  "periodApproved": "Période déjà approuvée : demandez sa réouverture pour y ajouter du temps.",
+  "taskDeleted": "Tâche « {name} » supprimée, avec ses sous-tâches ; ses entrées restent",
+  "@taskDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

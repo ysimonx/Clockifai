@@ -2842,4 +2842,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noTask => 'No task';
+
+  @override
+  String get periodLocked =>
+      'Locked period: only an administrator can enter time there.';
+
+  @override
+  String get periodApproved =>
+      'Period already approved: ask for it to be reopened to add time.';
+
+  @override
+  String taskDeleted(String name) {
+    return 'Task “$name” deleted, with its subtasks; its entries remain';
+  }
 }

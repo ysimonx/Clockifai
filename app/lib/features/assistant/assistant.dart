@@ -7,8 +7,10 @@ import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/services_api.dart';
 import '../../core/session.dart';
+import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import '../time_entries/entry_selection.dart' show entryEditable;
 
 /// « Demander à Clockifai » (plans/13-ux-moderne.md, lot 12) : questions sur le temps passé, réponses de Claude par
 /// le serveur (`/api/assistant`), à partir de totaux seulement. Une modification proposée s'affiche en aperçu ; la
@@ -262,7 +264,10 @@ class _ProposalCardState extends State<_ProposalCard> {
     return FutureBuilder<List<EntryRow>>(
       future: _rows,
       builder: (context, snap) {
-        final rows = snap.data ?? const <EntryRow>[];
+        // Le serveur propose les entrées qu'on peut lire ; seules celles qu'on peut modifier (droits, verrou) entrent.
+        final session = context.read<SessionController>();
+        final rights = TeamRights.of(context);
+        final rows = [for (final r in snap.data ?? const <EntryRow>[]) if (entryEditable(session, rights, r.entry)) r];
         final change = [
           if (catalog.project(p.projectId) case final project?) '→ ${project.name}${catalog.task(p.taskId) == null ? '' : ' : ${catalog.taskPath(p.taskId)}'}',
           if (p.billable != null) '→ ${p.billable! ? l.billable : l.nonBillable}',

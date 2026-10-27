@@ -12,7 +12,6 @@ import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
-import '../../data/repositories/modules_repository.dart' show dayKey;
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/duration_chips.dart';
 import '../today/day_plan.dart' show TypicalDay, addDays;
@@ -88,8 +87,7 @@ class _TeamEntryPageState extends State<TeamEntryPage> {
     if (targets.any((uid) => _seconds(_hoursOf(uid)) <= 0)) return showSnack(context, l.invalidDuration);
     if (ws.requireProject && _projectId == null) return showSnack(context, l.projectRequired);
     if (ws.requireDescription && _description.text.trim().isEmpty) return showSnack(context, l.descriptionRequired);
-    final lock = DateTime.tryParse(ws.lockEntriesBefore ?? '');
-    if (lock != null && _date.isBefore(lock) && !session.isAdmin) return showSnack(context, l.entryLocked);
+    if (inLockedPeriod(session, _date)) return showSnack(context, l.entryLocked);
     for (final uid in targets) {
       if (await modulesRepo.isDayApproved(ws.id, uid, _date)) {
         if (mounted) showSnack(context, l.approvedPeriodFor(memberName(catalog.memberOf(uid))));

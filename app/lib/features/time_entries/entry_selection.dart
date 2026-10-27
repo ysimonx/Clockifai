@@ -30,8 +30,7 @@ String groupLineKey(DateTime day, EntryGroup group) => 'g:$day ${group.key}';
 
 /// Mêmes conditions que le dialogue d'entrée : le serveur refuserait une entrée verrouillée ou d'une période close.
 bool entryEditable(SessionController session, TeamRights rights, TimeEntry e) {
-  final lockDate = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
-  final locked = !session.isAdmin && (e.locked || (lockDate != null && e.startAt.toLocal().isBefore(lockDate)));
+  final locked = (e.locked && !session.isAdmin) || inLockedPeriod(session, e.startAt.toLocal());
   return !locked && rights.canEditTimeOf(e.userId);
 }
 

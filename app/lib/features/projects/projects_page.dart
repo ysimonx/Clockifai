@@ -134,7 +134,10 @@ class _ProjectTile extends StatelessWidget {
                   IconButton(
                     tooltip: l.delete,
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () => catalogRepo.deleteTask(t.id),
+                    onPressed: () async {
+                      final before = await catalogRepo.deleteTask(t.id);
+                      if (context.mounted) showUndo(context, l.taskDeleted(t.name), () => catalogRepo.restoreTasks(before));
+                    },
                   ),
                 ])
               : null,
@@ -316,7 +319,7 @@ class _ProjectDialogState extends State<_ProjectDialog> {
                   final name = await promptText(context, title: l.newClient, label: l.name);
                   if (name == null || name.trim().isEmpty) return;
                   final id = await catalogRepo.createClient(session.workspaceId!, name: name);
-                  setState(() => _clientId = id);
+                  if (mounted) setState(() => _clientId = id);
                 },
               ),
             ]),

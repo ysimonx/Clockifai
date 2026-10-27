@@ -5,6 +5,7 @@ import 'package:clockifai/core/theme.dart';
 import 'package:clockifai/data/drift/database.dart';
 import 'package:clockifai/data/repositories/catalog_repository.dart';
 import 'package:clockifai/data/repositories/team_repository.dart';
+import 'package:clockifai/data/repositories/modules_repository.dart';
 import 'package:clockifai/data/repositories/time_entry_repository.dart';
 import 'package:clockifai/data/repositories/workspace_repository.dart';
 import 'package:clockifai/features/time_entries/quick_add_sheet.dart';
@@ -32,6 +33,8 @@ class _Session extends ChangeNotifier implements SessionController {
   @override
   Profile? get profile => null;
   @override
+  bool get isAdmin => false;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -45,6 +48,7 @@ void main() {
     session = _Session();
     db = TestDb();
     getIt.registerSingleton<TimeEntryRepository>(TimeEntryRepository(db));
+    getIt.registerSingleton<ModulesRepository>(ModulesRepository(db));
     await db.into(db.workspaces).insert(WorkspacesCompanion.insert(id: const Value(ws), name: 'Échafaudages du Nord'));
     await db.into(db.workspaceMembers).insert(member(me));
     session.workspace = await db.select(db.workspaces).getSingle();

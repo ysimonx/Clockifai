@@ -4,6 +4,7 @@ import 'package:clockifai/core/session.dart';
 import 'package:clockifai/data/drift/database.dart';
 import 'package:clockifai/data/repositories/catalog_repository.dart';
 import 'package:clockifai/data/repositories/team_repository.dart';
+import 'package:clockifai/data/repositories/modules_repository.dart';
 import 'package:clockifai/data/repositories/time_entry_repository.dart';
 import 'package:clockifai/data/repositories/workspace_repository.dart';
 import 'package:clockifai/features/timer/menu_bar.dart';
@@ -40,6 +41,8 @@ class _Session extends ChangeNotifier implements SessionController {
   @override
   Profile? profile;
   @override
+  bool get isAdmin => false;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -53,6 +56,7 @@ void main() {
   setUp(() async {
     db = TestDb();
     getIt.registerSingleton<TimeEntryRepository>(TimeEntryRepository(db));
+    getIt.registerSingleton<ModulesRepository>(ModulesRepository(db));
     await db.into(db.workspaces).insert(
         WorkspacesCompanion.insert(id: const Value(ws), name: 'Atelier', requireProject: const Value(true)));
     workspace = await db.select(db.workspaces).getSingle();

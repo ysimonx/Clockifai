@@ -1,7 +1,11 @@
 import 'dart:math' as math;
 
+import '../../core/format.dart' show addDays, dayKey;
+
 import '../../data/drift/database.dart';
 import '../presence/presence_log.dart' show SiteVisit;
+
+export '../../core/format.dart' show addDays, dayKey;
 
 /// Journal automatique (plans/13-ux-moderne.md, lot 11) : la journée se remplit à partir de ce que Clockifai sait
 /// déjà, et la personne valide. Calcul pur, sans base ni widget : il reçoit les entrées et le planning, et rend la
@@ -175,10 +179,6 @@ const _minGap = 15;
 int _snap(int m) => (m / 5).round() * 5;
 
 DateTime _midnight(DateTime d) => DateTime(d.year, d.month, d.day);
-String dayKey(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-/// Le jour [days] jours après [d], à minuit : pas 24 h plus tard, un jour de changement d'heure en compte 23 ou 25.
-DateTime addDays(DateTime d, int days) => DateTime(d.year, d.month, d.day + days);
 
 /// L'heure [minutes] (depuis minuit, à l'horloge) du jour [day].
 DateTime atMinute(DateTime day, int minutes) => DateTime(day.year, day.month, day.day, 0, minutes);

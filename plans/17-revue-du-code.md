@@ -18,7 +18,7 @@ aucune fonction `security definer` sans `search_path`, RLS sur toutes les tables
 | Lot | Contenu | État |
 |---|---|---|
 | 1 Base et serveur | Migration 0022 ; Flask (sessions Claude, exports, assistant) ; serveur MCP du plugin | fait |
-| 2 App : bugs | Constats « bug » de l'app ci-dessous | en cours |
+| 2 App : bugs | Constats « bug » de l'app ci-dessous | fait |
 | 3 App : nettoyage | Code mort, duplications, découpage de `today_page.dart` | à faire |
 | 4 À décider | Constats qui changent une règle ou un montant | à décider avec Yannick |
 
@@ -54,6 +54,25 @@ Flask :
 
 Plugin : le serveur MCP lit et écrit en UTF-8 quelle que soit la locale, et survit à une requête inattendue ; le hook
 ignore un `tool_input` qui n'est pas un objet.
+
+## Lot 2 — bugs de l'app
+
+- Jours : `addDays`, `dayKey`, `parseDay` réunis dans `core/format.dart` ; plus d'ajout de 7 × 24 h ni de
+  `startOfWeek` en heures (semaine du dimanche coupée en deux au changement d'heure, Planning décalé d'un jour) ;
+  rappel du récapitulatif à l'heure dite le jour du changement d'heure.
+- « Aujourd'hui », feuille « + », récapitulatif, saisie express du Mac : règles de l'espace et périodes verrouillées
+  ou approuvées avant d'écrire (`createOwnEntries`, `newEntryViolation`) ; un enregistrement à la fois ; la saisie
+  express se range parmi les entrées du jour visé ; tâches des projets archivés écartées ; un bloc verrouillé ou à
+  cheval sur minuit ne se déplace plus, et un glisser revenu au départ n'écrit rien ; la dictée s'arrête en quittant.
+- Chronomètres : le panneau suit le flux des chronomètres et se ferme au dernier arrêt ; `stop()` ne touche plus une
+  entrée déjà arrêtée.
+- Verrou : `inLockedPeriod(session, jour)` (`core/session.dart`) remplace huit copies ; le menu ⋮ d'une entrée en tient compte.
+- `setDayTotal` n'ouvre plus de transaction imbriquée (refusée par sqlite_async) ; relances et factures triées par
+  `epoch()`.
+- Assistant : propositions limitées aux entrées modifiables. Projets : Annuler après la suppression d'une tâche
+  (`restoreTasks`). Planning : lecture d'équipe pour les chefs d'équipe, personne active par défaut. « Qui n'a pas
+  soumis » sans personnes désactivées. Barre de menus : plus d'écouteur hors macOS (erreur quotidienne sur le web et
+  les téléphones). `mounted` vérifié après les appels réseau (kiosque, jetons, tags, clients).
 
 ## Lot 4 — à décider
 

@@ -24,16 +24,21 @@ class QuickSlot {
 }
 
 /// Analyse [text] avec le référentiel : projets, tâches et tags actifs.
-QuickEntry? parseQuick(String text, CatalogController catalog, DateTime now) => parseQuickEntry(
-      text,
-      weekday: now.weekday,
-      projects: [for (final p in catalog.activeProjects) QuickProject(p.id, p.name, client: catalog.client(p.clientId)?.name)],
-      tasks: [
-        for (final t in catalog.tasks)
-          if (t.status == 'active') QuickTask(t.id, t.name, t.projectId),
-      ],
-      tags: [for (final t in catalog.activeTags) QuickTag(t.id, t.name)],
-    );
+QuickEntry? parseQuick(String text, CatalogController catalog, DateTime now) {
+  final projects = catalog.activeProjects;
+  final open = {for (final p in projects) p.id};
+  return parseQuickEntry(
+    text,
+    weekday: now.weekday,
+    projects: [for (final p in projects) QuickProject(p.id, p.name, client: catalog.client(p.clientId)?.name)],
+    // Tâches des projets actifs seulement : celle d'un projet archivé donnerait une entrée sans projet.
+    tasks: [
+      for (final t in catalog.tasks)
+        if (t.status == 'active' && open.contains(t.projectId)) QuickTask(t.id, t.name, t.projectId),
+    ],
+    tags: [for (final t in catalog.activeTags) QuickTag(t.id, t.name)],
+  );
+}
 
 /// Où ranger [q] : sa plage, sinon le premier créneau vide assez grand de son jour, en laissant d'abord en place les
 /// propositions affichées ce jour-là ([proposedOn]), puis à leur place, sinon après la dernière entrée du jour.

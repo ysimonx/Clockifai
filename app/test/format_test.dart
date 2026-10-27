@@ -36,6 +36,8 @@ void main() {
     test('semaine ISO (lundi)', () => expect(startOfWeek(saturday, 1), DateTime(2026, 10, 5)));
     test('semaine commençant le dimanche', () => expect(startOfWeek(saturday, 7), DateTime(2026, 10, 11)));
     test('le jour même est le début de semaine', () => expect(startOfWeek(DateTime(2026, 10, 5, 8), 1), DateTime(2026, 10, 5)));
+    // Le 25 octobre 2026 compte 25 heures en Europe : le début de semaine reste à minuit, pas 48 h plus tôt.
+    test('changement d\'heure', () => expect(startOfWeek(DateTime(2026, 10, 27, 9), 7), DateTime(2026, 10, 25)));
   });
 
   test('colorFromHex', () {

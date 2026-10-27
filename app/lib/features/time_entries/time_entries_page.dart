@@ -19,7 +19,6 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../timer/timer_rules.dart';
 import '../timesheet/week_tools.dart' show WeekViews;
-import '../today/day_plan.dart' show dayKey;
 import 'agents_banner.dart';
 import 'ai_usage.dart';
 import 'entry_dialog.dart';
@@ -115,7 +114,7 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
     final session = context.watch<SessionController>();
     final ws = session.workspace!;
     final weekStart = startOfWeek(DateTime.now(), ws.weekStart);
-    final from = weekStart.subtract(Duration(days: 7 * (_weeks - 1)));
+    final from = addDays(weekStart, -7 * (_weeks - 1));
     final to = DateTime.now().add(const Duration(days: 2));
 
     return StreamBuilder<List<EntryRow>>(
@@ -234,7 +233,7 @@ class _WeekHeader extends StatelessWidget {
     final thisWeek = startOfWeek(DateTime.now(), context.read<SessionController>().workspace!.weekStart);
     final label = weekStart == thisWeek
         ? l.thisWeek
-        : weekStart == thisWeek.subtract(const Duration(days: 7))
+        : weekStart == addDays(thisWeek, -7)
             ? l.lastWeek
             : l.weekOf(MaterialLocalizations.of(context).formatShortDate(weekStart));
     final theme = Theme.of(context);
@@ -345,11 +344,12 @@ class EntryTile extends StatelessWidget {
     final times = '${timeLabel(context, e.startAt)} – ${e.endAt == null ? '…' : timeLabel(context, e.endAt!)}';
     final isMine = e.userId == session.userId;
     final rights = TeamRights.of(context);
-    final canEdit = rights.canEditTimeOf(e.userId);
+    // Verrou compris : le menu ne propose pas une modification que le serveur refuserait.
+    final canEdit = entryEditable(session, rights, e);
     final canDuplicate = rights.canCreateTimeFor(e.userId);
     final author = e.createdBy;
     // Description et projet modifiables sur place, aux mêmes conditions que le dialogue.
-    final inline = inlineEdit && entryEditable(session, rights, e);
+    final inline = inlineEdit && canEdit;
     final selection = selectable ? context.watch<EntrySelection?>() : null;
     final line = selection == null ? null : EntryLine(entryLineKey(e.id), [row], selectable: inline);
 
@@ -574,9 +574,7 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
     final aiTokens = g.rows.fold<int>(0, (s, r) => s + r.aiTokens);
     final aiCosts = [for (final r in g.rows) ?r.aiCostMicros];
     // Mêmes règles que le dialogue d'entrée : le serveur refuserait la modification d'une entrée verrouillée.
-    final lockDate = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
-    final inLockedPeriod = lockDate != null && widget.day.isBefore(lockDate) && !session.isAdmin;
-    final locked = (g.anyLocked && !session.isAdmin) || inLockedPeriod;
+    final locked = (g.anyLocked && !session.isAdmin) || inLockedPeriod(session, widget.day);
     final canEdit = !locked && TeamRights.of(context).canEditTimeOf(e.userId);
 
     final badge = Tooltip(

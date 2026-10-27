@@ -101,10 +101,21 @@ class CatalogRepository {
         estimateSeconds: estimateSeconds == null ? const Value.absent() : Value(estimateSeconds),
       ));
 
-  /// Supprime la tâche et ses sous-tâches (même horodatage : le serveur les rend ensemble à la restauration).
-  Future<void> deleteTask(String id) => (db.update(db.tasks)
-        ..where((t) => (t.id.equals(id) | t.parentId.equals(id)) & t.deletedAt.isNull()))
-      .write(TasksCompanion(deletedAt: Value(nowUtc())));
+  /// Supprime la tâche et ses sous-tâches (même horodatage : le serveur les rend ensemble à la restauration) ;
+  /// renvoie les lignes d'avant, pour [restoreTasks] (Annuler).
+  Future<List<Task>> deleteTask(String id) => db.transaction(() async {
+        Expression<bool> family($TasksTable t) => (t.id.equals(id) | t.parentId.equals(id)) & t.deletedAt.isNull();
+        final before = await (db.select(db.tasks)..where(family)).get();
+        await (db.update(db.tasks)..where(family)).write(TasksCompanion(deletedAt: Value(nowUtc())));
+        return before;
+      });
+
+  /// Annuler une suppression : la tâche d'abord, puis ses sous-tâches.
+  Future<void> restoreTasks(List<Task> before) => db.transaction(() async {
+        for (final t in [...before.where((t) => t.parentId == null), ...before.where((t) => t.parentId != null)]) {
+          await db.restoreRow(db.tasks, t.toCompanion(false));
+        }
+      });
 
   // ------------------------------------------------------------------ tags
   Future<String> createTag(String workspaceId, String name, {String color = '#6B7280'}) async {

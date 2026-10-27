@@ -22,6 +22,7 @@ import '../time_entries/ai_usage.dart';
 import '../time_entries/entry_dialog.dart';
 import '../time_entries/time_entries_page.dart';
 import 'report_model.dart';
+import 'report_questions.dart';
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -41,6 +42,23 @@ class _ReportsPageState extends State<ReportsPage> {
   bool? _billable;
   bool _applyRounding = false;
   bool _detailed = false;
+  // Rapports par questions (plan 13, lot 7).
+  bool _compare = false;
+  bool _toBill = false;
+
+  /// Une question toute faite : règle la période, le regroupement et les filtres d'un geste.
+  void _ask({required RangePreset preset, required GroupBy groupBy, MemberKind kind = MemberKind.all, bool toBill = false}) =>
+      setState(() {
+        _preset = preset;
+        _groupBy = groupBy;
+        _kind = kind;
+        _toBill = toBill;
+        _detailed = false;
+        _projectId = null;
+        _clientId = null;
+        _billable = null;
+        _userId = null;
+      });
   DateTimeRange _range(int weekStart) {
     final now = DateTime.now();
     final ws = startOfWeek(now, weekStart);
@@ -139,13 +157,21 @@ class _ReportsPageState extends State<ReportsPage> {
         ),
       ],
       child: StreamBuilder<List<EntryRow>>(
+        // Période précédente (comparaison) ; flux vide sinon.
+        stream: _compare
+            ? entriesRepo.watchEntries(
+                workspaceId: ws.id, userId: userFilter, from: previousRange(range, _preset).start, to: previousRange(range, _preset).end)
+            : Stream.value(const <EntryRow>[]),
+        builder: (context, prevSnap) => StreamBuilder<List<EntryRow>>(
         stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: userFilter, from: range.start, to: range.end),
         builder: (context, snap) {
-          final rows = _filter(snap.data ?? const [], catalog)
-              .where((r) => r.entry.userId == session.userId || rights.manages(r.entry.userId))
-              .toList();
+          bool visible(EntryRow r) => r.entry.userId == session.userId || rights.manages(r.entry.userId);
+          final rows = _filter(snap.data ?? const [], catalog).where(visible).toList();
+          final previous = _filter(prevSnap.data ?? const [], catalog).where(visible).toList();
           final calc = ReportCalculator(catalog: catalog, roundingMinutes: ws.roundingMinutes, applyRounding: _applyRounding);
           final totals = calc.totals(rows);
+          final before = _compare ? calc.totals(previous) : null;
+          String? vs(num now, num? then) => then == null ? null : deltaPercent(now, then);
           final groups = calc.group(
             rows,
             _groupBy,
@@ -155,13 +181,59 @@ class _ReportsPageState extends State<ReportsPage> {
             noDescription: l.noDescription,
             dayLabel: (d) => DateFormat.MMMEd(locale).format(d),
           );
+          final previousGroups = {
+            for (final g in calc.group(previous, _groupBy,
+                noProject: l.noProject, noClient: l.noClient, noTag: l.noTag, noDescription: l.noDescription,
+                dayLabel: (d) => DateFormat.MMMEd(locale).format(d)))
+              g.key: g.seconds,
+          };
+          final hasAgents = rights.visibleMembers.any((m) => catalog.isAgent(m.userId)) || catalog.agentsOf(session.userId).isNotEmpty;
           return ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 24), children: [
+            // Questions toutes faites : un geste règle période, regroupement et filtres.
+            Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+              Text(l.reportQuestions, style: Theme.of(context).textTheme.labelLarge),
+              ActionChip(
+                avatar: const Icon(Icons.timer_outlined, size: 18),
+                label: Text(rights.seesOthers ? l.qTeamWeek : l.qMyWeek),
+                onPressed: () => _ask(preset: RangePreset.thisWeek, groupBy: GroupBy.project),
+              ),
+              ActionChip(
+                avatar: const Icon(Icons.business_outlined, size: 18),
+                label: Text(l.qClientsMonth),
+                onPressed: () => _ask(preset: RangePreset.thisMonth, groupBy: GroupBy.client),
+              ),
+              if (rights.seesOthers)
+                ActionChip(
+                  avatar: const Icon(Icons.groups_outlined, size: 18),
+                  label: Text(l.qWhoWhat),
+                  onPressed: () => _ask(preset: RangePreset.thisWeek, groupBy: GroupBy.user),
+                ),
+              if (session.isManager)
+                ActionChip(
+                  avatar: const Icon(Icons.receipt_long_outlined, size: 18),
+                  label: Text(l.qReadyToBill),
+                  onPressed: () => _ask(preset: RangePreset.thisMonth, groupBy: GroupBy.client, toBill: true),
+                ),
+              if (hasAgents)
+                ActionChip(
+                  avatar: const Icon(Icons.smart_toy_outlined, size: 18),
+                  label: Text(l.qAiCost),
+                  onPressed: () => _ask(preset: RangePreset.thisMonth, groupBy: GroupBy.project, kind: MemberKind.agents),
+                ),
+              FilterChip(
+                label: Text(l.qCompare),
+                selected: _compare,
+                onSelected: (v) => setState(() => _compare = v),
+              ),
+            ]),
+            const SizedBox(height: 8),
+            if (_toBill && session.isManager) ...[const ReadyToBill(), const SizedBox(height: 12)],
             _filters(context, session, catalog, range),
             const SizedBox(height: 12),
             Wrap(spacing: 12, runSpacing: 12, children: [
-              _StatCard(label: l.totalTime, value: formatHm(totals.total)),
-              _StatCard(label: l.billableTime, value: formatHm(totals.billable)),
-              _StatCard(label: l.amount, value: formatMoney(totals.amount, ws.currency, locale)),
+              _StatCard(label: l.totalTime, value: formatHm(totals.total), delta: vs(totals.total, before?.total)),
+              _StatCard(label: l.billableTime, value: formatHm(totals.billable), delta: vs(totals.billable, before?.billable)),
+              _StatCard(label: l.amount, value: formatMoney(totals.amount, ws.currency, locale), delta: vs(totals.amount, before?.amount)),
               // Entrées d'agent Claude : tokens et coût estimé au tarif de l'API (plan 10, D17).
               if (totals.aiTokens > 0)
                 Tooltip(
@@ -215,21 +287,32 @@ class _ReportsPageState extends State<ReportsPage> {
                         color: g.color == null ? null : colorFromHex(g.color!),
                       ),
                       trailing: SizedBox(
-                        width: 180,
-                        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                        width: _compare ? 280 : 180,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
                           if (g.amount > 0)
                             Padding(
                               padding: const EdgeInsets.only(right: 12),
                               child: Text(formatMoney(g.amount, ws.currency, locale), style: Theme.of(context).textTheme.bodySmall),
                             ),
+                          if (_compare)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Text(l.qBefore(formatHm(previousGroups[g.key] ?? 0)),
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.outline)),
+                            ),
                           Text(formatHm(g.seconds), style: const TextStyle(fontWeight: FontWeight.w600)),
                         ]),
+                        ),
                       ),
                     ),
                 ]),
               ),
           ]);
         },
+      ),
       ),
     );
   }
@@ -375,10 +458,13 @@ class _ReportsPageState extends State<ReportsPage> {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value, this.caption});
+  const _StatCard({required this.label, required this.value, this.caption, this.delta});
   final String label;
   final String value;
   final String? caption;
+
+  /// Écart avec la période précédente (« +12 % »), quand on compare.
+  final String? delta;
 
   @override
   Widget build(BuildContext context) {
@@ -393,6 +479,10 @@ class _StatCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(value, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
             if (caption != null) Text(caption!, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+            if (delta != null)
+              Text(context.l10n.qDelta(delta!),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: delta!.startsWith('+') ? Colors.green.shade700 : (delta!.startsWith('−') ? theme.colorScheme.error : theme.colorScheme.outline))),
           ]),
         ),
       ),

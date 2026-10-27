@@ -714,6 +714,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String get reportQuestions => 'Questions:';
+
+  @override
+  String get qMyWeek => 'My time this week';
+
+  @override
+  String get qTeamWeek => 'The team\'s time this week';
+
+  @override
+  String get qClientsMonth => 'By client, this month';
+
+  @override
+  String get qWhoWhat => 'Who did what this week';
+
+  @override
+  String get qReadyToBill => 'Ready to bill';
+
+  @override
+  String get qAiCost => 'AI usage at cost';
+
+  @override
+  String get qCompare => 'Compare with the previous period';
+
+  @override
+  String qDelta(String delta) {
+    return '$delta vs previous period';
+  }
+
+  @override
+  String qBefore(String duration) {
+    return 'before: $duration';
+  }
+
+  @override
+  String get readyToBillTitle => 'To bill';
+
+  @override
+  String get readyToBillHelp =>
+      'Billable time not yet invoiced, by client, over the last twelve months (workspace rounding applied).';
+
+  @override
+  String get readyToBillNone => 'Everything is invoiced.';
+
+  @override
+  String readyToBillSince(String day) {
+    return 'since $day';
+  }
+
+  @override
+  String get invoiceNow => 'Invoice';
+
+  @override
   String get assistantTitle => 'Ask Clockifai';
 
   @override

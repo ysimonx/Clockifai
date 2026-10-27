@@ -1,6 +1,6 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
-> Statut : **en cours** (lots 1 à 6, 11 et 12 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
+> Statut : **en cours** (lots 1 à 7, 11 et 12 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
 > (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
@@ -153,6 +153,16 @@ Ce que cela demande :
 - Pas encore essayé contre l'API réelle (pas de clé sur le poste de développement) : à vérifier dès que
   `ANTHROPIC_API_KEY` est posée en production.
 
+### Lot 7, rapports par questions (fait)
+
+- Questions toutes faites en haut des Rapports (`_ask` : période, regroupement, filtres d'un geste) : le temps de la
+  semaine (le sien, ou de l'équipe), par client ce mois-ci, qui a fait quoi (si l'on voit d'autres personnes),
+  prêt à facturer (managers), usage IA au coût (si des agents sont visibles).
+- « Comparer à la période précédente » (`previousRange` : semaine, mois ou année civils, sinon même durée) : écart en
+  pourcentage sur les cartes, valeur d'avant sur chaque ligne du résumé.
+- « À facturer » (`ReadyToBill`) : temps facturable non facturé par client, douze derniers mois, arrondi appliqué ;
+  « Facturer » crée la facture (`createInvoiceFromTime`, par tâche, TVA par défaut) et l'ouvre.
+
 ### Lot 11, première version (faite)
 
 - Page **Aujourd'hui** (`/today`, `features/today/today_page.dart`), en tête du menu ; l'accueil reste
@@ -233,7 +243,7 @@ Ce que cela demande :
 | 4 Pistes | Moteur de suggestions : planning, habitudes, sessions de Claude et commits (rejoint le plan 10, lot 2, `time_suggestions`) ; agenda en option (Google, Microsoft) | M/L | fait (agenda iCal, commits ; sans Google ni Microsoft en direct) |
 | 5 Semaine | Une page, trois vues ; copie de la semaine précédente, remplissage par le planning, suggestions en pointillé, liste avant soumission | M | fait |
 | 6 Fin de journée | Récapitulatif à heure réglable (barre de menus macOS, notification mobile) avec les pistes à cocher | S/M | fait |
-| 7 Rapports par questions | Questions toutes faites, comparaison, prêt à facturer et facture en un clic, usage IA au coût | M | envisagé |
+| 7 Rapports par questions | Questions toutes faites, comparaison, prêt à facturer et facture en un clic, usage IA au coût | M | fait |
 | 8 Équipe | Tableau des retards, relance par notification, approbation avec écart au planning | M | envisagé |
 | 9 Mobile chantier | « Comme hier », durée au pouce, dictée, glisser, badge hors ligne, pointage d'équipe repensé | M | envisagé |
 | 10 Identité visuelle | Polices, jetons de couleur, mode sombre, densité | S/M | envisagé |

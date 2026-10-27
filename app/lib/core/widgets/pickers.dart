@@ -7,6 +7,7 @@ import '../di.dart';
 import '../format.dart';
 import '../l10n.dart';
 import '../session.dart';
+import '../tickets.dart';
 import 'common.dart';
 
 /// Résultat du sélecteur de projet : `projectId == null` = sans projet.
@@ -31,6 +32,17 @@ Future<String?> promptNewTask(BuildContext context, Project p, {String initial =
   final name = (await promptText(context, title: title, label: l.name, initial: initial))?.trim();
   if (name == null || name.isEmpty || !context.mounted) return null;
   return pickOrCreateTask(context, p, name, parent: parent);
+}
+
+/// La tâche du ticket [ticket] dans le projet [p] (plans/19-tickets-clients.md) : reprise si elle existe, sinon
+/// créée sous le nom « ENG-123 · Titre », le titre étant demandé (facultatif). Nul si l'utilisateur annule.
+Future<String?> promptTicketTask(BuildContext context, Project p, TicketRef ticket) async {
+  final existing = context.read<CatalogController>().ticketTask(ticket, projectId: p.id);
+  if (existing != null) return existing.id;
+  final l = context.l10n;
+  final title = await promptText(context, title: l.newTicketTask(ticket.label), label: l.ticketTitle);
+  if (title == null || !context.mounted) return null;
+  return catalogRepo.createTask(p.workspaceId, p.id, ticketTaskName(ticket, title), ticket: ticket);
 }
 
 /// La tâche [name] du projet [p] (ou la sous-tâche de [parent]), créée si elle n'existe pas encore.
@@ -71,6 +83,11 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
     if (id != null && mounted) Navigator.pop(context, ProjectPick(p.id, id));
   }
 
+  Future<void> _promptTicketTask(Project p, TicketRef ticket) async {
+    final id = await promptTicketTask(context, p, ticket);
+    if (id != null && mounted) Navigator.pop(context, ProjectPick(p.id, id));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -79,12 +96,15 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
     final session = context.read<SessionController>();
     final canCreateTasks = session.canCreateTasks;
     final q = _query.trim().toLowerCase();
+    // Une URL ou une clé de ticket collée retrouve la tâche du ticket (plans/19-tickets-clients.md).
+    final ticket = parseTicket(_query);
 
     bool nameMatches(Project p) =>
         q.isEmpty ||
         p.name.toLowerCase().contains(q) ||
         (catalog.client(p.clientId)?.name ?? '').toLowerCase().contains(q);
-    bool named(Task t) => t.name.toLowerCase().contains(q);
+    bool named(Task t) =>
+        t.name.toLowerCase().contains(q) || (ticket != null && t.parentId == null && isTicket(ticket, key: t.ticketKey, url: t.ticketUrl));
     // Une tâche répond à la recherche par son nom ou par celui d'une de ses sous-tâches.
     List<Task> matchingTasks(Project p) =>
         q.isEmpty ? const [] : catalog.tasksOf(p.id).where((t) => named(t) || catalog.subtasksOf(t.id).any(named)).toList();
@@ -128,8 +148,8 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
               tooltip: l.createTask,
               visualDensity: VisualDensity.compact,
               icon: const Icon(Icons.add, size: 18),
-              // La recherche porte sur une tâche (pas sur ce projet) : on la reprend comme nom.
-              onPressed: () => _promptTask(p, nameMatches(p) ? '' : _query.trim()),
+              // La recherche porte sur une tâche (pas sur ce projet) : on la reprend comme nom, ou comme ticket.
+              onPressed: () => ticket != null && !nameMatches(p) ? _promptTicketTask(p, ticket) : _promptTask(p, nameMatches(p) ? '' : _query.trim()),
             ),
         ]),
       );
@@ -182,7 +202,7 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
           ? [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text(l.createTaskIn(_query.trim()), style: theme.textTheme.labelLarge),
+                child: Text(ticket != null ? l.createTicketTaskIn(ticket.label) : l.createTaskIn(_query.trim()), style: theme.textTheme.labelLarge),
               ),
               for (final p in catalog.activeProjects)
                 ListTile(
@@ -191,7 +211,7 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
                   title: Text(p.name, style: TextStyle(color: colorFromHex(p.color), fontWeight: FontWeight.w600)),
                   subtitle: p.clientId == null ? null : Text(catalog.client(p.clientId)?.name ?? ''),
                   trailing: const Icon(Icons.add, size: 18),
-                  onTap: () => _pickOrCreateTask(p, _query),
+                  onTap: () => ticket != null ? _promptTicketTask(p, ticket) : _pickOrCreateTask(p, _query),
                 ),
             ]
           : [ListTile(title: Text(l.noMatch, style: TextStyle(color: theme.colorScheme.outline)))];

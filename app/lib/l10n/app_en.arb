@@ -1470,5 +1470,13 @@
         "type": "String"
       }
     }
-  }
+  },
+  "ticket": "Client ticket",
+  "ticketHint": "Jira, Linear or GitHub URL, or key (ENG-123)",
+  "ticketInvalid": "Ticket not recognized: an https URL or a key such as ENG-123",
+  "ticketTaskExists": "This ticket already has its task in this project: {name}",
+  "openTicket": "Open ticket {ticket}",
+  "createTicketTaskIn": "Create the task of ticket {ticket} in:",
+  "newTicketTask": "Task of ticket {ticket}",
+  "ticketTitle": "Title (optional)"
 }

@@ -3058,4 +3058,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String taskDeleted(String name) {
     return 'Task “$name” deleted, with its subtasks; its entries remain';
   }
+
+  @override
+  String get ticket => 'Client ticket';
+
+  @override
+  String get ticketHint => 'Jira, Linear or GitHub URL, or key (ENG-123)';
+
+  @override
+  String get ticketInvalid =>
+      'Ticket not recognized: an https URL or a key such as ENG-123';
+
+  @override
+  String ticketTaskExists(String name) {
+    return 'This ticket already has its task in this project: $name';
+  }
+
+  @override
+  String openTicket(String ticket) {
+    return 'Open ticket $ticket';
+  }
+
+  @override
+  String createTicketTaskIn(String ticket) {
+    return 'Create the task of ticket $ticket in:';
+  }
+
+  @override
+  String newTicketTask(String ticket) {
+    return 'Task of ticket $ticket';
+  }
+
+  @override
+  String get ticketTitle => 'Title (optional)';
 }

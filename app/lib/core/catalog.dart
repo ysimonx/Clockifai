@@ -6,6 +6,7 @@ import '../data/drift/database.dart';
 import '../data/repositories/catalog_repository.dart';
 import '../data/repositories/team_repository.dart';
 import '../data/repositories/workspace_repository.dart';
+import 'tickets.dart';
 
 /// Référentiel du workspace courant, gardé en mémoire et tenu à jour par les flux Drift.
 /// Les écrans résolvent projets / clients / tags / membres par identifiant sans requête.
@@ -104,6 +105,16 @@ class CatalogController extends ChangeNotifier {
   /// Sous-tâches actives d'une tâche.
   List<Task> subtasksOf(String? taskId) =>
       taskId == null ? const [] : tasks.where((t) => t.parentId == taskId && t.status == 'active').toList();
+
+  /// La tâche active d'un ticket (plans/19-tickets-clients.md), retrouvée par sa clé (sans tenir compte de la casse),
+  /// sinon par son URL ; dans [projectId] s'il est donné, sinon dans tout l'espace.
+  Task? ticketTask(TicketRef ticket, {String? projectId}) => tasks
+      .where((t) =>
+          t.parentId == null &&
+          t.status == 'active' &&
+          (projectId == null || t.projectId == projectId) &&
+          isTicket(ticket, key: t.ticketKey, url: t.ticketUrl))
+      .firstOrNull;
 
   /// La tâche de premier niveau : la tâche elle-même, ou le parent d'une sous-tâche.
   Task? rootTask(String? id) {

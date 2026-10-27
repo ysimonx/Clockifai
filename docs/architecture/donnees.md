@@ -103,6 +103,8 @@ erDiagram
     text name
     text status "active | done"
     int estimate_seconds
+    text ticket_url "ticket du client, Jira, Linear, GitHub (0027)"
+    text ticket_key "clé du ticket, ENG-123 : retrouve la tâche"
     uuid created_by
   }
   tags {

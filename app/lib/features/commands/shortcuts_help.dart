@@ -52,6 +52,7 @@ Future<void> showShortcutsHelp(BuildContext context) {
             Text(l.shortcutsHelp, style: theme.textTheme.bodySmall),
             section(l.shortcutsEverywhere, [
               ([commandKeyLabel, 'K'], l.kbPalette),
+              ([commandKeyLabel, 'J'], l.kbAssistant),
               (['N'], l.kbNewEntry),
               (['S'], l.kbTimer),
               ([commandKeyLabel, 'Z'], l.kbUndo),

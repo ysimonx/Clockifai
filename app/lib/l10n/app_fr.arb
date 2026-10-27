@@ -481,6 +481,38 @@
     }
   },
   "undo": "Annuler",
+  "assistantTitle": "Demander à Clockifai",
+  "assistantTooltip": "Demander à Clockifai ({shortcut})",
+  "@assistantTooltip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "assistantIntro": "Posez une question sur votre temps : totaux par projet, client, jour ou personne, comparaisons, entrées à corriger. Seuls des totaux et les noms des projets partent vers Claude, jamais vos descriptions.",
+  "assistantHint": "Combien d'heures sur la boulangerie ce mois-ci ?",
+  "assistantExample1": "Combien d'heures cette semaine, par projet ?",
+  "assistantExample2": "Qu'est-ce qui reste facturable ce mois-ci, par client ?",
+  "assistantExample3": "Mes entrées sans projet de la semaine dernière ?",
+  "assistantThinking": "Clockifai cherche…",
+  "assistantRefused": "Je ne peux pas répondre à cette question.",
+  "assistantTooLong": "Cette question demande trop d'étapes : précisez-la.",
+  "assistantUnavailable": "L'assistant est injoignable pour le moment.",
+  "assistantRateLimited": "Trop de questions : réessayez dans un moment.",
+  "assistantOffline": "L'assistant demande une connexion.",
+  "assistantEntries": "{count, plural, =0{Aucune entrée} =1{1 entrée} other{{count} entrées}}",
+  "@assistantEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assistantPreview": "Voir l'aperçu",
+  "assistantApply": "Appliquer",
+  "assistantApplied": "Appliqué",
+  "kbAssistant": "Demander à Clockifai",
   "recapTitle": "Fin de journée",
   "recapLine": "{logged} saisies sur {target} · {count, plural, =1{1 proposition à confirmer} other{{count} propositions à confirmer}}",
   "@recapLine": {

@@ -58,6 +58,10 @@ tags:
     description: |
       Traces d'une journée pour la page « Aujourd'hui » (plan 13, lots 4 et 11) : agenda de la personne (adresse
       iCal privée, lue par le serveur) et ses propres commits. JWT de l'utilisateur.
+  - name: assistant
+    description: |
+      « Demander à Clockifai » (plan 13, lot 12) : questions sur le temps passé, réponses de Claude (API Anthropic)
+      à partir d'agrégats seulement ; désactivé sans `ANTHROPIC_API_KEY`. JWT de l'utilisateur.
   - name: tâches planifiées
     description: |
       Déclenchement manuel. En temps normal APScheduler les exécute dans le process Flask
@@ -395,6 +399,95 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
 
+  /api/assistant/status:
+    get:
+      tags: [assistant]
+      operationId: getAssistantStatus
+      summary: L'assistant est-il disponible sur cette installation ?
+      responses:
+        "200":
+          description: "`enabled` : une clé d'API Anthropic est configurée."
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [enabled]
+                properties:
+                  enabled: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/assistant/ask:
+    post:
+      tags: [assistant]
+      operationId: askAssistant
+      summary: Poser une question sur le temps passé
+      description: |
+        Claude appelle des outils en lecture seule : référentiel (projets, clients, tâches, personnes), totaux par
+        projet, client, tâche, jour ou personne, entrées d'une période **sans leur description**. Périmètre : son
+        temps et celui de ses agents ; un chef d'équipe, ses collaborateurs en plus ; manager, admin et propriétaire,
+        tout le workspace. Une demande de modification revient en `proposals` : rien n'est écrit, l'app montre
+        l'aperçu et applique si la personne le décide. 40 questions par heure et par personne.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspace_id, question]
+              properties:
+                workspace_id: { type: string, format: uuid }
+                question: { type: string, maxLength: 2000 }
+                history:
+                  type: array
+                  description: Échanges précédents de la conversation (dix au plus sont repris).
+                  items:
+                    type: object
+                    properties:
+                      role: { type: string, enum: [user, assistant] }
+                      text: { type: string }
+      responses:
+        "200":
+          description: Réponse.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposals, refused]
+                properties:
+                  answer: { type: [string, "null"] }
+                  refused: { type: boolean, description: "Claude a décliné la question." }
+                  proposals:
+                    type: array
+                    items:
+                      type: object
+                      required: [entry_ids, summary]
+                      properties:
+                        entry_ids: { type: array, items: { type: string, format: uuid } }
+                        project_id: { type: string, format: uuid }
+                        task_id: { type: string, format: uuid }
+                        billable: { type: boolean }
+                        summary: { type: string }
+        "400":
+          description: "`workspace_id` ou `question` manquant."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/MemberRequired" }
+        "429":
+          description: "Trop de questions (`rate_limited`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "502":
+          description: "API Anthropic injoignable (`assistant_unavailable`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "503":
+          description: "Pas de clé d'API sur l'installation (`assistant_disabled`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
   /api/traces:
     get:
       tags: [journal]

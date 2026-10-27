@@ -137,6 +137,21 @@ class TimeEntryRepository {
         .map((rows) => rows.map(_toEntryRow).toList());
   }
 
+  /// Entrées par identifiants (proposition de l'assistant, plan 13, lot 12), dans l'ordre chronologique ; celles qui
+  /// ne sont pas (ou plus) dans la base locale sont absentes.
+  Future<List<EntryRow>> rowsByIds(List<String> ids) async {
+    if (ids.isEmpty) return const [];
+    final marks = List.filled(ids.length, '?').join(', ');
+    final rows = await db.customSelect(
+      'SELECT te.*, (SELECT group_concat(tet.tag_id) FROM time_entry_tags tet '
+      'WHERE tet.time_entry_id = te.id) AS tag_ids, $_aiColumns '
+      'FROM time_entries te WHERE te.deleted_at IS NULL AND te.id IN ($marks) ORDER BY unixepoch(te.start_at)',
+      variables: [for (final id in ids) Variable<String>(id)],
+      readsFrom: {db.timeEntries, db.timeEntryTags, db.agentUsage},
+    ).get();
+    return rows.map(_toEntryRow).toList();
+  }
+
   /// Dernières entrées terminées de l'utilisateur, une par couple description / projet / tâche
   /// (la plus récente) : ce qu'on relance d'un clic (« Continuer »).
   Stream<List<EntryRow>> watchRecent(String workspaceId, String userId, {int limit = 5}) {

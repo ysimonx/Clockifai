@@ -1,6 +1,6 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
-> Statut : **en cours** (lots 1 à 6 et 11 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
+> Statut : **en cours** (lots 1 à 6, 11 et 12 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
 > (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
@@ -141,6 +141,18 @@ Ce que cela demande :
   (`zonedSchedule`, paquet `timezone`, fuseau du profil, mode inexact : pas de permission d'alarme exacte), au
   texte fixe ; la toucher ouvre « Aujourd'hui ». Récepteurs Android déclarés (redémarrage compris).
 
+### Lot 12, Demander à Clockifai (fait)
+
+- Flask (`services/assistant.py`, `/api/assistant`) appelle Claude (SDK `anthropic`, `claude-opus-5-5`, effort `low`,
+  repli serveur `fallbacks: "default"`, cache automatique) avec quatre outils en lecture : `list_catalog`,
+  `time_summary` (par projet, client, tâche, jour, personne : durée, facturable, montant), `find_entries` (sans
+  description) et `propose_update` (n'écrit rien). Périmètre : soi et ses agents ; chef d'équipe, son équipe ;
+  manager+, tout le workspace. Boucle manuelle, huit tours au plus ; 40 questions par heure et par personne.
+- App (`features/assistant/`) : panneau à droite (⌘J, étoile en haut, palette), exemples, propositions en cartes
+  (aperçu des entrées depuis la base locale, « Appliquer » puis Annuler). Caché sans clé d'API sur le serveur.
+- Pas encore essayé contre l'API réelle (pas de clé sur le poste de développement) : à vérifier dès que
+  `ANTHROPIC_API_KEY` est posée en production.
+
 ### Lot 11, première version (faite)
 
 - Page **Aujourd'hui** (`/today`, `features/today/today_page.dart`), en tête du menu ; l'accueil reste
@@ -226,7 +238,7 @@ Ce que cela demande :
 | 9 Mobile chantier | « Comme hier », durée au pouce, dictée, glisser, badge hors ligne, pointage d'équipe repensé | M | envisagé |
 | 10 Identité visuelle | Polices, jetons de couleur, mode sombre, densité | S/M | envisagé |
 | 11 Journal automatique | Brouillons tirés des traces, frise manipulable (glisser, tirer les bords, clavier), « pourquoi ce bloc », validation en un geste ; première version sur l'historique, le planning et les sessions de Claude | L | fait (traces : agenda, commits ; pas d'activité du poste) |
-| 12 Demander à Clockifai | Assistant ⌘J : questions sur les rapports, modifications avec aperçu et Annuler ; Claude par l'API, outils côté Flask | M/L | envisagé |
+| 12 Demander à Clockifai | Assistant ⌘J : questions sur les rapports, modifications avec aperçu et Annuler ; Claude par l'API, outils côté Flask | M/L | fait (actif avec une clé d'API) |
 | 13 Présence chantier | Géorepérage du chantier sur téléphone (opt-in), journée prête le soir, arrondi au planning selon l'entreprise | M/L | envisagé |
 
 Ordre proposé : 1 (gains immédiats, sans changer la structure), puis 2 et 3 ensemble (le cœur de la proposition),

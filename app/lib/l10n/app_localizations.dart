@@ -1255,6 +1255,114 @@ abstract class AppLocalizations {
   /// **'Annuler'**
   String get undo;
 
+  /// No description provided for @assistantTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demander à Clockifai'**
+  String get assistantTitle;
+
+  /// No description provided for @assistantTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demander à Clockifai ({shortcut})'**
+  String assistantTooltip(String shortcut);
+
+  /// No description provided for @assistantIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Posez une question sur votre temps : totaux par projet, client, jour ou personne, comparaisons, entrées à corriger. Seuls des totaux et les noms des projets partent vers Claude, jamais vos descriptions.'**
+  String get assistantIntro;
+
+  /// No description provided for @assistantHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Combien d\'heures sur la boulangerie ce mois-ci ?'**
+  String get assistantHint;
+
+  /// No description provided for @assistantExample1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Combien d\'heures cette semaine, par projet ?'**
+  String get assistantExample1;
+
+  /// No description provided for @assistantExample2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qu\'est-ce qui reste facturable ce mois-ci, par client ?'**
+  String get assistantExample2;
+
+  /// No description provided for @assistantExample3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes entrées sans projet de la semaine dernière ?'**
+  String get assistantExample3;
+
+  /// No description provided for @assistantThinking.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clockifai cherche…'**
+  String get assistantThinking;
+
+  /// No description provided for @assistantRefused.
+  ///
+  /// In fr, this message translates to:
+  /// **'Je ne peux pas répondre à cette question.'**
+  String get assistantRefused;
+
+  /// No description provided for @assistantTooLong.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette question demande trop d\'étapes : précisez-la.'**
+  String get assistantTooLong;
+
+  /// No description provided for @assistantUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'assistant est injoignable pour le moment.'**
+  String get assistantUnavailable;
+
+  /// No description provided for @assistantRateLimited.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop de questions : réessayez dans un moment.'**
+  String get assistantRateLimited;
+
+  /// No description provided for @assistantOffline.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'assistant demande une connexion.'**
+  String get assistantOffline;
+
+  /// No description provided for @assistantEntries.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Aucune entrée} =1{1 entrée} other{{count} entrées}}'**
+  String assistantEntries(int count);
+
+  /// No description provided for @assistantPreview.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir l\'aperçu'**
+  String get assistantPreview;
+
+  /// No description provided for @assistantApply.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appliquer'**
+  String get assistantApply;
+
+  /// No description provided for @assistantApplied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appliqué'**
+  String get assistantApplied;
+
+  /// No description provided for @kbAssistant.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demander à Clockifai'**
+  String get kbAssistant;
+
   /// No description provided for @recapTitle.
   ///
   /// In fr, this message translates to:

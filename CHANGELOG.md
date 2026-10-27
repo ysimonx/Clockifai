@@ -44,6 +44,9 @@ la date d'arrivée de chaque évolution.
 - **Fin de journée** : à l'heure choisie (17:30 par défaut), le temps saisi et les propositions restantes, à
   confirmer d'un geste ; bandeau dans l'app, notification et ligne dans la barre de menus sur Mac, notification
   sur téléphone. Réglage dans Paramètres (27 octobre 2026).
+- **Demander à Clockifai** (⌘J) : questions en clair sur le temps passé, réponses de Claude à partir de vos totaux
+  (jamais vos descriptions), corrections proposées en aperçu puis appliquées d'un clic. Facultatif : s'active avec
+  une clé d'API Anthropic dans `deploy/.env` (27 octobre 2026).
 
 ### Modifié
 

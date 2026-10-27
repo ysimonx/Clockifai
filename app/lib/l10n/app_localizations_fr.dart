@@ -717,6 +717,79 @@ class AppLocalizationsFr extends AppLocalizations {
   String get undo => 'Annuler';
 
   @override
+  String get assistantTitle => 'Demander à Clockifai';
+
+  @override
+  String assistantTooltip(String shortcut) {
+    return 'Demander à Clockifai ($shortcut)';
+  }
+
+  @override
+  String get assistantIntro =>
+      'Posez une question sur votre temps : totaux par projet, client, jour ou personne, comparaisons, entrées à corriger. Seuls des totaux et les noms des projets partent vers Claude, jamais vos descriptions.';
+
+  @override
+  String get assistantHint =>
+      'Combien d\'heures sur la boulangerie ce mois-ci ?';
+
+  @override
+  String get assistantExample1 =>
+      'Combien d\'heures cette semaine, par projet ?';
+
+  @override
+  String get assistantExample2 =>
+      'Qu\'est-ce qui reste facturable ce mois-ci, par client ?';
+
+  @override
+  String get assistantExample3 =>
+      'Mes entrées sans projet de la semaine dernière ?';
+
+  @override
+  String get assistantThinking => 'Clockifai cherche…';
+
+  @override
+  String get assistantRefused => 'Je ne peux pas répondre à cette question.';
+
+  @override
+  String get assistantTooLong =>
+      'Cette question demande trop d\'étapes : précisez-la.';
+
+  @override
+  String get assistantUnavailable =>
+      'L\'assistant est injoignable pour le moment.';
+
+  @override
+  String get assistantRateLimited =>
+      'Trop de questions : réessayez dans un moment.';
+
+  @override
+  String get assistantOffline => 'L\'assistant demande une connexion.';
+
+  @override
+  String assistantEntries(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entrées',
+      one: '1 entrée',
+      zero: 'Aucune entrée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assistantPreview => 'Voir l\'aperçu';
+
+  @override
+  String get assistantApply => 'Appliquer';
+
+  @override
+  String get assistantApplied => 'Appliqué';
+
+  @override
+  String get kbAssistant => 'Demander à Clockifai';
+
+  @override
   String get recapTitle => 'Fin de journée';
 
   @override

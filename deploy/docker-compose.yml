@@ -106,6 +106,10 @@ services:
       APP_PUBLIC_URL: ${SITE_URL}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       JOBS_ENABLED: ${JOBS_ENABLED:-true}
+      # Assistant « Demander à Clockifai » : facultatif, désactivé sans clé
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ASSISTANT_MODEL: ${ASSISTANT_MODEL:-claude-opus-5-5}
+      ASSISTANT_EFFORT: ${ASSISTANT_EFFORT:-low}
     ports:
       - "${SERVICES_PORT:-5050}:5000"
     healthcheck:

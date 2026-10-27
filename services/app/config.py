@@ -43,6 +43,11 @@ class Config:
     CLAUDE_PLUGIN_DIR = os.environ.get("CLAUDE_PLUGIN_DIR") or str(
         Path(__file__).resolve().parents[2] / "integrations" / "claude-code")
 
+    # Assistant « Demander à Clockifai » (plan 13, lot 12) : désactivé sans clé d'API Anthropic
+    ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+    ASSISTANT_MODEL = os.environ.get("ASSISTANT_MODEL", "claude-opus-5-5")
+    ASSISTANT_EFFORT = os.environ.get("ASSISTANT_EFFORT", "low")
+
     TESTING = False
 
 

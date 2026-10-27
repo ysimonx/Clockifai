@@ -11,11 +11,13 @@ import '../../core/display_prefs.dart';
 import '../../core/guide.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/shortcuts.dart' show commandKeyLabel;
 import '../../core/text_search.dart';
 import '../../core/widgets/app_shell.dart' show navDestinations;
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import '../assistant/assistant.dart';
 import '../time_entries/entry_dialog.dart';
 import '../time_entries/time_entries_page.dart' show continueEntry;
 import '../timer/timer_bar.dart' show toggleTimer;
@@ -56,8 +58,11 @@ Future<List<PaletteCommand>> paletteCommands(BuildContext context) async {
   final ws = session.workspaceId!, me = session.userId!;
   final running = await entriesRepo.watchRunningAll(ws, me).first;
   final recent = await entriesRepo.watchRecent(ws, me).first;
+  final assistantOn = await AssistantApi.enabled();
   if (!context.mounted) return const [];
   return [
+    if (assistantOn)
+      PaletteCommand(icon: Icons.auto_awesome_outlined, title: l.assistantTitle, shortcut: '${commandKeyLabel}J', run: () => showAssistant(context)),
     PaletteCommand(
         icon: running.isEmpty ? Icons.play_arrow : Icons.stop,
         title: running.isEmpty ? l.cmdStartTimer : l.cmdStopTimer,

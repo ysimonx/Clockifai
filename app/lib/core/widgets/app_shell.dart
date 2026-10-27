@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/powersync/connector.dart';
+import '../../features/assistant/assistant.dart';
 import '../../features/commands/command_palette.dart';
 import '../../features/commands/shortcuts_help.dart';
 import '../../features/time_entries/entry_dialog.dart';
@@ -116,6 +117,12 @@ class _AppShellState extends State<AppShell> {
       return true;
     }
     if (commandPressed && key == LogicalKeyboardKey.keyZ && !isTyping()) return undoLast(context);
+    if (commandPressed && key == LogicalKeyboardKey.keyJ) {
+      AssistantApi.enabled().then((on) {
+        if (on && mounted) showAssistant(context);
+      });
+      return true;
+    }
     if (!plainKey(event) || event is KeyRepeatEvent) return false;
     if (key == LogicalKeyboardKey.keyN) {
       showEntryDialog(context);
@@ -185,11 +192,24 @@ class _AppShellState extends State<AppShell> {
     );
 
     final destinations = _visible(session, TeamRights.of(context));
-    final commands = IconButton(
-      tooltip: l.commandPaletteTooltip('${commandKeyLabel}K'),
-      icon: const Icon(Icons.search),
-      onPressed: () => showCommandPalette(context),
-    );
+    final commands = Row(mainAxisSize: MainAxisSize.min, children: [
+      // L'assistant n'apparaît que si l'installation a une clé d'API (plan 13, lot 12).
+      FutureBuilder<bool>(
+        future: AssistantApi.enabled(),
+        builder: (context, snap) => snap.data == true
+            ? IconButton(
+                tooltip: l.assistantTooltip('${commandKeyLabel}J'),
+                icon: const Icon(Icons.auto_awesome_outlined),
+                onPressed: () => showAssistant(context),
+              )
+            : const SizedBox.shrink(),
+      ),
+      IconButton(
+        tooltip: l.commandPaletteTooltip('${commandKeyLabel}K'),
+        icon: const Icon(Icons.search),
+        onPressed: () => showCommandPalette(context),
+      ),
+    ]);
     if (wide) {
       final index = _indexIn(destinations);
       return Scaffold(

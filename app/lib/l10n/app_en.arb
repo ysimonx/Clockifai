@@ -387,6 +387,38 @@
     }
   },
   "undo": "Undo",
+  "assistantTitle": "Ask Clockifai",
+  "assistantTooltip": "Ask Clockifai ({shortcut})",
+  "@assistantTooltip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "assistantIntro": "Ask about your time: totals by project, client, day or person, comparisons, entries to fix. Only totals and project names are sent to Claude, never your descriptions.",
+  "assistantHint": "How many hours on the bakery this month?",
+  "assistantExample1": "How many hours this week, by project?",
+  "assistantExample2": "What is billable this month, by client?",
+  "assistantExample3": "My entries without a project last week?",
+  "assistantThinking": "Clockifai is looking…",
+  "assistantRefused": "I can't answer this question.",
+  "assistantTooLong": "This question needs too many steps: make it more specific.",
+  "assistantUnavailable": "The assistant is unavailable right now.",
+  "assistantRateLimited": "Too many questions: try again in a while.",
+  "assistantOffline": "The assistant needs a connection.",
+  "assistantEntries": "{count, plural, =0{No entry} =1{1 entry} other{{count} entries}}",
+  "@assistantEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assistantPreview": "Preview",
+  "assistantApply": "Apply",
+  "assistantApplied": "Applied",
+  "kbAssistant": "Ask Clockifai",
   "recapTitle": "End of day",
   "recapLine": "{logged} entered out of {target} · {count, plural, =1{1 suggestion to confirm} other{{count} suggestions to confirm}}",
   "@recapLine": {

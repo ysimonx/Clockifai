@@ -39,6 +39,7 @@ flowchart TB
 
   smtp["Serveur SMTP<br/>(facultatif)"]
   ical["Agendas des personnes<br/>adresses iCal privées (https)"]
+  claudeapi["API Anthropic (Claude)<br/>assistant, facultatif"]
   fidwork["Fidwork<br/>(plan 02 en attente, non branché)"]
 
   web & mac & mob & kio -->|"HTTPS"| edge
@@ -61,6 +62,7 @@ flowchart TB
   flask -->|"API admin GoTrue<br/>invitations, agents"| kong
   flask -->|"emails d'invitation"| smtp
   flask -->|"lecture des agendas reliés<br/>https public seulement"| ical
+  flask -->|"questions de l'assistant<br/>totaux seulement"| claudeapi
   auth -->|"emails de connexion"| smtp
   migrate -->|"supabase/migrations/*.sql"| db
   backup -->|"pg_dump"| db

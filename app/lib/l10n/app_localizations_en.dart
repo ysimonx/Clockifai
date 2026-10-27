@@ -714,6 +714,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String get assistantTitle => 'Ask Clockifai';
+
+  @override
+  String assistantTooltip(String shortcut) {
+    return 'Ask Clockifai ($shortcut)';
+  }
+
+  @override
+  String get assistantIntro =>
+      'Ask about your time: totals by project, client, day or person, comparisons, entries to fix. Only totals and project names are sent to Claude, never your descriptions.';
+
+  @override
+  String get assistantHint => 'How many hours on the bakery this month?';
+
+  @override
+  String get assistantExample1 => 'How many hours this week, by project?';
+
+  @override
+  String get assistantExample2 => 'What is billable this month, by client?';
+
+  @override
+  String get assistantExample3 => 'My entries without a project last week?';
+
+  @override
+  String get assistantThinking => 'Clockifai is looking…';
+
+  @override
+  String get assistantRefused => 'I can\'t answer this question.';
+
+  @override
+  String get assistantTooLong =>
+      'This question needs too many steps: make it more specific.';
+
+  @override
+  String get assistantUnavailable => 'The assistant is unavailable right now.';
+
+  @override
+  String get assistantRateLimited =>
+      'Too many questions: try again in a while.';
+
+  @override
+  String get assistantOffline => 'The assistant needs a connection.';
+
+  @override
+  String assistantEntries(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries',
+      one: '1 entry',
+      zero: 'No entry',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assistantPreview => 'Preview';
+
+  @override
+  String get assistantApply => 'Apply';
+
+  @override
+  String get assistantApplied => 'Applied';
+
+  @override
+  String get kbAssistant => 'Ask Clockifai';
+
+  @override
   String get recapTitle => 'End of day';
 
   @override

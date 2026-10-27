@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -47,6 +48,7 @@ def start_scheduler(app: Flask) -> BackgroundScheduler:
     sched.add_job(tasks.purge_activity_events, "cron", hour=4, minute=30, id="purge_activity_events", max_instances=1)
 
     def in_app(job):
+        @functools.wraps(job)  # garde le nom du job dans les journaux
         def run():
             with app.app_context():
                 return job()

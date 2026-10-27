@@ -1,6 +1,6 @@
 # Plan 19 — Tickets clients : Projet › Ticket › Sous-tâches
 
-> Statut : **en cours** (27 octobre 2026 ; lots 1 et 2 faits le 27 octobre). Demandé par Yannick : ses clients lui confient des tickets (Jira, Linear),
+> Statut : **fait** (27 octobre 2026 ; lots 1, 2 et 3 faits le 27 octobre, lot 2 essayé en production par Yannick). Demandé par Yannick : ses clients lui confient des tickets (Jira, Linear),
 > qu'il facture ; il ouvre en général une session Claude Code par ticket.
 
 ## Ce qui est demandé
@@ -67,7 +67,7 @@ Python (serveur), testée sur les mêmes cas.
 |---|---|---|
 | 1 Ticket sur la tâche | Migration 0027 (`tasks.ticket_url`, `ticket_key`, index de recherche par clé), `schema.dart` et Drift ; analyse des URL (Dart) ; Projets : champ « Ticket » dans le dialogue de la tâche, clé et lien ouvrable sur la ligne ; sélecteur de tâche : coller une URL ou une clé retrouve la tâche du ticket ou propose de la créer ; lien du ticket dans le dialogue de l'entrée ; tests | fait (27 octobre 2026) |
 | 2 Claude et le ticket | Outil `set_current_task` (`ticket`, `ticket_title`) et sa consigne ; relais par le hook (`session_task` `{…, ticket, ticket_title}`, liste blanche) ; serveur : analyse (Python), ticket collant par session, clé de la branche, tâche par clé (projet du dépôt, sinon tâche existante de l'espace), sujet en sous-tâche, titre qui complète le nom ; projet « Facturé par ticket » (0028) et `ask_ticket` au démarrage, consigne du hook `SessionStart` (décision 8) ; tests unitaires, du plugin et d'intégration ; mise à jour du plugin sur chaque poste. Essai réel avec Claude Code : après le déploiement, sur un projet client | fait (27 octobre 2026) |
-| 3 Facturation et exports | Facture depuis le temps « par tâche » : une ligne par ticket, sous-tâches cumulées (aujourd'hui une sous-tâche ne remonte pas à sa tâche), libellé « ENG-123 · Titre » et lien ; exports CSV, Excel et PDF : colonne « Ticket » (URL) ; rapport partagé : clé liée ; Rapports groupés par tâche : lien du ticket | à faire |
+| 3 Facturation et exports | Facture depuis le temps « par tâche » : une ligne par tâche, sous-tâches cumulées (pour toutes les tâches, comme les rapports), libellé « Projet — ENG-123 · Titre » et adresse du ticket en seconde ligne, cliquable dans le PDF ; exports CSV, Excel et PDF : colonne « Ticket » (adresse, sinon clé ; lien dans Excel et le PDF) ; rapport partagé : tâche liée au ticket ; Rapports groupés par tâche : « Ouvrir le ticket ». Au passage : export en erreur dès qu'une entrée d'agent avait un usage IA (somme numeric), corrigé | fait (27 octobre 2026) |
 
 ## Documentation (par lot)
 

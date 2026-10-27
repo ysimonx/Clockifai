@@ -220,7 +220,10 @@
           <dd>Une tâche peut être le ticket qu’un client vous a confié : collez son adresse Jira, Linear ou GitHub (ou sa
             clé, « ENG-123 ») dans <span class="ui">Ticket du client</span>, en ajoutant ou en modifiant la tâche. Une
             nouvelle tâche prend le nom « ENG-123 · Titre ». Le bouton <span class="ui">Ouvrir le ticket</span> l’ouvre
-            dans le navigateur, depuis la ligne de la tâche ou une entrée. Un ticket n’a qu’une tâche par projet.</dd>
+            dans le navigateur, depuis la ligne de la tâche, une entrée ou les rapports groupés par tâche. Un ticket n’a
+            qu’une tâche par projet. Les factures détaillées par tâche ont une ligne par ticket, avec son adresse ; les
+            exports CSV, Excel et PDF une colonne <span class="ui">Ticket</span>, et le rapport partagé renvoie à
+            chaque ticket.</dd>
           <dt>À surveiller</dt>
           <dd>En tête des projets, les projets et les tâches à 80 % ou plus de leur budget (heures ou montant) ou de leur
             estimation, les plus avancés d’abord. Les managers reçoivent aussi un email au passage de 80 %, puis de 100 %
@@ -251,8 +254,9 @@
             <span class="ui">TVA</span>, puis <span class="ui">Générer</span>. Les lignes sont créées à partir du temps
             facturable non encore facturé du client sur la période, au taux de chaque entrée.
             <span class="ui">Détailler par tâche</span>, coché par défaut, donne à chaque tâche sa ligne
-            (« Projet — Tâche ») ; le temps sans tâche reste sur une ligne « Projet ». Décochez-le pour une seule
-            ligne par projet. Une entrée saisie avant que
+            (« Projet — Tâche »), ses sous-tâches comprises ; le temps sans tâche reste sur une ligne « Projet ».
+            La ligne d’un <a href="#tickets">ticket du client</a> (« Site — ENG-123 · Formulaire ») porte aussi
+            l’adresse du ticket, cliquable dans le PDF. Décochez-le pour une seule ligne par projet. Une entrée saisie avant que
             son projet, ou la personne, ait un taux prend le taux actuel. Si l’entreprise a défini un
             <span class="ui">Arrondi des durées</span>, chaque entrée est arrondie avant d’être facturée, comme dans
             <span class="ui">À facturer</span>.</li>

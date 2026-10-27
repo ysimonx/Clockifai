@@ -876,3 +876,11 @@ def test_a_client_ticket_is_the_task_and_claude_s_subjects_its_subtasks(team):
     assert send(at(1, "session_start", str(uuid.uuid4()), repo="interne", source="startup"))["ask_ticket"] == {}
     assert send(at(1, "session_start", s1, source="resume"))["ask_ticket"] == {}
     assert send(at(1, "session_start", str(uuid.uuid4()), source="compact"))["ask_ticket"] == {}
+    # Export (plan 19, lot 3) : colonne « Ticket », l'adresse du ticket de la tâche, sous-tâches comprises.
+    pilote_t, _ = team["people"]["pilote"]
+    status, body = api("GET", f"/api/exports/report?workspace_id={wid}&user_id={team['agent']}&format=csv", pilote_t)
+    lines = body.decode("utf-8-sig").splitlines()
+    header = lines[0].split(";")
+    assert status == 200 and header[5:8] == ["Tâche", "Sous-tâche", "Ticket"]
+    row = next(line.split(";") for line in lines[1:] if "Validation des champs" in line)
+    assert row[5:8] == ["ENG-501 · Formulaire de commande", "Validation des champs", url]

@@ -329,17 +329,25 @@ class ModulesRepository {
     final toBill = entries.where((e) => !already.contains(e.id)).toList();
     if (toBill.isEmpty) return null;
 
+    // Une sous-tâche compte dans sa tâche (plans/19-tickets-clients.md : une ligne par ticket du client).
+    final tasks = {
+      for (final t in await (db.select(db.tasks)..where((t) => t.projectId.isIn(projectIds))).get()) t.id: t,
+    };
+    String? rootOf(String? id) => tasks[id]?.parentId ?? id;
     final groups = <(String?, String?, int), List<TimeEntry>>{};
     for (final e in toBill) {
       // Une tâche inconnue (supprimée) compte comme sans tâche.
-      final task = byTask && taskNames.containsKey(e.taskId) ? e.taskId : null;
+      final root = rootOf(e.taskId);
+      final task = byTask && taskNames.containsKey(root) ? root : null;
       groups.putIfAbsent((e.projectId, task, rateOf(e)), () => []).add(e);
     }
-    // « Projet », ou « Projet — Tâche ».
+    // « Projet », ou « Projet — Tâche », suivi de l'adresse du ticket du client s'il y en a un.
     String label((String?, String?, int) key) {
       final project = projectNames[key.$1] ?? '';
       final task = taskNames[key.$2];
-      return task == null ? project : '$project — $task';
+      final url = tasks[key.$2]?.ticketUrl;
+      final line = task == null ? project : '$project — $task';
+      return url == null ? line : '$line\n$url';
     }
     final invoiceId = newId();
     await db.transaction(() async {

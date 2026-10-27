@@ -47,4 +47,4 @@ livrés : on les cite par leur nom de fichier.
 | [16-sous-taches.md](16-sous-taches.md) | Sous-tâches : Projet › Tâche › Sous-tâche, cumul dans les rapports ; Claude range l'objectif en tâche et l'étape en sous-tâche | fait | 10, 12 |
 | [17-revue-du-code.md](17-revue-du-code.md) | Revue du code après les plans 13, 14 et 16 : règles de la base, sessions Claude, exports, bugs et nettoyage de l'app | en cours | 13, 14, 16 |
 | [18-rapports-presence-alertes-partage.md](18-rapports-presence-alertes-partage.md) | Rapports : présence et heures sup, alertes de budget, lien public, envoi planifié par email | fait | 15 |
-| [19-tickets-clients.md](19-tickets-clients.md) | Tickets clients : Projet › Ticket (URL Jira, Linear) › Sous-tâches ; Claude range sa session dans le ticket ; facture par ticket | en cours | 10, 16 |
+| [19-tickets-clients.md](19-tickets-clients.md) | Tickets clients : Projet › Ticket (URL Jira, Linear) › Sous-tâches ; Claude range sa session dans le ticket ; facture par ticket | fait | 10, 16 |

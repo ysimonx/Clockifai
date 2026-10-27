@@ -319,7 +319,8 @@ class _InvoiceDialog extends StatelessWidget {
         content: SizedBox(
           width: 380,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(controller: desc, decoration: InputDecoration(labelText: l.description)),
+            // Deux lignes pour une tâche de ticket : son libellé, puis l'adresse du ticket.
+            TextField(controller: desc, minLines: 1, maxLines: 3, decoration: InputDecoration(labelText: l.description)),
             const SizedBox(height: 12),
             TextField(controller: qty, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: InputDecoration(labelText: l.quantityHours)),
             const SizedBox(height: 12),

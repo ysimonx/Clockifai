@@ -31,6 +31,7 @@ _TEMPLATE = """
   .totals td { border: none; padding: 4px 6px; }
   .grand td { font-size: 13px; font-weight: bold; border-top: 2px solid #111827; }
   .note { margin-top: 28px; white-space: pre-line; color: #374151; }
+  a.ticket { color: #1d4ed8; font-size: 9px; word-break: break-all; }
   .status { display: inline-block; padding: 2px 8px; border-radius: 10px; background: #e0f2fe; color: #0369a1; font-size: 9px; }
 </style></head><body>
 <div class="head">
@@ -54,7 +55,7 @@ _TEMPLATE = """
   <thead><tr><th>Désignation</th><th class="num">Quantité (h)</th><th class="num">Prix unitaire HT</th><th class="num">Montant HT</th></tr></thead>
   <tbody>
   {% for it in items %}
-    <tr><td>{{ it.description }}</td><td class="num">{{ qty(it.quantity) }}</td>
+    <tr><td>{% for line in (it.description or '').splitlines() %}{% if not loop.first %}<br>{% endif %}{% if line.startswith(('https://', 'http://')) %}<a class="ticket" href="{{ line }}">{{ line }}</a>{% else %}{{ line }}{% endif %}{% endfor %}</td><td class="num">{{ qty(it.quantity) }}</td>
         <td class="num">{{ money(it.unit_price_cents) }}</td><td class="num">{{ money(it.amount_cents) }}</td></tr>
   {% endfor %}
   </tbody>

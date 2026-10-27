@@ -19,13 +19,23 @@ la date d'arrivée de chaque évolution.
   tâche de la session, et chaque sujet de Claude une sous-tâche ; un projet « Facturé par ticket » fait demander le
   ticket par Claude au début de chaque session. Mettez à jour le plugin (`claude plugin update clockifai@clockifai`)
   (27 octobre 2026).
+- **Facturer par ticket** : la facture détaillée par tâche a une ligne par ticket, avec son adresse (cliquable dans le
+  PDF) ; colonne « Ticket » dans les exports CSV, Excel et PDF ; le rapport partagé et les rapports groupés par tâche
+  renvoient au ticket (27 octobre 2026).
 - **Claude Code** : une pastille au robot, en haut de chaque page à côté du chronomètre, montre la session de Claude
   en cours (sujet et durée) ; un clic liste les sessions (27 octobre 2026).
 
 ### Modifié
 
+- **Factures** : détaillée par tâche, une facture compte les sous-tâches dans la ligne de leur tâche (elles avaient
+  chacune leur ligne) (27 octobre 2026).
 - **Claude Code** : une entrée de Claude est décrite par le sujet qu'il a nommé (« Version 0.2.6 des applications »)
   plutôt que par ses commits ou par « dépôt (branche) » (27 octobre 2026).
+
+### Corrigé
+
+- **Exports** : un export qui contenait du temps de Claude avec son usage IA échouait (erreur serveur) ; il aboutit
+  (27 octobre 2026).
 
 ## [0.2.6] — 2026-10-27
 

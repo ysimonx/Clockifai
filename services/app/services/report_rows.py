@@ -7,7 +7,7 @@ from datetime import date, datetime, time, timedelta, tzinfo
 
 def detailed_rows(conn, workspace_id: str, start: date, end: date, tz: tzinfo, filters: dict) -> list[dict]:
     """Une ligne par entrée terminée du workspace, du jour [start] au jour [end] inclus (minuits du fuseau [tz]),
-    avec personne, client, projet, tâche et sous-tâche, tags et usage IA. [filters] : user_id, user_ids, project_id,
+    avec personne, client, projet, tâche et sous-tâche, ticket du client de la tâche, tags et usage IA. [filters] : user_id, user_ids, project_id,
     client_id, billable (« true » / « false »), member_kind (« human » / « agent »)."""
     sql = """
         select te.id, te.start_at, te.end_at, te.duration_seconds, te.description, te.billable,
@@ -18,12 +18,16 @@ def detailed_rows(conn, workspace_id: str, start: date, end: date, tz: tzinfo, f
                -- Tâche de premier niveau, et sous-tâche s'il y a lieu (plans/16-sous-taches.md).
                p.name as project_name, c.name as client_name, coalesce(pt.name, t.name) as task_name,
                case when pt.id is not null then t.name end as subtask_name,
+               -- Ticket du client de la tâche de premier niveau (plans/19-tickets-clients.md).
+               case when pt.id is not null then pt.ticket_url else t.ticket_url end as ticket_url,
+               case when pt.id is not null then pt.ticket_key else t.ticket_key end as ticket_key,
                coalesce(string_agg(tg.name, ', ' order by tg.name), '') as tags,
                -- Usage IA des entrées d'agent (plan 10, D17) : tokens et coût estimé, en millionièmes de dollar.
+               -- sum() d'entiers rend un numeric (Decimal en Python) : ramené en bigint pour les calculs en float.
                (select sum(au.input_tokens + au.output_tokens + au.cache_write_5m_tokens + au.cache_write_1h_tokens
-                           + au.cache_read_tokens)
+                           + au.cache_read_tokens)::bigint
                   from public.agent_usage au where au.time_entry_id = te.id and au.deleted_at is null) as ai_tokens,
-               (select sum(au.cost_micros)
+               (select sum(au.cost_micros)::bigint
                   from public.agent_usage au where au.time_entry_id = te.id and au.deleted_at is null) as ai_cost_micros
           from public.time_entries te
           left join public.workspace_members wm on wm.workspace_id = te.workspace_id and wm.user_id = te.user_id
@@ -56,5 +60,6 @@ def detailed_rows(conn, workspace_id: str, start: date, end: date, tz: tzinfo, f
         sql += " and wm.kind = %(member_kind)s"
         params["member_kind"] = filters["member_kind"]
     sql += (" group by te.id, wm.display_name, wm.email, wm.kind, wm.hourly_rate_cents, p.name, p.hourly_rate_cents,"
-            " c.name, t.name, pt.id, pt.name order by te.start_at")
+            " c.name, t.name, t.ticket_url, t.ticket_key, pt.id, pt.name, pt.ticket_url, pt.ticket_key"
+            " order by te.start_at")
     return conn.execute(sql, params).fetchall()

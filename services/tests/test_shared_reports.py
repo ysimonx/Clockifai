@@ -44,11 +44,11 @@ def test_filters_are_checked():
         assert sr.clean_filters(bad) is None
 
 
-def _row(project, task, seconds, description="", billable=True, rate=6000, subtask=None):
+def _row(project, task, seconds, description="", billable=True, rate=6000, subtask=None, ticket=None):
     start = datetime(2026, 10, 20, 7, tzinfo=UTC)
     return {"project_name": project, "client_name": "ACME" if project else None, "task_name": task,
             "subtask_name": subtask, "duration_seconds": seconds, "billable": billable, "hourly_rate_cents": rate,
-            "description": description, "user_name": "Léa", "start_at": start, "end_at": start}
+            "description": description, "user_name": "Léa", "start_at": start, "end_at": start, "ticket_url": ticket}
 
 
 def test_summary_by_project_then_task():
@@ -59,6 +59,22 @@ def test_summary_by_project_then_task():
                                                                                     ("Unité 4", 6000, 100.0)]
     assert summary[0]["tasks"] == [], "un projet sans tâche n'a rien à détailler"
     assert [(t["name"], t["seconds"]) for t in summary[1]["tasks"]] == [("Montage", 5400), (None, 600)]
+
+
+def test_ticket_tasks_link_to_their_ticket():
+    """Plan 19 : une tâche de ticket client renvoie au ticket, sous-tâches comprises."""
+    url = "https://linear.app/acme/issue/ENG-123/formulaire"
+    rows = [_row("Site", "ENG-123 · Formulaire", 3600, subtask="Validation", ticket=url),
+            _row("Site", "ENG-123 · Formulaire", 600, ticket=url), _row("Site", "Réunion", 300)]
+    tasks = sr.summarize(rows)[0]["tasks"]
+    assert [(t["name"], t["seconds"], t["url"]) for t in tasks] == [("ENG-123 · Formulaire", 4200, url),
+                                                                    ("Réunion", 300, None)]
+    report = {"name": "Site — client", "detailed": False, "show_amounts": False, "rounding": False}
+    with Flask(__name__).app_context():
+        page = sr.render(report, rows, date(2026, 10, 1), date(2026, 10, 31), workspace="Studio", currency="EUR",
+                         lang="fr", tz=ZoneInfo("Europe/Paris"), rounding_minutes=0,
+                         now=datetime(2026, 10, 27, 9, tzinfo=UTC))
+    assert f'<a href="{url}" rel="noopener noreferrer">ENG-123 · Formulaire</a>' in page
 
 
 def test_descriptions_and_amounts_only_when_asked():

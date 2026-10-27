@@ -7,7 +7,7 @@ from datetime import UTC, date, datetime
 
 from openpyxl import load_workbook
 
-from app.services.exporters import build_xlsx, member_kind_label
+from app.services.exporters import build_xlsx, member_kind_label, ticket_of
 
 
 def _row(name: str, kind: str | None) -> dict:
@@ -44,6 +44,21 @@ def test_xlsx_subtask_column():
     header = [c.value for c in ws[3]]
     assert header[4:6] == ["Tâche", "Sous-tâche"]
     assert (ws.cell(4, 5).value, ws.cell(4, 6).value) == ("Plan 16 · Sous-tâches", "Migration")
+
+
+def test_xlsx_ticket_column():
+    """Plan 19 : l'adresse du ticket du client de la tâche, cliquable ; sa clé faute d'adresse."""
+    url = "https://linear.app/acme/issue/ENG-123/formulaire"
+    rows = [dict(_row("Yannick", "human"), task_name="ENG-123 · Formulaire", ticket_url=url, ticket_key="ENG-123"),
+            dict(_row("Yannick", "human"), task_name="ENG-7", ticket_url=None, ticket_key="ENG-7"),
+            _row("Yannick", "human")]
+    ws = load_workbook(io.BytesIO(build_xlsx(rows, date(2026, 10, 1), date(2026, 10, 31))))["Détail"]
+    header = [c.value for c in ws[3]]
+    assert header[4:7] == ["Tâche", "Sous-tâche", "Ticket"]
+    col = header.index("Ticket") + 1
+    assert [ws.cell(r, col).value for r in (4, 5, 6)] == [url, "ENG-7", None]
+    assert ws.cell(4, col).hyperlink.target == url and ws.cell(5, col).hyperlink is None
+    assert ticket_of({"ticket_key": "ENG-7"}) == "ENG-7" and ticket_of({}) == ""
 
 
 def test_xlsx_ai_usage_columns():

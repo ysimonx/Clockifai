@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../di.dart';
 import '../l10n.dart';
 import '../session.dart';
+import '../../data/powersync/sync_service.dart';
 
 /// Erreur de réseau (pas de connexion, serveur injoignable) : rien à corriger pour l'utilisateur,
 /// c'est l'état « hors ligne », et les saisies partiront au retour du réseau.
@@ -21,9 +22,41 @@ bool _isNetworkError(Object? e) {
 /// Hors ligne : flux de sync coupé, ou envoi impossible faute de réseau (le flux peut survivre un moment).
 bool _isOffline(SyncStatus? status) => !(status?.connected ?? false) || _isNetworkError(status?.anyError);
 
-/// Icône d'état de la synchronisation (connecté, en cours, hors ligne) + détail au clic.
-class SyncIndicator extends StatelessWidget {
+/// Icône d'état de la synchronisation (connecté, en cours, hors ligne) + détail au clic. Un badge compte les
+/// modifications qui attendent de partir (plans/13-ux-moderne.md, lot 9 : « hors ligne, rien n'est perdu »).
+class SyncIndicator extends StatefulWidget {
   const SyncIndicator({super.key});
+
+  @override
+  State<SyncIndicator> createState() => _SyncIndicatorState();
+}
+
+class _SyncIndicatorState extends State<SyncIndicator> {
+  Timer? _poll;
+  int _pending = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!getIt.isRegistered<SyncService>()) return;
+    _refresh();
+    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _refresh());
+  }
+
+  Future<void> _refresh() async {
+    try {
+      final n = (await syncService.powersync.getUploadQueueStats()).count;
+      if (mounted && n != _pending) setState(() => _pending = n);
+    } catch (_) {
+      // base fermée (déconnexion) : le badge attend la prochaine lecture
+    }
+  }
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +69,12 @@ class SyncIndicator extends StatelessWidget {
             ? (Icons.cloud_sync, Theme.of(context).colorScheme.primary, l.syncing)
             : (Icons.cloud_done, Colors.green, l.synced);
     return IconButton(
-      tooltip: label,
-      icon: Icon(icon, color: color),
+      tooltip: _pending > 0 ? '$label · ${l.pendingCount(_pending)}' : label,
+      icon: Badge(
+        isLabelVisible: _pending > 0,
+        label: Text('$_pending'),
+        child: Icon(icon, color: color),
+      ),
       onPressed: () => showDialog<void>(context: context, builder: (_) => const _SyncDetails()),
     );
   }

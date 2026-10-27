@@ -714,6 +714,88 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String pendingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes waiting',
+      one: '1 change waiting',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dayNothingToCopy => 'Nothing to copy from that day.';
+
+  @override
+  String get likeYesterday => 'Same as yesterday';
+
+  @override
+  String likeDay(String day) {
+    return 'Same as $day';
+  }
+
+  @override
+  String likeDate(String date) {
+    return 'Same as $date';
+  }
+
+  @override
+  String get duplicateToday => 'Duplicate to today';
+
+  @override
+  String get morning => 'Morning';
+
+  @override
+  String get afternoon => 'Afternoon';
+
+  @override
+  String get dictate => 'Dictate';
+
+  @override
+  String get dictationStop => 'Stop dictation';
+
+  @override
+  String get dictationUnavailable =>
+      'Dictation unavailable: microphone denied or no speech recognition on this device.';
+
+  @override
+  String get teamAbsent => 'Approved time off';
+
+  @override
+  String get teamAbsentHalf => 'Approved time off (half day)';
+
+  @override
+  String teamAlreadyLogged(String time) {
+    return 'Already logged: $time';
+  }
+
+  @override
+  String leftAt(String time) {
+    return 'Left at $time';
+  }
+
+  @override
+  String arrivedAt(String time) {
+    return 'Arrived at $time';
+  }
+
+  @override
+  String get arrivedAtPick => 'Arrived at…';
+
+  @override
+  String get leftAtPick => 'Left at…';
+
+  @override
+  String get otherHours => 'Other hours…';
+
+  @override
+  String get commonHours => 'Common hours';
+
+  @override
+  String get teamException => 'Exception';
+
+  @override
   String get lateTitle => 'Last week';
 
   @override
@@ -2421,7 +2503,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teamEntryHelp =>
-      'Tick who was there: one entry is created for each person, even offline. Tap someone\'s hours to adjust them.';
+      'Everyone present is ticked (except approved time off or a day already logged): one entry is created for each person, even offline. Tap someone\'s hours to note an exception (\"Left at 15:00\").';
 
   @override
   String get teamManagerOf => 'Team manager of…';

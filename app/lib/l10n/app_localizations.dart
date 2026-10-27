@@ -1255,6 +1255,132 @@ abstract class AppLocalizations {
   /// **'Annuler'**
   String get undo;
 
+  /// No description provided for @pendingCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 modification en attente} other{{count} modifications en attente}}'**
+  String pendingCount(int count);
+
+  /// No description provided for @dayNothingToCopy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien à copier de ce jour-là.'**
+  String get dayNothingToCopy;
+
+  /// No description provided for @likeYesterday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comme hier'**
+  String get likeYesterday;
+
+  /// No description provided for @likeDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comme {day}'**
+  String likeDay(String day);
+
+  /// No description provided for @likeDate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comme le {date}'**
+  String likeDate(String date);
+
+  /// No description provided for @duplicateToday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dupliquer sur aujourd\'hui'**
+  String get duplicateToday;
+
+  /// No description provided for @morning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Matin'**
+  String get morning;
+
+  /// No description provided for @afternoon.
+  ///
+  /// In fr, this message translates to:
+  /// **'Après-midi'**
+  String get afternoon;
+
+  /// No description provided for @dictate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dicter'**
+  String get dictate;
+
+  /// No description provided for @dictationStop.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrêter la dictée'**
+  String get dictationStop;
+
+  /// No description provided for @dictationUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dictée indisponible : micro refusé ou pas de reconnaissance vocale sur cet appareil.'**
+  String get dictationUnavailable;
+
+  /// No description provided for @teamAbsent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Absence validée'**
+  String get teamAbsent;
+
+  /// No description provided for @teamAbsentHalf.
+  ///
+  /// In fr, this message translates to:
+  /// **'Absence validée (demi-journée)'**
+  String get teamAbsentHalf;
+
+  /// No description provided for @teamAlreadyLogged.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déjà saisi : {time}'**
+  String teamAlreadyLogged(String time);
+
+  /// No description provided for @leftAt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Départ à {time}'**
+  String leftAt(String time);
+
+  /// No description provided for @arrivedAt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrivée à {time}'**
+  String arrivedAt(String time);
+
+  /// No description provided for @arrivedAtPick.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrivée à…'**
+  String get arrivedAtPick;
+
+  /// No description provided for @leftAtPick.
+  ///
+  /// In fr, this message translates to:
+  /// **'Départ à…'**
+  String get leftAtPick;
+
+  /// No description provided for @otherHours.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autres horaires…'**
+  String get otherHours;
+
+  /// No description provided for @commonHours.
+  ///
+  /// In fr, this message translates to:
+  /// **'Horaires communs'**
+  String get commonHours;
+
+  /// No description provided for @teamException.
+  ///
+  /// In fr, this message translates to:
+  /// **'Exception'**
+  String get teamException;
+
   /// No description provided for @lateTitle.
   ///
   /// In fr, this message translates to:
@@ -4047,7 +4173,7 @@ abstract class AppLocalizations {
   /// No description provided for @teamEntryHelp.
   ///
   /// In fr, this message translates to:
-  /// **'Cochez les présents : une entrée est créée pour chacun, même hors ligne. Touchez les horaires d\'une personne pour les ajuster.'**
+  /// **'Les présents sont cochés d\'office (sauf absence validée ou journée déjà saisie) : une entrée est créée pour chacun, même hors ligne. Touchez les horaires d\'une personne pour noter une exception (« Départ à 15:00 »).'**
   String get teamEntryHelp;
 
   /// No description provided for @teamManagerOf.

@@ -717,6 +717,88 @@ class AppLocalizationsFr extends AppLocalizations {
   String get undo => 'Annuler';
 
   @override
+  String pendingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count modifications en attente',
+      one: '1 modification en attente',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dayNothingToCopy => 'Rien à copier de ce jour-là.';
+
+  @override
+  String get likeYesterday => 'Comme hier';
+
+  @override
+  String likeDay(String day) {
+    return 'Comme $day';
+  }
+
+  @override
+  String likeDate(String date) {
+    return 'Comme le $date';
+  }
+
+  @override
+  String get duplicateToday => 'Dupliquer sur aujourd\'hui';
+
+  @override
+  String get morning => 'Matin';
+
+  @override
+  String get afternoon => 'Après-midi';
+
+  @override
+  String get dictate => 'Dicter';
+
+  @override
+  String get dictationStop => 'Arrêter la dictée';
+
+  @override
+  String get dictationUnavailable =>
+      'Dictée indisponible : micro refusé ou pas de reconnaissance vocale sur cet appareil.';
+
+  @override
+  String get teamAbsent => 'Absence validée';
+
+  @override
+  String get teamAbsentHalf => 'Absence validée (demi-journée)';
+
+  @override
+  String teamAlreadyLogged(String time) {
+    return 'Déjà saisi : $time';
+  }
+
+  @override
+  String leftAt(String time) {
+    return 'Départ à $time';
+  }
+
+  @override
+  String arrivedAt(String time) {
+    return 'Arrivée à $time';
+  }
+
+  @override
+  String get arrivedAtPick => 'Arrivée à…';
+
+  @override
+  String get leftAtPick => 'Départ à…';
+
+  @override
+  String get otherHours => 'Autres horaires…';
+
+  @override
+  String get commonHours => 'Horaires communs';
+
+  @override
+  String get teamException => 'Exception';
+
+  @override
   String get lateTitle => 'Semaine dernière';
 
   @override
@@ -2438,7 +2520,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get teamEntryHelp =>
-      'Cochez les présents : une entrée est créée pour chacun, même hors ligne. Touchez les horaires d\'une personne pour les ajuster.';
+      'Les présents sont cochés d\'office (sauf absence validée ou journée déjà saisie) : une entrée est créée pour chacun, même hors ligne. Touchez les horaires d\'une personne pour noter une exception (« Départ à 15:00 »).';
 
   @override
   String get teamManagerOf => 'Chef d\'équipe de…';

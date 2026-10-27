@@ -14,7 +14,9 @@ import '../../core/widgets/pickers.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import '../today/day_plan.dart' show TypicalDay;
 import 'ai_usage.dart';
+import 'duration_chips.dart';
 
 /// Heure à écrire pour une entrée modifiée : null si l'heure saisie, à la minute près, est celle d'origine.
 /// Le dialogue ne saisit pas les secondes : réécrire une heure inchangée les perdrait, et ferait passer une entrée
@@ -154,6 +156,18 @@ class _EntryDialogState extends State<_EntryDialog> {
     });
   }
 
+  void _setEnd(DateTime end) => setState(() {
+        _end = TimeOfDay.fromDateTime(end);
+        _syncDurationField();
+      });
+
+  /// ±15 min sur la fin, sans descendre sous 5 minutes.
+  void _nudge(int minutes) {
+    final end = (_endDt ?? _startDt).add(Duration(minutes: minutes));
+    final min = _startDt.add(const Duration(minutes: 5));
+    _setEnd(end.isBefore(min) ? min : end);
+  }
+
   void _onDurationChanged(String v) {
     final secs = parseDuration(v);
     if (secs == null) return;
@@ -280,6 +294,7 @@ class _EntryDialogState extends State<_EntryDialog> {
     final author = widget.entry?.createdBy;
     // Une entrée d'agent porte son pilote comme auteur, mais c'est Claude Code qui l'a enregistrée.
     final enteredByOther = owner != null && author != null && author != owner && widget.entry?.source != 'agent';
+    final taskPills = readOnly || project == null ? const <Task>[] : catalog.tasksOf(project.id);
 
     return AlertDialog(
       title: Text(widget.entry == null ? l.addManualEntry : (_isRunning ? l.runningTimer : l.editEntry)),
@@ -383,6 +398,21 @@ class _EntryDialogState extends State<_EntryDialog> {
                 ),
               ),
             ),
+            // Tâches en pastilles (lot 9) : un toucher, sans rouvrir le sélecteur.
+            if (taskPills.isNotEmpty && taskPills.length <= 12)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Wrap(spacing: 6, runSpacing: 6, children: [
+                  for (final t in taskPills)
+                    ChoiceChip(
+                      label: Text(t.name),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      selected: _taskId == t.id,
+                      onSelected: (v) => setState(() => _taskId = v ? t.id : null),
+                    ),
+                ]),
+              ),
             // Une tâche pour ce travail, sans passer par le « + » du sélecteur (une session de Claude, par exemple :
             // ses entrées suivantes la reprennent, plan 10, D9).
             if (!readOnly && _taskId == null && project != null && session.canCreateTasks)
@@ -465,6 +495,20 @@ class _EntryDialogState extends State<_EntryDialog> {
                 ),
               ],
             ]),
+            if (!_isRunning && !readOnly)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: DurationChips(
+                  typical: TypicalDay.ofProfile(session.profile) ?? TypicalDay.fallback,
+                  onNudge: _nudge,
+                  onLength: (m) => _setEnd(_startDt.add(Duration(minutes: m))),
+                  onRange: (start, end) => setState(() {
+                    _start = start;
+                    _end = end;
+                    _syncDurationField();
+                  }),
+                ),
+              ),
             if (_endDt != null && !sameDay(_endDt!, _startDt))
               Padding(
                 padding: const EdgeInsets.only(top: 6),

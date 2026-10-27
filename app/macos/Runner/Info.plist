@@ -55,5 +55,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Dicter une saisie de temps (« 2 h chantier Dupuis »).</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Transformer la dictée en saisie de temps.</string>
 </dict>
 </plist>

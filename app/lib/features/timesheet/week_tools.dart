@@ -55,20 +55,31 @@ Future<List<EntryRow>> _entriesOf(String workspaceId, String userId, DateTime fr
 
 /// Copie les entrées de la semaine précédente sur [weekStart], aux mêmes jours et heures ; une entrée déjà présente
 /// (même projet, même description, même début) n'est pas recopiée. Annuler retire les copies.
-Future<bool> copyPreviousWeek(BuildContext context, {required String userId, required DateTime weekStart}) async {
+Future<bool> copyPreviousWeek(BuildContext context, {required String userId, required DateTime weekStart}) =>
+    _copyEntries(context, userId: userId, from: addDays(weekStart, -7), to: weekStart, days: 7, empty: context.l10n.weekNothingToCopy);
+
+/// « Comme vendredi » (lot 9) : les entrées du jour [from] recopiées sur [to], aux mêmes heures.
+Future<bool> copyDay(BuildContext context, {required String userId, required DateTime from, required DateTime to}) =>
+    _copyEntries(context, userId: userId, from: from, to: to, days: 1, empty: context.l10n.dayNothingToCopy);
+
+/// Copie [days] jours d'entrées de [from] vers [to] ; ni jour verrouillé ou approuvé, ni doublon.
+Future<bool> _copyEntries(BuildContext context,
+    {required String userId, required DateTime from, required DateTime to, required int days, required String empty}) async {
   final l = context.l10n;
   final session = context.read<SessionController>();
   final ws = session.workspace!;
-  final previous = await _entriesOf(ws.id, userId, addDays(weekStart, -7), weekStart);
-  final current = await _entriesOf(ws.id, userId, weekStart, addDays(weekStart, 7));
+  final previous = await _entriesOf(ws.id, userId, from, addDays(from, days));
+  final current = await _entriesOf(ws.id, userId, to, addDays(to, days));
   final taken = {for (final r in current) '${r.entry.projectId}|${r.entry.description}|${r.entry.startAt.toLocal()}'};
   final lock = DateTime.tryParse(ws.lockEntriesBefore ?? '');
+  // En jours civils (UTC : pas de décalage d'heure d'été).
+  final shift = DateTime.utc(to.year, to.month, to.day).difference(DateTime.utc(from.year, from.month, from.day)).inDays;
   final ids = <String>[];
   for (final r in previous) {
     final e = r.entry;
     if (e.endAt == null) continue;
     final local = e.startAt.toLocal();
-    final day = addDays(DateTime(local.year, local.month, local.day), 7);
+    final day = addDays(DateTime(local.year, local.month, local.day), shift);
     final start = atMinute(day, minuteOf(e.startAt, local));
     if (taken.contains('${e.projectId}|${e.description}|$start')) continue;
     if (lock != null && day.isBefore(lock) && !session.isAdmin) continue;
@@ -91,7 +102,7 @@ Future<bool> copyPreviousWeek(BuildContext context, {required String userId, req
   }
   if (!context.mounted) return ids.isNotEmpty;
   if (ids.isEmpty) {
-    showSnack(context, l.weekNothingToCopy);
+    showSnack(context, empty);
     return false;
   }
   showUndo(context, l.entriesDuplicated(ids.length), () => entriesRepo.deleteMany(ids));

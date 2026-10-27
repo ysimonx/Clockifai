@@ -53,6 +53,12 @@ la date d'arrivée de chaque évolution.
 - Approbations : **Semaine dernière**, qui n'a pas soumis sa feuille (heures saisies et prévues), et **Relancer** :
   un bandeau et une notification chez la personne ; l'**écart au planning** sous chaque feuille soumise
   (27 octobre 2026).
+- **Téléphone** : « Comme vendredi » recopie la dernière journée travaillée sur une journée vide ; dictée de la
+  saisie express (micro) ; durée au pouce (±15 min, 30 min à 4 h, matin, après-midi) et tâches en pastilles dans
+  une entrée ; glisser une ligne pour la dupliquer sur aujourd'hui ou la supprimer ; nombre de modifications en
+  attente sur l'icône de synchronisation (27 octobre 2026).
+- **Pointage d'équipe** : présents cochés d'office, absences validées exclues, journée déjà saisie décochée ;
+  exceptions « Arrivée à… », « Départ à… » ; Annuler après la création (27 octobre 2026).
 
 ### Modifié
 

@@ -387,6 +387,69 @@
     }
   },
   "undo": "Undo",
+  "pendingCount": "{count, plural, =1{1 change waiting} other{{count} changes waiting}}",
+  "@pendingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dayNothingToCopy": "Nothing to copy from that day.",
+  "likeYesterday": "Same as yesterday",
+  "likeDay": "Same as {day}",
+  "@likeDay": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "likeDate": "Same as {date}",
+  "@likeDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "duplicateToday": "Duplicate to today",
+  "morning": "Morning",
+  "afternoon": "Afternoon",
+  "dictate": "Dictate",
+  "dictationStop": "Stop dictation",
+  "dictationUnavailable": "Dictation unavailable: microphone denied or no speech recognition on this device.",
+  "teamAbsent": "Approved time off",
+  "teamAbsentHalf": "Approved time off (half day)",
+  "teamAlreadyLogged": "Already logged: {time}",
+  "@teamAlreadyLogged": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "leftAt": "Left at {time}",
+  "@leftAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "arrivedAt": "Arrived at {time}",
+  "@arrivedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "arrivedAtPick": "Arrived at…",
+  "leftAtPick": "Left at…",
+  "otherHours": "Other hours…",
+  "commonHours": "Common hours",
+  "teamException": "Exception",
   "lateTitle": "Last week",
   "lateHelp": "Who has not yet submitted their timesheet for the week of {date}.",
   "@lateHelp": {
@@ -1173,7 +1236,7 @@
   "taxPercent": "Tax",
   "team": "Team",
   "teamEntry": "Team entry",
-  "teamEntryHelp": "Tick who was there: one entry is created for each person, even offline. Tap someone's hours to adjust them.",
+  "teamEntryHelp": "Everyone present is ticked (except approved time off or a day already logged): one entry is created for each person, even offline. Tap someone's hours to note an exception (\"Left at 15:00\").",
   "teamManagerOf": "Team manager of…",
   "teamManagerOfHelp": "This member will see the selected people's time and approve their timesheets. Entering time for them depends on the workspace setting.",
   "teamMemberHint": "Only managers can see the whole team's activity.",

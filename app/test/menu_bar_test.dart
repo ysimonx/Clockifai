@@ -152,4 +152,45 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pump(Duration.zero); // minuteurs de Drift à la fermeture des flux
   }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
+
+  testWidgets('saisie express dans la barre de menus : aperçu à la frappe, puis l’entrée rangée', (tester) async {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'update') updates.add((call.arguments as Map).cast());
+      return null;
+    });
+    await tester.pumpWidget(MultiProvider(
+      providers: [
+        ChangeNotifierProvider<SessionController>.value(value: _Session(workspace)),
+        ChangeNotifierProvider<CatalogController>.value(value: catalog),
+      ],
+      child: MaterialApp(
+        locale: const Locale('fr'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        builder: (context, child) => MacMenuBar(child: child!),
+        home: const SizedBox(),
+      ),
+    ));
+    await settle(tester);
+    expect((updates.last['labels'] as Map)['quickEntry'], 'Saisie express');
+
+    final preview = (await send(tester, 'previewQuick', {'text': '1h30 pose chantier hier'}))! as Map;
+    expect(preview['ready'], true);
+    expect(preview['preview'], '1:30 · Chantier · « Pose » · Hier 08:30 → 10:00');
+    expect(((await send(tester, 'previewQuick', {'text': 'pose chantier'}))! as Map)['ready'], false, reason: 'pas de durée');
+
+    final saved = (await send(tester, 'quickEntry', {'text': '1h30 pose chantier hier'}))! as Map;
+    expect(saved, {'ok': true, 'message': 'Ajouté : Pose · Hier, 08:30 → 10:00'});
+    final entry = (await tester.runAsync(() => db.select(db.timeEntries).getSingle()))!;
+    final now = DateTime.now();
+    expect((entry.description, entry.projectId, entry.startAt.toLocal()), ('Pose', chantier, DateTime(now.year, now.month, now.day - 1, 8, 30)));
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(Duration.zero);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
 }

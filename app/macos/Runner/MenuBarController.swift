@@ -1,12 +1,14 @@
+import Carbon.HIToolbox
 import Cocoa
 import FlutterMacOS
 import SwiftUI
 
 /// Icône Clockifai de la barre de menus (en haut à droite de l'écran), comme celle de Clockify.
 ///
-/// Clic : panneau pour démarrer / arrêter le chronomètre, reprendre une entrée récente ou ouvrir
-/// la fenêtre de l'application. Clic droit : ouvrir / quitter. Le temps écoulé s'affiche à côté
-/// de l'icône tant qu'un chronomètre tourne.
+/// Clic : panneau pour démarrer / arrêter le chronomètre, saisir une ligne en clair (saisie express),
+/// reprendre une entrée récente ou ouvrir la fenêtre de l'application. ⌥⌘T, de n'importe quelle
+/// application : le panneau s'ouvre sur la saisie express. Clic droit : ouvrir / quitter. Le temps
+/// écoulé s'affiche à côté de l'icône tant qu'un chronomètre tourne.
 ///
 /// Aucune donnée n'est lue ici : l'app Flutter (`lib/features/timer/menu_bar.dart`) envoie l'état
 /// par le canal `clockifai/menu_bar` (`update`) et exécute les commandes du panneau sur la base locale.
@@ -17,6 +19,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
   private let model = MenuBarModel()
   private weak var window: MainFlutterWindow?
   private var ticker: Timer?
+  private var hotKey: EventHotKeyRef?
 
   init(messenger: FlutterBinaryMessenger, window: MainFlutterWindow) {
     channel = FlutterMethodChannel(name: "clockifai/menu_bar", binaryMessenger: messenger)
@@ -25,6 +28,11 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
 
     model.perform = { [weak self] method, arguments in self?.perform(method, arguments) }
     model.openApp = { [weak self] in self?.showMainWindow() }
+    model.ask = { [weak self] method, arguments, done in
+      self?.channel.invokeMethod(method, arguments: arguments) { result in
+        DispatchQueue.main.async { done(result) }
+      }
+    }
     channel.setMethodCallHandler { [weak self] call, result in
       guard call.method == "update" else { return result(FlutterMethodNotImplemented) }
       self?.apply(call.arguments)
@@ -46,6 +54,29 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     popover.contentViewController = hosting
     popover.behavior = .transient
     popover.delegate = self
+    registerHotKey()
+  }
+
+  // MARK: - ⌥⌘T
+
+  /// Raccourci global Carbon (RegisterEventHotKey) : reçu même quand une autre application est au premier
+  /// plan, sans autorisation d'accessibilité, compatible avec le bac à sable.
+  private func registerHotKey() {
+    var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+    InstallEventHandler(GetApplicationEventTarget(), { _, _, userData in
+      guard let userData else { return OSStatus(eventNotHandledErr) }
+      let controller = Unmanaged<MenuBarController>.fromOpaque(userData).takeUnretainedValue()
+      DispatchQueue.main.async { controller.showQuickEntry() }
+      return noErr
+    }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), nil)
+    let id = EventHotKeyID(signature: OSType(0x434C_4B54), id: 1)  // « CLKT »
+    RegisterEventHotKey(UInt32(kVK_ANSI_T), UInt32(cmdKey | optionKey), id, GetApplicationEventTarget(), 0, &hotKey)
+  }
+
+  /// Panneau ouvert, champ de la saisie express prêt.
+  func showQuickEntry() {
+    if !popover.isShown { showPopover() }
+    model.quickFocusRequest += 1
   }
 
   // MARK: - Icône
@@ -105,6 +136,8 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     // Une description modifiée sans valider (Entrée) est enregistrée à la fermeture.
     model.commitDescription()
     model.error = nil
+    model.quickError = nil
+    model.quickNotice = nil
   }
 
   /// Fenêtre principale au premier plan (rouverte si elle a été fermée).

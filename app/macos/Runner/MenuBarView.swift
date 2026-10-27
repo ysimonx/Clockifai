@@ -55,7 +55,18 @@ final class MenuBarModel: ObservableObject {
   /// Commande en cours d'exécution côté Flutter : évite qu'un double-clic démarre deux chronomètres.
   @Published var busy = false
 
+  // Saisie express (« 1h20 réunion site ») : aperçu calculé par Flutter à la frappe.
+  @Published var quickText = ""
+  @Published var quickPreview: String?
+  @Published var quickReady = false
+  @Published var quickNotice: String?
+  @Published var quickError: String?
+  /// Incrémenté par ⌥⌘T : le champ prend le focus.
+  @Published var quickFocusRequest = 0
+
   var perform: (String, [String: Any]) -> Void = { _, _ in }
+  /// Commande dont la réponse revient au panneau (aperçu, enregistrement).
+  var ask: (String, [String: Any], @escaping (Any?) -> Void) -> Void = { _, _, _ in }
   var openApp: () -> Void = {}
 
   /// Libellés traduits par Flutter (ARB) ; repli en français avant le premier envoi.
@@ -96,6 +107,42 @@ final class MenuBarModel: ObservableObject {
   func prepareForDisplay() {
     error = nil
     if let running { description = running.description }
+  }
+
+  func previewQuick() {
+    let text = quickText
+    guard !text.trimmingCharacters(in: .whitespaces).isEmpty else {
+      quickPreview = nil
+      quickReady = false
+      return
+    }
+    quickNotice = nil
+    quickError = nil
+    ask("previewQuick", ["text": text]) { [weak self] result in
+      // Réponse d'une frappe déjà dépassée : ignorée.
+      guard let self, self.quickText == text, let m = result as? [String: Any] else { return }
+      self.quickPreview = m["preview"] as? String
+      self.quickReady = m["ready"] as? Bool ?? false
+    }
+  }
+
+  func submitQuick() {
+    let text = quickText
+    guard !busy, !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+    busy = true
+    ask("quickEntry", ["text": text]) { [weak self] result in
+      guard let self else { return }
+      self.busy = false
+      let m = result as? [String: Any] ?? [:]
+      if m["ok"] as? Bool == true {
+        self.quickText = ""
+        self.quickPreview = nil
+        self.quickReady = false
+        self.quickNotice = m["message"] as? String
+      } else {
+        self.quickError = m["message"] as? String
+      }
+    }
   }
 
   // MARK: - Commandes (exécutées par Flutter)
@@ -183,6 +230,7 @@ private func truncated(_ s: String, _ max: Int = 26) -> String {
 
 struct MenuBarView: View {
   @ObservedObject var model: MenuBarModel
+  @FocusState private var quickFocused: Bool
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -190,6 +238,8 @@ struct MenuBarView: View {
       Divider()
       if model.signedIn && model.ready {
         timer.padding(12)
+        Divider()
+        quick.padding(12)
         if !model.recent.isEmpty {
           Divider()
           recent
@@ -204,6 +254,47 @@ struct MenuBarView: View {
       footer
     }
     .frame(width: 340)
+    .onChange(of: model.quickFocusRequest) { _ in
+      DispatchQueue.main.async { quickFocused = true }
+    }
+  }
+
+  /// Saisie express : une ligne en clair, rangée dans la journée par Flutter.
+  private var quick: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack {
+        Text(model.label("quickEntry").uppercased())
+          .font(.caption2.weight(.semibold))
+          .foregroundColor(.secondary)
+        Spacer()
+        Text("⌥⌘T")
+          .font(.caption2.monospacedDigit())
+          .foregroundColor(.secondary)
+      }
+      TextField(model.label("quickEntryHint"), text: $model.quickText)
+        .textFieldStyle(.roundedBorder)
+        .focused($quickFocused)
+        .onSubmit(model.submitQuick)
+        .onChange(of: model.quickText) { _ in model.previewQuick() }
+      if let preview = model.quickPreview {
+        Text(preview)
+          .font(.caption)
+          .foregroundColor(model.quickReady ? .secondary : .orange)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      if let error = model.quickError {
+        Text(error)
+          .font(.caption)
+          .foregroundColor(.red)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      if let notice = model.quickNotice {
+        Label(notice, systemImage: "checkmark.circle.fill")
+          .font(.caption)
+          .foregroundColor(.green)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+    }
   }
 
   private var header: some View {

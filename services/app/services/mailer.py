@@ -20,7 +20,8 @@ def mail_configured() -> bool:
     return current_app.config.get("SMTP_HOST", "") not in _PLACEHOLDER_HOSTS
 
 
-def send_mail(to: str, subject: str, text: str) -> bool:
+def send_mail(to: str, subject: str, text: str, attachments: list[tuple[str, bytes, str]] = ()) -> bool:
+    """Envoie un email texte, avec des pièces jointes (nom, contenu, type MIME « application/pdf »…)."""
     cfg = current_app.config
     host = cfg.get("SMTP_HOST", "")
     if not mail_configured():
@@ -32,6 +33,9 @@ def send_mail(to: str, subject: str, text: str) -> bool:
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(text)
+    for filename, data, mimetype in attachments:
+        maintype, subtype = mimetype.split("/", 1)
+        msg.add_attachment(data, maintype=maintype, subtype=subtype, filename=filename)
     port = cfg["SMTP_PORT"]
     try:
         if port == 465:

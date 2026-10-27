@@ -53,6 +53,8 @@ def start_scheduler(app: Flask) -> BackgroundScheduler:
         return run
 
     sched.add_job(in_app(tasks.budget_alerts), "cron", minute=7, id="budget_alerts", max_instances=1, coalesce=True)
+    sched.add_job(in_app(tasks.send_scheduled_reports), "cron", minute="2,17,32,47", id="send_scheduled_reports",
+                  max_instances=1, coalesce=True)
     sched.start()
     log.info("scheduler démarré (%s jobs)", len(sched.get_jobs()))
     _scheduler = sched

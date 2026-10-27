@@ -2,7 +2,8 @@
 
 Un manager enregistre le rapport affiché (période, filtres, options) et ouvre un lien public en lecture seule
 (plan 18, lot 3). La personne qui reçoit le lien n'a pas de compte : Flask calcule la page à chaque ouverture, dans
-le fuseau et la langue du créateur, tant que celui-ci est manager actif du workspace.
+le fuseau et la langue du créateur, tant que celui-ci est manager actif du workspace. Le rapport peut aussi partir
+par email chaque semaine ou chaque mois (lot 4).
 
 ```mermaid
 sequenceDiagram
@@ -29,6 +30,15 @@ sequenceDiagram
         F->>PG: entrées terminées de la période et des filtres (report_rows)
         F->>F: arrondi éventuel, totaux, projets et tâches, détail si demandé
         F-->>C: page HTML sans script (noindex, no-store), ou PDF avec format=pdf
+    end
+
+    opt Envoi par email (chaque semaine ou chaque mois)
+        F->>F: job send_scheduled_reports toutes les 15 min
+        F->>PG: rapports planifiés, créateur encore manager actif
+        F->>F: semaine ou mois passés, 8 h chez le créateur, période pas encore envoyée
+        F->>PG: entrées de la période
+        F->>C: email (SMTP) : totaux, temps par projet, lien public, PDF joint
+        F->>PG: last_sent_period, une seule fois par période
     end
 
     M->>App: Changer de lien, Fermer le lien ou Supprimer

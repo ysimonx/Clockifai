@@ -132,7 +132,10 @@ Tâches planifiées de Flask (`services/app/jobs/`, un seul worker donc un seul 
 - `purge_activity_events` chaque jour à 04:30 UTC : supprime les événements bruts reçus il y a plus de 30 jours ;
 - `budget_alerts` chaque heure (à la 7e minute) : projets et tâches qui franchissent 80 puis 100 % de leur budget
   (heures, montant) ou de leur estimation ; chaque seuil est noté une fois dans `clockifai_private.budget_alerts`, et
-  les managers actifs reçoivent un email (SMTP), dans la langue de leur profil.
+  les managers actifs reçoivent un email (SMTP), dans la langue de leur profil ;
+- `send_scheduled_reports` toutes les 15 minutes : rapports partagés planifiés dont la semaine ou le mois vient de
+  finir (8 h dans le fuseau de leur auteur), PDF en pièce jointe ; la période envoyée est notée, jamais deux fois.
+  Rien sans SMTP.
 
 ## Chemin d'une écriture
 

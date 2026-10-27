@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
 
 from flask import current_app
 
 from ..db import connection, execute, fetch_all
 from ..services import budget_alerts as budgets
+from ..services import shared_reports
 from ..services.activity import process_session
 from ..services.agent_clock import IDLE_TIMEOUT
-from ..services.mailer import send_mail
+from ..services.mailer import mail_configured, send_mail
 
 log = logging.getLogger(__name__)
 
@@ -102,3 +104,15 @@ def budget_alerts() -> int:
     if alerts:
         log.info("budgets : %s alerte(s), %s email(s) envoyé(s)", len(alerts), sent)
     return len(alerts)
+
+
+def send_scheduled_reports() -> int:
+    """Rapports partagés envoyés par email (plan 18, lot 4) : semaine ou mois passés, à 8 h chez leur créateur. Sans
+    SMTP, rien ne part et rien n'est noté. Dans le contexte de l'app Flask (mailer)."""
+    if not mail_configured():
+        return 0
+    with connection() as conn:
+        sent = shared_reports.send_due_reports(conn, datetime.now(UTC), current_app.config["APP_PUBLIC_URL"], send_mail)
+    if sent:
+        log.info("rapports planifiés : %s envoyé(s)", sent)
+    return sent

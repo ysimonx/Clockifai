@@ -1,6 +1,7 @@
 # Plan 15 — Ce qui manque par rapport à Clockify
 
-> Statut : **envisagé** (27 octobre 2026) : inventaire et ordre proposé, rien n'est décidé (§6).
+> Statut : **en cours** (27 octobre 2026) : inventaire et ordre proposé ; le lot 6 (Rapports) est livré par le plan 18,
+> le reste n'est pas décidé (§6).
 >
 > Objectif : faire de Clockifai une vraie alternative pour une équipe qui quitte Clockify. Lister les fonctions
 > de Clockify absentes de Clockifai, les classer par intérêt et par coût, et les découper en lots.
@@ -31,7 +32,7 @@ clockify.me avant de valider un lot.
 | Coût et marge | Taux de coût par membre ; coût de main-d'œuvre et profit dans les rapports | `workspace_members.cost_rate_cents` se saisit dans Équipe, mais rien ne le lit. Seul le coût IA est calculé | `features/team/team_page.dart`, `features/reports/report_model.dart` |
 | Confidentialité des taux | Taux et coûts montrés seulement aux rôles qui y ont droit | `workspace_members` est lisible par tout membre (`members_select` : `is_member`) et part en entier dans `workspace_core` : **chacun reçoit le taux et le coût horaires des autres** | `0003_rls.sql`, `powersync/sync-config.yaml` |
 | Taux par tâche, assignation | Oui | Taux du projet, sinon du membre (plan 12, D1), posé par le serveur hors managers (`time_entries_rate`, 0023, plan 17) ; assignation : plan 04, lot S | `12-taux-et-factures-par-tache.md`, `04-tickets.md` |
-| Rapports | Lien public, envoi planifié par email, présence (arrivée, départ, heures sup), alertes de budget et d'estimation | Rien de tout cela | `features/reports/`, `projects.budget_*`, `tasks.estimate_seconds` |
+| Rapports | Lien public, envoi planifié par email, présence (arrivée, départ, heures sup), alertes de budget et d'estimation | Fait (plan 18) | `features/reports/`, `features/projects/budget_watch.dart`, `routes/reports.py` |
 | Dépenses | Par projet, catégories, justificatifs, approbation, facturation | Rien | — |
 | Factures | Envoi par email, paiements partiels, dépenses facturées | PDF (`GET /api/invoices/<id>/pdf`), statuts `draft` / `sent` / `paid` / `void`, taxe, remise, durées arrondies au pas du workspace (plan 17) ; pas d'email sur `clients` | `0007_modules.sql`, `routes/invoices.py` |
 | Pauses | Entrée de type « pause », bouton au kiosque | Pause déjeuner de la journée type seulement | `0017_profile_day.sql`, `features/kiosk/` |
@@ -64,7 +65,7 @@ Dans l'ordre recommandé.
 | 3 Connexion Google et Microsoft | GoTrue, boutons de connexion, règle 4.8 de l'App Store (§4.3) | S | envisagé |
 | 4 Coût, marge, confidentialité des taux | Taux hors de `workspace_members`, coût daté, colonnes Coût et Marge, taux par tâche (§4.4) | M | envisagé |
 | 5 Factures : envoi et paiements | Email du client, envoi du PDF, paiements partiels, impayés (§4.5) | S/M | envisagé |
-| 6 Rapports | Lien public, envoi planifié, présence, alertes de budget (§4.6) ; suivi dans le plan 18 | M/L | en cours (plan 18) |
+| 6 Rapports | Lien public, envoi planifié, présence, alertes de budget (§4.6) ; livré par le plan 18 | M/L | fait (plan 18) |
 | 7 Dépenses | Catégories, dépenses, justificatifs, approbation, facturation (§4.7) | L | envisagé |
 | 8 API publique et webhooks | Échange de jeton vers PostgREST, webhooks signés (§4.8) | M/L | envisagé |
 | 9 Pauses et planning | Entrées de pause ; jalons, capacité, publication (§4.9) | M | envisagé |

@@ -36,7 +36,9 @@ class SavedReport {
         to = j['date_to'] == null ? null : DateTime.parse(j['date_to'] as String),
         detailed = j['detailed'] as bool,
         showAmounts = j['show_amounts'] as bool,
-        publicPath = j['public_path'] as String?;
+        publicPath = j['public_path'] as String?,
+        schedule = j['schedule'] as String?,
+        recipients = [for (final e in j['recipients'] as List? ?? const []) e as String];
   final String id;
   final String name;
   final String period;
@@ -45,6 +47,10 @@ class SavedReport {
   final bool detailed;
   final bool showAmounts;
   final String? publicPath;
+
+  /// Envoi par email (lot 4) : `weekly`, `monthly` ou null ; et ses destinataires.
+  final String? schedule;
+  final List<String> recipients;
 
   /// Adresse complète du lien public, avec l'adresse de l'instance que l'app connaît.
   String? get publicUrl => publicPath == null ? null : '${ServicesApi.baseUrl}$publicPath';
@@ -62,15 +68,22 @@ class _SavedReportsDialog extends StatefulWidget {
 }
 
 class _SavedReportsDialogState extends State<_SavedReportsDialog> {
-  late Future<List<SavedReport>> _reports = _load();
+  late Future<({List<SavedReport> reports, bool mail})> _reports = _load();
   bool _busy = false;
+
+  /// Un serveur d'envoi d'emails est configuré (sinon, pas d'envoi planifié).
+  bool _mail = false;
 
   String get _wid => context.read<SessionController>().workspaceId!;
 
-  Future<List<SavedReport>> _load() async {
+  Future<({List<SavedReport> reports, bool mail})> _load() async {
     final wid = context.read<SessionController>().workspaceId!;
     final res = await ServicesApi.get('/api/reports/saved', {'workspace_id': wid});
-    return [for (final r in res['reports'] as List) SavedReport.fromJson(r as Map<String, dynamic>)];
+    _mail = res['mail'] == true;
+    return (
+      reports: [for (final r in res['reports'] as List) SavedReport.fromJson(r as Map<String, dynamic>)],
+      mail: _mail,
+    );
   }
 
   /// Un appel au serveur, puis la liste relue ; une erreur (hors ligne…) s'affiche.
@@ -93,13 +106,20 @@ class _SavedReportsDialogState extends State<_SavedReportsDialog> {
   }
 
   Future<void> _create() async {
-    final draft = await showDialog<Map<String, dynamic>>(context: context, builder: (_) => _NewSharedReport(current: widget.current));
+    final draft = await showDialog<Map<String, dynamic>>(
+        context: context, builder: (_) => _NewSharedReport(current: widget.current, mail: _mail));
     if (draft == null) return;
     await _call(() => ServicesApi.post('/api/reports/saved', {'workspace_id': _wid, ...draft}));
   }
 
   Future<void> _update(SavedReport r, Map<String, dynamic> body) =>
       _call(() => ServicesApi.put('/api/reports/saved/${r.id}', {'workspace_id': _wid, ...body}));
+
+  Future<void> _editSchedule(SavedReport r) async {
+    final body = await showDialog<Map<String, dynamic>>(
+        context: context, builder: (_) => _ScheduleDialog(report: r, mail: _mail));
+    if (body != null) await _update(r, body);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,12 +129,12 @@ class _SavedReportsDialogState extends State<_SavedReportsDialog> {
       title: Text(l.sharedReports),
       content: SizedBox(
         width: 560,
-        child: FutureBuilder<List<SavedReport>>(
+        child: FutureBuilder<({List<SavedReport> reports, bool mail})>(
           future: _reports,
           builder: (context, snap) {
             if (snap.hasError) return Text(l.onlineOnly);
             if (!snap.hasData) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
-            final reports = snap.data!;
+            final reports = snap.data!.reports;
             return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(l.sharedReportsHelp, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
               const SizedBox(height: 8),
@@ -132,6 +152,8 @@ class _SavedReportsDialogState extends State<_SavedReportsDialog> {
                           periodLabel(context, r.period, r.from, r.to),
                           if (r.detailed) l.sharedDetailedShort,
                           if (r.publicPath == null) l.sharedLinkOff,
+                          if (r.schedule != null)
+                            '${r.schedule == 'weekly' ? l.sharedWeeklyShort : l.sharedMonthlyShort} → ${l.sharedRecipientsCount(r.recipients.length)}',
                         ].join(' · ')),
                         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                           if (r.publicUrl != null) ...[
@@ -150,6 +172,8 @@ class _SavedReportsDialogState extends State<_SavedReportsDialog> {
                                   await _update(r, {'public': r.publicPath == null});
                                 case 'newLink':
                                   await _update(r, {'new_link': true});
+                                case 'schedule':
+                                  await _editSchedule(r);
                                 case 'delete':
                                   final ok = await confirm(context,
                                       title: l.deleteSharedReport, message: l.deleteSharedReportMessage, confirmLabel: l.delete);
@@ -159,6 +183,7 @@ class _SavedReportsDialogState extends State<_SavedReportsDialog> {
                             itemBuilder: (_) => [
                               PopupMenuItem(value: 'public', child: Text(r.publicPath == null ? l.sharedLinkOpen : l.sharedLinkClose)),
                               if (r.publicPath != null) PopupMenuItem(value: 'newLink', child: Text(l.sharedNewLink)),
+                              PopupMenuItem(value: 'schedule', child: Text(l.sharedEditSchedule)),
                               PopupMenuItem(value: 'delete', child: Text(l.delete)),
                             ],
                           ),
@@ -194,8 +219,9 @@ String periodLabel(BuildContext context, String period, DateTime? from, DateTime
 
 /// Nom et options d'un nouveau rapport partagé ; renvoie le corps de la requête, ou null.
 class _NewSharedReport extends StatefulWidget {
-  const _NewSharedReport({required this.current});
+  const _NewSharedReport({required this.current, required this.mail});
   final ReportDraft current;
+  final bool mail;
 
   @override
   State<_NewSharedReport> createState() => _NewSharedReportState();
@@ -206,16 +232,20 @@ class _NewSharedReportState extends State<_NewSharedReport> {
   bool _detailed = false;
   bool _amounts = true;
   bool _public = true;
+  String? _schedule;
+  final _recipients = TextEditingController();
 
   @override
   void dispose() {
     _name.dispose();
+    _recipients.dispose();
     super.dispose();
   }
 
   void _submit() {
     final name = _name.text.trim();
-    if (name.isEmpty) return;
+    final recipients = splitRecipients(_recipients.text);
+    if (name.isEmpty || (_schedule != null && recipients.isEmpty)) return;
     final c = widget.current;
     Navigator.pop(context, <String, dynamic>{
       'name': name,
@@ -227,6 +257,8 @@ class _NewSharedReportState extends State<_NewSharedReport> {
       'detailed': _detailed,
       'show_amounts': _amounts,
       'public': _public,
+      'schedule': _schedule,
+      'recipients': _schedule == null ? const <String>[] : recipients,
     });
   }
 
@@ -266,11 +298,114 @@ class _NewSharedReportState extends State<_NewSharedReport> {
             title: Text(l.sharedPublicLink),
             subtitle: Text(l.sharedPublicLinkHelp),
           ),
+          _ScheduleFields(
+            mail: widget.mail,
+            schedule: _schedule,
+            recipients: _recipients,
+            onSchedule: (v) => setState(() => _schedule = v),
+          ),
         ]),
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
         FilledButton(onPressed: _submit, child: Text(l.save)),
+      ],
+    );
+  }
+}
+
+/// Adresses tapées, séparées par des virgules, des points-virgules, des espaces ou des retours à la ligne.
+List<String> splitRecipients(String text) =>
+    [for (final part in text.split(RegExp(r'[\s,;]+'))) if (part.trim().isNotEmpty) part.trim()];
+
+/// Fréquence et destinataires d'un envoi par email ; grisés sans serveur d'envoi.
+class _ScheduleFields extends StatelessWidget {
+  const _ScheduleFields({required this.mail, required this.schedule, required this.recipients, required this.onSchedule});
+  final bool mail;
+  final String? schedule;
+  final TextEditingController recipients;
+  final ValueChanged<String?> onSchedule;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+      const SizedBox(height: 8),
+      DropdownButtonFormField<String?>(
+        initialValue: schedule,
+        decoration: InputDecoration(
+          labelText: l.sharedSchedule,
+          helperText: mail ? l.sharedScheduleHelp : l.sharedNoMail,
+          helperMaxLines: 2,
+        ),
+        items: [
+          DropdownMenuItem(value: null, child: Text(l.sharedScheduleNone)),
+          DropdownMenuItem(value: 'weekly', child: Text(l.sharedScheduleWeekly)),
+          DropdownMenuItem(value: 'monthly', child: Text(l.sharedScheduleMonthly)),
+        ],
+        onChanged: mail ? onSchedule : null,
+      ),
+      if (schedule != null) ...[
+        const SizedBox(height: 12),
+        TextField(
+          controller: recipients,
+          keyboardType: TextInputType.emailAddress,
+          minLines: 1,
+          maxLines: 3,
+          decoration: InputDecoration(labelText: l.sharedRecipients, hintText: l.sharedRecipientsHint),
+        ),
+      ],
+    ]);
+  }
+}
+
+/// Envoi par email d'un rapport déjà partagé ; renvoie le corps de la modification, ou null.
+class _ScheduleDialog extends StatefulWidget {
+  const _ScheduleDialog({required this.report, required this.mail});
+  final SavedReport report;
+  final bool mail;
+
+  @override
+  State<_ScheduleDialog> createState() => _ScheduleDialogState();
+}
+
+class _ScheduleDialogState extends State<_ScheduleDialog> {
+  late String? _schedule = widget.report.schedule;
+  late final _recipients = TextEditingController(text: widget.report.recipients.join(', '));
+
+  @override
+  void dispose() {
+    _recipients.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AlertDialog(
+      title: Text(widget.report.name),
+      content: SizedBox(
+        width: 420,
+        child: _ScheduleFields(
+          mail: widget.mail,
+          schedule: _schedule,
+          recipients: _recipients,
+          onSchedule: (v) => setState(() => _schedule = v),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
+        FilledButton(
+          onPressed: () {
+            final recipients = splitRecipients(_recipients.text);
+            if (_schedule != null && recipients.isEmpty) return;
+            Navigator.pop(context, <String, dynamic>{
+              'schedule': _schedule,
+              'recipients': _schedule == null ? const <String>[] : recipients,
+            });
+          },
+          child: Text(l.save),
+        ),
       ],
     );
   }

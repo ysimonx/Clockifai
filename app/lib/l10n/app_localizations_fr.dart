@@ -527,6 +527,52 @@ class AppLocalizationsFr extends AppLocalizations {
   String get open => 'Ouvrir';
 
   @override
+  String get sharedSchedule => 'Envoi par email';
+
+  @override
+  String get sharedScheduleNone => 'Jamais';
+
+  @override
+  String get sharedScheduleWeekly => 'Chaque semaine (la semaine passée)';
+
+  @override
+  String get sharedScheduleMonthly => 'Chaque mois (le mois passé)';
+
+  @override
+  String get sharedScheduleHelp =>
+      'À 8 h le premier jour de la semaine ou du mois, avec le PDF en pièce jointe. Le premier envoi couvre la période en cours, une fois finie.';
+
+  @override
+  String get sharedNoMail =>
+      'Pas de serveur d\'envoi d\'emails sur cette installation.';
+
+  @override
+  String get sharedRecipients => 'Destinataires';
+
+  @override
+  String get sharedRecipientsHint => 'adresses séparées par des virgules';
+
+  @override
+  String get sharedWeeklyShort => 'chaque semaine';
+
+  @override
+  String get sharedMonthlyShort => 'chaque mois';
+
+  @override
+  String sharedRecipientsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count destinataires',
+      one: '1 destinataire',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sharedEditSchedule => 'Envoi par email…';
+
+  @override
   String get approvals => 'Approbations';
 
   @override

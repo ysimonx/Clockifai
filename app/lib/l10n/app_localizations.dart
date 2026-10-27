@@ -925,6 +925,78 @@ abstract class AppLocalizations {
   /// **'Ouvrir'**
   String get open;
 
+  /// No description provided for @sharedSchedule.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoi par email'**
+  String get sharedSchedule;
+
+  /// No description provided for @sharedScheduleNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jamais'**
+  String get sharedScheduleNone;
+
+  /// No description provided for @sharedScheduleWeekly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque semaine (la semaine passée)'**
+  String get sharedScheduleWeekly;
+
+  /// No description provided for @sharedScheduleMonthly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque mois (le mois passé)'**
+  String get sharedScheduleMonthly;
+
+  /// No description provided for @sharedScheduleHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'À 8 h le premier jour de la semaine ou du mois, avec le PDF en pièce jointe. Le premier envoi couvre la période en cours, une fois finie.'**
+  String get sharedScheduleHelp;
+
+  /// No description provided for @sharedNoMail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas de serveur d\'envoi d\'emails sur cette installation.'**
+  String get sharedNoMail;
+
+  /// No description provided for @sharedRecipients.
+  ///
+  /// In fr, this message translates to:
+  /// **'Destinataires'**
+  String get sharedRecipients;
+
+  /// No description provided for @sharedRecipientsHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'adresses séparées par des virgules'**
+  String get sharedRecipientsHint;
+
+  /// No description provided for @sharedWeeklyShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'chaque semaine'**
+  String get sharedWeeklyShort;
+
+  /// No description provided for @sharedMonthlyShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'chaque mois'**
+  String get sharedMonthlyShort;
+
+  /// No description provided for @sharedRecipientsCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 destinataire} other{{count} destinataires}}'**
+  String sharedRecipientsCount(int count);
+
+  /// No description provided for @sharedEditSchedule.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoi par email…'**
+  String get sharedEditSchedule;
+
   /// No description provided for @approvals.
   ///
   /// In fr, this message translates to:

@@ -20,7 +20,7 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/entry_dialog.dart';
 import 'day_plan.dart';
-import 'quick_entry.dart';
+import 'quick_place.dart';
 
 /// « Aujourd'hui », le journal automatique (plans/13-ux-moderne.md, lot 11) : la journée sur une frise, les entrées
 /// saisies, les créneaux vides et les propositions tirées des habitudes, du planning et des sessions de Claude, à
@@ -406,27 +406,6 @@ class _TodayPageState extends State<TodayPage> {
   }
 
   // ------------------------------------------------------------------ saisie express (lot 3)
-  /// Où ranger [q] : sa plage, sinon le premier créneau vide assez grand de son jour, en laissant d'abord en place
-  /// les propositions affichées ([proposed], jour affiché seulement), puis à leur place, sinon après la dernière entrée.
-  ({DateTime day, Span span, bool inGap})? _slotFor(QuickEntry q, List<EntryRow> rows, DateTime now, List<Span> proposed) {
-    final day = addDays(now, q.dayOffset);
-    if (q.hasRange) return (day: day, span: Span(q.startMinute!, q.endMinute!), inGap: false);
-    final d = q.minutes;
-    if (d == null || d <= 0) return null;
-    final end = addDays(day, 1);
-    final plan = planDay(
-      day: day,
-      now: now,
-      mine: [for (final r in rows) if (!r.entry.startAt.toLocal().isBefore(day) && r.entry.startAt.toLocal().isBefore(end)) r.entry],
-      history: [for (final r in rows) if (r.entry.startAt.toLocal().isBefore(day)) r.entry],
-    );
-    Span? fit(List<Span> taken) => subtract(plan.windows, taken, min: 5).where((g) => g.length >= d).firstOrNull;
-    if (fit([...plan.busy, if (day == _day) ...proposed]) case final g?) return (day: day, span: Span(g.start, g.start + d), inGap: true);
-    if (fit(plan.busy) case final g?) return (day: day, span: Span(g.start, g.start + d), inGap: false);
-    final from = plan.busy.isEmpty ? plan.typical.start : plan.busy.map((s) => s.end).reduce(math.max);
-    return (day: day, span: Span(from, math.min(1440, from + d)), inGap: false);
-  }
-
   List<String> _examples(CatalogController catalog) {
     String word(String name) => name.split(RegExp(r'\s+')).firstWhere((w) => w.length >= 5, orElse: () => name.split(' ').last).toLowerCase();
     final tasks = catalog.tasks.where((t) => t.status == 'active' && catalog.project(t.projectId)?.archived == false).toList();
@@ -447,38 +426,18 @@ class _TodayPageState extends State<TodayPage> {
       required String ws}) {
     final l = context.l10n;
     final theme = Theme.of(context);
-    final q = parseQuickEntry(
-      _quick.text,
-      weekday: now.weekday,
-      projects: [for (final p in catalog.activeProjects) QuickProject(p.id, p.name, client: catalog.client(p.clientId)?.name)],
-      tasks: [for (final t in catalog.tasks) if (t.status == 'active') QuickTask(t.id, t.name, t.projectId)],
-      tags: [for (final t in catalog.activeTags) QuickTag(t.id, t.name)],
-    );
-    final slot = q == null ? null : _slotFor(q, rows, now, proposed);
+    final q = parseQuick(_quick.text, catalog, now);
+    final slot = q == null
+        ? null
+        : placeQuick(q, now: now, entries: [for (final r in rows) r.entry], proposedOn: (day) => day == _day ? proposed : const []);
     final ready = q != null && q.isComplete && slot != null;
     final project = catalog.project(q?.projectId);
     final task = catalog.task(q?.taskId);
 
     Future<void> save() async {
       if (!ready) return;
-      final billable = q.billable ?? catalog.billableFor(projectId: q.projectId, userId: me);
-      final added = l.quickAdded(q.description.isEmpty ? (project?.name ?? '') : q.description,
-          dayLabel(context, slot.day, today: l.today, yesterday: l.yesterday, now: now), '${hm(slot.span.start)} → ${hm(slot.span.end)}');
-      final id = await entriesRepo.createManual(
-        workspaceId: ws,
-        userId: me,
-        start: atMinute(slot.day, slot.span.start),
-        end: atMinute(slot.day, slot.span.end),
-        createdBy: me,
-        draft: EntryDraft(
-          description: q.description,
-          projectId: q.projectId,
-          taskId: q.taskId,
-          billable: billable,
-          hourlyRateCents: catalog.rateFor(projectId: q.projectId, userId: me),
-          tagIds: q.tagIds,
-        ),
-      );
+      final added = quickAddedMessage(context, q, slot, catalog, now);
+      final id = await saveQuick(q, slot, catalog: catalog, workspaceId: ws, userId: me);
       if (!mounted) return;
       _quick.clear();
       setState(() {});

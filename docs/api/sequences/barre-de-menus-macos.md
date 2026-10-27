@@ -35,6 +35,17 @@ sequenceDiagram
         P->>W: stop, setDescription, setProject ou continue (entrée récente)
         W->>DB: même dépôt que l'interface principale
     end
+
+    opt Saisie express (champ du panneau, ou ⌥⌘T de n'importe quelle application)
+        U->>P: « 1h30 pose chantier hier »
+        P->>W: previewQuick (texte), à chaque frappe
+        W->>DB: entrées des cinq dernières semaines (journée type, créneaux vides)
+        W-->>P: aperçu (« 1:30 · Chantier · « Pose » · Hier 08:30 → 10:00 »), prêt ou non
+        U->>P: Entrée
+        P->>W: quickEntry (texte)
+        W->>DB: entrée terminée, rangée comme dans la page « Aujourd'hui »
+        W-->>P: ok et « Ajouté : … », ou le message (durée ou projet manquant)
+    end
     Note over DB: l'envoi au serveur suit le chemin habituel (ecriture-hors-ligne.md)
 ```
 
@@ -43,6 +54,9 @@ sequenceDiagram
 - Clic droit sur l'icône : ouvrir l'app, démarrage à l'ouverture de session (canal
   `clockifai/launch_at_login`, `SMAppService`, macOS 13+), quitter.
 - `setProject` retire la tâche (propre à l'ancien projet) et recalcule facturable et taux.
+- Saisie express : analyse et placement partagés avec la page « Aujourd'hui » (`features/today/quick_place.dart`) ;
+  ⌥⌘T est un raccourci global Carbon (`RegisterEventHotKey`), sans autorisation d'accessibilité.
 
-Sources : `app/lib/features/timer/menu_bar.dart`, `app/macos/Runner/MenuBarController.swift`,
+Sources : `app/lib/features/timer/menu_bar.dart`, `app/lib/features/today/quick_place.dart`,
+`app/macos/Runner/MenuBarController.swift`,
 `app/macos/Runner/LaunchAtLogin.swift`, `app/test/` (pont simulé), `plans/06-macos-barre-de-menus.md`.

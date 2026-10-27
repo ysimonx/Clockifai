@@ -29,6 +29,8 @@ la date d'arrivée de chaque évolution.
   X sélectionner, E modifier, D dupliquer, ⌫ supprimer, Échap (27 octobre 2026).
 - Suivi du temps : **sélection multiple** (case au survol, appui long sur téléphone) et barre d'actions : projet,
   facturable ou non, dupliquer vers un autre jour, supprimer, avec Annuler (27 octobre 2026).
+- Mac : la **saisie express** dans le panneau de la barre de menus, avec aperçu ; ⌥⌘T l'ouvre depuis n'importe
+  quelle application (27 octobre 2026).
 
 ### Modifié
 

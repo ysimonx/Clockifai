@@ -12,11 +12,14 @@ import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import '../today/day_plan.dart' show addDays;
+import '../today/quick_place.dart';
 import 'timer_rules.dart';
 
 /// Icône de la barre de menus macOS (en haut à droite de l'écran), comme celle de Clockify :
 /// un clic ouvre un petit panneau pour démarrer / arrêter le chronomètre, reprendre une entrée
-/// récente ou ouvrir la fenêtre de l'application.
+/// récente, saisir une ligne en clair (« 1h20 réunion site », ⌥⌘T de n'importe où) ou ouvrir la fenêtre de
+/// l'application.
 ///
 /// Le panneau est natif (`macos/Runner/MenuBar*.swift`) et n'a pas accès aux données : ce widget
 /// lui envoie l'état (`update`) et exécute ses commandes sur la base locale, comme la barre du
@@ -146,6 +149,8 @@ class _MacMenuBarState extends State<MacMenuBar> {
         'firstSync': l.firstSync,
         'noWorkspace': l.noWorkspace,
         'launchAtLogin': l.launchAtLogin,
+        'quickEntry': l.quickEntry,
+        'quickEntryHint': l.quickEntryHint,
       },
     };
     // L'état de sync et le référentiel notifient souvent sans rien changer pour le panneau.
@@ -183,6 +188,10 @@ class _MacMenuBarState extends State<MacMenuBar> {
         return _setProject(userId, args['projectId'] as String?);
       case 'continue':
         return _continue(args['id'] as String?);
+      case 'previewQuick':
+        return _quick(ws, userId, args['text'] as String? ?? '', save: false);
+      case 'quickEntry':
+        return _quick(ws, userId, args['text'] as String? ?? '', save: true);
     }
     throw MissingPluginException(call.method);
   }
@@ -230,6 +239,25 @@ class _MacMenuBarState extends State<MacMenuBar> {
       hourlyRateCents: _catalog.rateFor(projectId: projectId, userId: userId),
     );
     return null;
+  }
+
+  /// Saisie express (plans/13-ux-moderne.md, lot 3) : l'aperçu de la ligne (`preview`, `ready`), ou son
+  /// enregistrement (`ok`, `message`), rangée comme dans la page « Aujourd'hui ».
+  Future<Map<String, Object?>> _quick(Workspace ws, String userId, String text, {required bool save}) async {
+    final now = DateTime.now();
+    final q = parseQuick(text, _catalog, now);
+    if (q == null) return {'preview': null, 'ready': false, 'ok': false};
+    final rows = await entriesRepo
+        .watchEntries(workspaceId: ws.id, userId: userId, from: addDays(now, -35), to: addDays(now, 1), includeRunning: true)
+        .first;
+    final slot = placeQuick(q, now: now, entries: [for (final r in rows) r.entry]);
+    if (!mounted) return const {};
+    final ready = q.isComplete && slot != null;
+    if (!save) return {'preview': quickSummary(context, q, slot, _catalog, userId, now).join(' · '), 'ready': ready};
+    if (!ready) return {'ok': false, 'message': q.duration == null ? _l.quickDurationMissing : _l.quickProjectMissing};
+    final message = quickAddedMessage(context, q, slot, _catalog, now);
+    await saveQuick(q, slot, catalog: _catalog, workspaceId: ws.id, userId: userId);
+    return {'ok': true, 'message': message};
   }
 
   /// Relance une entrée récente, comme le bouton « Continuer » de la liste des entrées.

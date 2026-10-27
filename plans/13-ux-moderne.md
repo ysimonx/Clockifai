@@ -103,7 +103,7 @@ Ce que cela demande :
 - Pas dans cette version : assistant, agenda, temps actif sur le poste, commits. Le thème sombre se choisit dans
   Paramètres › Apparence (comme le système, claire ou sombre).
 
-### Lot 3, saisie express (faite dans « Aujourd'hui »)
+### Lot 3, saisie express (fait)
 
 - Analyse pure `parseQuickEntry` (`features/today/quick_entry.dart`, testée) : plage (« 9h-10h30 », « 14:00 - 15:30 »,
   « 9h à 11h »), sinon durée (« 1h20 », « 1,5h », « 1:30 », « 45min », « 90m ») ; jour (aujourd'hui, hier,
@@ -115,6 +115,11 @@ Ce que cela demande :
   défaut, à la place de l'une d'elles), sinon après la dernière entrée du jour. Jours de calendrier et heures à
   l'horloge (`addDays`, `atMinute`, `minuteOf`) : « hier » reste juste après un changement d'heure. Aperçu en étiquettes sous le champ ; Entrée
   enregistre, Échap efface, Annuler dans le bandeau. Exemples cliquables tirés des projets et tâches.
+- Analyse, placement et enregistrement partagés (`features/today/quick_place.dart`) entre la page et la barre de
+  menus du Mac : champ « Saisie express » du panneau, aperçu à chaque frappe (`previewQuick`), Entrée enregistre
+  (`quickEntry`) ; ⌥⌘T de n'importe quelle application ouvre le panneau sur ce champ (raccourci Carbon, sans
+  autorisation d'accessibilité). Dans la barre de menus, les propositions du journal ne sont pas connues : la
+  ligne peut prendre leur place.
 
 ### Lot 1, petits gains (fait)
 
@@ -154,7 +159,7 @@ Ce que cela demande :
 |---|---|---|---|
 | 1 Petits gains | Annuler au lieu des confirmations ; durées sans secondes ; description et projet modifiables sur place ; sélection multiple et barre d'actions ; raccourcis à une touche ; ⌘K (navigation et actions) | M | fait |
 | 2 Journal du jour | Page « Aujourd'hui » (pistes Vous et Claude, trous, pause habituelle dans le profil, bilan du jour) ; remplace la vue jour de « Suivi du temps » et du calendrier | M/L | envisagé |
-| 3 Saisie express | Analyseur FR/EN (durée, plage, jour, projet et tâche flous, `#tag`, facturable), étiquettes à la frappe, placement dans les trous ; aussi dans la barre de menus (⌥⌘T) | M | en cours (page « Aujourd'hui » : fait ; barre de menus : à faire) |
+| 3 Saisie express | Analyseur FR/EN (durée, plage, jour, projet et tâche flous, `#tag`, facturable), étiquettes à la frappe, placement dans les trous ; aussi dans la barre de menus (⌥⌘T) | M | fait |
 | 4 Pistes | Moteur de suggestions : planning, habitudes, sessions de Claude et commits (rejoint le plan 10, lot 2, `time_suggestions`) ; agenda en option (Google, Microsoft) | M/L | envisagé |
 | 5 Semaine | Une page, trois vues ; copie de la semaine précédente, remplissage par le planning, suggestions en pointillé, liste avant soumission | M | envisagé |
 | 6 Fin de journée | Récapitulatif à heure réglable (barre de menus macOS, notification mobile) avec les pistes à cocher | S/M | envisagé |

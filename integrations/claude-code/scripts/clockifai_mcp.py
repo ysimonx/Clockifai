@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Serveur MCP local du plugin Clockifai (stdio) : l'outil `set_current_task`, par lequel Claude nomme la tâche du
-sujet en cours (plans/10-suivi-claude-code.md, D18).
+"""Serveur MCP local du plugin Clockifai (stdio) : l'outil `set_current_task`, par lequel Claude nomme l'objectif en
+cours et son étape (plans/10-suivi-claude-code.md, D18 ; plans/16-sous-taches.md : l'étape devient une sous-tâche).
 
 N'appelle jamais le réseau et ne lit aucun réglage : il renvoie le nom reçu. Le hook (PostToolUse) le relaie à
 Clockifai avec le jeton et l'identifiant de session, que lui seul connaît : un serveur MCP ne reçoit pas la session.
@@ -16,25 +16,31 @@ NAME_MAX = 80  # comme le serveur (TASK_NAME_MAX)
 TOOL = "set_current_task"
 
 INSTRUCTIONS = (
-    "Clockifai mesure le temps de cette session de Claude Code et le range par tâche. Dès que tu sais sur quoi "
-    f"porte le travail, même une vérification rapide, appelle {TOOL} avec un nom de tâche court (3 à 6 mots, dans "
-    "la langue de l'utilisateur), avant de commencer ; pas pour une simple salutation. Garde ce nom tant que "
-    "l'utilisateur précise ou poursuit le même sujet : un nom plus précis donné juste après renomme la tâche. Ne "
-    "donne un nouveau nom que s'il passe à un autre sujet, et reprends exactement le même nom pour un sujet déjà "
-    "nommé. Pas de nom de personne ni de donnée confidentielle. Inutile de le signaler à l'utilisateur."
+    "Clockifai mesure le temps de cette session de Claude Code et le range par tâche et sous-tâche. Dès que tu sais "
+    f"sur quoi porte le travail, même une vérification rapide, appelle {TOOL} avant de commencer (pas pour une "
+    "simple salutation), avec deux noms courts (3 à 6 mots, dans la langue de l'utilisateur) : `name`, l'objectif "
+    "d'ensemble, stable d'une session et d'un jour à l'autre (si le travail relève d'un plan numéroté du dépôt, son "
+    "numéro et son titre, par exemple « Plan 14 · Coller aux maquettes ») ; `step`, l'étape en cours de cet "
+    "objectif. À chaque nouvelle étape, rappelle l'outil avec le même `name` et la nouvelle `step`. Ne change de "
+    "`name` que si l'utilisateur passe à un tout autre objectif, et reprends exactement le même `name` pour un "
+    "objectif déjà nommé. Un nom plus précis donné juste après renomme. Pas de nom de personne ni de donnée "
+    "confidentielle. Inutile de le signaler à l'utilisateur."
 )
 
 TOOLS = [{
     "name": TOOL,
     "title": "Nommer la tâche Clockifai",
     "description": (
-        "Nomme la tâche Clockifai du sujet en cours, au début de chaque nouveau sujet : le temps de cette session "
-        "y est rangé, dans le projet du dépôt. Même nom, même tâche."
+        "Nomme l'objectif (la tâche Clockifai) et l'étape en cours (sa sous-tâche) : le temps de cette session y est "
+        "rangé, dans le projet du dépôt. Même objectif, même tâche ; chaque étape a sa sous-tâche."
     ),
     "inputSchema": {
         "type": "object",
-        "properties": {"name": {"type": "string", "description": "Nom court de la tâche (3 à 6 mots)",
-                                "maxLength": NAME_MAX}},
+        "properties": {
+            "name": {"type": "string", "description": "Objectif d'ensemble, stable (3 à 6 mots)", "maxLength": NAME_MAX},
+            "step": {"type": "string", "description": "Étape en cours de cet objectif (3 à 6 mots), facultative",
+                     "maxLength": NAME_MAX},
+        },
         "required": ["name"],
     },
 }]
@@ -62,8 +68,11 @@ def handle(msg: dict) -> dict | None:
     elif method == "tools/list":
         result = {"tools": TOOLS}
     elif method == "tools/call" and params.get("name") == TOOL:
-        name = " ".join(str((params.get("arguments") or {}).get("name") or "").split())[:NAME_MAX]
-        result = text(f"Tâche « {name} » notée : le temps de cette session y est rangé.") if name else text(
+        args = params.get("arguments") or {}
+        name = " ".join(str(args.get("name") or "").split())[:NAME_MAX]
+        step = " ".join(str(args.get("step") or "").split())[:NAME_MAX]
+        noted = f"« {name} » › « {step} »" if step else f"« {name} »"
+        result = text(f"Tâche {noted} notée : le temps de cette session y est rangé.") if name else text(
             "Nom de tâche vide : rien n'est changé.", error=True)
     else:
         return {"jsonrpc": "2.0", "id": msg["id"], "error": {"code": -32601, "message": f"unknown method {method}"}}

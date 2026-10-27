@@ -152,7 +152,7 @@ class InvoicesPage extends StatelessWidget {
       taxPercent: double.tryParse(tax.text.replaceAll(',', '.')) ?? ws.defaultTaxPercent,
       projectNames: {for (final p in catalog.projects) p.id: p.name},
       byTask: byTask,
-      taskNames: {for (final t in catalog.tasks) t.id: t.name},
+      taskNames: {for (final t in catalog.tasks) t.id: catalog.taskPath(t.id)!},
     );
     if (!context.mounted) return;
     if (id == null) return showSnack(context, l.nothingToInvoice);

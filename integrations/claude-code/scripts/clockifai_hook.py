@@ -2,9 +2,9 @@
 """Hook Claude Code → Clockifai (plans/10-suivi-claude-code.md, §6.1, D6, D7, D13, D17).
 
 Lit l'événement du hook sur stdin et n'en garde que la liste blanche (D6) : session, dépôt, branche, dossier,
-durée de l'outil. Jamais le prompt, les entrées ou sorties des outils, ni la transcription, sauf le nom de tâche
-que Claude passe à l'outil `set_current_task` du plugin (D18). La commande d'un outil Bash est lue sur le poste pour
-y repérer un `git commit` (D13), jamais envoyée. La transcription est lue sur le poste pour en tirer l'usage de
+durée de l'outil. Jamais le prompt, les entrées ou sorties des outils, ni la transcription, sauf l'objectif et
+l'étape que Claude passe à l'outil `set_current_task` du plugin (D18, plan 16). La commande d'un outil Bash est lue
+sur le poste pour y repérer un `git commit` (D13), jamais envoyée. La transcription est lue sur le poste pour en tirer l'usage de
 l'API (D17) : seuls partent des totaux par modèle, effort et vitesse, jamais le texte des messages.
 
 N'écrit jamais sur stdout (Claude Code l'ajouterait au contexte) et sort toujours avec le code 0.
@@ -425,11 +425,14 @@ def collect(data: dict, now: float) -> list[dict]:
                 event["duration_ms"] = duration_ms
             events.append(event)
         if task_tool:
-            # Seule exception à la liste blanche pour tool_input : le nom de tâche que Claude a choisi d'envoyer.
-            name = " ".join(str((data.get("tool_input") or {}).get("name") or "").split())[:TASK_NAME_MAX]
+            # Seule exception à la liste blanche pour tool_input : l'objectif et l'étape que Claude a choisi d'envoyer.
+            tool_input = data.get("tool_input") or {}
+            name = " ".join(str(tool_input.get("name") or "").split())[:TASK_NAME_MAX]
+            step = " ".join(str(tool_input.get("step") or "").split())[:TASK_NAME_MAX]
             if name:
+                payload = {"task_name": name, "step_name": step} if step else {"task_name": name}
                 events.append(dict(base, id=str(uuid.uuid4()), kind="session_task", occurred_at=iso(now),
-                                   payload={"task_name": name}))
+                                   payload=payload))
     else:
         event = dict(base, id=str(uuid.uuid4()), kind=kind, occurred_at=iso(now))
         if hook == "SessionStart" and data.get("source"):

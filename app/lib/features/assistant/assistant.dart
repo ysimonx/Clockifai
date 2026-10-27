@@ -264,7 +264,7 @@ class _ProposalCardState extends State<_ProposalCard> {
       builder: (context, snap) {
         final rows = snap.data ?? const <EntryRow>[];
         final change = [
-          if (catalog.project(p.projectId) case final project?) '→ ${project.name}${catalog.task(p.taskId) == null ? '' : ' : ${catalog.task(p.taskId)!.name}'}',
+          if (catalog.project(p.projectId) case final project?) '→ ${project.name}${catalog.task(p.taskId) == null ? '' : ' : ${catalog.taskPath(p.taskId)}'}',
           if (p.billable != null) '→ ${p.billable! ? l.billable : l.nonBillable}',
         ].join(' · ');
         return Card(

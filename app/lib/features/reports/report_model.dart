@@ -1,7 +1,7 @@
 import '../../core/catalog.dart';
 import '../../data/repositories/time_entry_repository.dart';
 
-enum GroupBy { project, client, user, tag, day, description }
+enum GroupBy { project, task, client, user, tag, day, description }
 
 enum RangePreset { thisWeek, lastWeek, thisMonth, lastMonth, thisYear, custom }
 
@@ -31,6 +31,18 @@ class ReportGroup {
   /// Usage IA des entrées d'agent (plan 10, D17) ; coût null tant qu'aucune entrée n'a de tarif connu.
   int aiTokens = 0;
   int? aiCostMicros;
+
+  /// Par tâche : ses sous-tâches (plans/16-sous-taches.md), déjà comptées dans la tâche ; du plus long au plus court.
+  final List<ReportGroup> children = [];
+
+  void _add(int s, EntryRow r, double amount, double share) {
+    seconds += s;
+    if (r.entry.billable) billableSeconds += s;
+    this.amount += amount;
+    entries += 1;
+    aiTokens += (r.aiTokens * share).round();
+    if (r.aiCostMicros != null) aiCostMicros = (aiCostMicros ?? 0) + (r.aiCostMicros! * share).round();
+  }
 }
 
 /// Calcul des rapports à partir des entrées locales (fonctionne hors ligne).
@@ -69,17 +81,18 @@ class ReportCalculator {
     return (total: total, billable: billable, amount: amount, aiTokens: aiTokens, aiCostMicros: aiCost);
   }
 
-  List<ReportGroup> group(List<EntryRow> rows, GroupBy by, {required String noProject, required String noClient, required String noTag, required String noDescription, required String Function(DateTime) dayLabel}) {
+  List<ReportGroup> group(List<EntryRow> rows, GroupBy by,
+      {required String noProject,
+      required String noClient,
+      required String noTag,
+      required String noDescription,
+      required String Function(DateTime) dayLabel,
+      String noTask = ''}) {
     final map = <String?, ReportGroup>{};
-    void add(String? key, String label, EntryRow r, {String? color, double share = 1}) {
+    ReportGroup add(String? key, String label, EntryRow r, {String? color, double share = 1}) {
       final g = map.putIfAbsent(key, () => ReportGroup(key, label, color: color));
-      final s = (secondsOf(r) * share).round();
-      g.seconds += s;
-      if (r.entry.billable) g.billableSeconds += s;
-      g.amount += amountOf(r) * share;
-      g.entries += 1;
-      g.aiTokens += (r.aiTokens * share).round();
-      if (r.aiCostMicros != null) g.aiCostMicros = (g.aiCostMicros ?? 0) + (r.aiCostMicros! * share).round();
+      g._add((secondsOf(r) * share).round(), r, amountOf(r) * share, share);
+      return g;
     }
 
     for (final r in rows) {
@@ -88,6 +101,16 @@ class ReportCalculator {
         case GroupBy.project:
           final p = catalog.project(e.projectId);
           add(e.projectId, p?.name ?? noProject, r, color: p?.color);
+        case GroupBy.task:
+          // La tâche compte ses sous-tâches ; chaque sous-tâche a sa ligne dépliable sous la tâche.
+          final root = catalog.rootTask(e.taskId);
+          final p = catalog.project(e.projectId);
+          final g = add(root?.id, root?.name ?? noTask, r, color: p?.color);
+          if (root != null && e.taskId != root.id) {
+            var child = g.children.where((c) => c.key == e.taskId).firstOrNull;
+            if (child == null) g.children.add(child = ReportGroup(e.taskId, catalog.task(e.taskId)?.name ?? '?'));
+            child._add(secondsOf(r), r, amountOf(r), 1);
+          }
         case GroupBy.client:
           final c = catalog.clientOfProject(e.projectId);
           add(c?.id, c?.name ?? noClient, r);
@@ -112,6 +135,9 @@ class ReportCalculator {
       }
     }
     final list = map.values.toList();
+    for (final g in list) {
+      g.children.sort((a, b) => b.seconds.compareTo(a.seconds));
+    }
     if (by == GroupBy.day) {
       list.sort((a, b) => (a.key ?? '').compareTo(b.key ?? ''));
     } else {

@@ -44,3 +44,4 @@ livrés : on les cite par leur nom de fichier.
 | [13-ux-moderne.md](13-ux-moderne.md) | UX repensée : journal du jour, saisie express, ⌘K, semaine pré-remplie, édition en place, rapports par questions, téléphone pour le chantier | fait | — |
 | [14-coller-aux-maquettes.md](14-coller-aux-maquettes.md) | Allure des maquettes : menu de 7 rubriques, chronomètre en pastille, Geist, Aujourd'hui, invitations | en cours | 13 |
 | [15-ecarts-avec-clockify.md](15-ecarts-avec-clockify.md) | Ce qui manque par rapport à Clockify : import, rappels, coût et marge, dépenses, API, sécurité | envisagé | 01 |
+| [16-sous-taches.md](16-sous-taches.md) | Sous-tâches : Projet › Tâche › Sous-tâche, cumul dans les rapports ; Claude range l'objectif en tâche et l'étape en sous-tâche | en cours | 10, 12 |

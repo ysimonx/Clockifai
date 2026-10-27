@@ -29,6 +29,7 @@ erDiagram
   workspaces ||--o{ projects : ""
   clients |o--o{ projects : "client"
   projects ||--o{ tasks : "tâches"
+  tasks |o--o{ tasks : "sous-tâches"
   workspaces ||--o{ tags : ""
   workspaces ||--o{ time_entries : ""
   auth_users ||--o{ time_entries : "temps de"
@@ -98,6 +99,7 @@ erDiagram
   tasks {
     uuid id PK
     uuid project_id FK
+    uuid parent_id FK "sous-tâche (0021) : un niveau"
     text name
     text status "active | done"
     int estimate_seconds
@@ -429,6 +431,7 @@ non nul) : Flask, connecté en rôle `postgres`, et les triggers internes qui po
 | `workspace_members` | `workspace_members_agents_follow` | un pilote désactivé ou retiré entraîne ses agents ; jamais l'inverse |
 | `activity_rules` | `activity_rules_guard` | avec un JWT, seul `deleted_at` change |
 | `tasks` | `tasks_guard` (0010) | hors managers : création d'une tâche active sans estimation, puis renommage seulement |
+| `tasks` | `tasks_parent_guard`, `tasks_cascade_children` (0021) | sous-tâche : parent du même projet, sans parent lui-même, et une tâche qui a des sous-tâches n'en devient pas une ; supprimer ou restaurer une tâche emporte ses sous-tâches, la déplacer d'un projet aussi |
 | `timesheet_submissions` | `timesheet_submissions_guard` | une feuille commence `submitted` ; période et propriétaire immuables ; sans `manages()`, seulement `submitted` / `withdrawn` et pas de retour sur une feuille approuvée ; `decided_by` / `decided_at` posés |
 | `reminders` | `reminders_guard` (0019) | auteur posé depuis le JWT ; personne, semaine et auteur immuables. RLS : relancer ceux qu'on encadre (`manages()`), jamais soi ; lire les siennes et celles de son équipe ; marquer vue la sienne |
 | `timesheet_submissions` | `timesheet_submissions_apply` | approuver verrouille les entrées de la période (date locale), rouvrir les déverrouille (avec `bypass_guard`) |

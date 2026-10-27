@@ -80,12 +80,14 @@ class CatalogRepository {
   Future<void> restoreProject(Project before) => db.transaction(() => db.restoreRow(db.projects, before.toCompanion(false)));
 
   // ------------------------------------------------------------------ tâches
-  Future<String> createTask(String workspaceId, String projectId, String name, {int? estimateSeconds}) async {
+  /// Nouvelle tâche du projet, ou sous-tâche de [parentId] (même projet, un seul niveau : le serveur le vérifie).
+  Future<String> createTask(String workspaceId, String projectId, String name, {int? estimateSeconds, String? parentId}) async {
     final id = newId();
     await db.into(db.tasks).insert(TasksCompanion.insert(
           id: Value(id),
           workspaceId: workspaceId,
           projectId: projectId,
+          parentId: Value(parentId),
           name: name.trim(),
           estimateSeconds: Value(estimateSeconds),
         ));
@@ -99,8 +101,10 @@ class CatalogRepository {
         estimateSeconds: estimateSeconds == null ? const Value.absent() : Value(estimateSeconds),
       ));
 
-  Future<void> deleteTask(String id) =>
-      (db.update(db.tasks)..where((t) => t.id.equals(id))).write(TasksCompanion(deletedAt: Value(nowUtc())));
+  /// Supprime la tâche et ses sous-tâches (même horodatage : le serveur les rend ensemble à la restauration).
+  Future<void> deleteTask(String id) => (db.update(db.tasks)
+        ..where((t) => (t.id.equals(id) | t.parentId.equals(id)) & t.deletedAt.isNull()))
+      .write(TasksCompanion(deletedAt: Value(nowUtc())));
 
   // ------------------------------------------------------------------ tags
   Future<String> createTag(String workspaceId, String name, {String color = '#6B7280'}) async {

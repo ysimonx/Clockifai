@@ -43,7 +43,7 @@ le monde le geste de base (démarrer et arrêter le chronomètre, ajouter du tem
 | 2 Identité | Geist, Geist Mono (durées, heures, raccourcis) ; encre, fond gris froid, cartes blanches bordées, rayons 16 / 12 / 10 ; clair et sombre | fait |
 | 3 Aujourd'hui | Ordinateur : en-tête, saisie express, frise à gauche ; À compléter (propositions à ajouter, ou créneaux à remplir), Bilan du jour par projet (Vous, Claude) à droite. Téléphone : « Comme vendredi ? » et « Reprendre la journée », liste du jour, puis saisie express et frise | fait (feuille « + » : `features/time_entries/quick_add_sheet.dart`) |
 | 4 Autres pages | Semaine (grille, « Avant de soumettre »), Rapports, Équipe, Factures : en-têtes et cartes des maquettes | en cours (thème appliqué, titres) |
-| 5 Guide et vidéos | Vidéo « Premiers pas » (ordinateur puis téléphone : démarrer, arrêter, ajouter du temps, « Comme hier ») en tête du guide ; plus de mention « Vidéo sans son » ; les six vidéos retournées | en cours (mention retirée, guide à jour) |
+| 5 Guide et vidéos | Vidéo « Premiers pas » (ordinateur puis téléphone : démarrer, arrêter, ajouter du temps, « Comme hier ») en tête du guide ; plus de mention « Vidéo sans son » ; les six vidéos retournées | fait (vidéos tournées et publiées le 27 octobre 2026) |
 | 6 Invitations | Avec un serveur de mail : case « Envoyer l'invitation par email », cochée ; dans tous les cas le lien, à copier (`GET /api/invitations/options`, `send_email`, `app_url`) | fait |
 
 ### Décisions de mise en œuvre

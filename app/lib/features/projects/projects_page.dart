@@ -93,7 +93,52 @@ class _ProjectTile extends StatelessWidget {
     final budget = project.budgetHours;
     final progress = budget == null || budget == 0 ? null : trackedSeconds / (budget * 3600);
     final currency = session.workspace!.currency;
-    final tasks = catalog.tasks.where((t) => t.projectId == project.id).toList();
+    // Tâches de premier niveau, chacune suivie de ses sous-tâches (plans/16-sous-taches.md).
+    final tasks = catalog.tasks.where((t) => t.projectId == project.id && t.parentId == null).toList();
+    List<Task> subtasks(Task t) => catalog.tasks.where((s) => s.parentId == t.id).toList();
+
+    Widget taskTile(Task t, {required bool sub}) => ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.only(left: sub ? 40 : 16, right: 8),
+          leading: Icon(
+              sub ? Icons.subdirectory_arrow_right : (t.status == 'done' ? Icons.check_circle : Icons.radio_button_unchecked),
+              size: 18,
+              color: sub ? theme.colorScheme.outline : null),
+          title: Text(t.name, style: t.status == 'done' ? TextStyle(decoration: TextDecoration.lineThrough, color: theme.colorScheme.outline) : null),
+          trailing: session.isManager
+              ? Row(mainAxisSize: MainAxisSize.min, children: [
+                  if (!sub)
+                    IconButton(
+                      tooltip: l.createSubtask,
+                      icon: const Icon(Icons.subdirectory_arrow_right),
+                      onPressed: () async {
+                        final name = await promptText(context, title: l.newSubtaskIn(t.name), label: l.name);
+                        if (name != null && name.trim().isNotEmpty) {
+                          await catalogRepo.createTask(project.workspaceId, project.id, name, parentId: t.id);
+                        }
+                      },
+                    ),
+                  IconButton(
+                    tooltip: t.status == 'done' ? l.reopen : l.markDone,
+                    icon: Icon(t.status == 'done' ? Icons.undo : Icons.done),
+                    onPressed: () => catalogRepo.updateTask(t.id, status: t.status == 'done' ? 'active' : 'done'),
+                  ),
+                  IconButton(
+                    tooltip: l.rename,
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () async {
+                      final name = await promptText(context, title: l.rename, label: l.name, initial: t.name);
+                      if (name != null && name.trim().isNotEmpty) await catalogRepo.updateTask(t.id, name: name);
+                    },
+                  ),
+                  IconButton(
+                    tooltip: l.delete,
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => catalogRepo.deleteTask(t.id),
+                  ),
+                ])
+              : null,
+        );
 
     return Card(
       child: ExpansionTile(
@@ -149,34 +194,10 @@ class _ProjectTile extends StatelessWidget {
         children: [
           if (tasks.isEmpty)
             ListTile(dense: true, title: Text(l.noTasks, style: TextStyle(color: theme.colorScheme.outline))),
-          for (final t in tasks)
-            ListTile(
-              dense: true,
-              leading: Icon(t.status == 'done' ? Icons.check_circle : Icons.radio_button_unchecked, size: 18),
-              title: Text(t.name, style: t.status == 'done' ? TextStyle(decoration: TextDecoration.lineThrough, color: theme.colorScheme.outline) : null),
-              trailing: session.isManager
-                  ? Row(mainAxisSize: MainAxisSize.min, children: [
-                      IconButton(
-                        tooltip: t.status == 'done' ? l.reopen : l.markDone,
-                        icon: Icon(t.status == 'done' ? Icons.undo : Icons.done),
-                        onPressed: () => catalogRepo.updateTask(t.id, status: t.status == 'done' ? 'active' : 'done'),
-                      ),
-                      IconButton(
-                        tooltip: l.rename,
-                        icon: const Icon(Icons.edit_outlined),
-                        onPressed: () async {
-                          final name = await promptText(context, title: l.rename, label: l.name, initial: t.name);
-                          if (name != null && name.trim().isNotEmpty) await catalogRepo.updateTask(t.id, name: name);
-                        },
-                      ),
-                      IconButton(
-                        tooltip: l.delete,
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () => catalogRepo.deleteTask(t.id),
-                      ),
-                    ])
-                  : null,
-            ),
+          for (final t in tasks) ...[
+            taskTile(t, sub: false),
+            for (final s in subtasks(t)) taskTile(s, sub: true),
+          ],
         ],
       ),
     );

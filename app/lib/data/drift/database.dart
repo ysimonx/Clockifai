@@ -154,6 +154,8 @@ class Tasks extends Table {
   TextColumn get id => text().clientDefault(newId)();
   TextColumn get workspaceId => text()();
   TextColumn get projectId => text()();
+  /// Tâche parente d'une sous-tâche (plans/16-sous-taches.md) : un seul niveau.
+  TextColumn get parentId => text().nullable()();
   TextColumn get name => text()();
   IntColumn get estimateSeconds => integer().nullable()();
   TextColumn get status => text().clientDefault(() => 'active')();

@@ -333,10 +333,10 @@
   "claudeCodeStepTokenReconnect": "3. The token is only shown when a computer is connected: if this computer lacks it, tap Reconnect on its row in the list below.",
   "claudeCodeStepTokenThen": "Tap Copy token, then press Enter in the terminal: the command reads the token from the clipboard. In the other order, copying the command would replace the token.",
   "claudeTasks": "Claude's tasks",
-  "claudeTasksHelp": "Claude names the task of its work, and your sessions' time goes there, in the repository's project. A more precise name renames the task instead of creating another; a task you choose stays.",
+  "claudeTasksHelp": "Claude names the goal of its work (a task, for example the current plan) and each step (a subtask): your sessions' time goes there, in the repository's project. A more precise name renames instead of adding one; a task you pick stays.",
   "claudeTasksOff": "No task: project only",
   "claudeTasksSession": "One task per Claude Code session",
-  "claudeTasksSubject": "One task per subject (same name, same task)",
+  "claudeTasksSubject": "One task per goal, one subtask per step",
   "client": "Client",
   "clients": "Clients",
   "close": "Close",
@@ -1392,5 +1392,25 @@
         "type": "String"
       }
     }
-  }
+  },
+  "subtaskCount": "{count, plural, =1{1 subtask} other{{count} subtasks}}",
+  "@subtaskCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createSubtask": "Add a subtask",
+  "newSubtaskIn": "New subtask of {task}",
+  "@newSubtaskIn": {
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "subtasks": "Subtasks",
+  "task": "Task",
+  "noTask": "No task"
 }

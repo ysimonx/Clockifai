@@ -104,6 +104,7 @@ const schema = Schema([
   Table('tasks', [
     Column.text('workspace_id'),
     Column.text('project_id'),
+    Column.text('parent_id'),
     Column.text('name'),
     Column.integer('estimate_seconds'),
     Column.text('status'),

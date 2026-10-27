@@ -178,9 +178,11 @@ def list_catalog(conn, scope: Scope, args: dict) -> list[dict]:
         rows = conn.execute("select id::text as id, name from public.clients where workspace_id = %s "
                             "and deleted_at is null order by name", (scope.workspace_id,)).fetchall()
     elif kind == "tasks":
-        rows = conn.execute("select t.id::text as id, t.name, p.name as project from public.tasks t "
-                            "join public.projects p on p.id = t.project_id where t.workspace_id = %s "
-                            "and t.deleted_at is null order by p.name, t.name", (scope.workspace_id,)).fetchall()
+        # « Tâche › Sous-tâche » pour une sous-tâche (plans/16-sous-taches.md).
+        rows = conn.execute("select t.id::text as id, coalesce(pt.name || ' › ' || t.name, t.name) as name, "
+                            "p.name as project from public.tasks t join public.projects p on p.id = t.project_id "
+                            "left join public.tasks pt on pt.id = t.parent_id where t.workspace_id = %s "
+                            "and t.deleted_at is null order by p.name, 2", (scope.workspace_id,)).fetchall()
     else:
         sql = ("select user_id::text as id, display_name as name, kind from public.workspace_members "
                "where workspace_id = %(wid)s and deleted_at is null")
@@ -197,7 +199,8 @@ def time_summary(conn, scope: Scope, args: dict, tz: str) -> list[dict]:
     key, label = {
         "project": ("e.project_id::text", "coalesce(p.name, '(sans projet)')"),
         "client": ("p.client_id::text", "coalesce(c.name, '(sans client)')"),
-        "task": ("e.task_id::text", "coalesce(t.name, '(sans tâche)')"),
+        # Par tâche, les sous-tâches comptent dans leur tâche.
+        "task": ("coalesce(t.parent_id, e.task_id)::text", "coalesce(pt.name, t.name, '(sans tâche)')"),
         "day": ("((e.start_at at time zone %(tz)s)::date)::text", "((e.start_at at time zone %(tz)s)::date)::text"),
         "person": ("e.user_id::text", "coalesce(m.display_name, '?')"),
     }[args["group_by"]]
@@ -213,6 +216,7 @@ def time_summary(conn, scope: Scope, args: dict, tz: str) -> list[dict]:
           left join public.projects p on p.id = e.project_id
           left join public.clients c on c.id = p.client_id
           left join public.tasks t on t.id = e.task_id
+          left join public.tasks pt on pt.id = t.parent_id
           left join public.workspace_members m on m.workspace_id = e.workspace_id and m.user_id = e.user_id
          where {where}
          group by 1, 2 order by 3 desc limit 100
@@ -230,10 +234,12 @@ def find_entries(conn, scope: Scope, args: dict, tz: str) -> dict:
         select e.id::text as id, ((e.start_at at time zone %(tz)s)::date)::text as date,
                to_char(e.start_at at time zone %(tz)s, 'HH24:MI') as start,
                (extract(epoch from e.end_at - e.start_at) / 60)::int as minutes,
-               p.name as project, t.name as task, e.billable, m.display_name as person, e.locked
+               p.name as project, coalesce(pt.name || ' › ' || t.name, t.name) as task, e.billable,
+               m.display_name as person, e.locked
           from public.time_entries e
           left join public.projects p on p.id = e.project_id
           left join public.tasks t on t.id = e.task_id
+          left join public.tasks pt on pt.id = t.parent_id
           left join public.workspace_members m on m.workspace_id = e.workspace_id and m.user_id = e.user_id
          where {where}
          order by e.start_at limit {MAX_ENTRIES + 1}

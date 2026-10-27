@@ -23,23 +23,23 @@ Future<ProjectPick?> showProjectPicker(BuildContext context, {String? projectId,
   );
 }
 
-/// Demande le nom d'une nouvelle tâche du projet [p] et renvoie son id ; une tâche du même nom est reprise plutôt
-/// que dupliquée. Nul si l'utilisateur annule.
-Future<String?> promptNewTask(BuildContext context, Project p, {String initial = ''}) async {
+/// Demande le nom d'une nouvelle tâche du projet [p] (ou d'une sous-tâche de [parent]) et renvoie son id ; une tâche
+/// du même nom est reprise plutôt que dupliquée. Nul si l'utilisateur annule.
+Future<String?> promptNewTask(BuildContext context, Project p, {String initial = '', Task? parent}) async {
   final l = context.l10n;
-  final name = (await promptText(context, title: l.newTaskIn(p.name), label: l.name, initial: initial))?.trim();
+  final title = parent == null ? l.newTaskIn(p.name) : l.newSubtaskIn(parent.name);
+  final name = (await promptText(context, title: title, label: l.name, initial: initial))?.trim();
   if (name == null || name.isEmpty || !context.mounted) return null;
-  return pickOrCreateTask(context, p, name);
+  return pickOrCreateTask(context, p, name, parent: parent);
 }
 
-/// La tâche [name] du projet [p], créée si elle n'existe pas encore.
-Future<String> pickOrCreateTask(BuildContext context, Project p, String name) async {
-  final existing = context
-      .read<CatalogController>()
-      .tasksOf(p.id)
+/// La tâche [name] du projet [p] (ou la sous-tâche de [parent]), créée si elle n'existe pas encore.
+Future<String> pickOrCreateTask(BuildContext context, Project p, String name, {Task? parent}) async {
+  final catalog = context.read<CatalogController>();
+  final existing = (parent == null ? catalog.tasksOf(p.id) : catalog.subtasksOf(parent.id))
       .where((t) => t.name.toLowerCase() == name.toLowerCase())
       .firstOrNull;
-  return existing?.id ?? await catalogRepo.createTask(p.workspaceId, p.id, name);
+  return existing?.id ?? await catalogRepo.createTask(p.workspaceId, p.id, name, parentId: parent?.id);
 }
 
 class _ProjectPickerDialog extends StatefulWidget {
@@ -55,6 +55,8 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
   String _query = '';
   // Projets dont toutes les tâches sont dépliées ; celui de la tâche courante l'est d'office.
   late final Set<String> _expanded = {if (widget.taskId != null && widget.projectId != null) widget.projectId!};
+  // Tâches dont les sous-tâches sont dépliées (plans/16-sous-taches.md) ; celle de la tâche courante l'est d'office.
+  late final Set<String> _expandedTasks = {?context.read<CatalogController>().rootTask(widget.taskId)?.id};
 
   /// Sélectionne la tâche [name] du projet, en la créant si elle n'existe pas encore.
   Future<void> _pickOrCreateTask(Project p, String name) async {
@@ -64,8 +66,8 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
     if (mounted) Navigator.pop(context, ProjectPick(p.id, id));
   }
 
-  Future<void> _promptTask(Project p, String initial) async {
-    final id = await promptNewTask(context, p, initial: initial);
+  Future<void> _promptTask(Project p, String initial, {Task? parent}) async {
+    final id = await promptNewTask(context, p, initial: initial, parent: parent);
     if (id != null && mounted) Navigator.pop(context, ProjectPick(p.id, id));
   }
 
@@ -82,8 +84,15 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
         q.isEmpty ||
         p.name.toLowerCase().contains(q) ||
         (catalog.client(p.clientId)?.name ?? '').toLowerCase().contains(q);
+    bool named(Task t) => t.name.toLowerCase().contains(q);
+    // Une tâche répond à la recherche par son nom ou par celui d'une de ses sous-tâches.
     List<Task> matchingTasks(Project p) =>
-        q.isEmpty ? const [] : catalog.tasksOf(p.id).where((t) => t.name.toLowerCase().contains(q)).toList();
+        q.isEmpty ? const [] : catalog.tasksOf(p.id).where((t) => named(t) || catalog.subtasksOf(t.id).any(named)).toList();
+    List<Task> shownSubtasks(Task t) {
+      final subs = catalog.subtasksOf(t.id);
+      if (_expandedTasks.contains(t.id)) return subs;
+      return q.isEmpty ? const [] : subs.where(named).toList();
+    }
 
     final projects = catalog.activeProjects.where((p) => nameMatches(p) || matchingTasks(p).isNotEmpty).toList();
 
@@ -126,12 +135,44 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
       );
     }
 
-    Widget taskTile(Project p, Task t) => ListTile(
+    Widget taskTile(Project p, Task t) {
+      final subs = catalog.subtasksOf(t.id);
+      final open = _expandedTasks.contains(t.id);
+      return ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.only(left: 56, right: 16),
+        title: Text(t.name),
+        selected: widget.taskId == t.id,
+        onTap: () => Navigator.pop(context, ProjectPick(p.id, t.id)),
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (subs.isNotEmpty)
+            TextButton(
+              style: TextButton.styleFrom(visualDensity: VisualDensity.compact, foregroundColor: theme.colorScheme.outline),
+              onPressed: () => setState(() => open ? _expandedTasks.remove(t.id) : _expandedTasks.add(t.id)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(l.subtaskCount(subs.length)),
+                Icon(open ? Icons.expand_less : Icons.expand_more, size: 18),
+              ]),
+            ),
+          if (canCreateTasks)
+            IconButton(
+              tooltip: l.createSubtask,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.subdirectory_arrow_right, size: 18),
+              onPressed: () => _promptTask(p, '', parent: t),
+            ),
+        ]),
+      );
+    }
+
+    Widget subtaskTile(Project p, Task s) => ListTile(
           dense: true,
-          contentPadding: const EdgeInsets.only(left: 56, right: 16),
-          title: Text(t.name),
-          selected: widget.taskId == t.id,
-          onTap: () => Navigator.pop(context, ProjectPick(p.id, t.id)),
+          contentPadding: const EdgeInsets.only(left: 84, right: 16),
+          leading: Icon(Icons.subdirectory_arrow_right, size: 16, color: theme.colorScheme.outline),
+          minLeadingWidth: 16,
+          title: Text(s.name),
+          selected: widget.taskId == s.id,
+          onTap: () => Navigator.pop(context, ProjectPick(p.id, s.id)),
         );
 
     final List<Widget> results;
@@ -166,7 +207,10 @@ class _ProjectPickerDialogState extends State<_ProjectPickerDialog> {
           ),
           for (final p in groups[key]!) ...[
             projectTile(p),
-            for (final t in _expanded.contains(p.id) ? catalog.tasksOf(p.id) : matchingTasks(p)) taskTile(p, t),
+            for (final t in _expanded.contains(p.id) ? catalog.tasksOf(p.id) : matchingTasks(p)) ...[
+              taskTile(p, t),
+              for (final s in shownSubtasks(t)) subtaskTile(p, s),
+            ],
           ],
         ],
       ];

@@ -122,7 +122,7 @@ class _MacMenuBarState extends State<MacMenuBar> {
       'projectId': e.projectId,
       'project': project?.name,
       'client': _catalog.client(project?.clientId)?.name,
-      'task': _catalog.task(e.taskId)?.name,
+      'task': _catalog.taskPath(e.taskId),
       'color': project?.color,
     };
   }

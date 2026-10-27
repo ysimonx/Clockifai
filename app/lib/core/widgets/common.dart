@@ -39,7 +39,7 @@ class ProjectLabel extends StatelessWidget {
       return Text(context.l10n.noProject, style: style?.copyWith(color: theme.colorScheme.outline));
     }
     final client = catalog.client(project.clientId);
-    final task = catalog.task(taskId);
+    final task = catalog.taskPath(taskId);
     return Row(mainAxisSize: MainAxisSize.min, children: [
       ColorDot(project.color),
       const SizedBox(width: 6),
@@ -47,7 +47,7 @@ class ProjectLabel extends StatelessWidget {
         child: Text.rich(
           TextSpan(children: [
             TextSpan(text: project.name, style: TextStyle(color: colorFromHex(project.color), fontWeight: FontWeight.w600)),
-            if (task != null) TextSpan(text: ' : ${task.name}'),
+            if (task != null) TextSpan(text: ' : $task'),
             if (client != null) TextSpan(text: ' · ${client.name}', style: TextStyle(color: theme.colorScheme.outline)),
           ]),
           style: style,

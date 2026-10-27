@@ -10,6 +10,16 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Sous-tâches** : Projet › Tâche › Sous-tâche (« Unité 4 » › « Montage »). La flèche ↳ en ajoute une, dans la
+  page des projets et le sélecteur de projet ; la saisie montre les sous-tâches en pastilles sous la tâche choisie.
+  Rapports : « Grouper par tâche » cumule les sous-tâches, qu'un clic déplie ; exports CSV, Excel et PDF : colonne
+  « Sous-tâche » (27 octobre 2026).
+- **Claude Code** : la tâche porte l'objectif (le titre du plan en cours, par exemple), stable d'une session à
+  l'autre, et chaque étape devient une sous-tâche ; les rapports ne s'encombrent plus d'une tâche par étape. Mettez à
+  jour le plugin sur chaque poste (`claude plugin update clockifai@clockifai`) (27 octobre 2026).
+
 ## [0.2.4] — 2026-10-27
 
 ### Modifié

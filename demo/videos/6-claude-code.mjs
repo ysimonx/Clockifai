@@ -97,9 +97,9 @@ export async function run(browser, failures) {
         await h.nav('Paramètres');
         await h.reveal(/^Claude Code/, 420);
         await h.click(/^Claude Code/, 1500);
-        await h.click(/^Une tâche par sujet/, 1200);
+        await h.click(/^Une tâche par objectif/, 1200);
         await h.caption(C('Tâches de Claude'), 'Comment ranger le temps de Claude',
-          'Par sujet : un même nom retombe sur la même tâche, d’une session à l’autre (« Page Contact »). Par session : chaque conversation a la sienne. Ou le projet seulement.', ROLE, 8000);
+          'Par objectif : la tâche (« Page Contact »), d’une session à l’autre, et une sous-tâche par étape. Par session : chaque conversation a la sienne. Ou le projet seulement.', ROLE, 8000);
         await h.page.keyboard.press('Escape');
         await h.wait(800);
         await h.reveal(/^Postes connectés$/, 420, { x: 720 });

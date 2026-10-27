@@ -295,6 +295,9 @@ class _EntryDialogState extends State<_EntryDialog> {
     // Une entrée d'agent porte son pilote comme auteur, mais c'est Claude Code qui l'a enregistrée.
     final enteredByOther = owner != null && author != null && author != owner && widget.entry?.source != 'agent';
     final taskPills = readOnly || project == null ? const <Task>[] : catalog.tasksOf(project.id);
+    // Sous-tâches de la tâche choisie (plans/16-sous-taches.md), en pastilles sous les tâches.
+    final rootTask = catalog.rootTask(_taskId);
+    final subtaskPills = readOnly || rootTask == null ? const <Task>[] : catalog.subtasksOf(rootTask.id);
 
     return AlertDialog(
       title: Text(widget.entry == null ? l.addManualEntry : (_isRunning ? l.runningTimer : l.editEntry)),
@@ -408,8 +411,23 @@ class _EntryDialogState extends State<_EntryDialog> {
                       label: Text(t.name),
                       visualDensity: VisualDensity.compact,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      selected: _taskId == t.id,
+                      selected: rootTask?.id == t.id,
                       onSelected: (v) => setState(() => _taskId = v ? t.id : null),
+                    ),
+                ]),
+              ),
+            if (subtaskPills.isNotEmpty && subtaskPills.length <= 12)
+              Padding(
+                padding: const EdgeInsets.only(top: 6, left: 12),
+                child: Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                  Icon(Icons.subdirectory_arrow_right, size: 16, color: theme.colorScheme.outline),
+                  for (final s in subtaskPills)
+                    ChoiceChip(
+                      label: Text(s.name),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      selected: _taskId == s.id,
+                      onSelected: (v) => setState(() => _taskId = v ? s.id : rootTask!.id),
                     ),
                 ]),
               ),

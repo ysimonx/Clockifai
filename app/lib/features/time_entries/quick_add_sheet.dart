@@ -136,6 +136,8 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
     final mono = theme.textTheme.bodyMedium?.copyWith(fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()]);
     final project = catalog.project(_projectId);
     final tasks = project == null ? const <Task>[] : catalog.tasksOf(project.id).take(8).toList();
+    final root = catalog.rootTask(_taskId);
+    final subtasks = root == null ? const <Task>[] : catalog.subtasksOf(root.id).take(8).toList();
 
     Widget round(IconData icon, String tooltip, VoidCallback onTap) => IconButton.outlined(
           tooltip: tooltip,
@@ -218,13 +220,30 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
                 for (final t in tasks)
                   ChoiceChip(
                     label: Text(t.name),
-                    selected: _taskId == t.id,
+                    selected: root?.id == t.id,
                     selectedColor: theme.colorScheme.primary,
-                    labelStyle: TextStyle(color: _taskId == t.id ? theme.colorScheme.onPrimary : null),
+                    labelStyle: TextStyle(color: root?.id == t.id ? theme.colorScheme.onPrimary : null),
                     showCheckmark: false,
                     onSelected: (v) => setState(() => _taskId = v ? t.id : null),
                   ),
               ]),
+            // Sous-tâches de la tâche choisie (plans/16-sous-taches.md).
+            if (subtasks.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8, left: 12),
+                child: Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                  Icon(Icons.subdirectory_arrow_right, size: 18, color: theme.colorScheme.outline),
+                  for (final s in subtasks)
+                    ChoiceChip(
+                      label: Text(s.name),
+                      selected: _taskId == s.id,
+                      selectedColor: theme.colorScheme.primary,
+                      labelStyle: TextStyle(color: _taskId == s.id ? theme.colorScheme.onPrimary : null),
+                      showCheckmark: false,
+                      onSelected: (v) => setState(() => _taskId = v ? s.id : root!.id),
+                    ),
+                ]),
+              ),
             const SizedBox(height: 14),
             TextField(
               controller: _description,

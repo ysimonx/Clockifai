@@ -10,6 +10,8 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.4] — 2026-10-27
+
 ### Modifié
 
 - **Nouvelle allure**, celle des maquettes : police Geist (Geist Mono pour les heures et les durées), boutons

@@ -10,6 +10,13 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Modifié
+
+- **Factures** : chaque durée suit l'arrondi du workspace (Paramètres › Arrondi des durées), comme le bloc
+  « À facturer » des rapports ; le montant de la facture créée est celui annoncé.
+- **Taux des entrées** : posé par le serveur (celui du projet, sinon de la personne) ; seul un manager peut le
+  changer.
+
 ### Corrigé
 
 - **Exports Excel et PDF** : heures dans le fuseau de votre profil (elles étaient décalées d'une ou deux heures), et
@@ -34,6 +41,10 @@ la date d'arrivée de chaque évolution.
 - **Claude Code** : une session ne peut plus être modifiée par un autre membre ; « Une tâche par session » avec des
   étapes ne bloque plus le chronomètre de Claude ; une sous-tâche renommée à la main reste celle de l'entrée ; le
   plugin résiste à un poste dont la langue n'est pas en UTF-8 (`claude plugin update clockifai@clockifai`).
+- **Agents Claude** : désactiver ou retirer un agent arrête son entrée en cours à sa dernière activité (elle restait
+  ouverte).
+- **Agenda** : la lecture d'un agenda ne peut plus être détournée vers le réseau interne par un nom de domaine qui
+  changerait d'adresse.
 
 ## [0.2.5] — 2026-10-27
 

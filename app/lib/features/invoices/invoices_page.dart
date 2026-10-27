@@ -152,6 +152,7 @@ class InvoicesPage extends StatelessWidget {
       projectNames: catalog.projectNames,
       byTask: byTask,
       taskNames: catalog.taskPaths,
+      roundingMinutes: ws.roundingMinutes,
     );
     if (!context.mounted) return;
     if (id == null) return showSnack(context, l.nothingToInvoice);

@@ -94,6 +94,28 @@ void main() {
     expect(await modules.invoicedEntryIds(ws), isEmpty);
   });
 
+  test('facture : chaque durée arrondie au pas du workspace, comme « À facturer »', () async {
+    final client = await catalog.createClient(ws, name: 'ACME');
+    final p = await catalog.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'Montage', clientId: Value(client)));
+    for (final (hour, minutes) in [(8, 22), (10, 38), (13, 7)]) {
+      await entries.createManual(
+        workspaceId: ws,
+        userId: me,
+        draft: EntryDraft(projectId: p, hourlyRateCents: 6000, billable: true),
+        start: DateTime.utc(2026, 9, 10, hour),
+        end: DateTime.utc(2026, 9, 10, hour, minutes),
+      );
+    }
+    final id = await modules.createInvoiceFromTime(
+      workspaceId: ws, userId: me, clientId: client,
+      from: DateTime.utc(2026, 9, 1), to: DateTime.utc(2026, 10, 1),
+      currency: 'EUR', taxPercent: 20, projectNames: {p: 'Montage'}, roundingMinutes: 15,
+    );
+    final [item] = await modules.watchItems(id!).first;
+    // 22 → 15, 38 → 45, 7 → 0 : 1 h, pas les 67 minutes brutes.
+    expect((item.quantity, item.amountCents), (1.0, 6000));
+  });
+
   test('facture : taux actuel pour une entrée sans taux, détail par tâche', () async {
     final client = await catalog.createClient(ws, name: 'ACME');
     final p = await catalog.createProject(ws,

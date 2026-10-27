@@ -1270,7 +1270,7 @@
   "newClient": "Nouveau client",
   "newGroup": "Nouveau groupe",
   "newInvoice": "Nouvelle facture",
-  "newInvoiceHelp": "Une ligne par projet, ou par tâche si vous détaillez, est créée à partir du temps facturable non encore facturé du client sur la période. Une entrée saisie avant que son projet ait un taux prend le taux actuel.",
+  "newInvoiceHelp": "Une ligne par projet, ou par tâche si vous détaillez, est créée à partir du temps facturable non encore facturé du client sur la période. Une entrée saisie avant que son projet ait un taux prend le taux actuel. Chaque durée suit l'arrondi du workspace.",
   "newKioskDevice": "Nouvel appareil",
   "newPassword": "Nouveau mot de passe (8 caractères min.)",
   "newPolicy": "Nouvelle politique",
@@ -1462,7 +1462,7 @@
   "roleMember": "Membre",
   "roleOwner": "Propriétaire",
   "rounding": "Arrondi des durées",
-  "roundingHelp": "Appliqué dans les rapports si demandé",
+  "roundingHelp": "Appliqué aux factures, et dans les rapports si demandé",
   "runningTimer": "Chronomètre en cours",
   "runningTimersCount": "{count, plural, =1{1 chronomètre en cours} other{{count} chronomètres en cours}}",
   "@runningTimersCount": {

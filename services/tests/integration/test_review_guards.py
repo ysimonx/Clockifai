@@ -142,6 +142,35 @@ def test_invoices_and_tags_stay_in_their_workspace(company):
     assert status == 400 and body["code"] == "23514", body
 
 
+def test_the_rate_of_an_entry_is_set_by_the_server_except_for_managers(company):
+    boss_t, _ = company["boss"]
+    t, uid = company["salarie"]
+    wid = company["wid"]
+    assert rest("PATCH", f"workspace_members?workspace_id=eq.{wid}&user_id=eq.{uid}", boss_t,
+                {"hourly_rate_cents": 5000})[0] == 200
+    paid, unpaid = str(uuid.uuid4()), str(uuid.uuid4())
+    assert rest("POST", "projects", boss_t, {"id": paid, "workspace_id": wid, "name": "Régie",
+                                             "hourly_rate_cents": 8000})[0] == 201
+    assert rest("POST", "projects", boss_t, {"id": unpaid, "workspace_id": wid, "name": "Interne"})[0] == 201
+    entry = str(uuid.uuid4())
+    start = datetime.now(UTC).replace(microsecond=0) - timedelta(days=2)
+
+    def rate() -> int | None:
+        _, [row] = rest("GET", f"time_entries?id=eq.{entry}&select=hourly_rate_cents", SERVICE)
+        return row["hourly_rate_cents"]
+
+    assert rest("POST", "time_entries", t, {"id": entry, "workspace_id": wid, "user_id": uid, "project_id": paid,
+                                            "start_at": iso(start), "end_at": iso(start + timedelta(hours=1)),
+                                            "hourly_rate_cents": 99900})[0] == 201
+    assert rate() == 8000, "celui du projet"
+    assert rest("PATCH", f"time_entries?id=eq.{entry}", t, {"hourly_rate_cents": 1})[0] == 200
+    assert rate() == 8000, "inchangé"
+    assert rest("PATCH", f"time_entries?id=eq.{entry}", t, {"project_id": unpaid, "hourly_rate_cents": 1})[0] == 200
+    assert rate() == 5000, "projet sans taux : celui du membre"
+    assert rest("PATCH", f"time_entries?id=eq.{entry}", boss_t, {"hourly_rate_cents": 6500})[0] == 200
+    assert rate() == 6500, "un manager le fixe"
+
+
 def test_internal_functions_are_not_rpc(company):
     t, _ = company["salarie"]
     status, _ = _call("POST", f"{SUPABASE}/rest/v1/rpc/team_scope_wanted", t, {"wid": company["wid"]})

@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-import '../../core/format.dart' show addDays, dayKey;
+import '../../core/format.dart' show addDays, dayKey, roundSeconds;
 import '../drift/database.dart';
 
 export '../../core/format.dart' show dayKey, parseDay;
@@ -290,8 +290,9 @@ class ModulesRepository {
 
   /// Crée une facture brouillon depuis le temps facturable d'un client sur une période :
   /// une ligne par (projet, taux), ou par (projet, tâche, taux) avec [byTask], quantités en heures. Une entrée
-  /// sans taux prend celui applicable aujourd'hui (`CatalogController.entryRate`). Les entrées sont marquées
-  /// facturées. Le numéro définitif est attribué par le serveur à la synchronisation.
+  /// sans taux prend celui applicable aujourd'hui (`CatalogController.entryRate`). Chaque durée est arrondie au pas du
+  /// workspace ([roundingMinutes]), comme le bloc « À facturer » des rapports. Les entrées sont marquées facturées.
+  /// Le numéro définitif est attribué par le serveur à la synchronisation.
   Future<String?> createInvoiceFromTime({
     required String workspaceId,
     required String userId,
@@ -303,6 +304,7 @@ class ModulesRepository {
     required Map<String, String> projectNames,
     bool byTask = false,
     Map<String, String> taskNames = const {},
+    int roundingMinutes = 0,
   }) async {
     final already = await invoicedEntryIds(workspaceId);
     final projects = await (db.select(db.projects)..where((p) => p.clientId.equals(clientId) & p.deletedAt.isNull())).get();
@@ -366,7 +368,8 @@ class ModulesRepository {
       final keys = groups.keys.toList()..sort(compare);
       for (final key in keys) {
         final list = groups[key]!;
-        final seconds = list.fold<int>(0, (s, e) => s + e.endAt!.difference(e.startAt).inSeconds);
+        final seconds =
+            list.fold<int>(0, (s, e) => s + roundSeconds(e.endAt!.difference(e.startAt).inSeconds, roundingMinutes));
         final hours = (seconds / 36).round() / 100; // 2 décimales
         await db.into(db.invoiceItems).insert(InvoiceItemsCompanion.insert(
               workspaceId: workspaceId,

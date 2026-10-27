@@ -1964,7 +1964,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newInvoiceHelp =>
-      'One line per project, or per task when detailed, is created from the client\'s billable, not yet invoiced time in the period. An entry recorded before its project had a rate takes the current rate.';
+      'One line per project, or per task when detailed, is created from the client\'s billable, not yet invoiced time in the period. An entry recorded before its project had a rate takes the current rate. Each duration follows the workspace rounding.';
 
   @override
   String get newKioskDevice => 'New device';
@@ -2362,7 +2362,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rounding => 'Duration rounding';
 
   @override
-  String get roundingHelp => 'Applied in reports on request';
+  String get roundingHelp => 'Applied to invoices, and in reports on request';
 
   @override
   String get runningTimer => 'Running timer';

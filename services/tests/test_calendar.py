@@ -89,6 +89,39 @@ def test_redirect_to_internal_address_refused(monkeypatch):
         calendar._SafeRedirects().redirect_request(None, None, 302, "Found", {}, "https://intranet.local/x.ics")
 
 
+def test_the_connection_goes_to_the_checked_address(monkeypatch):
+    calls = []
+    monkeypatch.setattr(socket, "getaddrinfo", lambda *a, **k: [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))])
+
+    def refuse(address, *a, **k):
+        calls.append(address)
+        raise ConnectionRefusedError
+
+    monkeypatch.setattr(socket, "create_connection", refuse)
+    with pytest.raises(calendar.CalendarError) as err:
+        calendar.fetch("https://calendar.example.com/x.ics")
+    assert err.value.code == "unreachable"
+    assert calls == [("93.184.216.34", 443)], "l'adresse vérifiée, pas le nom résolu à nouveau"
+
+
+def test_a_name_that_turns_internal_is_never_reached(monkeypatch):
+    answers = iter(["93.184.216.34", "10.0.0.5", "10.0.0.5"])
+    monkeypatch.setattr(socket, "getaddrinfo",
+                        lambda *a, **k: [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (next(answers), 443))])
+    calls = []
+    monkeypatch.setattr(socket, "create_connection", lambda address, *a, **k: calls.append(address))
+    with pytest.raises(calendar.CalendarError) as err:
+        calendar.fetch("https://calendar.example.com/x.ics")
+    assert err.value.code == "host_not_allowed" and calls == []
+
+
+@pytest.mark.parametrize("ip", ["::ffff:10.0.0.5", "::ffff:127.0.0.1"])
+def test_mapped_internal_addresses_refused(monkeypatch, ip):
+    monkeypatch.setattr(socket, "getaddrinfo", lambda *a, **k: [(socket.AF_INET6, socket.SOCK_STREAM, 6, "", (ip, 443, 0, 0))])
+    with pytest.raises(calendar.CalendarError):
+        calendar.check_url("https://calendar.example.com/x.ics")
+
+
 def test_events_of_a_day_heure_et_titre_seulement():
     cal = calendar.parse(ICS)
     events = calendar.events_between(cal, datetime(2026, 10, 26, tzinfo=UTC), datetime(2026, 10, 27, tzinfo=UTC))

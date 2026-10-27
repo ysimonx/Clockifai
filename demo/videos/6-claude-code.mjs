@@ -90,7 +90,7 @@ export async function run(browser, failures) {
         await h.nav('Suivi du temps', 1000);
         await h.find(/Commande de gâteaux/, { timeout: 30000 });
         await h.caption(C('Semaine'), 'Claude travaille',
-          'La session en cours, rangée dans le projet du dépôt et la tâche nommée par Claude. Rien à démarrer ni à arrêter : après 10 minutes sans activité, l’entrée s’arrête à la dernière action.', ROLE, 8000);
+          'La session en cours, en haut de chaque page à côté du chronomètre et ici : décrite et rangée dans la tâche par le sujet que Claude a nommé. Rien à démarrer ni à arrêter : après 10 minutes sans activité, l’entrée s’arrête à la dernière action.', ROLE, 9000);
       });
 
       await h.scene('tâches', async () => {
@@ -131,9 +131,9 @@ export async function run(browser, failures) {
         await h.click(/^Détaillé$/, 1500);
         await h.reveal(/^Détaillé$/, 230);
         await h.caption(C('Rapports'), 'Jour par jour',
-          'Les heures d’Alex et celles de Claude ; chaque session dans sa tâche, décrite par les messages de ses commits, avec ses tokens et son coût.', ROLE, 7000);
-        await h.reveal(/Compresse les photos de la vitrine/, 420);
-        await h.click(/Compresse les photos de la vitrine/, 2000);
+          'Les heures d’Alex et celles de Claude ; chaque session décrite par son sujet et rangée dans sa tâche, avec ses tokens et son coût.', ROLE, 7000);
+        await h.reveal(/^Optimisation des images/, 420);
+        await h.click(/^Optimisation des images/, 2000);
         await h.caption(C('Rapports'), 'Corriger le temps de son agent',
           'Projet, tâche, description, horaires, ou supprimer l’entrée. Pas d’ajout à la main : seul Claude Code enregistre ce temps, et une correction n’est jamais écrasée.', ROLE, 7000);
         await h.hover(/^Usage IA/);

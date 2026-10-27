@@ -300,11 +300,14 @@ L'état de chaque entrée d'agent (session, dépôt, valeurs écrites par le ser
    de Claude. `agent_entries` garde le dernier texte écrit par le serveur (`server_description`) et son
    origine (`description_source` : `auto` ou `claude`) : si le texte de l'entrée en diffère, il a été saisi
    dans l'app et plus personne n'y touche.
-2. Sinon, les **messages des commits** faits pendant la plage (D13), séparés par « ; ». C'est la meilleure
-   source automatique.
-3. Sinon, en option, un extrait (200 caractères) du prompt ou de `last_assistant_message`, si l'option
+2. Sinon, le **sujet nommé par Claude** (D18, « Objectif · étape »), avec ou sans tâche : demandé le
+   27 octobre 2026, « clockifai (main) » ne disait pas sur quoi Claude travaillait, et les commits non plus
+   tant qu'il n'y en a pas. Il passe aussi avant les commits, choix du pilote : la description dit ce que Claude
+   fait, les commits restent dans le journal du jour.
+3. Sinon, les **messages des commits** faits pendant la plage (D13), séparés par « ; ».
+4. Sinon, en option, un extrait (200 caractères) du prompt ou de `last_assistant_message`, si l'option
    `send_excerpts` du plugin est activée.
-4. Sinon, le dépôt et la branche.
+5. Sinon, le dépôt et la branche.
 
 Pour une suggestion humaine, les sources 2 et 3 incluent aussi les entrées de mon agent du même projet qui la
 chevauchent (« ce que Claude faisait pendant ce temps »).
@@ -504,7 +507,7 @@ sur `main` n'a pas de branche pour distinguer ses sujets, et la tâche de D9 ne 
   `tool_input` qui quitte le poste. Le serveur MCP ne connaît pas la session : seul le hook la connaît.
 - **Côté serveur** (`subject_task`) : dans le projet de l'entrée, la tâche active de ce nom (sans tenir compte de la
   casse), sinon une nouvelle si `workspaces.task_creation = 'everyone'`, sous verrou par projet et par nom (deux
-  sessions, une seule tâche). Sans projet ou sans ce droit, le nom devient la description de l'entrée. Une tâche
+  sessions, une seule tâche). Le nom décrit aussi l'entrée (D10), avec ou sans tâche. Une tâche
   choisie à la main n'est jamais remplacée ; dans un projet choisi à la main, la tâche nommée s'ajoute.
 - **Découpage** (`agent_clock`) : un nom donné dans les 2 minutes suivant le début de l'entrée, ou son dernier
   prompt, vaut pour toute l'entrée ; un nouveau nom plus tard coupe l'entrée au dernier prompt s'il est récent,
@@ -964,7 +967,7 @@ Les plugins n'y sont pas chargés ; seuls les hooks du `.claude/settings.json` d
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille », filtre des rapports, colonne « Type » des exports, réglages de facturation des agents, lien de l'écran Intégrations vers la fiche de l'agent) ; hooks vérifiés dans l'extension VSCode | M/L | fait |
+| 1 Temps de Claude | Migrations 0012 (tables privées) et 0013 (membres agents, `source`, `code_repositories`, `code_commits`, règles, gardes, `pilots_agent`, `agent_entry_write`, D15, D16), Flask (jetons, `ensure_agent`, `entry_defaults`, `require_user_or_token`, `events` avec recalcul D7, règles, jobs `close_idle_agent_entries` et `purge_activity_events`, marketplace de l'instance), plugin minimal (hooks seuls, commits de Claude D13 avec attribution par session), descriptions tirées des commits, app (fait : écran des jetons, droits D15, exclusions, section Agents, « toujours rattacher », bandeau « Claude travaille » et sa pastille dans la barre du haut, à côté du chronomètre (27 octobre 2026), filtre des rapports, colonne « Type » des exports, réglages de facturation des agents, lien de l'écran Intégrations vers la fiche de l'agent) ; hooks vérifiés dans l'extension VSCode | M/L | fait |
 | 1c Tâche nommée par Claude (D18) | Serveur MCP local du plugin (`set_current_task`), relais `session_task` `{task_name}` par le hook, `subject_task` et découpage des entrées par sujet (`agent_clock`), « préciser = renommer » (`agent_tasks`, 0014), réglage « Tâches de Claude » par pilote (`profiles.claude_tasks`, 0015), tests unitaires, du plugin et d'intégration, essai réel avec Claude Code | S/M | fait |
 | 2 Mon temps | Extension VSCode (signaux, commits, barre d'état, rattachement), prompts comme signal humain, `time_suggestions`, job D8, écran Suggestions | L | en attente (26 octobre 2026 : pas de mesure de l'activité personnelle pour l'instant ; le journal du plan 13 s'en passe) |
 | 3 MCP | Service `mcp`, outils (`set_current_task` déjà fait en local, lot 1c), `.mcp.json`, commandes du plugin et relais `session_description` par le hook | M | validé |

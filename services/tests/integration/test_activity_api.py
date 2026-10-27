@@ -226,7 +226,7 @@ def test_claude_names_the_task_of_its_subject(team):
     [export] = tasks_named("Export PDF")
     first = entry_at(88)
     assert (first["project_id"], first["task_id"]) == (team["project"], export["id"])
-    assert first["description"] == "taches (main)", "la description reste celle du dépôt ou des commits"
+    assert first["description"] == "Export PDF", "le sujet décrit l'entrée, plutôt que le dépôt ou les commits"
 
     # Nouveau sujet, quatre minutes plus tard dans le même tour : l'entrée est coupée au prompt qui l'a amené.
     send(at(84, "prompt", session), at(83.9, "session_task", session, "Connexion mobile"),

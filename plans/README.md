@@ -42,3 +42,4 @@ livrés : on les cite par leur nom de fichier.
 | [11-documentation.md](11-documentation.md) | Documentation tenue à jour : architecture, API, guide, exploitation | fait | — |
 | [12-taux-et-factures-par-tache.md](12-taux-et-factures-par-tache.md) | Taux des entrées saisies sans taux, nouveau taux appliqué aux entrées non facturées, factures détaillées par tâche | fait | — |
 | [13-ux-moderne.md](13-ux-moderne.md) | UX repensée : journal du jour, saisie express, ⌘K, semaine pré-remplie, édition en place, rapports par questions, téléphone pour le chantier | fait | — |
+| [14-coller-aux-maquettes.md](14-coller-aux-maquettes.md) | Allure des maquettes : menu de 7 rubriques, chronomètre en pastille, Geist, Aujourd'hui, invitations | en cours | 13 |

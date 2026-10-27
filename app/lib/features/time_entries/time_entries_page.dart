@@ -11,12 +11,14 @@ import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../core/shortcuts.dart';
 import '../../core/team_rights.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart' show ProjectPick;
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../timer/timer_rules.dart';
+import '../timesheet/week_tools.dart' show WeekViews;
 import '../today/day_plan.dart' show dayKey;
 import 'agents_banner.dart';
 import 'ai_usage.dart';
@@ -89,6 +91,15 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
     return false;
   }
 
+  /// « Semaine » et ses trois vues : cette liste en est la vue Liste (plans/14-coller-aux-maquettes.md).
+  Widget _weekTitle(BuildContext context, DateTime weekStart) => Padding(
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 12),
+        child: Wrap(spacing: 16, runSpacing: 8, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          Text(context.l10n.navWeek, style: Theme.of(context).textTheme.headlineSmall),
+          WeekViews(current: 'list', week: weekStart),
+        ]),
+      );
+
   Stream<List<TimeEntry>> _runningOf(String workspaceId, String? userId) {
     final key = '$workspaceId:$userId';
     if (key != _runningKey || _running == null) {
@@ -118,7 +129,10 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
           return Column(children: [
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1100),
-              child: const Padding(padding: EdgeInsets.fromLTRB(12, 8, 12, 0), child: AgentsWorkingBanner()),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: Column(children: [_weekTitle(context, weekStart), const AgentsWorkingBanner()]),
+              ),
             ),
             Expanded(
               child: EmptyState(
@@ -162,7 +176,7 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
                 else
                   for (final r in byDay[d]!) EntryLine(entryLineKey(r.entry.id), [r], selectable: editable(r)),
             ]);
-            final children = <Widget>[const AgentsWorkingBanner()];
+            final children = <Widget>[_weekTitle(context, weekStart), const AgentsWorkingBanner()];
             DateTime? currentWeek;
             for (final d in days) {
               final w = startOfWeek(d, ws.weekStart);
@@ -379,7 +393,7 @@ class EntryTile extends StatelessWidget {
       SizedBox(
         width: 72,
         // Durées à la minute ; les secondes seulement pour un chronomètre en cours.
-        child: Text(e.endAt == null ? formatClock(row.seconds) : formatHm(row.seconds), textAlign: TextAlign.right, style: theme.textTheme.titleSmall?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
+        child: Text(e.endAt == null ? formatClock(row.seconds) : formatHm(row.seconds), textAlign: TextAlign.right, style: theme.textTheme.titleSmall?.copyWith(fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()])),
       ),
       if (isMine && showContinue) _ContinueButton(row: row, running: running),
       PopupMenuButton<String>(
@@ -582,7 +596,7 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
           child: Text('$count',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: _expanded ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
-                fontFeatures: const [FontFeature.tabularFigures()],
+                fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()],
               )),
         ),
       ),
@@ -630,7 +644,7 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
             width: 72,
             child: Text(g.rows.any((r) => r.entry.endAt == null) ? formatClock(g.seconds) : formatHm(g.seconds),
                 textAlign: TextAlign.right,
-                style: theme.textTheme.titleSmall?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
+                style: theme.textTheme.titleSmall?.copyWith(fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()])),
           ),
           if (isMine) _ContinueButton(row: g.first, running: widget.running),
           PopupMenuButton<String>(

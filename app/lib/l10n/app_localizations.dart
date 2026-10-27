@@ -2808,18 +2808,6 @@ abstract class AppLocalizations {
   /// **'Si la personne a déjà un compte, elle est ajoutée immédiatement. Sinon, un lien d\'invitation est créé.'**
   String get inviteHelp;
 
-  /// No description provided for @inviteLinkMessage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Aucun serveur d\'email n\'est configuré. Transmettez ce lien à la personne invitée :'**
-  String get inviteLinkMessage;
-
-  /// No description provided for @inviteLinkTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Lien d\'invitation'**
-  String get inviteLinkTitle;
-
   /// No description provided for @inviteMember.
   ///
   /// In fr, this message translates to:
@@ -4577,6 +4565,144 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Votre nom'**
   String get yourName;
+
+  /// No description provided for @navWeek.
+  ///
+  /// In fr, this message translates to:
+  /// **'Semaine'**
+  String get navWeek;
+
+  /// No description provided for @navPeople.
+  ///
+  /// In fr, this message translates to:
+  /// **'Personnes'**
+  String get navPeople;
+
+  /// No description provided for @navProjectsClients.
+  ///
+  /// In fr, this message translates to:
+  /// **'Projets et clients'**
+  String get navProjectsClients;
+
+  /// No description provided for @searchOrAct.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher ou agir'**
+  String get searchOrAct;
+
+  /// No description provided for @syncedWorksOffline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchronisé · fonctionne hors ligne'**
+  String get syncedWorksOffline;
+
+  /// No description provided for @addTime.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter du temps'**
+  String get addTime;
+
+  /// No description provided for @add.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter'**
+  String get add;
+
+  /// No description provided for @inviteByEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer l\'invitation par email'**
+  String get inviteByEmail;
+
+  /// No description provided for @inviteNoMail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas de serveur de mail sur cette installation : vous copierez le lien.'**
+  String get inviteNoMail;
+
+  /// No description provided for @inviteReady.
+  ///
+  /// In fr, this message translates to:
+  /// **'Invitation prête'**
+  String get inviteReady;
+
+  /// No description provided for @inviteEmailedTo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un email d\'invitation est parti à {email}. Vous pouvez aussi lui transmettre ce lien :'**
+  String inviteEmailedTo(String email);
+
+  /// No description provided for @inviteShareWith.
+  ///
+  /// In fr, this message translates to:
+  /// **'Transmettez ce lien à {email} :'**
+  String inviteShareWith(String email);
+
+  /// No description provided for @copyLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier le lien'**
+  String get copyLink;
+
+  /// No description provided for @linkCopied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien copié'**
+  String get linkCopied;
+
+  /// No description provided for @journalToComplete.
+  ///
+  /// In fr, this message translates to:
+  /// **'À compléter'**
+  String get journalToComplete;
+
+  /// No description provided for @journalFill.
+  ///
+  /// In fr, this message translates to:
+  /// **'Remplir'**
+  String get journalFill;
+
+  /// No description provided for @journalNothingToday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien de saisi aujourd\'hui'**
+  String get journalNothingToday;
+
+  /// No description provided for @journalNothingThatDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien de saisi ce jour-là'**
+  String get journalNothingThatDay;
+
+  /// No description provided for @likeDayQuestion.
+  ///
+  /// In fr, this message translates to:
+  /// **'{label} ?'**
+  String likeDayQuestion(String label);
+
+  /// No description provided for @resumeDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reprendre la journée · {duration}'**
+  String resumeDay(String duration);
+
+  /// No description provided for @journalFromPlanning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Selon le planning'**
+  String get journalFromPlanning;
+
+  /// No description provided for @journalSomethingElse.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autre chose'**
+  String get journalSomethingElse;
+
+  /// No description provided for @journalYourDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre journée'**
+  String get journalYourDay;
 }
 
 class _AppLocalizationsDelegate

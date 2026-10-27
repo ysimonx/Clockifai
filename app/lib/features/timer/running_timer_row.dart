@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/di.dart';
 import '../../core/l10n.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import '../time_entries/entry_dialog.dart';
@@ -51,7 +52,7 @@ class RunningTimerRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           ElapsedText(entry.startAt,
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, fontFeatures: const [FontFeature.tabularFigures()])),
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()])),
           IconButton(
             tooltip: l.stop,
             onPressed: () => stopTimer(context, entry),

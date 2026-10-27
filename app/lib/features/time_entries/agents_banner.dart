@@ -5,6 +5,7 @@ import '../../core/catalog.dart';
 import '../../core/di.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import 'entry_dialog.dart';
@@ -106,7 +107,7 @@ class _AgentSessionRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           ElapsedText(entry.startAt,
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, fontFeatures: const [FontFeature.tabularFigures()])),
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()])),
         ]),
       ),
     );

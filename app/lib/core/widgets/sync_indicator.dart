@@ -25,8 +25,11 @@ bool _isOffline(SyncStatus? status) => !(status?.connected ?? false) || _isNetwo
 
 /// Icône d'état de la synchronisation (connecté, en cours, hors ligne) + détail au clic. Un badge compte les
 /// modifications qui attendent de partir (plans/13-ux-moderne.md, lot 9 : « hors ligne, rien n'est perdu »).
+///
+/// [line] : pied du menu latéral (plans/14-coller-aux-maquettes.md) : un point de couleur et l'état en toutes lettres.
 class SyncIndicator extends StatefulWidget {
-  const SyncIndicator({super.key});
+  const SyncIndicator({super.key, this.line = false});
+  final bool line;
 
   @override
   State<SyncIndicator> createState() => _SyncIndicatorState();
@@ -69,14 +72,37 @@ class _SyncIndicatorState extends State<SyncIndicator> {
         : busy
             ? (Icons.cloud_sync, Theme.of(context).colorScheme.primary, l.syncing)
             : (Icons.cloud_done, AppColors.of(context).success, l.synced);
+    void details() => showDialog<void>(context: context, builder: (_) => const _SyncDetails());
+    final text = _pending > 0 ? '$label · ${l.pendingCount(_pending)}' : label;
+    if (widget.line) {
+      final theme = Theme.of(context);
+      return Tooltip(
+        message: text,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(Radii.control),
+          onTap: details,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(children: [
+              Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(_pending > 0 || _isOffline(status) || busy ? text : l.syncedWorksOffline,
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+              ),
+            ]),
+          ),
+        ),
+      );
+    }
     return IconButton(
-      tooltip: _pending > 0 ? '$label · ${l.pendingCount(_pending)}' : label,
+      tooltip: text,
       icon: Badge(
         isLabelVisible: _pending > 0,
         label: Text('$_pending'),
         child: Icon(icon, color: color),
       ),
-      onPressed: () => showDialog<void>(context: context, builder: (_) => const _SyncDetails()),
+      onPressed: details,
     );
   }
 }

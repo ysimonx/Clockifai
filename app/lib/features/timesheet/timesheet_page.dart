@@ -74,7 +74,7 @@ class _TimesheetPageState extends State<TimesheetPage> {
     final locale = context.localeTag;
 
     return PageScaffold(
-      title: l.timesheet,
+      title: l.navWeek,
       actions: [
         IconButton(onPressed: () => _shiftWeek(-1), icon: const Icon(Icons.chevron_left), tooltip: l.previousWeek),
         TextButton(

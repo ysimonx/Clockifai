@@ -1005,8 +1005,6 @@
   "invitationSent": "Invitation sent.",
   "invite": "Invite",
   "inviteHelp": "Existing users are added right away. Otherwise an invitation link is created.",
-  "inviteLinkMessage": "No email server is configured. Send this link to the invitee:",
-  "inviteLinkTitle": "Invitation link",
   "inviteMember": "Invite a member",
   "invoice": "Invoice",
   "invoiceByTask": "Detail by task",
@@ -1320,5 +1318,56 @@
   "workspaces": "Workspaces",
   "year": "year",
   "yesterday": "Yesterday",
-  "yourName": "Your name"
+  "yourName": "Your name",
+  "navWeek": "Week",
+  "navPeople": "People",
+  "navProjectsClients": "Projects and clients",
+  "searchOrAct": "Search or act",
+  "syncedWorksOffline": "Synced · works offline",
+  "addTime": "Add time",
+  "add": "Add",
+  "inviteByEmail": "Send the invitation by email",
+  "inviteNoMail": "No mail server on this installation: you will copy the link.",
+  "inviteReady": "Invitation ready",
+  "inviteEmailedTo": "An invitation email was sent to {email}. You can also send them this link:",
+  "@inviteEmailedTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteShareWith": "Send this link to {email}:",
+  "@inviteShareWith": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "copyLink": "Copy link",
+  "linkCopied": "Link copied",
+  "journalToComplete": "To complete",
+  "journalFill": "Fill",
+  "journalNothingToday": "Nothing logged today",
+  "journalNothingThatDay": "Nothing logged that day",
+  "likeDayQuestion": "{label}?",
+  "@likeDayQuestion": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "resumeDay": "Repeat that day · {duration}",
+  "@resumeDay": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "journalFromPlanning": "From the schedule",
+  "journalSomethingElse": "Something else",
+  "journalYourDay": "Your day"
 }

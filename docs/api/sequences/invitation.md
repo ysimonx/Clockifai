@@ -15,8 +15,12 @@ sequenceDiagram
     participant PS as PowerSync
     actor I as Personne invitée
 
-    Adm->>App: Équipe, Inviter (email, rôle)
-    App->>F: POST /api/invitations (JWT)
+    Adm->>App: Équipe, Inviter
+    App->>F: GET /api/invitations/options (JWT)
+    F-->>App: email = SMTP configuré ?
+    App-->>Adm: email, rôle, case « Envoyer l'invitation par email » (cochée si SMTP)
+    Adm->>App: Inviter
+    App->>F: POST /api/invitations (JWT, send_email)
     F->>F: require_user puis require_workspace admin
     F->>PG: compte existant dans auth.users ?
     alt Nouveau compte
@@ -25,21 +29,17 @@ sequenceDiagram
         PG->>PG: handle_new_user, profil + workspace personnel
         Auth-->>F: id + action_link
     else Compte existant
-        Note over F: pas de lien, invite_link = null
+        Note over F: invite_link = null, app_url à transmettre
     end
     F->>PG: upsert workspace_members (status active, rôle demandé, un owner reste owner)
-    alt SMTP configuré
+    alt SMTP configuré et send_email
         F->>SMTP: email (lien d'activation, ou accès au workspace)
         SMTP-->>I: email
-    else Pas de SMTP
+    else Pas de SMTP, ou email non demandé
         Note over F: emailed = false
     end
-    F-->>App: 201 user_id, created, emailed, invite_link
-    alt Lien renvoyé et email non envoyé
-        App-->>Adm: affiche le lien à copier et transmettre
-    else Email envoyé ou compte existant
-        App-->>Adm: « invitation envoyée »
-    end
+    F-->>App: 201 user_id, created, emailed, invite_link, app_url
+    App-->>Adm: « email envoyé à … » ou « transmettez ce lien », avec le lien et « Copier le lien »
     PG->>PS: réplication de workspace_members
     PS-->>App: le nouveau membre apparaît dans l'équipe
     I->>Auth: ouvre le lien, session ouverte, redirection vers APP_PUBLIC_URL

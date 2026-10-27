@@ -51,13 +51,23 @@ export async function run(browser, failures) {
     });
 
     await h.scene('invitation', async () => {
+      // La pile de tournage n'a pas de serveur de mail : on montre l'installation de production, qui en a un.
+      await h.page.route('**/api/invitations/options**', (r) => r.fulfill({ json: { email: true } }));
+      await h.page.route('**/api/invitations', async (r) => {
+        if (r.request().method() !== 'POST') return r.continue();
+        const res = await r.fetch();
+        r.fulfill({ response: res, json: { ...(await res.json()), emailed: true } });
+      });
       await h.pick(/^Membres$/, 1200);
       await h.click(/^Inviter$/, 1000);
       await h.typeInto('Email', 'paul@demo.clockifai.fr');
-      await h.caption(C('Inviter'), 'Inviter une nouvelle personne', 'Avec un rôle dès l’arrivée. Sans serveur d’email, le lien d’invitation s’affiche pour être envoyé par SMS.', ROLE, 2000);
+      await h.caption(C('Inviter'), 'Inviter une nouvelle personne', 'Avec un rôle dès l’arrivée ; l’invitation part par email.', ROLE, 2500);
       await h.clickLast(/^Inviter$/, 3000);
-      await h.wait(2000);
+      await h.caption(C('Inviter'), 'Le lien d’invitation', '« Copier le lien » pour l’envoyer aussi par SMS ou messagerie.', ROLE, 3000);
+      await h.click(/^Copier le lien$/, 1200);
       await h.clickLast(/^Fermer$/, 800);
+      await h.page.unroute('**/api/invitations/options**');
+      await h.page.unroute('**/api/invitations');
     });
 
     await h.scene('règles', async () => {

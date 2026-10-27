@@ -10,6 +10,28 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Modifié
+
+- **Nouvelle allure**, celle des maquettes : police Geist (Geist Mono pour les heures et les durées), boutons
+  d'action en noir, fond gris clair et cartes blanches, en clair comme en sombre (27 octobre 2026).
+- **Menu simplifié** à sept rubriques : Aujourd'hui, Semaine, Rapports, Factures, Équipe, puis Projets et clients
+  et Paramètres. « Semaine » réunit la grille (feuille de temps), le calendrier et la liste (suivi du temps) ;
+  « Équipe » réunit personnes, approbations, pointage d'équipe, planning et absences, en onglets ; « Projets et
+  clients » réunit projets, clients et tags. En tête du menu, « Rechercher ou agir ⌘K » ; en pied, l'état de la
+  synchronisation (27 octobre 2026).
+- **Chronomètre** : la barre « Sur quoi travaillez-vous ? » laisse la place à un bouton **Démarrer** en haut à
+  droite, avec vos entrées récentes à reprendre d'un geste ; en marche, il devient une pastille (point vert,
+  description, durée, bouton d'arrêt). À côté, **Ajouter du temps** saisit des heures déjà faites (27 octobre 2026).
+- **Aujourd'hui** : la frise à gauche ; à droite, « À compléter » (chaque proposition à ajouter, ou les créneaux
+  vides à remplir) et le bilan du jour, projet par projet, pour vous et pour Claude. Journée vide :
+  « Comme vendredi ? » montre la dernière journée travaillée et « Reprendre la journée » la recopie
+  (27 octobre 2026).
+- **Téléphone** : barre du bas Aujourd'hui, Semaine, **+** (ajouter du temps ou démarrer le chronomètre), Équipe,
+  Plus ; « Comme vendredi ? » et la liste du jour en tête d'Aujourd'hui (27 octobre 2026).
+- **Invitations** : avec un serveur de mail, la case « Envoyer l'invitation par email » (cochée) ; dans tous les cas,
+  le lien s'affiche avec « Copier le lien », pour l'envoyer aussi par SMS ou messagerie (27 octobre 2026).
+- Guide : les vidéos ne sont plus annoncées « sans son » à chaque page (27 octobre 2026).
+
 ## [0.2.3] — 2026-10-27
 
 ### Ajouté

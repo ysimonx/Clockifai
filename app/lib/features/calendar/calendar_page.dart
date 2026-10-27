@@ -57,7 +57,7 @@ class _CalendarPageState extends State<CalendarPage> {
     final locale = context.localeTag;
 
     return PageScaffold(
-      title: l.calendar,
+      title: l.navWeek,
       maxWidth: 1400,
       actions: [
         IconButton(onPressed: () => setState(() => _anchor = _anchor.subtract(Duration(days: count))), icon: const Icon(Icons.chevron_left)),

@@ -11,13 +11,21 @@ import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../core/widgets/teammates.dart';
+import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../approvals/submission_bar.dart';
+import '../time_entries/time_entries_page.dart' show DayCard;
+import 'week_tools.dart';
 
-/// Feuille de temps hebdomadaire : projets × jours, cellules éditables.
+/// Feuille de temps hebdomadaire : projets × jours, cellules éditables, heures prévues au planning en pointillé ;
+/// ou la liste des entrées de la semaine ([view] `list`). Une page, trois vues avec le calendrier (lot 5).
 /// Un chef d'équipe ou un manager choisit la personne affichée (bandeau « Collaborateur »).
 class TimesheetPage extends StatefulWidget {
-  const TimesheetPage({super.key});
+  const TimesheetPage({super.key, this.initialWeek, this.view = 'grid'});
+
+  /// Un jour de la semaine à ouvrir (lien depuis le calendrier) ; par défaut, cette semaine.
+  final DateTime? initialWeek;
+  final String view;
 
   @override
   State<TimesheetPage> createState() => _TimesheetPageState();
@@ -43,7 +51,7 @@ class _TimesheetPageState extends State<TimesheetPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_init) {
-      _weekStart = startOfWeek(DateTime.now(), context.read<SessionController>().workspace!.weekStart);
+      _weekStart = startOfWeek(widget.initialWeek ?? DateTime.now(), context.read<SessionController>().workspace!.weekStart);
       _init = true;
     }
   }
@@ -75,10 +83,14 @@ class _TimesheetPageState extends State<TimesheetPage> {
         ),
         IconButton(onPressed: () => _shiftWeek(1), icon: const Icon(Icons.chevron_right), tooltip: l.nextWeek),
       ],
-      child: StreamBuilder<List<EntryRow>>(
-        stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: userId, from: days.first, to: weekEnd),
+      child: StreamBuilder<List<ScheduleAssignment>>(
+        stream: modulesRepo.watchAssignments(ws.id, userId: userId, from: days.first, to: days.last),
+        builder: (context, planSnap) => StreamBuilder<List<EntryRow>>(
+        stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: userId, from: days.first, to: weekEnd, includeRunning: true),
         builder: (context, snap) {
-          final rows = snap.data ?? const <EntryRow>[];
+          final assignments = planSnap.data ?? const <ScheduleAssignment>[];
+          final allRows = snap.data ?? const <EntryRow>[];
+          final rows = [for (final r in allRows) if (r.entry.endAt != null) r];
           final cells = <_RowKey, List<int>>{};
           for (final r in rows) {
             final key = _RowKey(r.entry.projectId);
@@ -90,15 +102,37 @@ class _TimesheetPageState extends State<TimesheetPage> {
           for (final k in _extraRows) {
             cells.putIfAbsent(k, () => List.filled(7, 0));
           }
+          // Projets prévus au planning : leur ligne apparaît, heures prévues en pointillé dans les cases vides.
+          for (final a in assignments) {
+            cells.putIfAbsent(_RowKey(a.projectId), () => List.filled(7, 0));
+          }
           final catalog = context.watch<CatalogController>();
           final keys = cells.keys.toList()
             ..sort((a, b) => (catalog.project(a.projectId)?.name ?? '').toLowerCase().compareTo((catalog.project(b.projectId)?.name ?? '').toLowerCase()));
           final dayTotals = List<int>.generate(7, (i) => cells.values.fold(0, (s, v) => s + v[i]));
           final grand = dayTotals.fold(0, (a, b) => a + b);
 
+          final mine = userId == session.userId;
           return SingleChildScrollView(
             padding: const EdgeInsets.all(12),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                WeekViews(current: widget.view, week: _weekStart),
+                if (editable && widget.view == 'grid') ...[
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.content_copy_outlined, size: 18),
+                    label: Text(l.weekCopyPrevious),
+                    onPressed: () => copyPreviousWeek(context, userId: userId, weekStart: _weekStart),
+                  ),
+                  if (assignments.isNotEmpty)
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.event_available_outlined, size: 18),
+                      label: Text(l.weekFillPlanning),
+                      onPressed: () => fillFromPlanning(context, userId: userId, weekStart: _weekStart, assignments: assignments),
+                    ),
+                ],
+              ]),
+              const SizedBox(height: 12),
               TeammateBar(
                 userId: userId,
                 onChanged: (v) => setState(() {
@@ -108,8 +142,28 @@ class _TimesheetPageState extends State<TimesheetPage> {
               ),
               // Un agent Claude ne soumet pas de feuille de temps (plan 10, D15).
               if (!rights.isAgent(userId))
-                SubmissionBar(userId: userId, periodStart: days.first, periodEnd: days.last, totalSeconds: grand),
+                SubmissionBar(
+                  userId: userId,
+                  periodStart: days.first,
+                  periodEnd: days.last,
+                  totalSeconds: grand,
+                  review: (now) => weekIssues(
+                    days: days,
+                    rows: allRows,
+                    assignments: assignments,
+                    now: now,
+                    requireProject: ws.requireProject,
+                    requireDescription: ws.requireDescription,
+                  ),
+                ),
               const SizedBox(height: 12),
+              if (widget.view == 'list')
+                for (final d in days)
+                  if (rows.where((r) => sameDay(r.entry.startAt.toLocal(), d)).toList() case final ofDay when ofDay.isNotEmpty)
+                    DayCard(day: d, rows: ofDay, grouped: false, inlineEdit: mine || editable)
+                  else
+                    const SizedBox.shrink()
+              else
               Card(
               // Clé par personne : les cellules repartent de zéro quand on change de collaborateur.
               key: ValueKey(userId),
@@ -123,7 +177,14 @@ class _TimesheetPageState extends State<TimesheetPage> {
                     _headerRow(context, days),
                     const Divider(height: 1),
                     for (final k in keys) ...[
-                      _TimesheetRow(rowKey: k, values: cells[k]!, days: days, userId: userId, readOnly: !editable),
+                      _TimesheetRow(
+                        rowKey: k,
+                        values: cells[k]!,
+                        planned: [for (final d in days) plannedMinutes(assignments, k.projectId, d)],
+                        days: days,
+                        userId: userId,
+                        readOnly: !editable,
+                      ),
                       const Divider(height: 1),
                     ],
                     if (editable)
@@ -150,6 +211,7 @@ class _TimesheetPageState extends State<TimesheetPage> {
             ]),
           );
         },
+      ),
       ),
     );
   }
@@ -191,9 +253,13 @@ class _TimesheetPageState extends State<TimesheetPage> {
 }
 
 class _TimesheetRow extends StatelessWidget {
-  const _TimesheetRow({required this.rowKey, required this.values, required this.days, required this.userId, required this.readOnly});
+  const _TimesheetRow(
+      {required this.rowKey, required this.values, required this.planned, required this.days, required this.userId, required this.readOnly});
   final _RowKey rowKey;
   final List<int> values;
+
+  /// Minutes prévues au planning, par jour.
+  final List<int> planned;
   final List<DateTime> days;
   final String userId;
   final bool readOnly;
@@ -209,7 +275,7 @@ class _TimesheetRow extends StatelessWidget {
       for (var i = 0; i < 7; i++)
         SizedBox(
           width: 76,
-          child: _Cell(seconds: values[i], projectId: rowKey.projectId, day: days[i], userId: userId, readOnly: readOnly),
+          child: _Cell(seconds: values[i], planned: planned[i], projectId: rowKey.projectId, day: days[i], userId: userId, readOnly: readOnly),
         ),
       SizedBox(width: 84, child: Text(formatHm(total), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600))),
     ]);
@@ -217,8 +283,12 @@ class _TimesheetRow extends StatelessWidget {
 }
 
 class _Cell extends StatefulWidget {
-  const _Cell({required this.seconds, required this.projectId, required this.day, required this.userId, required this.readOnly});
+  const _Cell(
+      {required this.seconds, this.planned = 0, required this.projectId, required this.day, required this.userId, required this.readOnly});
   final int seconds;
+
+  /// Minutes prévues : affichées en pointillé dans une case vide.
+  final int planned;
   final String? projectId;
   final DateTime day;
   final String userId;
@@ -308,7 +378,11 @@ class _CellState extends State<_Cell> {
           focusNode: _focus,
           readOnly: widget.readOnly,
           textAlign: TextAlign.center,
-          decoration: const InputDecoration(hintText: '–', contentPadding: EdgeInsets.symmetric(vertical: 10)),
+          decoration: InputDecoration(
+            hintText: widget.planned > 0 ? formatHm(widget.planned * 60) : '–',
+            hintStyle: widget.planned > 0 ? TextStyle(fontStyle: FontStyle.italic, color: Theme.of(context).colorScheme.outline) : null,
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          ),
           onSubmitted: (_) => _focus.unfocus(),
         ),
       );

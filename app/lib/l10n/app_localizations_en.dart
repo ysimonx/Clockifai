@@ -714,6 +714,115 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String get weekGrid => 'Grid';
+
+  @override
+  String get weekList => 'List';
+
+  @override
+  String get weekCopyPrevious => 'Copy previous week';
+
+  @override
+  String get weekFillPlanning => 'Fill from the schedule';
+
+  @override
+  String get weekNothingToCopy => 'Nothing to copy from the previous week.';
+
+  @override
+  String get weekNothingToFill =>
+      'Nothing to fill: the schedule is already covered.';
+
+  @override
+  String weekFilled(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries added from the schedule',
+      one: '1 entry added from the schedule',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String weekPlanned(String duration) {
+    return 'Planned: $duration';
+  }
+
+  @override
+  String get weekReviewTitle => 'Before submitting';
+
+  @override
+  String get weekReviewAllGood => 'All good: every working day has its time.';
+
+  @override
+  String get weekReviewFix => 'Fix';
+
+  @override
+  String get weekReviewSubmit => 'Submit';
+
+  @override
+  String get weekReviewSubmitAnyway => 'Submit anyway';
+
+  @override
+  String issueEmptyDay(String day) {
+    return '$day: no time entered';
+  }
+
+  @override
+  String issueEmptyDayPlanned(String day, String planned) {
+    return '$day: no time entered ($planned planned)';
+  }
+
+  @override
+  String issueBelowPlan(String day, String logged, String planned) {
+    return '$day: $logged entered out of $planned planned';
+  }
+
+  @override
+  String issueNoProject(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries without a project',
+      one: '1 entry without a project',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String issueNoDescription(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries without a description',
+      one: '1 entry without a description',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String issueRunning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count timers still running',
+      one: '1 timer still running',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String issueOverlap(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count overlaps between entries',
+      one: '1 overlap between two entries',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get journalSourceCalendar => 'Calendar';
 
   @override

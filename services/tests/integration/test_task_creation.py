@@ -74,6 +74,20 @@ def test_member_only_renames_own_task(ws):
     assert status == 200 and rows == []
 
 
+def test_member_creates_a_ticket_task_like_the_connector(ws):
+    """Tâche d'un ticket client (0027, plans/19-tickets-clients.md) : URL et clé, retirables par une mise à jour."""
+    lea_t, _ = ws["lea"]
+    url = "https://linear.app/acme/issue/ENG-123/formulaire"
+    body = _task(ws["wid"], ws["pid"], name="ENG-123 · Formulaire", ticket_url=url, ticket_key="ENG-123")
+    assert upsert("tasks", lea_t, body)[0] == 201
+    _, rows = rest("GET", f"tasks?id=eq.{body['id']}&select=ticket_url,ticket_key", ws["owner"])
+    assert rows == [{"ticket_url": url, "ticket_key": "ENG-123"}]
+    status, rows = rest("PATCH", f"tasks?id=eq.{body['id']}", lea_t, {"ticket_url": None, "ticket_key": None})
+    assert status == 200 and (rows[0]["ticket_url"], rows[0]["ticket_key"]) == (None, None)
+    status, err = upsert("tasks", lea_t, _task(ws["wid"], ws["pid"], ticket_url="https://x.fr/" + "a" * 500))
+    assert status >= 400 and err["code"] == "23514", err
+
+
 @pytest.mark.parametrize("case", ["estimate", "done", "archived_project", "foreign_project", "other_author"])
 def test_member_creation_limits(ws, case):
     lea_t, _ = ws["lea"]

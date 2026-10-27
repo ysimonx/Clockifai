@@ -8,9 +8,11 @@ import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../core/theme.dart';
+import '../../core/tickets.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../core/widgets/rate_change.dart';
+import '../../core/widgets/ticket_link.dart';
 import '../../data/drift/database.dart';
 import '../presence/presence_log.dart' show Site;
 import '../presence/presence_settings.dart';
@@ -144,6 +146,7 @@ class _ProjectTile extends StatelessWidget {
                           : (taskUsed(t) * 10 >= t.estimateSeconds! * 8 ? AppColors.of(context).warning : null))),
           trailing: session.isManager
               ? Row(mainAxisSize: MainAxisSize.min, children: [
+                  TicketLink(task: t),
                   if (!sub)
                     IconButton(
                       tooltip: l.createSubtask,
@@ -163,7 +166,7 @@ class _ProjectTile extends StatelessWidget {
                   IconButton(
                     tooltip: l.editTask,
                     icon: const Icon(Icons.edit_outlined),
-                    onPressed: () => _editTask(context, t),
+                    onPressed: () => _taskDialog(context, project, task: t),
                   ),
                   IconButton(
                     tooltip: l.delete,
@@ -174,7 +177,7 @@ class _ProjectTile extends StatelessWidget {
                     },
                   ),
                 ])
-              : null,
+              : TicketLink(task: t),
         );
 
     return Card(
@@ -203,10 +206,7 @@ class _ProjectTile extends StatelessWidget {
                     case 'edit':
                       await showProjectDialog(context, project: project);
                     case 'task':
-                      final name = await promptText(context, title: l.newTask, label: l.name);
-                      if (name != null && name.trim().isNotEmpty) {
-                        await catalogRepo.createTask(project.workspaceId, project.id, name);
-                      }
+                      await _taskDialog(context, project);
                     case 'archive':
                       await catalogRepo.updateProject(project.id, ProjectsCompanion(archived: Value(!project.archived)));
                     case 'delete':
@@ -235,33 +235,100 @@ class _ProjectTile extends StatelessWidget {
   }
 }
 
-/// Nom et estimation d'une tâche (managers) ; l'estimation s'écrit comme une durée (« 4h », « 1:30 », « 2,5 »).
-Future<void> _editTask(BuildContext context, Task t) async {
-  final l = context.l10n;
-  final name = TextEditingController(text: t.name);
-  final estimate = TextEditingController(text: t.estimateSeconds == null ? '' : formatHm(t.estimateSeconds!));
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l.editTask),
+/// Nouvelle tâche du projet [project], ou modification de [task] (managers) : nom, ticket du client (tâches de
+/// premier niveau, plans/19-tickets-clients.md) et estimation, qui s'écrit comme une durée (« 4h », « 1:30 », « 2,5 »).
+Future<void> _taskDialog(BuildContext context, Project project, {Task? task}) =>
+    showDialog<void>(context: context, builder: (_) => _TaskDialog(project: project, task: task));
+
+class _TaskDialog extends StatefulWidget {
+  const _TaskDialog({required this.project, this.task});
+  final Project project;
+  final Task? task;
+
+  @override
+  State<_TaskDialog> createState() => _TaskDialogState();
+}
+
+class _TaskDialogState extends State<_TaskDialog> {
+  late final _name = TextEditingController(text: widget.task?.name ?? '');
+  late final _ticket = TextEditingController(text: widget.task?.ticketUrl ?? widget.task?.ticketKey ?? '');
+  late final _estimate =
+      TextEditingController(text: widget.task?.estimateSeconds == null ? '' : formatHm(widget.task!.estimateSeconds!));
+  String? _ticketError;
+  String? _estimateError;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _ticket.dispose();
+    _estimate.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final l = context.l10n;
+    final t = widget.task;
+    final ticketText = _ticket.text.trim();
+    final ticket = ticketText.isEmpty ? null : parseTicket(ticketText);
+    final seconds = _estimate.text.trim().isEmpty ? null : parseDuration(_estimate.text);
+    setState(() {
+      _ticketError = ticketText.isNotEmpty && ticket == null ? l.ticketInvalid : null;
+      _estimateError = _estimate.text.trim().isNotEmpty && seconds == null ? l.estimateHint : null;
+    });
+    if (_ticketError != null || _estimateError != null) return;
+    // Un ticket, une tâche par projet : celle qui l'a déjà est signalée plutôt que doublée.
+    final owner = ticket == null ? null : context.read<CatalogController>().ticketTask(ticket, projectId: widget.project.id);
+    if (owner != null && owner.id != t?.id) {
+      setState(() => _ticketError = l.ticketTaskExists(owner.name));
+      return;
+    }
+    // Nouvelle tâche d'un ticket : « ENG-123 · Titre », sauf si le nom porte déjà la clé.
+    var name = _name.text.trim();
+    if (t == null && ticket != null && !(ticket.key != null && name.toUpperCase().contains(ticket.key!.toUpperCase()))) {
+      name = ticketTaskName(ticket, name);
+    }
+    if (name.isEmpty) return;
+    final estimate = Value(seconds == 0 ? null : seconds);
+    if (t == null) {
+      final id = await catalogRepo.createTask(widget.project.workspaceId, widget.project.id, name, ticket: ticket);
+      if (seconds != null && seconds > 0) await catalogRepo.updateTask(id, estimateSeconds: estimate);
+    } else {
+      await catalogRepo.updateTask(t.id, name: name, estimateSeconds: estimate, ticket: t.parentId == null ? Value(ticket) : const Value.absent());
+    }
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final sub = widget.task?.parentId != null;
+    return AlertDialog(
+      title: Text(widget.task == null ? l.newTaskIn(widget.project.name) : l.editTask),
       content: SizedBox(
-        width: 360,
+        width: 400,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: name, autofocus: true, decoration: InputDecoration(labelText: l.name)),
+          TextField(controller: _name, autofocus: true, decoration: InputDecoration(labelText: l.name)),
+          if (!sub) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _ticket,
+              keyboardType: TextInputType.url,
+              decoration: InputDecoration(labelText: l.ticket, hintText: l.ticketHint, errorText: _ticketError, errorMaxLines: 2),
+            ),
+          ],
           const SizedBox(height: 12),
-          TextField(controller: estimate, decoration: InputDecoration(labelText: l.estimate, hintText: l.estimateHint, suffixText: 'h')),
+          TextField(
+            controller: _estimate,
+            decoration: InputDecoration(labelText: l.estimate, hintText: l.estimateHint, suffixText: 'h', errorText: _estimateError),
+          ),
         ]),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
-        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.save)),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
+        FilledButton(onPressed: _save, child: Text(l.save)),
       ],
-    ),
-  );
-  if (ok != true || name.text.trim().isEmpty) return;
-  final seconds = estimate.text.trim().isEmpty ? null : parseDuration(estimate.text);
-  if (estimate.text.trim().isNotEmpty && seconds == null) return;
-  await catalogRepo.updateTask(t.id, name: name.text, estimateSeconds: Value(seconds == 0 ? null : seconds));
+    );
+  }
 }
 
 Future<void> showProjectDialog(BuildContext context, {Project? project}) =>

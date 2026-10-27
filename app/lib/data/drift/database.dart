@@ -159,6 +159,9 @@ class Tasks extends Table {
   TextColumn get name => text()();
   IntColumn get estimateSeconds => integer().nullable()();
   TextColumn get status => text().clientDefault(() => 'active')();
+  /// Ticket du client (plans/19-tickets-clients.md) : son URL et sa clé (« ENG-123 »), qui retrouve la tâche.
+  TextColumn get ticketUrl => text().nullable()();
+  TextColumn get ticketKey => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();

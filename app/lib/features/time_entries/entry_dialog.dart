@@ -11,6 +11,7 @@ import '../../core/session.dart';
 import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
+import '../../core/widgets/ticket_link.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
@@ -392,13 +393,16 @@ class _EntryDialogState extends State<_EntryDialog> {
                         }
                       });
                     },
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: ProjectLabel(projectId: _projectId, taskId: _taskId),
+              child: Row(children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: ProjectLabel(projectId: _projectId, taskId: _taskId),
+                  ),
                 ),
-              ),
+                // Le ticket du client de la tâche (plans/19-tickets-clients.md), à ouvrir sans quitter l'entrée.
+                TicketLink(task: rootTask),
+              ]),
             ),
             // Tâches en pastilles (lot 9) : un toucher, sans rouvrir le sélecteur.
             if (taskPills.isNotEmpty && taskPills.length <= 12)

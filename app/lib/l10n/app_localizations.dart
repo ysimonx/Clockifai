@@ -5123,6 +5123,54 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Tâche « {name} » supprimée, avec ses sous-tâches ; ses entrées restent'**
   String taskDeleted(String name);
+
+  /// No description provided for @ticket.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ticket du client'**
+  String get ticket;
+
+  /// No description provided for @ticketHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'URL Jira, Linear ou GitHub, ou clé (ENG-123)'**
+  String get ticketHint;
+
+  /// No description provided for @ticketInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ticket non reconnu : une URL https ou une clé comme ENG-123'**
+  String get ticketInvalid;
+
+  /// No description provided for @ticketTaskExists.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce ticket a déjà sa tâche dans ce projet : {name}'**
+  String ticketTaskExists(String name);
+
+  /// No description provided for @openTicket.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir le ticket {ticket}'**
+  String openTicket(String ticket);
+
+  /// No description provided for @createTicketTaskIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer la tâche du ticket {ticket} dans :'**
+  String createTicketTaskIn(String ticket);
+
+  /// No description provided for @newTicketTask.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tâche du ticket {ticket}'**
+  String newTicketTask(String ticket);
+
+  /// No description provided for @ticketTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Titre (facultatif)'**
+  String get ticketTitle;
 }
 
 class _AppLocalizationsDelegate

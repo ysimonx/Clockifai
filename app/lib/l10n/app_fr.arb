@@ -1857,5 +1857,41 @@
         "type": "String"
       }
     }
-  }
+  },
+  "ticket": "Ticket du client",
+  "ticketHint": "URL Jira, Linear ou GitHub, ou clé (ENG-123)",
+  "ticketInvalid": "Ticket non reconnu : une URL https ou une clé comme ENG-123",
+  "ticketTaskExists": "Ce ticket a déjà sa tâche dans ce projet : {name}",
+  "@ticketTaskExists": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "openTicket": "Ouvrir le ticket {ticket}",
+  "@openTicket": {
+    "placeholders": {
+      "ticket": {
+        "type": "String"
+      }
+    }
+  },
+  "createTicketTaskIn": "Créer la tâche du ticket {ticket} dans :",
+  "@createTicketTaskIn": {
+    "placeholders": {
+      "ticket": {
+        "type": "String"
+      }
+    }
+  },
+  "newTicketTask": "Tâche du ticket {ticket}",
+  "@newTicketTask": {
+    "placeholders": {
+      "ticket": {
+        "type": "String"
+      }
+    }
+  },
+  "ticketTitle": "Titre (facultatif)"
 }

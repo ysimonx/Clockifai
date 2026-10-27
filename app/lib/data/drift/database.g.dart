@@ -4912,6 +4912,28 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     requiredDuringInsert: false,
     clientDefault: () => 'active',
   );
+  static const VerificationMeta _ticketUrlMeta = const VerificationMeta(
+    'ticketUrl',
+  );
+  @override
+  late final GeneratedColumn<String> ticketUrl = GeneratedColumn<String>(
+    'ticket_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ticketKeyMeta = const VerificationMeta(
+    'ticketKey',
+  );
+  @override
+  late final GeneratedColumn<String> ticketKey = GeneratedColumn<String>(
+    'ticket_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -4955,6 +4977,8 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     name,
     estimateSeconds,
     status,
+    ticketUrl,
+    ticketKey,
     createdAt,
     updatedAt,
     deletedAt,
@@ -5022,6 +5046,18 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         status.isAcceptableOrUnknown(data['status']!, _statusMeta),
       );
     }
+    if (data.containsKey('ticket_url')) {
+      context.handle(
+        _ticketUrlMeta,
+        ticketUrl.isAcceptableOrUnknown(data['ticket_url']!, _ticketUrlMeta),
+      );
+    }
+    if (data.containsKey('ticket_key')) {
+      context.handle(
+        _ticketKeyMeta,
+        ticketKey.isAcceptableOrUnknown(data['ticket_key']!, _ticketKeyMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -5077,6 +5113,14 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         DriftSqlType.string,
         data['${effectivePrefix}status'],
       )!,
+      ticketUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ticket_url'],
+      ),
+      ticketKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ticket_key'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -5108,6 +5152,10 @@ class Task extends DataClass implements Insertable<Task> {
   final String name;
   final int? estimateSeconds;
   final String status;
+
+  /// Ticket du client (plans/19-tickets-clients.md) : son URL et sa clé (« ENG-123 »), qui retrouve la tâche.
+  final String? ticketUrl;
+  final String? ticketKey;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
@@ -5119,6 +5167,8 @@ class Task extends DataClass implements Insertable<Task> {
     required this.name,
     this.estimateSeconds,
     required this.status,
+    this.ticketUrl,
+    this.ticketKey,
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
@@ -5137,6 +5187,12 @@ class Task extends DataClass implements Insertable<Task> {
       map['estimate_seconds'] = Variable<int>(estimateSeconds);
     }
     map['status'] = Variable<String>(status);
+    if (!nullToAbsent || ticketUrl != null) {
+      map['ticket_url'] = Variable<String>(ticketUrl);
+    }
+    if (!nullToAbsent || ticketKey != null) {
+      map['ticket_key'] = Variable<String>(ticketKey);
+    }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
     }
@@ -5162,6 +5218,12 @@ class Task extends DataClass implements Insertable<Task> {
           ? const Value.absent()
           : Value(estimateSeconds),
       status: Value(status),
+      ticketUrl: ticketUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ticketUrl),
+      ticketKey: ticketKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ticketKey),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -5187,6 +5249,8 @@ class Task extends DataClass implements Insertable<Task> {
       name: serializer.fromJson<String>(json['name']),
       estimateSeconds: serializer.fromJson<int?>(json['estimateSeconds']),
       status: serializer.fromJson<String>(json['status']),
+      ticketUrl: serializer.fromJson<String?>(json['ticketUrl']),
+      ticketKey: serializer.fromJson<String?>(json['ticketKey']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
@@ -5203,6 +5267,8 @@ class Task extends DataClass implements Insertable<Task> {
       'name': serializer.toJson<String>(name),
       'estimateSeconds': serializer.toJson<int?>(estimateSeconds),
       'status': serializer.toJson<String>(status),
+      'ticketUrl': serializer.toJson<String?>(ticketUrl),
+      'ticketKey': serializer.toJson<String?>(ticketKey),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
@@ -5217,6 +5283,8 @@ class Task extends DataClass implements Insertable<Task> {
     String? name,
     Value<int?> estimateSeconds = const Value.absent(),
     String? status,
+    Value<String?> ticketUrl = const Value.absent(),
+    Value<String?> ticketKey = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
     Value<DateTime?> deletedAt = const Value.absent(),
@@ -5230,6 +5298,8 @@ class Task extends DataClass implements Insertable<Task> {
         ? estimateSeconds.value
         : this.estimateSeconds,
     status: status ?? this.status,
+    ticketUrl: ticketUrl.present ? ticketUrl.value : this.ticketUrl,
+    ticketKey: ticketKey.present ? ticketKey.value : this.ticketKey,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
@@ -5247,6 +5317,8 @@ class Task extends DataClass implements Insertable<Task> {
           ? data.estimateSeconds.value
           : this.estimateSeconds,
       status: data.status.present ? data.status.value : this.status,
+      ticketUrl: data.ticketUrl.present ? data.ticketUrl.value : this.ticketUrl,
+      ticketKey: data.ticketKey.present ? data.ticketKey.value : this.ticketKey,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
@@ -5263,6 +5335,8 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('name: $name, ')
           ..write('estimateSeconds: $estimateSeconds, ')
           ..write('status: $status, ')
+          ..write('ticketUrl: $ticketUrl, ')
+          ..write('ticketKey: $ticketKey, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt')
@@ -5279,6 +5353,8 @@ class Task extends DataClass implements Insertable<Task> {
     name,
     estimateSeconds,
     status,
+    ticketUrl,
+    ticketKey,
     createdAt,
     updatedAt,
     deletedAt,
@@ -5294,6 +5370,8 @@ class Task extends DataClass implements Insertable<Task> {
           other.name == this.name &&
           other.estimateSeconds == this.estimateSeconds &&
           other.status == this.status &&
+          other.ticketUrl == this.ticketUrl &&
+          other.ticketKey == this.ticketKey &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt);
@@ -5307,6 +5385,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<String> name;
   final Value<int?> estimateSeconds;
   final Value<String> status;
+  final Value<String?> ticketUrl;
+  final Value<String?> ticketKey;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> deletedAt;
@@ -5319,6 +5399,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.name = const Value.absent(),
     this.estimateSeconds = const Value.absent(),
     this.status = const Value.absent(),
+    this.ticketUrl = const Value.absent(),
+    this.ticketKey = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -5332,6 +5414,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     required String name,
     this.estimateSeconds = const Value.absent(),
     this.status = const Value.absent(),
+    this.ticketUrl = const Value.absent(),
+    this.ticketKey = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -5347,6 +5431,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<String>? name,
     Expression<int>? estimateSeconds,
     Expression<String>? status,
+    Expression<String>? ticketUrl,
+    Expression<String>? ticketKey,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
@@ -5360,6 +5446,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (name != null) 'name': name,
       if (estimateSeconds != null) 'estimate_seconds': estimateSeconds,
       if (status != null) 'status': status,
+      if (ticketUrl != null) 'ticket_url': ticketUrl,
+      if (ticketKey != null) 'ticket_key': ticketKey,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
@@ -5375,6 +5463,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<String>? name,
     Value<int?>? estimateSeconds,
     Value<String>? status,
+    Value<String?>? ticketUrl,
+    Value<String?>? ticketKey,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
     Value<DateTime?>? deletedAt,
@@ -5388,6 +5478,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       name: name ?? this.name,
       estimateSeconds: estimateSeconds ?? this.estimateSeconds,
       status: status ?? this.status,
+      ticketUrl: ticketUrl ?? this.ticketUrl,
+      ticketKey: ticketKey ?? this.ticketKey,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -5419,6 +5511,12 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
+    if (ticketUrl.present) {
+      map['ticket_url'] = Variable<String>(ticketUrl.value);
+    }
+    if (ticketKey.present) {
+      map['ticket_key'] = Variable<String>(ticketKey.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -5444,6 +5542,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('name: $name, ')
           ..write('estimateSeconds: $estimateSeconds, ')
           ..write('status: $status, ')
+          ..write('ticketUrl: $ticketUrl, ')
+          ..write('ticketKey: $ticketKey, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
@@ -19529,6 +19629,8 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   required String name,
   Value<int?> estimateSeconds,
   Value<String> status,
+  Value<String?> ticketUrl,
+  Value<String?> ticketKey,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> deletedAt,
@@ -19542,6 +19644,8 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<String> name,
   Value<int?> estimateSeconds,
   Value<String> status,
+  Value<String?> ticketUrl,
+  Value<String?> ticketKey,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> deletedAt,
@@ -19588,6 +19692,16 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ticketUrl => $composableBuilder(
+    column: $table.ticketUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ticketKey => $composableBuilder(
+    column: $table.ticketKey,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19651,6 +19765,16 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get ticketUrl => $composableBuilder(
+    column: $table.ticketUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ticketKey => $composableBuilder(
+    column: $table.ticketKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -19701,6 +19825,12 @@ class $$TasksTableAnnotationComposer
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
+  GeneratedColumn<String> get ticketUrl =>
+      $composableBuilder(column: $table.ticketUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get ticketKey =>
+      $composableBuilder(column: $table.ticketKey, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -19746,6 +19876,8 @@ class $$TasksTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<int?> estimateSeconds = const Value.absent(),
                 Value<String> status = const Value.absent(),
+                Value<String?> ticketUrl = const Value.absent(),
+                Value<String?> ticketKey = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -19758,6 +19890,8 @@ class $$TasksTableTableManager
                 name: name,
                 estimateSeconds: estimateSeconds,
                 status: status,
+                ticketUrl: ticketUrl,
+                ticketKey: ticketKey,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -19772,6 +19906,8 @@ class $$TasksTableTableManager
                 required String name,
                 Value<int?> estimateSeconds = const Value.absent(),
                 Value<String> status = const Value.absent(),
+                Value<String?> ticketUrl = const Value.absent(),
+                Value<String?> ticketKey = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -19784,6 +19920,8 @@ class $$TasksTableTableManager
                 name: name,
                 estimateSeconds: estimateSeconds,
                 status: status,
+                ticketUrl: ticketUrl,
+                ticketKey: ticketKey,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,

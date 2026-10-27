@@ -146,6 +146,35 @@ void main() {
     expect(result()?.taskId, pose);
   });
 
+  testWidgets('URL de ticket collée : retrouve sa tâche, sinon la crée avec son titre', (tester) async {
+    const url = 'https://linear.app/acme/issue/ENG-123/formulaire-de-commande';
+    var result = await open(tester);
+    await tester.enterText(find.byType(TextField), url);
+    await tester.pumpAndSettle();
+    expect(find.text('Créer la tâche du ticket ENG-123 dans :'), findsOneWidget);
+    await tester.tap(find.text('Bureau'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tâche du ticket ENG-123'), findsOneWidget);
+    await tester.enterText(
+        find.descendant(of: find.widgetWithText(AlertDialog, 'Tâche du ticket ENG-123'), matching: find.byType(TextField)),
+        'Formulaire de commande');
+    await tester.tap(find.text('Enregistrer'));
+    await settle(tester);
+
+    final created = catalog.tasksOf(bureau).single;
+    expect((created.name, created.ticketKey, created.ticketUrl), ('ENG-123 · Formulaire de commande', 'ENG-123', url));
+    expect(result()?.taskId, created.id);
+
+    // La clé seule, ou une autre URL du même ticket, la retrouve.
+    result = await open(tester);
+    await tester.enterText(find.byType(TextField), 'https://acme.atlassian.net/browse/eng-123');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ENG-123 · Formulaire de commande'));
+    await tester.pumpAndSettle();
+    expect(result()?.taskId, created.id);
+    expect(catalog.tasksOf(bureau), hasLength(1));
+  });
+
   testWidgets('sans le droit de créer : ni bouton +, ni proposition', (tester) async {
     await open(tester, canCreateTasks: false);
     expect(find.byTooltip('Créer une tâche'), findsNothing);

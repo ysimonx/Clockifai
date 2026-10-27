@@ -108,6 +108,8 @@ const schema = Schema([
     Column.text('name'),
     Column.integer('estimate_seconds'),
     Column.text('status'),
+    Column.text('ticket_url'),
+    Column.text('ticket_key'),
     ..._audit,
     ..._softDelete,
   ], indexes: [

@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../core/tickets.dart';
 import '../drift/database.dart';
 
 /// Référentiel d'un workspace : clients, projets, tâches, tags.
@@ -81,7 +82,8 @@ class CatalogRepository {
 
   // ------------------------------------------------------------------ tâches
   /// Nouvelle tâche du projet, ou sous-tâche de [parentId] (même projet, un seul niveau : le serveur le vérifie).
-  Future<String> createTask(String workspaceId, String projectId, String name, {String? parentId}) async {
+  /// [ticket] : la tâche d'un ticket client (plans/19-tickets-clients.md), de premier niveau seulement.
+  Future<String> createTask(String workspaceId, String projectId, String name, {String? parentId, TicketRef? ticket}) async {
     final id = newId();
     await db.into(db.tasks).insert(TasksCompanion.insert(
           id: Value(id),
@@ -89,16 +91,22 @@ class CatalogRepository {
           projectId: projectId,
           parentId: Value(parentId),
           name: name.trim(),
+          ticketUrl: Value(ticket?.url),
+          ticketKey: Value(ticket?.key),
         ));
     return id;
   }
 
   /// [estimateSeconds] : `Value(null)` retire l'estimation (managers seulement, `tasks_guard`).
-  Future<void> updateTask(String id, {String? name, String? status, Value<int?> estimateSeconds = const Value.absent()}) =>
+  /// [ticket] : `Value(null)` retire le ticket de la tâche.
+  Future<void> updateTask(String id,
+          {String? name, String? status, Value<int?> estimateSeconds = const Value.absent(), Value<TicketRef?> ticket = const Value.absent()}) =>
       (db.update(db.tasks)..where((t) => t.id.equals(id))).write(TasksCompanion(
         name: name == null ? const Value.absent() : Value(name.trim()),
         status: status == null ? const Value.absent() : Value(status),
         estimateSeconds: estimateSeconds,
+        ticketUrl: ticket.present ? Value(ticket.value?.url) : const Value.absent(),
+        ticketKey: ticket.present ? Value(ticket.value?.key) : const Value.absent(),
       ));
 
   /// Supprime la tâche et ses sous-tâches (même horodatage : le serveur les rend ensemble à la restauration) ;

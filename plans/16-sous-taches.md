@@ -1,6 +1,6 @@
 # Plan 16 — Sous-tâches
 
-> Statut : **en cours** (27 octobre 2026), validé le 27 octobre. Demandé par Yannick : voir le sujet global d'un travail (un plan, une
+> Statut : **fait** (27 octobre 2026), validé et livré le 27 octobre. Demandé par Yannick : voir le sujet global d'un travail (un plan, une
 > fonctionnalité) plutôt qu'une tâche par étape, sans perdre le détail.
 
 ## Constat
@@ -51,7 +51,7 @@ stable d'une session et d'un jour à l'autre ; la **sous-tâche** porte l'étape
 | 2 Saisie | Sélecteur de projet sur trois niveaux (recherche, ↳ « Ajouter une sous-tâche ») ; libellés « Projet : Tâche › Sous-tâche » ; pastilles des sous-tâches sous la tâche choisie (saisie, feuille « + ») ; page Projets : sous-tâches, ajout ; saisie express (recherche dans les sous-tâches) | fait (pas de déplacement d'une tâche sous une autre dans l'app) |
 | 3 Rapports et factures | « Grouper par tâche » (cumul, dépliable), rapport détaillé « Tâche › Sous-tâche » ; exports Flask : colonne « Sous-tâche » (OpenAPI) ; assistant : par tâche, sous-tâches comprises ; facture détaillée par tâche : une ligne par sous-tâche, libellée « Tâche › Sous-tâche » | fait (sans filtre par tâche, qui n'existe pas encore ; sans budget par tâche) |
 | 4 Claude | Outil `set_current_task(name, step)` et consigne ; hook : l'étape relayée (`session_task {task_name, step_name}`, liste blanche D6) ; serveur : objectif → tâche, étape → sous-tâche, entrées coupées par étape, `agent_tasks` pour les deux ; tests du plugin et d'intégration ; plugin à mettre à jour sur les postes | fait |
-| 5 Historique | Regroupement des tâches déjà créées par Claude sous leur objectif : liste proposée à Yannick, puis appliquée (script SQL ponctuel, sauvegarde avant) | à faire |
+| 5 Historique | Regroupement des tâches déjà créées par Claude sous leur objectif : liste proposée à Yannick, puis appliquée (script SQL ponctuel, sauvegarde avant) | fait (28 tâches de Clockifai rangées sous 8 objectifs, entrées marquées comme choix humain) |
 | 6 Documentation | Guide (membre, manager), `docs/architecture/donnees.md`, `openapi.yaml`, plan 10 (D18, objectif et étape), CHANGELOG | fait |
 
 Ordre : 1, 2 et 4 d'abord (la saisie et Claude), puis 3 et 5.

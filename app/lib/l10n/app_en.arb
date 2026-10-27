@@ -1369,5 +1369,28 @@
   },
   "journalFromPlanning": "From the schedule",
   "journalSomethingElse": "Something else",
-  "journalYourDay": "Your day"
+  "journalYourDay": "Your day",
+  "change": "Change",
+  "descriptionOptional": "Description (optional)",
+  "minus15": "Remove 15 minutes",
+  "plus15": "Add 15 minutes",
+  "quickAddSaved": "Added: {duration} · {range}",
+  "@quickAddSaved": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "saveDuration": "Save · {duration}",
+  "@saveDuration": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  }
 }

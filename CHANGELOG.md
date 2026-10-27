@@ -26,8 +26,10 @@ la date d'arrivée de chaque évolution.
   vides à remplir) et le bilan du jour, projet par projet, pour vous et pour Claude. Journée vide :
   « Comme vendredi ? » montre la dernière journée travaillée et « Reprendre la journée » la recopie
   (27 octobre 2026).
-- **Téléphone** : barre du bas Aujourd'hui, Semaine, **+** (ajouter du temps ou démarrer le chronomètre), Équipe,
-  Plus ; « Comme vendredi ? » et la liste du jour en tête d'Aujourd'hui (27 octobre 2026).
+- **Téléphone** : barre du bas Aujourd'hui, Semaine, **+**, Équipe, Plus. Le « + » ajoute du temps sans clavier :
+  durée en grand (± un quart d'heure, durées toutes faites), matin ou après-midi, tâches en pastilles, description
+  dictée, « Enregistrer · 3:00 » ; ou démarre le chronomètre. « Comme vendredi ? » et la liste du jour en tête
+  d'Aujourd'hui (27 octobre 2026).
 - **Invitations** : avec un serveur de mail, la case « Envoyer l'invitation par email » (cochée) ; dans tous les cas,
   le lien s'affiche avec « Copier le lien », pour l'envoyer aussi par SMS ou messagerie (27 octobre 2026).
 - Guide : les vidéos ne sont plus annoncées « sans son » à chaque page (27 octobre 2026).

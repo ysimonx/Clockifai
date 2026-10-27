@@ -11,6 +11,7 @@ import '../../features/assistant/assistant.dart';
 import '../../features/commands/command_palette.dart';
 import '../../features/commands/shortcuts_help.dart';
 import '../../features/time_entries/entry_dialog.dart';
+import '../../features/time_entries/quick_add_sheet.dart';
 import '../../features/timer/timer_control.dart';
 import '../../features/today/day_recap.dart';
 import '../di.dart';
@@ -551,7 +552,10 @@ class _PhoneBar extends StatelessWidget {
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       destinations: items,
       onDestinationSelected: (i) {
-        if (i == 2) return showAddSheet(context);
+        if (i == 2) {
+          showQuickAddSheet(context);
+          return;
+        }
         if (i == moreIndex) return _showMore(context, rest);
         context.go(bar[i < 2 ? i : i - 1].visiblePages(session, rights).first.path);
       },
@@ -590,39 +594,4 @@ class _PhoneBar extends StatelessWidget {
       ),
     );
   }
-}
-
-/// « + » du téléphone : ajouter du temps après coup, ou démarrer le chronomètre.
-void showAddSheet(BuildContext context) {
-  final l = context.l10n;
-  showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    builder: (ctx) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          FilledButton.icon(
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-            onPressed: () {
-              Navigator.pop(ctx);
-              showEntryDialog(context);
-            },
-            icon: const Icon(Icons.add),
-            label: Text(l.addTime),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-            onPressed: () {
-              Navigator.pop(ctx);
-              showStartTimer(context);
-            },
-            icon: const Icon(Icons.play_arrow),
-            label: Text(l.cmdStartTimer),
-          ),
-        ]),
-      ),
-    ),
-  );
 }

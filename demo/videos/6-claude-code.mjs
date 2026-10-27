@@ -89,7 +89,7 @@ export async function run(browser, failures) {
         await h.hideCode();
         await h.nav('Suivi du temps', 1000);
         await h.find(/Commande de gâteaux/, { timeout: 30000 });
-        await h.caption(C('Suivi du temps'), 'Claude travaille',
+        await h.caption(C('Semaine'), 'Claude travaille',
           'La session en cours, rangée dans le projet du dépôt et la tâche nommée par Claude. Rien à démarrer ni à arrêter : après 10 minutes sans activité, l’entrée s’arrête à la dernière action.', ROLE, 8000);
       });
 

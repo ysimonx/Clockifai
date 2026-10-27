@@ -2,7 +2,7 @@
 //
 //   make up && make app-build-web        # pile locale et build web à jour
 //   cd demo && npm install
-//   node record.mjs                      # les 6 vidéos (données réinitialisées avant chacune)
+//   node record.mjs                      # les 7 vidéos (données réinitialisées avant chacune)
 //   node record.mjs 2 3                  # seulement les vidéos 2 et 3
 //
 // Résultats : demo/out/<n>-<nom>.mp4, sans voix, avec incrustations explicatives, et
@@ -21,6 +21,7 @@ if (process.platform === 'darwin') {
 }
 
 const videos = {
+  0: () => import('./videos/0-premiers-pas.mjs'),
   1: () => import('./videos/1-camille.mjs'),
   2: () => import('./videos/2-chef-equipe.mjs'),
   3: () => import('./videos/3-manager.mjs'),
@@ -55,7 +56,7 @@ try {
       await page.goto(APP);
       await h.wait(2500);
       await h.login(email);
-      await h.find(/^Suivi du temps(\s|$)/, { timeout: 600000 });
+      await h.find(/^Semaine(\s|$)/, { timeout: 600000 });
       await h.wait(3000);
       await page.close();
       console.log(`  chauffe ${email} : ${Math.round((Date.now() - t0) / 1000)} s`);

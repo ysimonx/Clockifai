@@ -4703,6 +4703,42 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Votre journée'**
   String get journalYourDay;
+
+  /// No description provided for @change.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer'**
+  String get change;
+
+  /// No description provided for @descriptionOptional.
+  ///
+  /// In fr, this message translates to:
+  /// **'Description (facultative)'**
+  String get descriptionOptional;
+
+  /// No description provided for @minus15.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer 15 minutes'**
+  String get minus15;
+
+  /// No description provided for @plus15.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter 15 minutes'**
+  String get plus15;
+
+  /// No description provided for @quickAddSaved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouté : {duration} · {range}'**
+  String quickAddSaved(String duration, String range);
+
+  /// No description provided for @saveDuration.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer · {duration}'**
+  String saveDuration(String duration);
 }
 
 class _AppLocalizationsDelegate

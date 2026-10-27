@@ -21,8 +21,9 @@ export async function run(browser, failures) {
 
     await h.scene('connexion', async () => {
       await h.login('karim@demo.clockifai.fr');
-      await h.caption(C('Son menu'), 'Chef d’équipe : un périmètre, pas un super-pouvoir', 'Sophie, qui gère l’entreprise, l’a nommé chef du groupe « Unité 4 ». Son menu gagne « Pointage d’équipe » et « Approbations ».', ROLE, 6000);
-      await h.hover(h.navRe("Pointage d'équipe")).catch(() => {});
+      await h.caption(C('Son menu'), 'Chef d’équipe : un périmètre, pas un super-pouvoir', 'Sophie, qui gère l’entreprise, l’a nommé chef du groupe « Unité 4 ». La rubrique « Équipe » gagne « Pointage d’équipe » et « Approbations ».', ROLE, 6000);
+      await h.nav('Équipe');
+      await h.hover(/^Pointage d'équipe$/).catch(() => {});
       await h.wait(1500);
     });
 

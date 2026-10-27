@@ -2825,4 +2825,26 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get journalYourDay => 'Votre journée';
+
+  @override
+  String get change => 'Changer';
+
+  @override
+  String get descriptionOptional => 'Description (facultative)';
+
+  @override
+  String get minus15 => 'Retirer 15 minutes';
+
+  @override
+  String get plus15 => 'Ajouter 15 minutes';
+
+  @override
+  String quickAddSaved(String duration, String range) {
+    return 'Ajouté : $duration · $range';
+  }
+
+  @override
+  String saveDuration(String duration) {
+    return 'Enregistrer · $duration';
+  }
 }

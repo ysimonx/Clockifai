@@ -51,10 +51,11 @@ DateTime startOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
 
 bool sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 
-String dayLabel(BuildContext context, DateTime day, {required String today, required String yesterday}) {
-  final now = DateTime.now();
-  if (sameDay(day, now)) return today;
-  if (sameDay(day, now.subtract(const Duration(days: 1)))) return yesterday;
+/// « Aujourd'hui », « Hier », sinon le jour en toutes lettres ; [now] : l'horloge de la page (par défaut l'heure réelle).
+String dayLabel(BuildContext context, DateTime day, {required String today, required String yesterday, DateTime? now}) {
+  final at = now ?? DateTime.now();
+  if (sameDay(day, at)) return today;
+  if (sameDay(day, DateTime(at.year, at.month, at.day - 1))) return yesterday;
   final locale = Localizations.localeOf(context).toLanguageTag();
   return toBeginningOfSentenceCase(DateFormat('EEEE d MMMM', locale).format(day));
 }

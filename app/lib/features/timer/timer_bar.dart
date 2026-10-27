@@ -16,6 +16,11 @@ import 'running_timer_row.dart';
 import 'timer_notifications.dart';
 import 'timer_rules.dart';
 
+final _toggles = ValueNotifier<int>(0);
+
+/// Touche S et palette ⌘K : le bouton principal de la barre (Démarrer, ou Arrêter le chronomètre qu'elle affiche).
+void toggleTimer() => _toggles.value++;
+
 /// Barre « Sur quoi travaillez-vous ? » : démarre / arrête le chronomètre.
 /// Le chronomètre est une entrée sans fin en base locale : il survit au redémarrage
 /// de l'app, fonctionne hors ligne et apparaît sur les autres appareils après sync.
@@ -46,6 +51,17 @@ class _TimerBarState extends State<TimerBar> {
   String? _taskId;
   List<String> _tagIds = const [];
   bool _billable = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _toggles.addListener(_onToggle);
+  }
+
+  void _onToggle() {
+    if (!mounted) return;
+    _running == null ? _start() : _stop();
+  }
 
   @override
   void didChangeDependencies() {
@@ -92,6 +108,7 @@ class _TimerBarState extends State<TimerBar> {
 
   @override
   void dispose() {
+    _toggles.removeListener(_onToggle);
     _sub?.cancel();
     _debounce?.cancel();
     _description.dispose();

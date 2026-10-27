@@ -3,6 +3,8 @@
 /// Analyse pure, sans base ni widget : la page « Aujourd'hui » place ensuite l'entrée dans un créneau vide.
 library;
 
+import '../../core/text_search.dart';
+
 class QuickProject {
   const QuickProject(this.id, this.name, {this.client});
   final String id;
@@ -55,17 +57,6 @@ class QuickEntry {
 
   /// De quoi enregistrer : une durée, et un projet ou une description.
   bool get isComplete => (duration ?? 0) > 0 && (projectId != null || description.isNotEmpty);
-}
-
-String fold(String s) {
-  const from = 'àâäáãåçéèêëíìîïñóòôöõúùûüýÿœæ';
-  const to = 'aaaaaaceeeeiiiinooooouuuuyyoa';
-  final b = StringBuffer();
-  for (final c in s.toLowerCase().split('')) {
-    final i = from.indexOf(c);
-    b.write(i < 0 ? c : to[i]);
-  }
-  return b.toString();
 }
 
 const _weekdays = {

@@ -481,6 +481,69 @@
     }
   },
   "undo": "Annuler",
+  "commandPalette": "Commandes",
+  "commandPaletteTooltip": "Commandes ({shortcut})",
+  "@commandPaletteTooltip": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "keyEscape": "Échap",
+  "commandPaletteHint": "Une action, une page, un projet…",
+  "commandNoResult": "Aucune commande",
+  "cmdGoTo": "Aller à",
+  "cmdStartTimer": "Démarrer le chronomètre",
+  "cmdStopTimer": "Arrêter le chronomètre",
+  "cmdStartOnProject": "Démarrer le chronomètre sur ce projet",
+  "cmdResume": "Reprendre",
+  "cmdThemeDark": "Apparence : sombre",
+  "cmdThemeLight": "Apparence : claire",
+  "cmdThemeSystem": "Apparence : comme le système",
+  "shortcutsTitle": "Raccourcis clavier",
+  "shortcutsEverywhere": "Partout",
+  "shortcutsHelp": "Une touche seule agit quand vous n'écrivez pas dans un champ.",
+  "kbPalette": "Commandes : pages, chronomètre, projets",
+  "kbNewEntry": "Nouvelle entrée",
+  "kbTimer": "Démarrer ou arrêter le chronomètre",
+  "kbUndo": "Annuler la dernière action",
+  "kbHelp": "Cette aide",
+  "kbMove": "Entrée suivante, précédente",
+  "kbSelect": "Sélectionner",
+  "kbEdit": "Modifier",
+  "kbDuplicate": "Dupliquer",
+  "kbDelete": "Supprimer (la sélection, sinon l'entrée)",
+  "kbClear": "Tout désélectionner",
+  "kbTodayConfirm": "Confirmer le bloc choisi",
+  "kbTodayIgnore": "Ignorer la proposition",
+  "kbTodayShift": "Décaler de 5 minutes (Maj : allonger ou raccourcir)",
+  "selectedCount": "{count, plural, =1{1 sélectionnée} other{{count} sélectionnées}}",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectEntry": "Sélectionner",
+  "duplicateTo": "Dupliquer vers…",
+  "entriesUpdated": "{count, plural, =1{1 entrée modifiée} other{{count} entrées modifiées}}",
+  "@entriesUpdated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "entriesDuplicated": "{count, plural, =1{1 entrée dupliquée} other{{count} entrées dupliquées}}",
+  "@entriesDuplicated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "entryDeleted": "Entrée supprimée",
   "entriesDeleted": "{count, plural, =1{1 entrée supprimée} other{{count} entrées supprimées}}",
   "@entriesDeleted": {

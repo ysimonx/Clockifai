@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/catalog.dart';
@@ -7,6 +8,7 @@ import '../../core/display_prefs.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/shortcuts.dart';
 import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart' show ProjectPick;
@@ -19,9 +21,11 @@ import 'ai_usage.dart';
 import 'entry_dialog.dart';
 import 'entry_group_dialog.dart';
 import 'entry_groups.dart';
+import 'entry_selection.dart';
 import 'inline_edit.dart';
 
-/// Page d'accueil : entrées terminées de l'utilisateur, groupées par jour.
+/// Page d'accueil : entrées terminées de l'utilisateur, groupées par jour. Sélection multiple et barre d'actions,
+/// clavier J / K, X, E, D, ⌫, Échap (plans/13-ux-moderne.md, lot 1).
 class TimeEntriesPage extends StatefulWidget {
   const TimeEntriesPage({super.key});
 
@@ -34,6 +38,54 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
   // Chronomètres en cours (▶ devient ■) : flux gardé d'une reconstruction à l'autre, sans clignotement.
   Stream<List<TimeEntry>>? _running;
   String? _runningKey;
+  final _selection = EntrySelection();
+
+  @override
+  void dispose() {
+    _selection.dispose();
+    super.dispose();
+  }
+
+  bool _onKey(KeyEvent event) {
+    if (!plainKey(event)) return false;
+    final key = event.logicalKey;
+    final s = _selection;
+    if (key == LogicalKeyboardKey.keyJ || key == LogicalKeyboardKey.keyK) {
+      s.moveCursor(key == LogicalKeyboardKey.keyJ ? 1 : -1);
+      return true;
+    }
+    if (event is KeyRepeatEvent) return false;
+    final line = s.cursorLine;
+    if (key == LogicalKeyboardKey.escape) {
+      if (!s.isActive && s.cursor == null) return false;
+      s.clear();
+      return true;
+    }
+    if (key == LogicalKeyboardKey.keyX && line != null) {
+      s.toggle(line);
+      return true;
+    }
+    if ((key == LogicalKeyboardKey.keyE || key == LogicalKeyboardKey.enter) && line != null) {
+      final group = line.group;
+      if (group == null) {
+        showEntryDialog(context, entry: line.rows.single.entry, tagIds: line.rows.single.tagIds);
+      } else if (line.selectable) {
+        showEntryGroupDialog(context, group);
+      }
+      return true;
+    }
+    if (key == LogicalKeyboardKey.keyD && line != null && line.selectable) {
+      duplicateRows(context, line.rows);
+      return true;
+    }
+    if (key == LogicalKeyboardKey.backspace || key == LogicalKeyboardKey.delete) {
+      final rows = s.isActive ? s.selectedRows : (line != null && line.selectable ? line.rows : const <EntryRow>[]);
+      if (rows.isEmpty) return false;
+      deleteRows(context, rows).then((_) => s.clear());
+      return true;
+    }
+    return false;
+  }
 
   Stream<List<TimeEntry>> _runningOf(String workspaceId, String? userId) {
     final key = '$workspaceId:$userId';
@@ -94,6 +146,20 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
           initialData: const [],
           builder: (context, runningSnap) {
             final running = runningSnap.data ?? const <TimeEntry>[];
+            final grouped = context.watch<DisplayPrefs>().groupSimilarEntries;
+            final rights = TeamRights.of(context);
+            bool editable(EntryRow r) => entryEditable(session, rights, r.entry);
+            // Lignes dans l'ordre affiché, pour le clavier et la sélection.
+            _selection.setLines([
+              for (final d in days)
+                if (grouped)
+                  for (final g in groupSimilar(byDay[d]!))
+                    g.isSingle
+                        ? EntryLine(entryLineKey(g.first.entry.id), [g.first], selectable: editable(g.first))
+                        : EntryLine(groupLineKey(d, g), g.rows, selectable: g.rows.every(editable), group: g)
+                else
+                  for (final r in byDay[d]!) EntryLine(entryLineKey(r.entry.id), [r], selectable: editable(r)),
+            ]);
             final children = <Widget>[const AgentsWorkingBanner()];
             DateTime? currentWeek;
             for (final d in days) {
@@ -106,7 +172,7 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
                 day: d,
                 rows: byDay[d]!,
                 running: running,
-                grouped: context.watch<DisplayPrefs>().groupSimilarEntries,
+                grouped: grouped,
                 inlineEdit: true,
               ));
             }
@@ -117,11 +183,21 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
               ),
             ));
 
-            return Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1100),
-                child: ListView(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), children: children),
+            return ChangeNotifierProvider<EntrySelection>.value(
+              value: _selection,
+              child: PageShortcuts(
+                onKey: _onKey,
+                child: Stack(children: [
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1100),
+                      // En bas, la place de la barre de sélection.
+                      child: ListView(padding: const EdgeInsets.fromLTRB(12, 8, 12, 88), children: children),
+                    ),
+                  ),
+                  const Positioned(left: 12, right: 12, bottom: 16, child: Center(child: SelectionBar())),
+                ]),
               ),
             );
           },
@@ -179,11 +255,11 @@ class DayCard extends StatelessWidget {
         ? [
             for (final g in groupSimilar(rows))
               g.isSingle
-                  ? EntryTile(row: g.first, running: running, showUser: showUser, inlineEdit: inlineEdit)
+                  ? EntryTile(row: g.first, running: running, showUser: showUser, inlineEdit: inlineEdit, selectable: inlineEdit)
                   : EntryGroupTile(
                       key: ValueKey('$day ${g.key}'), group: g, day: day, running: running, showUser: showUser, inlineEdit: inlineEdit),
           ]
-        : [for (final r in rows) EntryTile(row: r, running: running, showUser: showUser, inlineEdit: inlineEdit)];
+        : [for (final r in rows) EntryTile(row: r, running: running, showUser: showUser, inlineEdit: inlineEdit, selectable: inlineEdit)];
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
@@ -211,9 +287,18 @@ class DayCard extends StatelessWidget {
 /// Ligne d'entrée de temps (réutilisée par les rapports détaillés).
 class EntryTile extends StatelessWidget {
   const EntryTile(
-      {super.key, required this.row, this.showUser = false, this.running = const [], this.showContinue = true, this.inlineEdit = false});
+      {super.key,
+      required this.row,
+      this.showUser = false,
+      this.running = const [],
+      this.showContinue = true,
+      this.inlineEdit = false,
+      this.selectable = false});
   final EntryRow row;
   final bool showUser;
+
+  /// Ligne du « Suivi du temps » : case à cocher, curseur clavier ([EntrySelection]).
+  final bool selectable;
 
   /// Description et projet modifiables d'un clic (« Suivi du temps ») ; ailleurs, un clic ouvre le dialogue.
   final bool inlineEdit;
@@ -238,11 +323,10 @@ class EntryTile extends StatelessWidget {
     final canEdit = rights.canEditTimeOf(e.userId);
     final canDuplicate = rights.canCreateTimeFor(e.userId);
     final author = e.createdBy;
-    // Description et projet modifiables sur place, aux mêmes conditions que le dialogue : le serveur refuserait
-    // une entrée verrouillée ou d'une période close.
-    final lockDate = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
-    final locked = !session.isAdmin && (e.locked || (lockDate != null && e.startAt.toLocal().isBefore(lockDate)));
-    final inline = inlineEdit && canEdit && !locked;
+    // Description et projet modifiables sur place, aux mêmes conditions que le dialogue.
+    final inline = inlineEdit && entryEditable(session, rights, e);
+    final selection = selectable ? context.watch<EntrySelection?>() : null;
+    final line = selection == null ? null : EntryLine(entryLineKey(e.id), [row], selectable: inline);
 
     Future<void> saveDescription(String text) async {
       if (session.workspace!.requireDescription && text.isEmpty) return showSnack(context, l.descriptionRequired);
@@ -293,21 +377,7 @@ class EntryTile extends StatelessWidget {
             case 'edit':
               await showEntryDialog(context, entry: e, tagIds: row.tagIds);
             case 'duplicate':
-              await entriesRepo.createManual(
-                workspaceId: e.workspaceId,
-                userId: e.userId,
-                start: e.startAt,
-                end: e.endAt ?? DateTime.now(),
-                createdBy: session.userId,
-                draft: EntryDraft(
-                  description: e.description,
-                  projectId: e.projectId,
-                  taskId: e.taskId,
-                  billable: e.billable,
-                  hourlyRateCents: e.hourlyRateCents,
-                  tagIds: row.tagIds,
-                ),
-              );
+              await duplicateRows(context, [row]);
             case 'delete':
               final before = await entriesRepo.delete(e.id);
               if (context.mounted) showUndo(context, l.entryDeleted, () => entriesRepo.restore(before));
@@ -321,21 +391,33 @@ class EntryTile extends StatelessWidget {
       ),
     ]);
 
-    return InkWell(
-      onTap: () => showEntryDialog(context, entry: e, tagIds: row.tagIds),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 4, 8),
-        child: Row(children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              description,
-              const SizedBox(height: 4),
-              meta,
-              if (!wide) ...[const SizedBox(height: 2), Text(times, style: theme.textTheme.bodySmall)],
+    Widget tile(bool hovered) => InkWell(
+          onTap: () => showEntryDialog(context, entry: e, tagIds: row.tagIds),
+          // Appui long : sélectionner (écran tactile).
+          onLongPress: line == null || !inline ? null : () => selection!.toggle(line),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(line == null || (!wide && !selection!.isActive) ? 16 : 0, 8, 4, 8),
+            child: Row(children: [
+              if (line != null) LineCheckbox(line: line, visible: hovered, compact: !wide),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  description,
+                  const SizedBox(height: 4),
+                  meta,
+                  if (!wide) ...[const SizedBox(height: 2), Text(times, style: theme.textTheme.bodySmall)],
+                ]),
+              ),
+              trailing,
             ]),
           ),
-          trailing,
-        ]),
+        );
+
+    if (line == null) return tile(false);
+    return KeyedSubtree(
+      key: selection!.keyFor(line.key),
+      child: DecoratedBox(
+        decoration: lineDecoration(context, selected: selection.stateOf(line) != false, cursor: selection.cursor == line.key),
+        child: HoverRegion(builder: (context, hovered) => tile(hovered)),
       ),
     );
   }
@@ -361,13 +443,13 @@ class _ContinueButton extends StatelessWidget {
         onPressed: () => stopTimer(context, current),
       );
     }
-    return IconButton(tooltip: l.continueEntry, icon: const Icon(Icons.play_arrow), onPressed: () => _continue(context, row));
+    return IconButton(tooltip: l.continueEntry, icon: const Icon(Icons.play_arrow), onPressed: () => continueEntry(context, row));
   }
 }
 
 /// Relance l'activité d'une entrée, sauf si sa tâche a déjà un chronomètre en cours.
 /// Vérifie la base locale : la liste [EntryTile.running] n'est pas fournie partout (rapports, approbations).
-Future<void> _continue(BuildContext context, EntryRow row) async {
+Future<void> continueEntry(BuildContext context, EntryRow row) async {
   final session = context.read<SessionController>();
   final l = context.l10n;
   final e = row.entry;
@@ -455,11 +537,15 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
       ),
     );
 
-    final summary = InkWell(
+    final selection = widget.inlineEdit ? context.watch<EntrySelection?>() : null;
+    final line = selection == null ? null : EntryLine(groupLineKey(widget.day, g), g.rows, selectable: canEdit, group: g);
+    Widget summaryOf(bool hovered) => InkWell(
       onTap: _toggle,
+      onLongPress: line == null || !canEdit ? null : () => selection!.toggle(line),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+        padding: EdgeInsets.fromLTRB(line == null || (!wide && !selection!.isActive) ? 12 : 0, 8, 4, 8),
         child: Row(children: [
+          if (line != null) LineCheckbox(line: line, visible: hovered, compact: !wide),
           badge,
           const SizedBox(width: 12),
           Expanded(
@@ -515,6 +601,15 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
         ]),
       ),
     );
+    final summary = line == null
+        ? summaryOf(false)
+        : KeyedSubtree(
+            key: selection!.keyFor(line.key),
+            child: DecoratedBox(
+              decoration: lineDecoration(context, selected: selection.stateOf(line) != false, cursor: selection.cursor == line.key),
+              child: HoverRegion(builder: (context, hovered) => summaryOf(hovered)),
+            ),
+          );
 
     if (!_expanded) return summary;
     return Column(children: [

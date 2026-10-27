@@ -1255,6 +1255,216 @@ abstract class AppLocalizations {
   /// **'Annuler'**
   String get undo;
 
+  /// No description provided for @commandPalette.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commandes'**
+  String get commandPalette;
+
+  /// No description provided for @commandPaletteTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commandes ({shortcut})'**
+  String commandPaletteTooltip(String shortcut);
+
+  /// No description provided for @keyEscape.
+  ///
+  /// In fr, this message translates to:
+  /// **'Échap'**
+  String get keyEscape;
+
+  /// No description provided for @commandPaletteHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une action, une page, un projet…'**
+  String get commandPaletteHint;
+
+  /// No description provided for @commandNoResult.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune commande'**
+  String get commandNoResult;
+
+  /// No description provided for @cmdGoTo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aller à'**
+  String get cmdGoTo;
+
+  /// No description provided for @cmdStartTimer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Démarrer le chronomètre'**
+  String get cmdStartTimer;
+
+  /// No description provided for @cmdStopTimer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrêter le chronomètre'**
+  String get cmdStopTimer;
+
+  /// No description provided for @cmdStartOnProject.
+  ///
+  /// In fr, this message translates to:
+  /// **'Démarrer le chronomètre sur ce projet'**
+  String get cmdStartOnProject;
+
+  /// No description provided for @cmdResume.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reprendre'**
+  String get cmdResume;
+
+  /// No description provided for @cmdThemeDark.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apparence : sombre'**
+  String get cmdThemeDark;
+
+  /// No description provided for @cmdThemeLight.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apparence : claire'**
+  String get cmdThemeLight;
+
+  /// No description provided for @cmdThemeSystem.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apparence : comme le système'**
+  String get cmdThemeSystem;
+
+  /// No description provided for @shortcutsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Raccourcis clavier'**
+  String get shortcutsTitle;
+
+  /// No description provided for @shortcutsEverywhere.
+  ///
+  /// In fr, this message translates to:
+  /// **'Partout'**
+  String get shortcutsEverywhere;
+
+  /// No description provided for @shortcutsHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une touche seule agit quand vous n\'écrivez pas dans un champ.'**
+  String get shortcutsHelp;
+
+  /// No description provided for @kbPalette.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commandes : pages, chronomètre, projets'**
+  String get kbPalette;
+
+  /// No description provided for @kbNewEntry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle entrée'**
+  String get kbNewEntry;
+
+  /// No description provided for @kbTimer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Démarrer ou arrêter le chronomètre'**
+  String get kbTimer;
+
+  /// No description provided for @kbUndo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annuler la dernière action'**
+  String get kbUndo;
+
+  /// No description provided for @kbHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette aide'**
+  String get kbHelp;
+
+  /// No description provided for @kbMove.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrée suivante, précédente'**
+  String get kbMove;
+
+  /// No description provided for @kbSelect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sélectionner'**
+  String get kbSelect;
+
+  /// No description provided for @kbEdit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier'**
+  String get kbEdit;
+
+  /// No description provided for @kbDuplicate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dupliquer'**
+  String get kbDuplicate;
+
+  /// No description provided for @kbDelete.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer (la sélection, sinon l\'entrée)'**
+  String get kbDelete;
+
+  /// No description provided for @kbClear.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout désélectionner'**
+  String get kbClear;
+
+  /// No description provided for @kbTodayConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmer le bloc choisi'**
+  String get kbTodayConfirm;
+
+  /// No description provided for @kbTodayIgnore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ignorer la proposition'**
+  String get kbTodayIgnore;
+
+  /// No description provided for @kbTodayShift.
+  ///
+  /// In fr, this message translates to:
+  /// **'Décaler de 5 minutes (Maj : allonger ou raccourcir)'**
+  String get kbTodayShift;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 sélectionnée} other{{count} sélectionnées}}'**
+  String selectedCount(int count);
+
+  /// No description provided for @selectEntry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sélectionner'**
+  String get selectEntry;
+
+  /// No description provided for @duplicateTo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dupliquer vers…'**
+  String get duplicateTo;
+
+  /// No description provided for @entriesUpdated.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 entrée modifiée} other{{count} entrées modifiées}}'**
+  String entriesUpdated(int count);
+
+  /// No description provided for @entriesDuplicated.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 entrée dupliquée} other{{count} entrées dupliquées}}'**
+  String entriesDuplicated(int count);
+
   /// No description provided for @entryDeleted.
   ///
   /// In fr, this message translates to:

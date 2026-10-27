@@ -1,6 +1,6 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
-> Statut : **en cours** (lot 11, première version, commencé le 26 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
+> Statut : **en cours** (lot 1 fait, lot 3 et lot 11 en partie, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
 > (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
@@ -116,7 +116,7 @@ Ce que cela demande :
   l'horloge (`addDays`, `atMinute`, `minuteOf`) : « hier » reste juste après un changement d'heure. Aperçu en étiquettes sous le champ ; Entrée
   enregistre, Échap efface, Annuler dans le bandeau. Exemples cliquables tirés des projets et tâches.
 
-### Lot 1, premiers gains (faits)
+### Lot 1, petits gains (fait)
 
 - Annuler plutôt que confirmer (`showUndo`, `core/widgets/common.dart`, bandeau de 8 s) : supprimer une entrée, un
   groupe d'entrées similaires, abandonner un chronomètre, supprimer un projet, un client ou un tag. Restent confirmés
@@ -133,12 +133,26 @@ Ce que cela demande :
   du dialogue (droits, entrée verrouillée, période close, projet ou description exigés), avec Annuler. Ailleurs
   (rapports, approbations), un clic ouvre toujours le dialogue. Pas d'infobulle : l'étiquette d'accessibilité
   reste la description.
+- Raccourcis (`core/shortcuts.dart`) : écoutés sur `HardwareKeyboard`, donc quel que soit le focus ; une touche seule
+  seulement hors saisie (`plainKey`) ; ignorés sous une boîte de dialogue ; ceux d'une page (`PageShortcuts`) passent
+  avant ceux de l'app (`AppShortcuts`, dans la coquille). Partout : ⌘K (Ctrl K), N, S (le bouton de la barre du
+  chronomètre), ⌘Z (`undoLast` : le dernier bandeau Annuler encore affiché), ?. Dans « Suivi du temps » : J / K
+  (curseur, filet à gauche, amené à l'écran), X, E ou Entrée, D, ⌫, Échap.
+- Palette ⌘K (`features/commands/`) : chronomètre, nouvelle entrée, cinq dernières entrées à reprendre, pages
+  visibles, puis en cherchant seulement : chaque projet (démarrer dessus, aux règles de la barre) et l'apparence ;
+  recherche `searchRank` (`core/text_search.dart`, sans accents, chaque mot commence un mot du titre ou du
+  sous-titre). Aide des raccourcis (touche ?). Une loupe en haut de l'écran l'ouvre aussi (téléphone).
+- Sélection multiple (`features/time_entries/entry_selection.dart`) : case révélée au survol, appui long au
+  toucher ; une ligne regroupée coche toutes ses entrées ; seules les entrées modifiables (droits, verrou, période
+  close) se cochent. Barre en bas : nombre et durée, projet, facturable, non facturable, dupliquer vers un jour
+  (mêmes heures), supprimer, chaque fois avec Annuler. Hors du lot : tâche seule et tags (le dialogue de groupe
+  les fait).
 
 ## Lots
 
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
-| 1 Petits gains | Annuler au lieu des confirmations ; durées sans secondes ; description et projet modifiables sur place ; sélection multiple et barre d'actions ; raccourcis à une touche ; ⌘K (navigation et actions) | M | en cours (durées sans secondes, Annuler, description et projet sur place : faits ; sélection multiple, raccourcis, ⌘K : à faire) |
+| 1 Petits gains | Annuler au lieu des confirmations ; durées sans secondes ; description et projet modifiables sur place ; sélection multiple et barre d'actions ; raccourcis à une touche ; ⌘K (navigation et actions) | M | fait |
 | 2 Journal du jour | Page « Aujourd'hui » (pistes Vous et Claude, trous, pause habituelle dans le profil, bilan du jour) ; remplace la vue jour de « Suivi du temps » et du calendrier | M/L | envisagé |
 | 3 Saisie express | Analyseur FR/EN (durée, plage, jour, projet et tâche flous, `#tag`, facturable), étiquettes à la frappe, placement dans les trous ; aussi dans la barre de menus (⌥⌘T) | M | en cours (page « Aujourd'hui » : fait ; barre de menus : à faire) |
 | 4 Pistes | Moteur de suggestions : planning, habitudes, sessions de Claude et commits (rejoint le plan 10, lot 2, `time_suggestions`) ; agenda en option (Google, Microsoft) | M/L | envisagé |

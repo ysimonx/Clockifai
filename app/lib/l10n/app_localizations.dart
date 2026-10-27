@@ -3249,7 +3249,7 @@ abstract class AppLocalizations {
   /// No description provided for @newInvoiceHelp.
   ///
   /// In fr, this message translates to:
-  /// **'Une ligne par projet, ou par tâche si vous détaillez, est créée à partir du temps facturable non encore facturé du client sur la période. Une entrée saisie avant que son projet ait un taux prend le taux actuel.'**
+  /// **'Une ligne par projet, ou par tâche si vous détaillez, est créée à partir du temps facturable non encore facturé du client sur la période. Une entrée saisie avant que son projet ait un taux prend le taux actuel. Chaque durée suit l\'arrondi du workspace.'**
   String get newInvoiceHelp;
 
   /// No description provided for @newKioskDevice.
@@ -3921,7 +3921,7 @@ abstract class AppLocalizations {
   /// No description provided for @roundingHelp.
   ///
   /// In fr, this message translates to:
-  /// **'Appliqué dans les rapports si demandé'**
+  /// **'Appliqué aux factures, et dans les rapports si demandé'**
   String get roundingHelp;
 
   /// No description provided for @runningTimer.

@@ -177,7 +177,8 @@
             saisie : quand vous changez le <span class="ui">Taux horaire</span>, Clockifai demande
             <span class="ui">Appliquer le nouveau taux ?</span> pour les entrées pas encore facturées qui en ont un
             autre (<span class="ui">Appliquer</span>, ou <span class="ui">Seulement les nouvelles</span>). Les
-            entrées verrouillées ou d’une période approuvée ne changent que pour un administrateur. La jauge compare
+            entrées verrouillées ou d’une période approuvée ne changent que pour un administrateur. Le taux d’une entrée
+            est posé par Clockifai (celui du projet, sinon de la personne) : seul un manager peut le changer. La jauge compare
             les heures passées au budget (« … % du budget de … h »). Un projet terminé s’archive
             (<span class="ui">Archiver</span>, <span class="ui">Restaurer</span>).</dd>
           <dd>Pour un chantier, <span class="ui">Position du chantier</span> : latitude et longitude copiées d’une
@@ -218,7 +219,9 @@
             <span class="ui">Détailler par tâche</span>, coché par défaut, donne à chaque tâche sa ligne
             (« Projet — Tâche ») ; le temps sans tâche reste sur une ligne « Projet ». Décochez-le pour une seule
             ligne par projet. Une entrée saisie avant que
-            son projet, ou la personne, ait un taux prend le taux actuel.</li>
+            son projet, ou la personne, ait un taux prend le taux actuel. Si l’entreprise a défini un
+            <span class="ui">Arrondi des durées</span>, chaque entrée est arrondie avant d’être facturée, comme dans
+            <span class="ui">À facturer</span>.</li>
           <li>Tant qu’elle est en <span class="ui">Brouillon</span>, ajustez les lignes (<span class="ui">Ajouter une
             ligne</span> : description, quantité en heures, prix unitaire HT), la <span class="ui">Remise</span>, la
             TVA et les <span class="ui">Mentions / conditions</span>.</li>

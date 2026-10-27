@@ -1980,7 +1980,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get newInvoiceHelp =>
-      'Une ligne par projet, ou par tâche si vous détaillez, est créée à partir du temps facturable non encore facturé du client sur la période. Une entrée saisie avant que son projet ait un taux prend le taux actuel.';
+      'Une ligne par projet, ou par tâche si vous détaillez, est créée à partir du temps facturable non encore facturé du client sur la période. Une entrée saisie avant que son projet ait un taux prend le taux actuel. Chaque durée suit l\'arrondi du workspace.';
 
   @override
   String get newKioskDevice => 'Nouvel appareil';
@@ -2379,7 +2379,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get rounding => 'Arrondi des durées';
 
   @override
-  String get roundingHelp => 'Appliqué dans les rapports si demandé';
+  String get roundingHelp =>
+      'Appliqué aux factures, et dans les rapports si demandé';
 
   @override
   String get runningTimer => 'Chronomètre en cours';

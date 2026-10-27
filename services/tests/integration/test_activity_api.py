@@ -573,6 +573,24 @@ def test_deleted_entry_is_not_recreated(team):
     assert same_span == []
 
 
+def test_a_deactivated_agent_stops_at_its_last_activity(team):
+    """Désactivé, l'agent n'a plus d'entrée recalculée : celle en cours s'arrête à sa dernière activité (0023)."""
+    owner_t, _ = team["people"]["owner"]
+    t, uid = signup("pilote2")
+    _add_member(owner_t, team["wid"], uid, "pilote2")
+    status, created = api("POST", "/api/tokens", t, {"workspace_id": team["wid"], "name": "MacBook"})
+    assert status == 201, created
+    session = str(uuid.uuid4())
+    assert api("POST", "/api/activity/events", created["token"], {"events": [
+        _event("prompt", _ago(6), session), _event("agent_tool", _ago(4), session)]})[0] == 202
+    [running] = [e for e in _agent_entries(created["agent_id"]) if e["end_at"] is None]
+    assert rest("PATCH", f"workspace_members?workspace_id=eq.{team['wid']}&user_id=eq.{created['agent_id']}", owner_t,
+                {"status": "inactive"})[0] == 200
+    [stopped] = [e for e in _agent_entries(created["agent_id"]) if e["id"] == running["id"]]
+    assert stopped["end_at"] is not None
+    assert abs((datetime.fromisoformat(stopped["end_at"]) - _ago(4)).total_seconds()) < 5, "à sa dernière activité"
+
+
 def test_agent_billing_never(team):
     owner_t, _ = team["people"]["owner"]
     assert rest("PATCH", f"workspaces?id=eq.{team['wid']}", owner_t, {"agent_billing": "never"})[0] == 200

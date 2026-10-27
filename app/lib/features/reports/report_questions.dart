@@ -128,6 +128,7 @@ class _ReadyToBillState extends State<ReadyToBill> {
       projectNames: catalog.projectNames,
       byTask: true,
       taskNames: catalog.taskPaths,
+      roundingMinutes: ws.roundingMinutes,
     );
     if (!mounted) return;
     setState(() => _busy = null);

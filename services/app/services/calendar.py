@@ -3,12 +3,14 @@
 Seuls l'heure et le titre des événements servent ; les événements d'une journée entière et ceux annulés sont
 ignorés. L'adresse est un secret (qui la connaît lit l'agenda) : elle reste dans `clockifai_private`, n'est jamais
 renvoyée en entier, et la lecture refuse tout ce qui n'est pas une adresse https publique (SSRF : pas d'adresse
-interne, pas de redirection vers une).
+interne, pas de redirection vers une, et la connexion vise l'adresse vérifiée : un DNS qui répondrait une adresse
+publique puis une interne n'y change rien).
 """
 
 from __future__ import annotations
 
 import hashlib
+import http.client
 import ipaddress
 import socket
 import time
@@ -61,24 +63,53 @@ def host_of(url: str) -> str:
     return urlsplit(url).hostname or ""
 
 
-def _public(host: str) -> bool:
-    """Toutes les adresses de [host] sont publiques (ni boucle locale, ni réseau privé, ni lien local…)."""
+def public_addresses(host: str, port: int = 443) -> list[str]:
+    """Adresses de [host], si toutes sont publiques (ni boucle locale, ni réseau privé, ni lien local…) ; sinon
+    CalendarError."""
     try:
-        infos = socket.getaddrinfo(host, 443, proto=socket.IPPROTO_TCP)
+        infos = socket.getaddrinfo(host, port, proto=socket.IPPROTO_TCP)
     except OSError:
-        return False
-    if not infos:
-        return False
+        infos = []
+    addresses = []
     for info in infos:
         ip = ipaddress.ip_address(info[4][0])
+        if ip.version == 6 and ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
         if not ip.is_global or ip.is_multicast:
-            return False
-    return True
+            raise CalendarError("host_not_allowed")
+        addresses.append(info[4][0])
+    if not addresses:
+        raise CalendarError("host_not_allowed")
+    return addresses
 
 
 def check_url(url: str) -> None:
-    if not _public(host_of(url)):
-        raise CalendarError("host_not_allowed")
+    public_addresses(host_of(url))
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """Se connecte à une adresse que [public_addresses] vient de vérifier, sans résoudre le nom une seconde fois.
+    Le certificat reste vérifié pour le nom (SNI et en-tête Host inchangés)."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._create_connection = self._connect_pinned  # attribut posé par HTTPConnection.__init__
+
+    @staticmethod
+    def _connect_pinned(address, timeout, source_address=None):
+        host, port = address
+        error: OSError | None = None
+        for ip in public_addresses(host, port):
+            try:
+                return socket.create_connection((ip, port), timeout, source_address)
+            except OSError as e:
+                error = e
+        raise error or OSError("unreachable")
+
+
+class _PinnedHTTPS(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(_PinnedHTTPSConnection, req, context=self._context)
 
 
 class _SafeRedirects(urllib.request.HTTPRedirectHandler):
@@ -93,7 +124,8 @@ class _SafeRedirects(urllib.request.HTTPRedirectHandler):
 def fetch(url: str) -> bytes:
     url = normalize_url(url)
     check_url(url)
-    opener = urllib.request.build_opener(_SafeRedirects)
+    # Pas de proxy pris dans l'environnement : la connexion va droit à l'adresse vérifiée.
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _PinnedHTTPS, _SafeRedirects)
     request = urllib.request.Request(url, headers={"User-Agent": "Clockifai/1 (agenda)", "Accept": "text/calendar"})
     try:
         with opener.open(request, timeout=TIMEOUT) as response:

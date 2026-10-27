@@ -119,7 +119,7 @@ erDiagram
     timestamptz start_at
     timestamptz end_at "NULL = chronomètre en cours"
     int duration_seconds "calculée par trigger"
-    int hourly_rate_cents "taux à la saisie ; NULL = taux actuel du projet, sinon du membre"
+    int hourly_rate_cents "taux à la saisie, posé par le serveur hors managers ; NULL = taux actuel du projet, sinon du membre"
     bool locked
     text source "NULL = app | kiosk | activity | agent"
     uuid created_by "posé depuis le JWT"
@@ -426,9 +426,11 @@ non nul) : Flask, connecté en rôle `postgres`, et les triggers internes qui po
 |---|---|---|
 | `time_entries` | `time_entries_a_running_limit` (0011, 0013) | au plus `max_running_timers` chronomètres en cours par `(workspace, user)` (0 = illimité) ; « le plus récent gagne » : les plus anciens sont arrêtés au début du nouveau, un chronomètre arrivé en retard et plus ancien est enregistré déjà terminé ; verrou consultatif par `(workspace, user)`. S'applique aussi sans JWT (kiosque), mais pas aux agents (une session, un chronomètre). L'ancien chronomètre est arrêté avec `bypass_guard` (0022) : verrouillé, il n'empêche pas le nouveau. Un seul chronomètre par tâche : contrôlé côté app (`sameTimerTarget`) |
 | `time_entries` | `time_entries_before_write` | `duration_seconds` recalculée ; `created_by` / `updated_by` pris dans le JWT, `created_by` immuable |
+| `time_entries` | `time_entries_rate` (0023) | hors managers, `hourly_rate_cents` est celui du projet, sinon du membre, à la création et au changement de projet, et ne change pas sinon (remplacé, pas refusé : une entrée hors ligne n'est pas bloquée) |
 | `time_entries` | `time_entries_guard` (0013) | personne et workspace d'une entrée immuables ; aucune entrée créée pour un agent ; `source` limitée à nul, `app` ou `activity` à la création, puis immuable ; pas de chronomètre pour autrui ; hors admins : entrée `locked` intouchable, verrou réservé aux admins, rien avant `lock_entries_before` (date locale dans le fuseau du profil), rien dans une période approuvée, entrée d'une facture non annulée intouchable |
 | `workspace_members` | `workspace_members_guard` (0022) | à l'insertion comme à la modification : aucun agent créé avec un JWT, `kind` et `agent_owner_id` immuables ; seul un propriétaire donne ou retire le rôle de propriétaire (sauf le premier membre d'un workspace) ; hors admins, sur sa propre ligne : ni rôle, ni statut, ni taux, ni capacité journalière, ni rattachement, ni `deleted_at`, et l'adresse ne fait que suivre celle du profil ; le dernier propriétaire actif ne peut pas être rétrogradé |
 | `workspace_members` | `workspace_members_agents_follow` | un pilote désactivé ou retiré entraîne ses agents ; jamais l'inverse |
+| `workspace_members` | `workspace_members_agent_stop` (0023) | un agent désactivé ou retiré : son entrée en cours s'arrête à sa dernière activité (`agent_entries.last_activity_at`), avec `bypass_guard` |
 | `activity_rules` | `activity_rules_guard` | avec un JWT, seul `deleted_at` change |
 | `tasks` | `tasks_guard` (0022) | hors managers : création d'une tâche active sans estimation, puis renommage seulement (ni projet, ni parent, ni statut) |
 | `tasks` | `tasks_parent_guard` (0022), `tasks_cascade_children` (0021) | sous-tâche : parent du même projet, sans parent lui-même, et une tâche qui a des sous-tâches n'en devient pas une ; créée sous une tâche déjà supprimée (hors ligne), elle est supprimée avec elle ; supprimer ou restaurer une tâche emporte ses sous-tâches, la déplacer d'un projet aussi |

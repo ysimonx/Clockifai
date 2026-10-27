@@ -1,4 +1,5 @@
 import '../../core/catalog.dart';
+import '../../core/format.dart' show roundSeconds;
 import '../../data/repositories/time_entry_repository.dart';
 import '../../core/widgets/teammates.dart' show memberName;
 
@@ -54,12 +55,7 @@ class ReportCalculator {
   final int roundingMinutes;
   final bool applyRounding;
 
-  int secondsOf(EntryRow r) {
-    final s = r.seconds;
-    if (!applyRounding || roundingMinutes <= 0) return s;
-    final step = roundingMinutes * 60;
-    return ((s + step ~/ 2) ~/ step) * step;
-  }
+  int secondsOf(EntryRow r) => applyRounding ? roundSeconds(r.seconds, roundingMinutes) : r.seconds;
 
   double amountOf(EntryRow r) {
     final rate = catalog.entryRate(r.entry);

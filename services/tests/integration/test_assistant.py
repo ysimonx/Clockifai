@@ -28,7 +28,8 @@ def studio():
     wid = rows[0]["workspace_id"]
     member_t, member = signup("membre")
     assert rest("POST", "workspace_members", owner_t,
-                {"workspace_id": wid, "user_id": member, "role": "member", "display_name": "Membre"})[0] == 201
+                {"workspace_id": wid, "user_id": member, "role": "member", "display_name": "Membre",
+                 "hourly_rate_cents": 5000})[0] == 201
     client = str(uuid.uuid4())
     project = str(uuid.uuid4())
     assert rest("POST", "clients", owner_t, {"id": client, "workspace_id": wid, "name": "Boulangerie"})[0] == 201

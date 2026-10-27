@@ -52,6 +52,14 @@ int? parseDuration(String input) {
   return null;
 }
 
+/// Durée arrondie au pas du workspace (`rounding_minutes`, 0 = pas d'arrondi), à la demi-valeur supérieure : entrée
+/// par entrée, dans les rapports comme sur les factures.
+int roundSeconds(int seconds, int roundingMinutes) {
+  if (roundingMinutes <= 0) return seconds;
+  final step = roundingMinutes * 60;
+  return ((seconds + step ~/ 2) ~/ step) * step;
+}
+
 /// Début de semaine (minuit local) ; [weekStart] ISO : 1 = lundi … 7 = dimanche.
 DateTime startOfWeek(DateTime date, int weekStart) => addDays(date, -((date.weekday - weekStart) % 7));
 

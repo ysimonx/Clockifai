@@ -20,7 +20,7 @@ aucune fonction `security definer` sans `search_path`, RLS sur toutes les tables
 | 1 Base et serveur | Migration 0022 ; Flask (sessions Claude, exports, assistant) ; serveur MCP du plugin | fait |
 | 2 App : bugs | Constats « bug » de l'app ci-dessous | fait |
 | 3 Nettoyage | Code mort, duplications, découpage de `today_page.dart` et d'`activity.py` | fait (découpage partiel, voir plus bas) |
-| 4 À décider | Constats qui changent une règle ou un montant | à décider avec Yannick |
+| 4 Décisions | Constats qui changent une règle ou un montant : taux, arrondi des factures, agenda, agent désactivé (migration 0023) | fait ; deux points encore à décider |
 
 ## Lot 1 — base et serveur (fait)
 
@@ -90,15 +90,25 @@ ignore un `tool_input` qui n'est pas un objet.
 Pas encore fait : l'appel à `planDay` recopié entre la page et le récapitulatif de fin de journée, la ligne de
 chronomètre en double (`RunningTimerRow`, `_AgentSessionRow`), le contrôleur de `promptText` jamais libéré.
 
-## Lot 4 — à décider
+## Lot 4 — décisions (27 octobre 2026)
 
-- **Taux des entrées** : un membre peut changer `hourly_rate_cents` de ses propres entrées par l'API (les exports le
-  prennent en premier). Le figer côté serveur suppose de recalculer le taux quand le projet change.
-- **« À facturer » et la facture** : le bloc des rapports applique l'arrondi du workspace, la facture créée depuis
-  ce bloc facture les durées brutes. Lequel fait foi ?
-- **Agenda iCal** : le contrôle d'adresse (pas d'IP privée) résout le nom puis le laisse résoudre à nouveau à la
-  connexion ; un DNS complaisant pourrait viser le réseau Docker. Épingler l'adresse vérifiée.
-- **Agent désactivé** : son entrée en cours reste ouverte (`process_session` sort sans rien écrire).
+Décidé avec Yannick et fait :
+
+- **Taux des entrées** : un membre pouvait changer `hourly_rate_cents` de ses propres entrées par l'API (les exports
+  le prennent en premier). Trigger `time_entries_rate` (0023) : hors managers, le serveur pose le taux du projet,
+  sinon du membre, à la création et au changement de projet, et le garde sinon. Il remplace plutôt qu'il ne refuse,
+  pour ne pas bloquer une entrée saisie hors ligne avec un référentiel en retard.
+- **« À facturer » et la facture** : c'est la facture qui doit être arrondie. `createInvoiceFromTime` arrondit chaque
+  entrée au pas du workspace (`roundSeconds`, `core/format.dart`, partagé avec les rapports).
+- **Agenda iCal** : le contrôle d'adresse résolvait le nom puis le laissait résoudre à nouveau à la connexion. La
+  connexion vise désormais l'adresse vérifiée (`_PinnedHTTPSConnection`, certificat toujours vérifié pour le nom),
+  sans proxy de l'environnement ; une adresse IPv6 qui enveloppe une IPv4 privée est refusée.
+- **Agent désactivé** : son entrée en cours restait ouverte (`process_session` sort sans rien écrire). Trigger
+  `workspace_members_agent_stop` (0023) : elle s'arrête à sa dernière activité, `server_end_at` suit ; les agents
+  déjà désactivés sont traités par la migration.
+
+Encore à décider :
+
 - **Temps suivi d'un projet** (page Projets) : un chef d'équipe n'y voit que le sien, alors que les rapports comptent
   son équipe.
 - **Sujet sans tâche possible** (création réservée aux managers) : la nouvelle entrée garde la tâche de l'entrée

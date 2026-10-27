@@ -1071,7 +1071,7 @@
   "newClient": "New client",
   "newGroup": "New group",
   "newInvoice": "New invoice",
-  "newInvoiceHelp": "One line per project, or per task when detailed, is created from the client's billable, not yet invoiced time in the period. An entry recorded before its project had a rate takes the current rate.",
+  "newInvoiceHelp": "One line per project, or per task when detailed, is created from the client's billable, not yet invoiced time in the period. An entry recorded before its project had a rate takes the current rate. Each duration follows the workspace rounding.",
   "newKioskDevice": "New device",
   "newPassword": "New password (min. 8 characters)",
   "newPolicy": "New policy",
@@ -1190,7 +1190,7 @@
   "roleMember": "Member",
   "roleOwner": "Owner",
   "rounding": "Duration rounding",
-  "roundingHelp": "Applied in reports on request",
+  "roundingHelp": "Applied to invoices, and in reports on request",
   "runningTimer": "Running timer",
   "runningTimersCount": "{count, plural, =1{1 running timer} other{{count} running timers}}",
   "@runningTimersCount": {

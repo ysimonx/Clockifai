@@ -38,6 +38,7 @@ flowchart TB
   end
 
   smtp["Serveur SMTP<br/>(facultatif)"]
+  ical["Agendas des personnes<br/>adresses iCal privées (https)"]
   fidwork["Fidwork<br/>(plan 02 en attente, non branché)"]
 
   web & mac & mob & kio -->|"HTTPS"| edge
@@ -59,6 +60,7 @@ flowchart TB
   flask -->|"psycopg, rôle postgres<br/>hors RLS"| db
   flask -->|"API admin GoTrue<br/>invitations, agents"| kong
   flask -->|"emails d'invitation"| smtp
+  flask -->|"lecture des agendas reliés<br/>https public seulement"| ical
   auth -->|"emails de connexion"| smtp
   migrate -->|"supabase/migrations/*.sql"| db
   backup -->|"pg_dump"| db

@@ -481,6 +481,56 @@
     }
   },
   "undo": "Annuler",
+  "journalSourceCalendar": "Agenda",
+  "journalSourceCommits": "Commits",
+  "journalReasonCalendar": "Dans votre agenda, de {start} à {end}",
+  "@journalReasonCalendar": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonCommits": "{count, plural, =1{1 commit} other{{count} commits}} dans {repository}, de {start} à {end}",
+  "@journalReasonCommits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "repository": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "journalTraces": "Traces",
+  "calendarTitle": "Agenda",
+  "calendarHelp": "Collez l'adresse iCal privée de votre agenda : Google Agenda, Paramètres de l'agenda › « Adresse secrète au format iCal » ; Outlook, Paramètres › Calendrier › Calendriers partagés › Publier ; Apple, clic droit sur l'agenda › Partager. Clockifai n'en lit que l'heure et le titre des événements, pour vous proposer vos réunions dans « Aujourd'hui ».",
+  "calendarUrl": "Adresse iCal privée",
+  "calendarNone": "Aucun agenda relié",
+  "calendarLinked": "Relié : {host}",
+  "@calendarLinked": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarRemove": "Retirer l'agenda",
+  "calendarOffline": "Réglable en ligne seulement.",
+  "calendarErrorHttps": "L'adresse doit commencer par https:// (ou webcal://).",
+  "calendarErrorHost": "Cette adresse n'est pas accessible depuis Internet.",
+  "calendarErrorUnreachable": "Agenda injoignable : vérifiez l'adresse.",
+  "calendarErrorFormat": "Cette adresse ne donne pas un agenda iCal.",
+  "calendarErrorTooLarge": "Agenda trop volumineux.",
   "journalTypicalProfile": "Journée type : {start} – {end}, réglée dans vos paramètres",
   "@journalTypicalProfile": {
     "placeholders": {

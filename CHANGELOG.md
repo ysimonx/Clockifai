@@ -35,6 +35,9 @@ la date d'arrivée de chaque évolution.
   réglage, elle reste déduite de vos semaines passées (27 octobre 2026).
 - **Voir la journée** : depuis « Suivi du temps » (le soleil à côté du jour) ou un jour du calendrier, la journée
   s'ouvre sur la frise d'« Aujourd'hui » (27 octobre 2026).
+- Aujourd'hui : vos **réunions** (agenda relié par son adresse iCal privée, dans Paramètres › Intégrations ›
+  Agenda) et vos **commits** deviennent des propositions, avec une ligne « Traces » sur la frise
+  (27 octobre 2026).
 
 ### Modifié
 

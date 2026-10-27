@@ -42,6 +42,12 @@ class ServicesApi {
     return res.body.isEmpty ? const {} : jsonDecode(res.body) as Map<String, dynamic>;
   }
 
+  static Future<Map<String, dynamic>> put(String path, Map<String, dynamic> body) async {
+    final res = await http.put(_uri(path), headers: _headers(), body: jsonEncode(body));
+    if (res.statusCode >= 300) throw ServicesException(res.statusCode, _error(res));
+    return res.body.isEmpty ? const {} : jsonDecode(res.body) as Map<String, dynamic>;
+  }
+
   /// Appels du mode kiosque : authentifiés par le jeton de l'appareil, sans session utilisateur.
   static Future<Map<String, dynamic>> kiosk(String method, String path, String token, [Map<String, dynamic>? body]) async {
     final headers = {'X-Kiosk-Token': token, 'Content-Type': 'application/json'};

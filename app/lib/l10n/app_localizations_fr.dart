@@ -717,6 +717,79 @@ class AppLocalizationsFr extends AppLocalizations {
   String get undo => 'Annuler';
 
   @override
+  String get journalSourceCalendar => 'Agenda';
+
+  @override
+  String get journalSourceCommits => 'Commits';
+
+  @override
+  String journalReasonCalendar(String start, String end) {
+    return 'Dans votre agenda, de $start à $end';
+  }
+
+  @override
+  String journalReasonCommits(
+    int count,
+    String repository,
+    String start,
+    String end,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count commits',
+      one: '1 commit',
+    );
+    return '$_temp0 dans $repository, de $start à $end';
+  }
+
+  @override
+  String get journalTraces => 'Traces';
+
+  @override
+  String get calendarTitle => 'Agenda';
+
+  @override
+  String get calendarHelp =>
+      'Collez l\'adresse iCal privée de votre agenda : Google Agenda, Paramètres de l\'agenda › « Adresse secrète au format iCal » ; Outlook, Paramètres › Calendrier › Calendriers partagés › Publier ; Apple, clic droit sur l\'agenda › Partager. Clockifai n\'en lit que l\'heure et le titre des événements, pour vous proposer vos réunions dans « Aujourd\'hui ».';
+
+  @override
+  String get calendarUrl => 'Adresse iCal privée';
+
+  @override
+  String get calendarNone => 'Aucun agenda relié';
+
+  @override
+  String calendarLinked(String host) {
+    return 'Relié : $host';
+  }
+
+  @override
+  String get calendarRemove => 'Retirer l\'agenda';
+
+  @override
+  String get calendarOffline => 'Réglable en ligne seulement.';
+
+  @override
+  String get calendarErrorHttps =>
+      'L\'adresse doit commencer par https:// (ou webcal://).';
+
+  @override
+  String get calendarErrorHost =>
+      'Cette adresse n\'est pas accessible depuis Internet.';
+
+  @override
+  String get calendarErrorUnreachable =>
+      'Agenda injoignable : vérifiez l\'adresse.';
+
+  @override
+  String get calendarErrorFormat =>
+      'Cette adresse ne donne pas un agenda iCal.';
+
+  @override
+  String get calendarErrorTooLarge => 'Agenda trop volumineux.';
+
+  @override
   String journalTypicalProfile(String start, String end) {
     return 'Journée type : $start – $end, réglée dans vos paramètres';
   }

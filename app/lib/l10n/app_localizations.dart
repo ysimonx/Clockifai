@@ -1255,6 +1255,113 @@ abstract class AppLocalizations {
   /// **'Annuler'**
   String get undo;
 
+  /// No description provided for @journalSourceCalendar.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agenda'**
+  String get journalSourceCalendar;
+
+  /// No description provided for @journalSourceCommits.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commits'**
+  String get journalSourceCommits;
+
+  /// No description provided for @journalReasonCalendar.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dans votre agenda, de {start} à {end}'**
+  String journalReasonCalendar(String start, String end);
+
+  /// No description provided for @journalReasonCommits.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 commit} other{{count} commits}} dans {repository}, de {start} à {end}'**
+  String journalReasonCommits(
+    int count,
+    String repository,
+    String start,
+    String end,
+  );
+
+  /// No description provided for @journalTraces.
+  ///
+  /// In fr, this message translates to:
+  /// **'Traces'**
+  String get journalTraces;
+
+  /// No description provided for @calendarTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agenda'**
+  String get calendarTitle;
+
+  /// No description provided for @calendarHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collez l\'adresse iCal privée de votre agenda : Google Agenda, Paramètres de l\'agenda › « Adresse secrète au format iCal » ; Outlook, Paramètres › Calendrier › Calendriers partagés › Publier ; Apple, clic droit sur l\'agenda › Partager. Clockifai n\'en lit que l\'heure et le titre des événements, pour vous proposer vos réunions dans « Aujourd\'hui ».'**
+  String get calendarHelp;
+
+  /// No description provided for @calendarUrl.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse iCal privée'**
+  String get calendarUrl;
+
+  /// No description provided for @calendarNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun agenda relié'**
+  String get calendarNone;
+
+  /// No description provided for @calendarLinked.
+  ///
+  /// In fr, this message translates to:
+  /// **'Relié : {host}'**
+  String calendarLinked(String host);
+
+  /// No description provided for @calendarRemove.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer l\'agenda'**
+  String get calendarRemove;
+
+  /// No description provided for @calendarOffline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglable en ligne seulement.'**
+  String get calendarOffline;
+
+  /// No description provided for @calendarErrorHttps.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'adresse doit commencer par https:// (ou webcal://).'**
+  String get calendarErrorHttps;
+
+  /// No description provided for @calendarErrorHost.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette adresse n\'est pas accessible depuis Internet.'**
+  String get calendarErrorHost;
+
+  /// No description provided for @calendarErrorUnreachable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agenda injoignable : vérifiez l\'adresse.'**
+  String get calendarErrorUnreachable;
+
+  /// No description provided for @calendarErrorFormat.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette adresse ne donne pas un agenda iCal.'**
+  String get calendarErrorFormat;
+
+  /// No description provided for @calendarErrorTooLarge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agenda trop volumineux.'**
+  String get calendarErrorTooLarge;
+
   /// No description provided for @journalTypicalProfile.
   ///
   /// In fr, this message translates to:

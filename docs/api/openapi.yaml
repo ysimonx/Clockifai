@@ -54,6 +54,10 @@ tags:
       Marketplace Claude Code de l'instance, publique (le plugin ne contient aucun secret). Un poste l'ajoute
       par `claude plugin marketplace add https://<instance>/api/claude/marketplace.json`, puis
       `claude plugin install clockifai@clockifai` (plan 10, §6.1).
+  - name: journal
+    description: |
+      Traces d'une journée pour la page « Aujourd'hui » (plan 13, lots 4 et 11) : agenda de la personne (adresse
+      iCal privée, lue par le serveur) et ses propres commits. JWT de l'utilisateur.
   - name: tâches planifiées
     description: |
       Déclenchement manuel. En temps normal APScheduler les exécute dans le process Flask
@@ -391,6 +395,115 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
 
+  /api/traces:
+    get:
+      tags: [journal]
+      operationId: getDayTraces
+      summary: Événements d'agenda et commits de la personne sur une période (8 jours au plus)
+      description: |
+        `events` : heure et titre des événements de son agenda (récurrences dépliées ; journées entières et
+        événements annulés ignorés), lu au plus toutes les 5 minutes. `commits` : ses commits du workspace dont
+        l'auteur est reconnu (`code_commits.author_user_id`), avec le dépôt et le projet du dépôt. Rien n'est
+        enregistré : l'app en tire des propositions à confirmer.
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+        - { name: from, in: query, required: true, schema: { type: string, format: date-time } }
+        - { name: to, in: query, required: true, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Traces de la période.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events, commits, calendar]
+                properties:
+                  calendar:
+                    type: string
+                    description: |
+                      `ok`, `none` (pas d'agenda), ou la raison de l'échec de lecture (`unreachable`,
+                      `not_a_calendar`, `too_large`, `host_not_allowed`, `https_required`).
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, start, end, title]
+                      properties:
+                        id: { type: string, description: "Stable pour une occurrence (UID et début)." }
+                        start: { type: string, format: date-time }
+                        end: { type: string, format: date-time }
+                        title: { type: string }
+                  commits:
+                    type: array
+                    items:
+                      type: object
+                      required: [sha, subject, at, repository]
+                      properties:
+                        sha: { type: string }
+                        subject: { type: string }
+                        at: { type: string, format: date-time }
+                        repository: { type: string }
+                        project_id: { type: [string, "null"], format: uuid }
+        "400":
+          description: "`workspace_id` manquant, ou `from` / `to` invalides (8 jours au plus)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/MemberRequired" }
+  /api/traces/calendar:
+    get:
+      tags: [journal]
+      operationId: getCalendarSource
+      summary: Son agenda est-il réglé ? (l'hôte seulement, jamais l'adresse)
+      responses:
+        "200":
+          description: État du réglage.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CalendarSource" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    put:
+      tags: [journal]
+      operationId: putCalendarSource
+      summary: Régler son agenda (adresse iCal privée)
+      description: |
+        `webcal://` devient `https://` ; seules les adresses https publiques sont acceptées (ni réseau privé, ni
+        boucle locale, ni redirection vers une). L'agenda est lu une fois pour vérifier l'adresse. Elle est gardée
+        dans `clockifai_private.calendar_sources`, hors API et hors réplication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url: { type: string }
+      responses:
+        "200":
+          description: Agenda réglé.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CalendarSource" }
+        "400":
+          description: |
+            Adresse refusée ou agenda illisible : `{"error": "https_required" | "host_not_allowed" |
+            "unreachable" | "not_a_calendar" | "too_large"}`.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      tags: [journal]
+      operationId: deleteCalendarSource
+      summary: Retirer son agenda
+      responses:
+        "204": { description: Agenda retiré. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
   /api/tokens:
     post:
       tags: [jetons personnels]
@@ -917,6 +1030,12 @@ components:
                   source: { type: string, const: archive }
                   url: { type: string, format: uri }
                   sha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+    CalendarSource:
+      type: object
+      required: [configured]
+      properties:
+        configured: { type: boolean }
+        host: { type: [string, "null"], description: "Hôte de l'adresse (« calendar.google.com »)." }
     Error:
       type: object
       required: [error]

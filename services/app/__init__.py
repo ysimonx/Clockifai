@@ -43,6 +43,7 @@ def create_app(config: type[Config] | None = None) -> Flask:
     from .routes.jobs import bp as jobs_bp
     from .routes.kiosk import bp as kiosk_bp
     from .routes.tokens import bp as tokens_bp
+    from .routes.traces import bp as traces_bp
 
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(exports_bp, url_prefix="/api/exports")
@@ -54,6 +55,7 @@ def create_app(config: type[Config] | None = None) -> Flask:
     app.register_blueprint(agents_bp, url_prefix="/api/agents")
     app.register_blueprint(activity_bp, url_prefix="/api/activity")
     app.register_blueprint(claude_bp, url_prefix="/api/claude")
+    app.register_blueprint(traces_bp, url_prefix="/api/traces")
 
     origins = {o.strip() for o in app.config["CORS_ORIGINS"].split(",") if o.strip()}
 
@@ -66,7 +68,7 @@ def create_app(config: type[Config] | None = None) -> Flask:
             resp.headers["Access-Control-Allow-Origin"] = origin
             resp.headers["Vary"] = "Origin"
             resp.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, X-Kiosk-Token"
-            resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PATCH, DELETE, OPTIONS"
+            resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
             resp.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
         return resp
 

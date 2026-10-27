@@ -387,6 +387,56 @@
     }
   },
   "undo": "Undo",
+  "journalSourceCalendar": "Calendar",
+  "journalSourceCommits": "Commits",
+  "journalReasonCalendar": "In your calendar, from {start} to {end}",
+  "@journalReasonCalendar": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonCommits": "{count, plural, =1{1 commit} other{{count} commits}} in {repository}, from {start} to {end}",
+  "@journalReasonCommits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "repository": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "journalTraces": "Traces",
+  "calendarTitle": "Calendar",
+  "calendarHelp": "Paste the private iCal address of your calendar: Google Calendar, calendar settings › “Secret address in iCal format”; Outlook, Settings › Calendar › Shared calendars › Publish; Apple, right-click the calendar › Share. Clockifai only reads the time and title of events, to suggest your meetings in Today.",
+  "calendarUrl": "Private iCal address",
+  "calendarNone": "No calendar linked",
+  "calendarLinked": "Linked: {host}",
+  "@calendarLinked": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarRemove": "Remove the calendar",
+  "calendarOffline": "Can only be set while online.",
+  "calendarErrorHttps": "The address must start with https:// (or webcal://).",
+  "calendarErrorHost": "This address is not reachable from the Internet.",
+  "calendarErrorUnreachable": "Calendar unreachable: check the address.",
+  "calendarErrorFormat": "This address does not lead to an iCal calendar.",
+  "calendarErrorTooLarge": "Calendar too large.",
   "journalTypicalProfile": "Typical day: {start} – {end}, set in your settings",
   "@journalTypicalProfile": {
     "placeholders": {

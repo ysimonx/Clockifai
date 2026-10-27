@@ -21,6 +21,7 @@ import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/entry_dialog.dart';
 import 'day_plan.dart';
 import 'quick_place.dart';
+import 'traces.dart';
 
 /// « Aujourd'hui », le journal automatique (plans/13-ux-moderne.md, lot 11) : la journée sur une frise, les entrées
 /// saisies, les créneaux vides et les propositions tirées des habitudes, du planning et des sessions de Claude, à
@@ -101,6 +102,21 @@ class _TodayPageState extends State<TodayPage> {
   late Stream<List<EntryRow>> _agentStream;
   late Stream<List<ScheduleAssignment>> _planStream;
 
+  // Traces (agenda, commits) du jour affiché ; relues toutes les 5 minutes pour aujourd'hui.
+  DayTraces _traces = DayTraces.empty;
+  String? _tracesKey;
+
+  void _ensureTraces(String ws, DateTime now) {
+    final key = '$ws ${dayKey(_day)} ${_day == _midnight(now) ? now.minute ~/ 5 + now.hour * 12 : ''}';
+    if (key == _tracesKey) return;
+    final sameDay = _tracesKey?.startsWith('$ws ${dayKey(_day)} ') ?? false;
+    _tracesKey = key;
+    if (!sameDay) _traces = DayTraces.empty;
+    TracesApi.day(ws, _day).then((t) {
+      if (mounted && _tracesKey == key) setState(() => _traces = t);
+    }, onError: (Object _) {}); // hors ligne, ou serveur injoignable : la journée se propose sans traces
+  }
+
   void _ensureStreams(String ws, String me, String? agentId) {
     final key = '$ws|$me|$agentId|${_day.toIso8601String()}';
     if (key == _streamsKey) return;
@@ -153,6 +169,7 @@ class _TodayPageState extends State<TodayPage> {
     final me = session.userId!;
     final agents = catalog.agentsOf(me);
     _ensureStreams(ws, me, agents.firstOrNull?.userId);
+    _ensureTraces(ws, widget.clock());
     return StreamBuilder<List<EntryRow>>(
       stream: _mineStream,
       builder: (context, mineSnap) => StreamBuilder<List<EntryRow>>(
@@ -199,6 +216,12 @@ class _TodayPageState extends State<TodayPage> {
       planning: planning,
       dismissed: prefs.dismissedSuggestions,
       typical: typical,
+      calendar: _traces.events,
+      commits: _traces.commits,
+      guessProject: (text) {
+        final q = parseQuick(text, catalog, now);
+        return q?.projectId == null ? null : (projectId: q!.projectId, taskId: q.taskId);
+      },
     );
 
     final blocks = <_Block>[
@@ -239,8 +262,12 @@ class _TodayPageState extends State<TodayPage> {
     final claudeSpans = [for (final r in agentRows) if (spanOf(r.entry, _day, now) case final sp?) (r.entry, sp)];
 
     // Plage affichée : au moins 7:00 – 19:00, élargie à ce qui est saisi.
-    final starts = [420, for (final w in plan.windows) w.start, for (final b in blocks) b.span.start, for (final c in claudeSpans) c.$2.start];
-    final ends = [1140, for (final w in plan.windows) w.end, for (final b in blocks) b.span.end, for (final c in claudeSpans) c.$2.end];
+    final traceSpans = [for (final ev in _traces.events) if (_traceSpan(ev.start, ev.end) case final sp?) (ev, sp)];
+    final commitMinutes = [for (final c in _traces.commits) (c, minuteOf(c.at, _day))];
+    final starts = [420, for (final w in plan.windows) w.start, for (final b in blocks) b.span.start, for (final c in claudeSpans) c.$2.start,
+      for (final t in traceSpans) t.$2.start, for (final c in commitMinutes) if (c.$2 >= 0) c.$2 - 15];
+    final ends = [1140, for (final w in plan.windows) w.end, for (final b in blocks) b.span.end, for (final c in claudeSpans) c.$2.end,
+      for (final t in traceSpans) t.$2.end, for (final c in commitMinutes) if (c.$2 < 1440) c.$2 + 15];
     final range = Span((starts.reduce(math.min) ~/ 60) * 60, math.min(1440, ((ends.reduce(math.max) + 59) ~/ 60) * 60));
 
     Future<void> confirmDrafts(List<_Block> list) async {
@@ -383,6 +410,8 @@ class _TodayPageState extends State<TodayPage> {
                   blocks: blocks,
                   gaps: gaps,
                   claude: claudeSpans,
+                  events: traceSpans,
+                  commits: [for (final c in commitMinutes) if (c.$2 >= 0 && c.$2 < 1440) c],
                   isToday: _day == _midnight(now),
                   nowMin: minuteOf(now, _day),
                   commitSpan: commitSpan,
@@ -698,6 +727,8 @@ class _TodayPageState extends State<TodayPage> {
       required List<_Block> blocks,
       required List<Span> gaps,
       required List<(TimeEntry, Span)> claude,
+      required List<(CalendarEvent, Span)> events,
+      required List<(CommitTrace, int)> commits,
       required bool isToday,
       required int nowMin,
       required Future<void> Function(_Block, Span) commitSpan}) {
@@ -1001,6 +1032,54 @@ class _TodayPageState extends State<TodayPage> {
             ],
           );
 
+          // Traces : événements de l'agenda (bord fin) et commits (points), d'où viennent certaines propositions.
+          final tracesLane = lane(
+            height: 46,
+            children: [
+              for (final (ev, sp) in events)
+                Positioned(
+                  left: x(sp.start),
+                  width: math.max(6.0, x(sp.end) - x(sp.start)),
+                  top: 6,
+                  bottom: 6,
+                  child: Tooltip(
+                    message: '${ev.title}, ${hm(sp.start)} – ${hm(sp.end)}',
+                    child: CustomPaint(
+                      painter: _BlockPainter(fill: theme.colorScheme.surface, border: theme.colorScheme.outline.withValues(alpha: 0.7)),
+                      child: x(sp.end) - x(sp.start) < 40
+                          ? const SizedBox.expand()
+                          : Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: ExcludeSemantics(
+                                  child: Text(ev.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.labelSmall),
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              for (final (c, m) in commits)
+                Positioned(
+                  left: x(m) - 6,
+                  top: 17,
+                  width: 12,
+                  height: 12,
+                  child: Tooltip(
+                    message: '${c.subject} — ${c.repository}, ${hm(m)}',
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.colorScheme.tertiaryContainer,
+                        border: Border.all(color: theme.colorScheme.tertiary, width: 2),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+
           Widget row(Widget label, Widget content) => Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -1023,9 +1102,18 @@ class _TodayPageState extends State<TodayPage> {
                 Row(children: [
                   Icon(Icons.auto_awesome, size: 14, color: theme.colorScheme.tertiary),
                   const SizedBox(width: 4),
-                  Text('Claude', style: theme.textTheme.titleSmall),
+                  Flexible(child: Text('Claude', overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall)),
                 ]),
                 claudeLane,
+              ),
+            if (events.isNotEmpty || commits.isNotEmpty)
+              row(
+                Row(children: [
+                  Icon(Icons.event_note_outlined, size: 14, color: theme.colorScheme.outline),
+                  const SizedBox(width: 4),
+                  Flexible(child: Text(l.journalTraces, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall)),
+                ]),
+                tracesLane,
               ),
             const SizedBox(height: 10),
             Padding(
@@ -1036,6 +1124,12 @@ class _TodayPageState extends State<TodayPage> {
         }),
       ),
     );
+  }
+
+  /// Plage d'un événement dans le jour affiché (minutes), ou null s'il n'y tombe pas.
+  Span? _traceSpan(DateTime start, DateTime end) {
+    final s = math.max(0, minuteOf(start, _day)), e = math.min(1440, minuteOf(end, _day));
+    return e > s ? Span(s, e) : null;
   }
 
   Color _projectColor(CatalogController catalog, String? projectId, ThemeData theme) {
@@ -1071,6 +1165,8 @@ class _TodayPageState extends State<TodayPage> {
     };
     final source = switch (b.draft?.source) {
       DraftSource.claude => l.journalSourceClaude,
+      DraftSource.calendar => l.journalSourceCalendar,
+      DraftSource.commits => l.journalSourceCommits,
       DraftSource.habit => l.journalSourceHabit,
       DraftSource.planning => l.journalSourcePlanning,
       null => '',
@@ -1080,6 +1176,8 @@ class _TodayPageState extends State<TodayPage> {
         switch (r.kind) {
           ReasonKind.claudeSession => l.journalReasonClaudeSession(hm(r.a), hm(r.b)),
           ReasonKind.claudePilot => l.journalReasonClaudePilot,
+          ReasonKind.calendar => l.journalReasonCalendar(hm(r.a), hm(r.b)),
+          ReasonKind.commits => l.journalReasonCommits(r.count, r.text, hm(r.a), hm(r.b)),
           ReasonKind.habitWeekday => l.journalReasonHabitWeekday(r.count, r.of, hm(r.a)),
           ReasonKind.habitDaily => l.journalReasonHabitDaily(r.count, r.of, hm(r.a)),
           ReasonKind.planned => l.journalReasonPlanned(formatHm(r.count * 60)),

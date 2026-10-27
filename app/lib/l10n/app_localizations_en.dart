@@ -464,6 +464,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportAttendanceCsv => 'Attendance (CSV)';
 
   @override
+  String get sharedReports => 'Shared reports';
+
+  @override
+  String get sharedReportsHelp =>
+      'A read-only link, no account needed, for a client or an accountant. The period is recomputed each time it is opened; the link stops working if its author is no longer a manager.';
+
+  @override
+  String get noSharedReports => 'No shared reports yet.';
+
+  @override
+  String get shareThisReport => 'Share this report';
+
+  @override
+  String get sharedReportName => 'Report name';
+
+  @override
+  String get sharedReportNameHint => 'e.g. Website — ACME';
+
+  @override
+  String sharedReportPeriod(String period) {
+    return 'Period: $period, with the filters shown.';
+  }
+
+  @override
+  String get sharedDetailed => 'With entry details (descriptions included)';
+
+  @override
+  String get sharedDetailedShort => 'entry details';
+
+  @override
+  String get sharedAmounts => 'With amounts';
+
+  @override
+  String get sharedPublicLink => 'Public link';
+
+  @override
+  String get sharedPublicLinkHelp =>
+      'Anyone with the link can read the report.';
+
+  @override
+  String get sharedLinkOff => 'link closed';
+
+  @override
+  String get sharedLinkOpen => 'Open the public link';
+
+  @override
+  String get sharedLinkClose => 'Close the public link';
+
+  @override
+  String get sharedNewLink => 'Change link (the old one stops working)';
+
+  @override
+  String get deleteSharedReport => 'Delete the shared report?';
+
+  @override
+  String get deleteSharedReportMessage => 'Its link will stop working.';
+
+  @override
+  String get open => 'Open';
+
+  @override
   String get approvals => 'Approvals';
 
   @override

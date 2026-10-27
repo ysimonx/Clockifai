@@ -99,6 +99,7 @@ Les écritures client passent par **upsert** : la politique SELECT doit accepter
 | Suivi de Claude Code : jeton, hooks, entrées de l'agent | [claude-code.md](sequences/claude-code.md) |
 | Journal du jour : propositions, agenda, commits | [journal.md](sequences/journal.md) |
 | Assistant « Demander à Clockifai » | [assistant.md](sequences/assistant.md) |
+| Rapport partagé par lien public | [rapport-partage.md](sequences/rapport-partage.md) |
 | Fidwork (prévu, non implémenté) | [fidwork.md](sequences/fidwork.md) |
 
 ## Tenir à jour

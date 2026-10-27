@@ -25,7 +25,8 @@ def ai_cost(row: dict) -> float:
     return (row.get("ai_cost_micros") or 0) / 1e6
 
 
-def _amount(row: dict) -> float:
+def entry_amount(row: dict) -> float:
+    """Montant facturable d'une ligne, en unités : durée × taux, 0 si non facturable ou sans taux."""
     if not row["billable"] or not row["hourly_rate_cents"]:
         return 0.0
     return round((row["duration_seconds"] or 0) / 3600 * row["hourly_rate_cents"] / 100, 2)
@@ -52,7 +53,7 @@ def build_xlsx(rows: list[dict], start: date, end: date, *, tz: tzinfo = UTC) ->
             r["end_at"].astimezone(tz).replace(tzinfo=None) if r["end_at"] else None,
             round((r["duration_seconds"] or 0) / 3600, 2),
             "oui" if r["billable"] else "non",
-            _amount(r),
+            entry_amount(r),
             r.get("ai_tokens") or None,
             round(ai_cost(r), 4) if r.get("ai_cost_micros") is not None else None,
         ])
@@ -88,7 +89,7 @@ def _by_project(rows: list[dict]) -> dict[tuple, list[float]]:
     for r in rows:
         key = (r["project_name"] or "(sans projet)", r["client_name"] or "")
         agg[key][0] += (r["duration_seconds"] or 0) / 3600
-        agg[key][1] += _amount(r)
+        agg[key][1] += entry_amount(r)
         agg[key][2] += ai_cost(r)
     return agg
 
@@ -149,7 +150,7 @@ def build_pdf(rows: list[dict], start: date, end: date, *, tz: tzinfo = UTC) -> 
     from weasyprint import HTML  # import tardif : lib lourde
 
     for r in rows:
-        r["amount"] = _amount(r)
+        r["amount"] = entry_amount(r)
     agg = _by_project(rows)
     summary = [{"project": k[0], "client": k[1], "hours": v[0], "amount": v[1], "ai_cost": v[2]}
                for k, v in sorted(agg.items())]

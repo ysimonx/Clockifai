@@ -348,6 +348,32 @@
   "attendanceHoliday": "Férié",
   "attendanceTimeOff": "Absence",
   "exportAttendanceCsv": "Présence (CSV)",
+  "sharedReports": "Rapports partagés",
+  "sharedReportsHelp": "Un lien en lecture seule, sans compte, pour un client ou un comptable. La période se recalcule à chaque ouverture ; le lien cesse de fonctionner si son auteur n'est plus manager.",
+  "noSharedReports": "Aucun rapport partagé pour l'instant.",
+  "shareThisReport": "Partager ce rapport",
+  "sharedReportName": "Nom du rapport",
+  "sharedReportNameHint": "ex. Site vitrine — ACME",
+  "sharedReportPeriod": "Période : {period}, avec les filtres affichés.",
+  "@sharedReportPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedDetailed": "Avec le détail des entrées (descriptions comprises)",
+  "sharedDetailedShort": "détail des entrées",
+  "sharedAmounts": "Avec les montants",
+  "sharedPublicLink": "Lien public",
+  "sharedPublicLinkHelp": "Toute personne qui a le lien lit le rapport.",
+  "sharedLinkOff": "lien fermé",
+  "sharedLinkOpen": "Ouvrir le lien public",
+  "sharedLinkClose": "Fermer le lien public",
+  "sharedNewLink": "Changer de lien (l'ancien ne marchera plus)",
+  "deleteSharedReport": "Supprimer le rapport partagé ?",
+  "deleteSharedReportMessage": "Son lien ne fonctionnera plus.",
+  "open": "Ouvrir",
   "approvals": "Approbations",
   "approve": "Approuver",
   "approvedPeriodFor": "Période déjà approuvée pour {name}.",

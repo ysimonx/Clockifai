@@ -62,6 +62,10 @@ tags:
     description: |
       « Demander à Clockifai » (plan 13, lot 12) : questions sur le temps passé, réponses de Claude (API Anthropic)
       à partir d'agrégats seulement ; désactivé sans `ANTHROPIC_API_KEY`. JWT de l'utilisateur.
+  - name: rapports partagés
+    description: |
+      Rapports enregistrés par un manager, avec un lien public en lecture seule (plan 18, lot 3). Gérés avec le JWT
+      (manager+) ; la page publique se lit sans compte, tant que son créateur reste manager actif du workspace.
   - name: tâches planifiées
     description: |
       Déclenchement manuel. En temps normal APScheduler les exécute dans le process Flask
@@ -1060,6 +1064,157 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
 
+  /api/reports/saved:
+    get:
+      tags: [rapports partagés]
+      operationId: listSavedReports
+      summary: Rapports enregistrés du workspace (manager+)
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+      responses:
+        "200":
+          description: Rapports non supprimés, par nom.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reports]
+                properties:
+                  reports:
+                    type: array
+                    items: { $ref: "#/components/schemas/SavedReport" }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/ManagerRequired" }
+    post:
+      tags: [rapports partagés]
+      operationId: createSavedReport
+      summary: Enregistrer un rapport (manager+)
+      description: Avec `public` à vrai, un lien public est créé aussitôt (jeton aléatoire de 32 octets).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/SavedReportInput"
+                - type: object
+                  required: [workspace_id, name]
+                  properties:
+                    workspace_id: { type: string, format: uuid }
+      responses:
+        "201":
+          description: Rapport enregistré.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedReport" }
+        "400":
+          description: "`workspace_id is required`, nom absent ou trop long, période, dates, filtres ou options invalides."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/ManagerRequired" }
+
+  /api/reports/saved/{report_id}:
+    put:
+      tags: [rapports partagés]
+      operationId: updateSavedReport
+      summary: Modifier un rapport enregistré, ouvrir, fermer ou changer son lien (manager+)
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      description: |
+        Les champs absents gardent leur valeur. `public` à faux retire le lien ; à vrai, en crée un s'il n'y en a pas.
+        `new_link` remplace le jeton : l'ancien lien ne mène plus nulle part.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/SavedReportInput"
+                - type: object
+                  required: [workspace_id]
+                  properties:
+                    workspace_id: { type: string, format: uuid }
+                    new_link: { type: boolean }
+      responses:
+        "200":
+          description: Rapport modifié.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedReport" }
+        "400":
+          description: Champ invalide (voir la création).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/ManagerRequired" }
+        "404":
+          description: Rapport inconnu, supprimé ou d'un autre workspace.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    delete:
+      tags: [rapports partagés]
+      operationId: deleteSavedReport
+      summary: Supprimer un rapport enregistré et son lien (manager+)
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+      responses:
+        "204": { description: Supprimé. }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/ManagerRequired" }
+        "404":
+          description: Rapport inconnu, déjà supprimé ou d'un autre workspace.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/reports/public/{token}:
+    get:
+      tags: [rapports partagés]
+      operationId: publicReport
+      summary: Page publique d'un rapport enregistré (sans compte)
+      description: |
+        Période relative calculée à l'ouverture, dans le fuseau et la langue du créateur. Totaux, temps et montants
+        (selon l'option) par projet et tâche ; les descriptions seulement avec l'option « détail des entrées ».
+        En-têtes : `X-Robots-Tag: noindex, nofollow`, `Cache-Control: no-store`, `Referrer-Policy: no-referrer` ;
+        la page HTML n'a ni script ni ressource externe (`Content-Security-Policy`).
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+        - name: format
+          in: query
+          required: false
+          schema: { type: string, enum: [pdf] }
+          description: "`pdf` : le même rapport en PDF (A4)."
+      responses:
+        "200":
+          description: La page, ou le PDF.
+          content:
+            text/html:
+              schema: { type: string }
+            application/pdf:
+              schema: { type: string, format: binary }
+        "404":
+          description: Jeton inconnu ou retiré, rapport supprimé, ou créateur qui n'est plus manager actif du workspace.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
 components:
   securitySchemes:
     supabaseJwt:
@@ -1108,6 +1263,11 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
+    ManagerRequired:
+      description: Pas membre actif du workspace (`not a member of this workspace`), ou rôle inférieur à manager (`manager role required`).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
     MemberRequired:
       description: Pas membre actif du workspace (`not a member of this workspace`).
       content:
@@ -1125,6 +1285,46 @@ components:
           schema: { $ref: "#/components/schemas/Error" }
 
   schemas:
+    SavedReportInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        period:
+          type: string
+          enum: [this_week, last_week, this_month, last_month, this_year, custom]
+          description: Relative (calculée à l'ouverture), ou `custom` avec `date_from` et `date_to`.
+        date_from: { type: [string, "null"], format: date }
+        date_to: { type: [string, "null"], format: date }
+        filters:
+          type: object
+          additionalProperties: false
+          properties:
+            client_id: { type: string, format: uuid }
+            project_id: { type: string, format: uuid }
+            user_id: { type: string, format: uuid }
+            billable: { type: string, enum: ["true", "false"] }
+            member_kind: { type: string, enum: [human, agent] }
+        detailed: { type: boolean, description: "Détail des entrées, descriptions comprises (défaut : non)." }
+        show_amounts: { type: boolean, description: "Montants affichés (défaut : oui)." }
+        rounding: { type: boolean, description: "Arrondi du workspace appliqué à chaque entrée (défaut : non)." }
+        public: { type: boolean, description: "Lien public ouvert (vrai) ou fermé (faux)." }
+    SavedReport:
+      type: object
+      required: [id, name, period, filters, detailed, show_amounts, rounding, public_path, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        period: { type: string }
+        date_from: { type: [string, "null"], format: date }
+        date_to: { type: [string, "null"], format: date }
+        filters: { type: object }
+        detailed: { type: boolean }
+        show_amounts: { type: boolean }
+        rounding: { type: boolean }
+        public_path:
+          type: [string, "null"]
+          description: "Chemin de la page publique (`/api/reports/public/<jeton>`), à compléter par l'adresse de l'instance ; nul sans lien."
+        created_at: { type: string, format: date-time }
     ClaudeMarketplace:
       type: object
       required: [name, owner, plugins]

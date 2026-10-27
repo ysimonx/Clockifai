@@ -10,6 +10,8 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.5] — 2026-10-27
+
 ### Ajouté
 
 - **Sous-tâches** : Projet › Tâche › Sous-tâche (« Unité 4 » › « Montage »). La flèche ↳ en ajoute une, dans la
@@ -19,6 +21,13 @@ la date d'arrivée de chaque évolution.
 - **Claude Code** : la tâche porte l'objectif (le titre du plan en cours, par exemple), stable d'une session à
   l'autre, et chaque étape devient une sous-tâche ; les rapports ne s'encombrent plus d'une tâche par étape. Mettez à
   jour le plugin sur chaque poste (`claude plugin update clockifai@clockifai`) (27 octobre 2026).
+
+### Corrigé
+
+- iPhone : texte d'autorisation des photos demandé par Apple (enregistrement des exports) ; Clockifai ne lit pas
+  vos photos (27 octobre 2026).
+- Lecteurs d'écran : un seul libellé pour le bouton d'arrêt du chronomètre et l'état de la synchronisation ; heures
+  de la frise d'« Aujourd'hui » mieux espacées (27 octobre 2026).
 
 ## [0.2.4] — 2026-10-27
 

@@ -14,6 +14,6 @@ l'OpenAPI, ainsi que les liens et les scènes vidéo du guide.
 | [Architecture : données](architecture/donnees.md) | Schéma relationnel, flux de synchronisation, matrice des droits par rôle | Développeurs |
 | [API : présentation](api/README.md) | Authentification, conventions, renvoi vers la description PostgREST | Développeurs, intégrateurs |
 | [API : OpenAPI](api/openapi.yaml) | Toutes les routes du service Flask (`/api/…`) | Développeurs, intégrateurs |
-| [API : séquences](api/sequences/) | Un diagramme de séquence par parcours : connexion, écriture hors ligne, chronomètres, feuille de temps, absences, invitation, kiosque, export, facture PDF, barre de menus macOS, Fidwork (prévu) | Développeurs |
+| [API : séquences](api/sequences/) | Un diagramme de séquence par parcours : connexion, écriture hors ligne, chronomètres, feuille de temps, absences, invitation, kiosque, export, rapport partagé, facture PDF, barre de menus macOS, Fidwork (prévu) | Développeurs |
 | [Plans](../plans/) | Plans validés et décisions, avec leur contexte | Développeurs |
 | [Notes de version](../CHANGELOG.md) | Évolutions visibles, version par version | Tous ; texte repris pour TestFlight et Google Play |

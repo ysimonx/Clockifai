@@ -20,7 +20,7 @@
 |---|---|---|
 | 1 Présence | Vue « Présence » des rapports, calculée dans l'app (hors ligne), export CSV | fait |
 | 2 Alertes de budget | Champs montant et estimation, jauges, « À surveiller », job horaire et email | fait |
-| 3 Lien public | Rapports enregistrés (Flask), page HTML et PDF publics, révocation | validé |
+| 3 Lien public | Rapports enregistrés (Flask), page HTML et PDF publics, révocation | fait |
 | 4 Envoi planifié | Fréquence, destinataires, PDF en pièce jointe | validé |
 
 ## Lot 1 — Présence
@@ -76,11 +76,16 @@
 - **Lien public** : jeton aléatoire de 32 octets. `GET /api/public/reports/<jeton>` rend une page HTML autonome,
   `?format=pdf` le PDF. Période relative calculée à l'ouverture, dans le fuseau du créateur. Révocable (nouveau
   jeton, ou suppression). `X-Robots-Tag: noindex`, pas de cache.
-- `build_pdf` apprend le mode sans détail.
+- La page et le PDF ont le même HTML (`services/shared_reports.py`, rendu par WeasyPrint pour le PDF) ; la requête
+  des lignes est partagée avec les exports (`services/report_rows.py`).
 - **App** : dans Rapports, « Enregistrer et partager » reprend les filtres affichés ; liste des rapports
   enregistrés (copier le lien, révoquer, supprimer).
 - **Tests** : droits (managers seulement), jeton révoqué → 404, période relative, sans détail aucune description
   dans la page ni le PDF.
+- **Livré** : migration `0025_saved_reports.admin.sql`, `routes/reports.py`, `services/shared_reports.py` ; dans
+  l'app, bouton « Rapports partagés » de Rapports (`features/reports/saved_reports.dart`). Le lien est le chemin
+  renvoyé par Flask complété par l'adresse de l'instance que l'app connaît. Un lien meurt avec les droits de son
+  auteur (plus manager, désactivé ou retiré).
 
 ## Lot 4 — Envoi planifié
 

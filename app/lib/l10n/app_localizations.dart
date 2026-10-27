@@ -811,6 +811,120 @@ abstract class AppLocalizations {
   /// **'Présence (CSV)'**
   String get exportAttendanceCsv;
 
+  /// No description provided for @sharedReports.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rapports partagés'**
+  String get sharedReports;
+
+  /// No description provided for @sharedReportsHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un lien en lecture seule, sans compte, pour un client ou un comptable. La période se recalcule à chaque ouverture ; le lien cesse de fonctionner si son auteur n\'est plus manager.'**
+  String get sharedReportsHelp;
+
+  /// No description provided for @noSharedReports.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun rapport partagé pour l\'instant.'**
+  String get noSharedReports;
+
+  /// No description provided for @shareThisReport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Partager ce rapport'**
+  String get shareThisReport;
+
+  /// No description provided for @sharedReportName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom du rapport'**
+  String get sharedReportName;
+
+  /// No description provided for @sharedReportNameHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'ex. Site vitrine — ACME'**
+  String get sharedReportNameHint;
+
+  /// No description provided for @sharedReportPeriod.
+  ///
+  /// In fr, this message translates to:
+  /// **'Période : {period}, avec les filtres affichés.'**
+  String sharedReportPeriod(String period);
+
+  /// No description provided for @sharedDetailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Avec le détail des entrées (descriptions comprises)'**
+  String get sharedDetailed;
+
+  /// No description provided for @sharedDetailedShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'détail des entrées'**
+  String get sharedDetailedShort;
+
+  /// No description provided for @sharedAmounts.
+  ///
+  /// In fr, this message translates to:
+  /// **'Avec les montants'**
+  String get sharedAmounts;
+
+  /// No description provided for @sharedPublicLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien public'**
+  String get sharedPublicLink;
+
+  /// No description provided for @sharedPublicLinkHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Toute personne qui a le lien lit le rapport.'**
+  String get sharedPublicLinkHelp;
+
+  /// No description provided for @sharedLinkOff.
+  ///
+  /// In fr, this message translates to:
+  /// **'lien fermé'**
+  String get sharedLinkOff;
+
+  /// No description provided for @sharedLinkOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir le lien public'**
+  String get sharedLinkOpen;
+
+  /// No description provided for @sharedLinkClose.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermer le lien public'**
+  String get sharedLinkClose;
+
+  /// No description provided for @sharedNewLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer de lien (l\'ancien ne marchera plus)'**
+  String get sharedNewLink;
+
+  /// No description provided for @deleteSharedReport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer le rapport partagé ?'**
+  String get deleteSharedReport;
+
+  /// No description provided for @deleteSharedReportMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Son lien ne fonctionnera plus.'**
+  String get deleteSharedReportMessage;
+
+  /// No description provided for @open.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir'**
+  String get open;
+
   /// No description provided for @approvals.
   ///
   /// In fr, this message translates to:

@@ -25,6 +25,7 @@ import '../time_entries/time_entries_page.dart';
 import 'attendance.dart';
 import 'report_model.dart';
 import 'report_questions.dart';
+import 'saved_reports.dart';
 
 /// Résumé (par regroupement), détail jour par jour, ou présence (arrivées, départs, heures sup).
 enum ReportView { summary, detailed, attendance }
@@ -156,6 +157,13 @@ class _ReportsPageState extends State<ReportsPage> {
             onPressed: () => showEntryDialog(context, initialUserIds: {
               _userId != null && rights.canCreateTimeFor(_userId!) ? _userId! : session.userId!,
             }),
+          ),
+        // Rapport partagé par lien public (managers, en ligne) : période et filtres affichés (plan 18, lot 3).
+        if (session.isManager)
+          IconButton(
+            tooltip: l.sharedReports,
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () => showSavedReports(context, _draft(range)),
           ),
         PopupMenuButton<String>(
           tooltip: l.export,
@@ -450,6 +458,27 @@ class _ReportsPageState extends State<ReportsPage> {
         ),
     ]);
   }
+
+  ReportDraft _draft(DateTimeRange range) => ReportDraft(
+        period: switch (_preset) {
+          RangePreset.thisWeek => 'this_week',
+          RangePreset.lastWeek => 'last_week',
+          RangePreset.thisMonth => 'this_month',
+          RangePreset.lastMonth => 'last_month',
+          RangePreset.thisYear => 'this_year',
+          RangePreset.custom => 'custom',
+        },
+        from: range.start,
+        to: addDays(range.end, -1),
+        filters: {
+          'user_id': ?_userId,
+          'project_id': ?_projectId,
+          'client_id': ?_clientId,
+          if (_billable != null) 'billable': '$_billable',
+          'member_kind': ?_kind.param,
+        },
+        rounding: _applyRounding,
+      );
 
   /// Personnes de la présence : la personne choisie, sinon les humains actifs visibles, plus ceux qui ont du temps
   /// sur la période (une personne désactivée depuis).

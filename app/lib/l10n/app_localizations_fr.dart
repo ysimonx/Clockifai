@@ -465,6 +465,68 @@ class AppLocalizationsFr extends AppLocalizations {
   String get exportAttendanceCsv => 'Présence (CSV)';
 
   @override
+  String get sharedReports => 'Rapports partagés';
+
+  @override
+  String get sharedReportsHelp =>
+      'Un lien en lecture seule, sans compte, pour un client ou un comptable. La période se recalcule à chaque ouverture ; le lien cesse de fonctionner si son auteur n\'est plus manager.';
+
+  @override
+  String get noSharedReports => 'Aucun rapport partagé pour l\'instant.';
+
+  @override
+  String get shareThisReport => 'Partager ce rapport';
+
+  @override
+  String get sharedReportName => 'Nom du rapport';
+
+  @override
+  String get sharedReportNameHint => 'ex. Site vitrine — ACME';
+
+  @override
+  String sharedReportPeriod(String period) {
+    return 'Période : $period, avec les filtres affichés.';
+  }
+
+  @override
+  String get sharedDetailed =>
+      'Avec le détail des entrées (descriptions comprises)';
+
+  @override
+  String get sharedDetailedShort => 'détail des entrées';
+
+  @override
+  String get sharedAmounts => 'Avec les montants';
+
+  @override
+  String get sharedPublicLink => 'Lien public';
+
+  @override
+  String get sharedPublicLinkHelp =>
+      'Toute personne qui a le lien lit le rapport.';
+
+  @override
+  String get sharedLinkOff => 'lien fermé';
+
+  @override
+  String get sharedLinkOpen => 'Ouvrir le lien public';
+
+  @override
+  String get sharedLinkClose => 'Fermer le lien public';
+
+  @override
+  String get sharedNewLink => 'Changer de lien (l\'ancien ne marchera plus)';
+
+  @override
+  String get deleteSharedReport => 'Supprimer le rapport partagé ?';
+
+  @override
+  String get deleteSharedReportMessage => 'Son lien ne fonctionnera plus.';
+
+  @override
+  String get open => 'Ouvrir';
+
+  @override
   String get approvals => 'Approbations';
 
   @override

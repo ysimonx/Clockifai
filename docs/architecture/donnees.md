@@ -334,6 +334,7 @@ lit comme l'entrée (`user_id = auth.uid() or manages(workspace_id, user_id)`) e
 | `clockifai_private` | `agent_entries` | par entrée d'agent : session, dépôt, dernière activité, et valeurs écrites par le serveur (pour repérer ce qu'un humain a retouché) | Flask |
 | `clockifai_private` | `agent_tasks` | tâches créées par le serveur pour une session de Claude, avec le nom qu'il leur a donné : un nom plus précis les renomme au lieu d'en créer d'autres ; une tâche renommée à la main n'est plus touchée | Flask |
 | `clockifai_private` | `budget_alerts` | seuils d'alerte de budget déjà signalés (projet ou tâche, heures, montant ou estimation, 80 ou 100 %, valeur du budget : un budget relevé réarme) | Flask (job `budget_alerts`) |
+| `clockifai_private` | `saved_reports` | rapports enregistrés par un manager (période, filtres, options) et jeton de leur lien public, lisible tant que l'auteur est manager actif | Flask (`/api/reports`) |
 | `clockifai_private` | `calendar_sources` | adresse iCal privée de l'agenda d'une personne (un secret : qui la connaît lit l'agenda) ; seul l'hôte est renvoyé à l'app | Flask (`/api/traces`) |
 | `clockifai_meta` | `schema_migrations` | migrations appliquées | `deploy/migrate.sh` |
 

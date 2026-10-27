@@ -20,6 +20,9 @@ la date d'arrivée de chaque évolution.
 - **Budgets et alertes** : budget en montant pour un projet et estimation pour une tâche (sous-tâches comprises),
   avec leurs jauges ; « À surveiller » en tête des Projets pour les managers (80 % et plus), et un email aux
   managers au passage de 80 % puis de 100 %.
+- **Rapports partagés** : un manager partage le rapport affiché par un lien public en lecture seule, sans compte
+  (client, comptable) : totaux par projet et tâche, montants et détail des entrées au choix, PDF. La période se
+  recalcule à chaque ouverture ; le lien se change, se ferme ou se supprime.
 
 ### Modifié
 

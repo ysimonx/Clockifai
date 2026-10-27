@@ -43,6 +43,7 @@ def create_app(config: type[Config] | None = None) -> Flask:
     from .routes.invoices import bp as invoices_bp
     from .routes.jobs import bp as jobs_bp
     from .routes.kiosk import bp as kiosk_bp
+    from .routes.reports import bp as reports_bp
     from .routes.tokens import bp as tokens_bp
     from .routes.traces import bp as traces_bp
 
@@ -58,6 +59,7 @@ def create_app(config: type[Config] | None = None) -> Flask:
     app.register_blueprint(claude_bp, url_prefix="/api/claude")
     app.register_blueprint(traces_bp, url_prefix="/api/traces")
     app.register_blueprint(assistant_bp, url_prefix="/api/assistant")
+    app.register_blueprint(reports_bp, url_prefix="/api/reports")
 
     origins = {o.strip() for o in app.config["CORS_ORIGINS"].split(",") if o.strip()}
 

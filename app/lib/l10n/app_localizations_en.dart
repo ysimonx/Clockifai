@@ -714,6 +714,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String get recapTitle => 'End of day';
+
+  @override
+  String recapLine(String logged, String target, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count suggestions to confirm',
+      one: '1 suggestion to confirm',
+    );
+    return '$logged entered out of $target · $_temp0';
+  }
+
+  @override
+  String recapLineDone(String logged, String target) {
+    return '$logged entered out of $target, nothing to confirm';
+  }
+
+  @override
+  String get recapNothing => 'Nothing to confirm: your day is complete.';
+
+  @override
+  String get recapOpenDay => 'Open the timeline';
+
+  @override
+  String recapConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Confirm $count entries',
+      one: 'Confirm 1 entry',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recapLater => 'Later';
+
+  @override
+  String get recapReview => 'Review';
+
+  @override
+  String get recapSetting => 'End-of-day summary';
+
+  @override
+  String get recapSettingHelp =>
+      'Every working day, at the chosen time: the time entered and the suggestions to confirm in one go. Set on each device.';
+
+  @override
+  String get recapOff => 'Off';
+
+  @override
+  String recapAt(String time) {
+    return 'At $time';
+  }
+
+  @override
+  String get recapNotificationBody =>
+      'Your day is waiting: check it and confirm the suggestions.';
+
+  @override
   String get weekGrid => 'Grid';
 
   @override

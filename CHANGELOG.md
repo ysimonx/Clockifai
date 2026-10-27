@@ -41,6 +41,9 @@ la date d'arrivée de chaque évolution.
 - **Semaine** : trois vues de la même semaine (grille, calendrier, liste) ; heures prévues au planning en
   italique dans la grille, **Compléter d'après le planning**, **Copier la semaine précédente**, et **Avant de
   soumettre**, la liste de ce qui mérite un coup d'œil (27 octobre 2026).
+- **Fin de journée** : à l'heure choisie (17:30 par défaut), le temps saisi et les propositions restantes, à
+  confirmer d'un geste ; bandeau dans l'app, notification et ligne dans la barre de menus sur Mac, notification
+  sur téléphone. Réglage dans Paramètres (27 octobre 2026).
 
 ### Modifié
 

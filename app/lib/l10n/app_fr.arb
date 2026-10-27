@@ -481,6 +481,56 @@
     }
   },
   "undo": "Annuler",
+  "recapTitle": "Fin de journée",
+  "recapLine": "{logged} saisies sur {target} · {count, plural, =1{1 proposition à confirmer} other{{count} propositions à confirmer}}",
+  "@recapLine": {
+    "placeholders": {
+      "logged": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recapLineDone": "{logged} saisies sur {target}, rien à confirmer",
+  "@recapLineDone": {
+    "placeholders": {
+      "logged": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "recapNothing": "Rien à confirmer : votre journée est complète.",
+  "recapOpenDay": "Voir la frise",
+  "recapConfirm": "{count, plural, =1{Confirmer 1 entrée} other{Confirmer {count} entrées}}",
+  "@recapConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recapLater": "Plus tard",
+  "recapReview": "Revoir",
+  "recapSetting": "Récapitulatif de fin de journée",
+  "recapSettingHelp": "Chaque jour ouvré, à l'heure choisie : le temps saisi et les propositions à confirmer d'un geste. Réglé sur chaque appareil.",
+  "recapOff": "Désactivé",
+  "recapAt": "À {time}",
+  "@recapAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "recapNotificationBody": "Votre journée vous attend : vérifiez-la et confirmez les propositions.",
   "weekGrid": "Grille",
   "weekList": "Liste",
   "weekCopyPrevious": "Copier la semaine précédente",

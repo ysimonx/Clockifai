@@ -19,6 +19,7 @@ import 'core/locale_controller.dart';
 import 'core/session.dart';
 import 'core/theme.dart';
 import 'features/timer/menu_bar.dart';
+import 'features/today/day_recap.dart';
 import 'router.dart';
 
 Future<void> main() async {
@@ -70,13 +71,38 @@ class _ClockifaiAppState extends State<ClockifaiApp> {
     super.initState();
     _session.addListener(_bindCatalog);
     _bindCatalog();
+    // Fin de journée (plan 13, lot 6) : toucher la notification ouvre « Aujourd'hui » ; sur téléphone, la notification
+    // est reprogrammée quand le réglage, le fuseau ou la langue du profil changent.
+    RecapNotifications.instance.onOpen = () => _router.go('/today');
+    _session.addListener(_scheduleRecap);
+    _display.addListener(_scheduleRecap);
   }
 
   void _bindCatalog() => _catalog.bind(_session.workspaceId);
 
+  String? _recapKey;
+
+  void _scheduleRecap() {
+    final profile = _session.profile;
+    if (!_session.isSignedIn || profile == null) return;
+    final key = '${_display.dayRecap} ${_display.dayRecapTime} ${profile.timezone} ${profile.locale}';
+    if (key == _recapKey) return;
+    _recapKey = key;
+    final l = lookupAppLocalizations(Locale(profile.locale == 'en' ? 'en' : 'fr'));
+    RecapNotifications.instance.schedule(
+      enabled: _display.dayRecap,
+      time: _display.dayRecapTime,
+      timezone: profile.timezone,
+      title: l.recapTitle,
+      body: l.recapNotificationBody,
+    );
+  }
+
   @override
   void dispose() {
     _session.removeListener(_bindCatalog);
+    _session.removeListener(_scheduleRecap);
+    _display.removeListener(_scheduleRecap);
     _session.dispose();
     _catalog.dispose();
     _locale.dispose();
@@ -110,7 +136,7 @@ class _ClockifaiAppState extends State<ClockifaiApp> {
           ],
           routerConfig: _router,
           // macOS : icône du chronomètre dans la barre de menus (sans effet ailleurs).
-          builder: (context, child) => MacMenuBar(child: child!),
+          builder: (context, child) => MacMenuBar(onOpenToday: () => _router.go('/today'), child: child!),
         ),
       ),
     );

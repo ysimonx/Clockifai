@@ -33,6 +33,9 @@ sequenceDiagram
 - Projet d'une réunion : deviné d'après son titre, comme la saisie express (`parseQuick`). Projet d'une série de
   commits : celui du dépôt. Les événements d'une journée entière, annulés ou hors de la journée de travail sont
   ignorés.
+- Fin de journée (`features/today/day_recap.dart`) : à l'heure réglée (préférence de l'appareil), même calcul,
+  propositions cochées et confirmées d'un geste ; bandeau dans l'app, notification sur Mac, ligne dans la barre de
+  menus ; sur téléphone, notification programmée chaque jour ouvré (`zonedSchedule`, fuseau du profil).
 - Une proposition ignorée est mémorisée sur l'appareil par sa clé (`cal:…`, `git:…`, `habit:…`) et ne revient pas.
 
 Sources : `app/lib/features/today/`, `services/app/routes/traces.py`, `services/app/services/calendar.py`,

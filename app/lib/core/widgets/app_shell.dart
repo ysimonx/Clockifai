@@ -9,6 +9,7 @@ import '../../data/powersync/connector.dart';
 import '../../features/commands/command_palette.dart';
 import '../../features/commands/shortcuts_help.dart';
 import '../../features/time_entries/entry_dialog.dart';
+import '../../features/today/day_recap.dart';
 import '../../features/timer/timer_bar.dart';
 import '../di.dart';
 import '../guide.dart';
@@ -163,6 +164,7 @@ class _AppShellState extends State<AppShell> {
     final content = Column(children: [
       const TimerBar(),
       const Divider(height: 1),
+      const DayRecapBanner(),
       Expanded(child: widget.child),
     ]);
 

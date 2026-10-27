@@ -387,6 +387,56 @@
     }
   },
   "undo": "Undo",
+  "recapTitle": "End of day",
+  "recapLine": "{logged} entered out of {target} · {count, plural, =1{1 suggestion to confirm} other{{count} suggestions to confirm}}",
+  "@recapLine": {
+    "placeholders": {
+      "logged": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recapLineDone": "{logged} entered out of {target}, nothing to confirm",
+  "@recapLineDone": {
+    "placeholders": {
+      "logged": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "recapNothing": "Nothing to confirm: your day is complete.",
+  "recapOpenDay": "Open the timeline",
+  "recapConfirm": "{count, plural, =1{Confirm 1 entry} other{Confirm {count} entries}}",
+  "@recapConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recapLater": "Later",
+  "recapReview": "Review",
+  "recapSetting": "End-of-day summary",
+  "recapSettingHelp": "Every working day, at the chosen time: the time entered and the suggestions to confirm in one go. Set on each device.",
+  "recapOff": "Off",
+  "recapAt": "At {time}",
+  "@recapAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "recapNotificationBody": "Your day is waiting: check it and confirm the suggestions.",
   "weekGrid": "Grid",
   "weekList": "List",
   "weekCopyPrevious": "Copy previous week",

@@ -9,10 +9,11 @@ import 'package:clockifai/data/repositories/team_repository.dart';
 import 'package:clockifai/data/repositories/time_entry_repository.dart';
 import 'package:clockifai/data/repositories/workspace_repository.dart';
 import 'package:clockifai/features/today/day_plan.dart' show CalendarEvent;
+import 'package:clockifai/features/today/day_recap.dart';
 import 'package:clockifai/features/today/today_page.dart';
 import 'package:clockifai/features/today/traces.dart';
 import 'package:clockifai/l10n/app_localizations.dart';
-import 'package:drift/drift.dart' hide isNull, isNotNull;
+import 'package:drift/drift.dart' hide isNull, isNotNull, Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,7 +88,7 @@ void main() {
     }
   }
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(WidgetTester tester, {Widget? body}) async {
     tester.view.physicalSize = const Size(1400, 1200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -106,7 +107,7 @@ void main() {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: Scaffold(body: TodayPage(clock: () => DateTime(2026, 10, 26, 17, 2))),
+        home: Scaffold(body: body ?? TodayPage(clock: () => DateTime(2026, 10, 26, 17, 2))),
       ),
     ));
     await settle(tester);
@@ -156,6 +157,21 @@ void main() {
     await settle(tester);
     expect(find.text('Agenda'), findsOneWidget);
     expect(find.textContaining('Dans votre agenda, de 15:00 à 16:00'), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('fin de journée : bandeau à l’heure dite, propositions cochées, confirmées d’un geste', (tester) async {
+    await open(tester, body: Column(children: [DayRecapBanner(clock: () => DateTime(2026, 10, 26, 17, 40)), const Expanded(child: SizedBox())]));
+    expect(find.textContaining('Fin de journée · 1:30 saisies sur'), findsOneWidget);
+    expect(find.textContaining('1 proposition à confirmer'), findsOneWidget);
+    expect(prefs.dayRecapShown, '2026-10-26', reason: 'une fois par jour');
+
+    await tester.tap(find.text('Revoir'));
+    await settle(tester);
+    expect(find.widgetWithText(CheckboxListTile, 'Courriels'), findsOneWidget);
+    await tester.tap(find.text('Confirmer 1 entrée'));
+    await settle(tester);
+    expect((await tester.runAsync(today))!, hasLength(1));
     await close(tester);
   });
 

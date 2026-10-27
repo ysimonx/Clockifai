@@ -450,6 +450,95 @@ def test_task_per_session_and_no_task_settings(team):
         mode("subject")
 
 
+def _subject_kit(team, repo_name: str):
+    """Règle de rattachement d'un dépôt au projet de l'équipe, et petits outils pour envoyer une session nommée."""
+    repo = {"remote_key": f"github.com/ysimonx/{repo_name}", "cwd": f"/Users/y/dev/{repo_name}"}
+    assert api("POST", "/api/activity/rules", team["token"],
+               {"remote_key": repo["remote_key"], "project_id": team["project"]})[0] == 201
+
+    def at(minutes: float, kind: str, session: str, name: str | None = None, step: str | None = None) -> dict:
+        payload = {"task_name": name, **({"step_name": step} if step else {})}
+        return _event(kind, _ago(minutes), session, **repo, **({"payload": payload} if name else {}))
+
+    def send(*events, token: str = team["token"]) -> None:
+        assert api("POST", "/api/activity/events", token, {"events": list(events)})[0] == 202
+
+    def entry_at(minutes: float) -> dict:
+        return next(e for e in _agent_entries(team["agent"]) if e["start_at"].startswith(iso(_ago(minutes))[:16]))
+
+    def tasks() -> list[dict]:
+        _, rows = rest("GET", f"tasks?project_id=eq.{team['project']}&deleted_at=is.null&select=id,name,parent_id",
+                       SERVICE)
+        return rows
+
+    return at, send, entry_at, tasks
+
+
+def test_a_session_of_another_pilot_is_left_alone(team):
+    """L'id d'une session se lit dans code_commits : posté par un autre membre, il ne touche ni aux entrées ni aux
+    tâches de la session du pilote, et ne lui donne aucune entrée."""
+    at, send, entry_at, tasks = _subject_kit(team, "intrus")
+    session = str(uuid.uuid4())
+    send(at(260, "prompt", session), at(259.9, "session_task", session, "Audit des droits"),
+         at(259, "agent_stop", session))
+    before = entry_at(260)
+
+    autre_t, _ = team["people"]["autre"]
+    status, created = api("POST", "/api/tokens", autre_t, {"workspace_id": team["wid"], "name": "Intrus"})
+    assert status == 201, created
+    send(at(258, "prompt", session), at(257.9, "session_task", session, "Piratage"), at(257, "agent_stop", session),
+         token=created["token"])
+    assert entry_at(260) == before
+    assert _agent_entries(created["agent_id"]) == []
+    names = {t["name"] for t in tasks()}
+    assert "Audit des droits" in names and "Piratage" not in names
+
+
+def test_task_per_session_with_steps(team):
+    """Une tâche par session et des étapes : la tâche de la session reste la tâche racine, l'étape en est la
+    sous-tâche (une sous-tâche prise pour la tâche de la session faisait échouer chaque recalcul)."""
+    pilote_t, pilote = team["people"]["pilote"]
+    at, send, entry_at, tasks = _subject_kit(team, "bilan")
+    assert rest("PATCH", f"profiles?id=eq.{pilote}", pilote_t, {"claude_tasks": "session"})[0] == 200
+    try:
+        session = str(uuid.uuid4())
+        send(at(234, "prompt", session), at(233.9, "session_task", session, "Bilan T4"), at(233, "agent_stop", session))
+        send(at(232, "prompt", session), at(231.9, "session_task", session, "Bilan T4", "Collecte"),
+             at(231, "agent_stop", session))
+        send(at(230, "prompt", session), at(229.9, "session_task", session, "Bilan T4", "Analyse"),
+             at(229, "agent_stop", session))
+        entry = entry_at(234)
+        assert entry["end_at"].startswith(iso(_ago(229))[:16]), "la session est encore recalculée"
+        rows = tasks()
+        [root] = [t for t in rows if t["name"] == "Bilan T4" and t["parent_id"] is None]
+        [step] = [t for t in rows if t["id"] == entry["task_id"]]
+        assert step["parent_id"] == root["id"] and step["name"] == "Analyse"
+    finally:
+        rest("PATCH", f"profiles?id=eq.{pilote}", pilote_t, {"claude_tasks": "subject"})
+
+
+def test_a_subtask_renamed_by_hand_stays(team):
+    owner_t, _ = team["people"]["owner"]
+    at, send, entry_at, tasks = _subject_kit(team, "revue")
+    session = str(uuid.uuid4())
+    send(at(240, "prompt", session), at(239.9, "session_task", session, "Revue d'octobre", "Migration"),
+         at(239, "agent_tool", session))
+    step = entry_at(240)["task_id"]
+    [goal] = [t["parent_id"] for t in tasks() if t["id"] == step]
+    assert rest("PATCH", f"tasks?id=eq.{step}", owner_t, {"name": "Migration de la base"})[0] == 200
+    send(at(238, "agent_tool", session), at(237.9, "session_task", session, "Revue d'octobre", "Migration"),
+         at(237, "agent_stop", session))
+    assert entry_at(240)["task_id"] == step
+    assert [t["name"] for t in tasks() if t["parent_id"] == goal] == ["Migration de la base"]
+
+
+def test_a_pilot_exports_the_time_of_their_agent(team):
+    pilote_t, _ = team["people"]["pilote"]
+    status, body = api("GET", f"/api/exports/report?workspace_id={team['wid']}&user_id={team['agent']}&format=csv",
+                       pilote_t)
+    assert status == 200, body
+
+
 def test_rule_from_an_entry_reattributes_entries_without_project(team):
     session = str(uuid.uuid4())
     events = [_event("prompt", _ago(70), session, remote_key="github.com/ysimonx/fidwork"),

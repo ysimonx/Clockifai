@@ -11,13 +11,11 @@ from __future__ import annotations
 
 from flask import Blueprint, abort, g, jsonify, request
 
-from ..auth import hash_token, new_api_token, require_user, require_workspace
+from ..auth import ADMIN_ROLES, hash_token, new_api_token, require_user, require_workspace
 from ..db import connection, fetch_all
 from ..services.agents import ensure_agent
 
 bp = Blueprint("tokens", __name__)
-
-_ADMIN_ROLES = ("owner", "admin")
 
 
 @bp.post("")
@@ -41,7 +39,7 @@ def create_token():
 @require_user
 @require_workspace()
 def list_tokens():
-    everyone = g.workspace_role in _ADMIN_ROLES
+    everyone = g.workspace_role in ADMIN_ROLES
     rows = fetch_all(
         """
         select t.id, t.name, t.user_id, m.display_name as user_name, t.created_at, t.last_used_at
@@ -63,7 +61,7 @@ def list_tokens():
 @require_user
 @require_workspace()
 def revoke_token(token_id: str):
-    everyone = g.workspace_role in _ADMIN_ROLES
+    everyone = g.workspace_role in ADMIN_ROLES
     with connection() as conn:
         n = conn.execute(
             "update clockifai_private.api_tokens set revoked_at = now() "

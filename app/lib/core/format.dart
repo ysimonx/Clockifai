@@ -25,6 +25,18 @@ String formatDecimalHours(int seconds, String locale) =>
 String formatMoney(num amount, String currency, String locale) =>
     NumberFormat.simpleCurrency(locale: locale, name: currency).format(amount);
 
+/// Nombre saisi avec une virgule ou un point (« 7,5 »), ou null.
+double? parseDecimal(String text) => double.tryParse(text.trim().replaceAll(',', '.'));
+
+/// Montant saisi en unités (« 85,50 ») converti en centimes, ou null.
+int? textToCents(String text) => switch (parseDecimal(text)) { final v? => (v * 100).round(), null => null };
+
+/// Centimes en texte à modifier (« 85.50 ») ; vide sans montant.
+String centsToText(int? cents) => cents == null ? '' : (cents / 100).toStringAsFixed(2);
+
+/// Quantité sans décimale inutile : « 7 », « 7.5 » (une décimale au plus).
+String formatQuantity(num v) => v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
+
 /// Interprète une durée saisie : "1.5", "1,5", "1:30", "90m", "2h", "1h30".
 int? parseDuration(String input) {
   final s = input.trim().toLowerCase().replaceAll(' ', '');
@@ -41,13 +53,17 @@ int? parseDuration(String input) {
 }
 
 /// Début de semaine (minuit local) ; [weekStart] ISO : 1 = lundi … 7 = dimanche.
-DateTime startOfWeek(DateTime date, int weekStart) {
-  final d = DateTime(date.year, date.month, date.day);
-  final diff = (d.weekday - weekStart) % 7;
-  return d.subtract(Duration(days: diff));
-}
+DateTime startOfWeek(DateTime date, int weekStart) => addDays(date, -((date.weekday - weekStart) % 7));
 
 DateTime startOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
+
+/// Le jour [days] jours après [d], à minuit : pas 24 h plus tard, un jour de changement d'heure en compte 23 ou 25.
+DateTime addDays(DateTime d, int days) => DateTime(d.year, d.month, d.day + days);
+
+/// Jour sans heure en texte `yyyy-MM-dd`, comme les colonnes `date` de la base (`period_start`, `start_date`…).
+String dayKey(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+DateTime parseDay(String s) => DateTime.parse(s);
 
 bool sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 

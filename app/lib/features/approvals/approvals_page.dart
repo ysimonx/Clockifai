@@ -11,13 +11,12 @@ import '../../core/team_rights.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
-import '../../data/repositories/modules_repository.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/time_entries_page.dart';
 import '../timesheet/week_tools.dart' show plannedMinutes;
-import '../today/day_plan.dart' show addDays;
 import 'late_board.dart';
 import 'submission_bar.dart';
+import '../../core/widgets/teammates.dart' show memberName;
 
 /// Validation des feuilles de temps soumises : managers (tout le workspace), chefs d'équipe (leur périmètre).
 class ApprovalsPage extends StatefulWidget {
@@ -93,8 +92,8 @@ class _SubmissionCard extends StatelessWidget {
     return Card(
       child: ExpansionTile(
         shape: const Border(),
-        leading: CircleAvatar(child: Text((member?.displayName.isNotEmpty ?? false) ? member!.displayName[0].toUpperCase() : '?')),
-        title: Text(member?.displayName ?? sub.userId.substring(0, 8)),
+        leading: CircleAvatar(child: Text(memberName(member).characters.first.toUpperCase())),
+        title: Text(memberName(member)),
         subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${fmt.format(start)} – ${fmt.format(end)} · ${formatHm(sub.totalSeconds ?? 0)}'),
           // Écart au planning de la période (plan 13, lot 8).
@@ -144,7 +143,7 @@ class _SubmissionCard extends StatelessWidget {
               workspaceId: sub.workspaceId,
               userId: sub.userId,
               from: start,
-              to: end.add(const Duration(days: 1)),
+              to: addDays(end, 1),
             ),
             builder: (context, snap) {
               final rows = snap.data ?? const <EntryRow>[];

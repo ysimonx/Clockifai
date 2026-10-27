@@ -19,6 +19,9 @@ from datetime import date, timedelta
 from typing import Any
 
 import anthropic
+import psycopg
+
+from ..auth import MANAGER_ROLES, readable_user_ids
 
 MAX_TURNS = 8
 MAX_QUESTIONS_PER_HOUR = 40
@@ -123,18 +126,9 @@ class Scope:
 
 
 def scope_for(conn, workspace_id: str, user_id: str, role: str) -> Scope:
-    if role in ("owner", "admin", "manager"):
+    if role in MANAGER_ROLES:
         return Scope(workspace_id, None)
-    rows = conn.execute(
-        """
-        select user_id::text as id from public.team_scope where workspace_id = %(wid)s and manager_id = %(uid)s
-        union
-        select user_id::text from public.workspace_members
-         where workspace_id = %(wid)s and kind = 'agent' and agent_owner_id = %(uid)s and deleted_at is null
-        """,
-        {"wid": workspace_id, "uid": user_id},
-    ).fetchall()
-    return Scope(workspace_id, sorted({user_id, *(r["id"] for r in rows)}))
+    return Scope(workspace_id, readable_user_ids(conn, workspace_id, user_id))
 
 
 def _day(value: str) -> date:
@@ -250,6 +244,13 @@ def find_entries(conn, scope: Scope, args: dict, tz: str) -> dict:
 
 
 def run_tool(conn, scope: Scope, tz: str, name: str, args: dict, proposals: list[dict]) -> Any:
+    # Point de sauvegarde : un id mal formé donné par Claude (psycopg.DataError) lui revient en erreur d'outil sans
+    # avorter la transaction des appels suivants.
+    with conn.transaction():
+        return _run_tool(conn, scope, tz, name, args, proposals)
+
+
+def _run_tool(conn, scope: Scope, tz: str, name: str, args: dict, proposals: list[dict]) -> Any:
     if name == "list_catalog":
         return list_catalog(conn, scope, args)
     if name == "time_summary":
@@ -293,7 +294,7 @@ def ask(client: anthropic.Anthropic, conn, scope: Scope, *, question: str, histo
     """Une question, avec l'historique de la conversation (textes seulement) ; renvoie la réponse et les propositions."""
     messages: list[dict] = []
     for h in history[-10:]:
-        if h.get("role") in ("user", "assistant") and isinstance(h.get("text"), str) and h["text"].strip():
+        if isinstance(h, dict) and h.get("role") in ("user", "assistant") and isinstance(h.get("text"), str) and h["text"].strip():
             messages.append({"role": h["role"], "content": h["text"][:4000]})
     if messages and messages[0]["role"] != "user":
         messages.pop(0)
@@ -325,7 +326,7 @@ def ask(client: anthropic.Anthropic, conn, scope: Scope, *, question: str, histo
                 result = run_tool(conn, scope, tz, use.name, dict(use.input), proposals)
                 results.append({"type": "tool_result", "tool_use_id": use.id,
                                 "content": json.dumps(result, ensure_ascii=False, default=str)})
-            except (ValueError, KeyError) as err:
+            except (ValueError, KeyError, psycopg.DataError) as err:
                 results.append({"type": "tool_result", "tool_use_id": use.id, "content": f"Erreur : {err}",
                                 "is_error": True})
         messages.append({"role": "user", "content": results})

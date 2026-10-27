@@ -3,25 +3,24 @@
 GET /api/exports/report?workspace_id=&from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|pdf
     [&user_id=][&project_id=][&client_id=][&billable=true|false][&member_kind=human|agent]
 
-Un membre n'exporte que ses propres entrées ; un chef d'équipe, les siennes et celles de son
-périmètre ; manager+ peut exporter toute l'équipe.
+Un membre n'exporte que ses propres entrées et celles de son agent Claude ; un chef d'équipe, aussi celles de son
+périmètre ; manager+ peut exporter toute l'équipe. Jours et heures dans le fuseau de son profil.
 """
 
 from __future__ import annotations
 
 import csv
 import io
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta, tzinfo
 
 from flask import Blueprint, Response, abort, g, request
 
-from ..auth import managed_user_ids, require_user, require_workspace
-from ..db import fetch_all
+from ..auth import MANAGER_ROLES, readable_user_ids, require_user, require_workspace
+from ..db import connection
 from ..services.exporters import ai_cost, build_pdf, build_xlsx, member_kind_label
+from ..services.profiles import user_tz
 
 bp = Blueprint("exports", __name__)
-
-_MANAGER_ROLES = ("owner", "admin", "manager")
 
 
 def _parse_date(value: str | None, default: date) -> date:
@@ -33,7 +32,7 @@ def _parse_date(value: str | None, default: date) -> date:
         abort(400, f"invalid date: {value}")
 
 
-def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> list[dict]:
+def _detailed_rows(conn, workspace_id: str, start: date, end: date, tz: tzinfo, filters: dict) -> list[dict]:
     sql = """
         select te.id, te.start_at, te.end_at, te.duration_seconds, te.description, te.billable,
                -- Entrée saisie avant que son projet ou son membre ait un taux : le taux actuel (catalog.entryRate).
@@ -61,7 +60,9 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
          where te.workspace_id = %(wid)s and te.deleted_at is null and te.end_at is not null
            and te.start_at >= %(start)s and te.start_at < %(end)s
     """
-    params: dict = {"wid": workspace_id, "start": start, "end": end + timedelta(days=1)}
+    # Bornes au minuit du fuseau de la personne, pas à celui de la session Postgres.
+    params: dict = {"wid": workspace_id, "start": datetime.combine(start, time.min, tz),
+                    "end": datetime.combine(end + timedelta(days=1), time.min, tz)}
     for key in ("user_id", "project_id"):
         if filters.get(key):
             sql += f" and te.{key} = %({key})s"
@@ -80,28 +81,28 @@ def _detailed_rows(workspace_id: str, start: date, end: date, filters: dict) -> 
         params["member_kind"] = filters["member_kind"]
     sql += (" group by te.id, wm.display_name, wm.email, wm.kind, wm.hourly_rate_cents, p.name, p.hourly_rate_cents,"
             " c.name, t.name, pt.id, pt.name order by te.start_at")
-    return fetch_all(sql, params)
+    return conn.execute(sql, params).fetchall()
 
 
 @bp.get("/report")
 @require_user
 @require_workspace("member")
 def export_report():
-    today = date.today()
-    start = _parse_date(request.args.get("from"), today.replace(day=1))
-    end = _parse_date(request.args.get("to"), today)
     fmt = request.args.get("format", "csv").lower()
     filters = {k: request.args.get(k) for k in ("user_id", "project_id", "client_id", "billable", "member_kind")}
-
-    # Un membre ne voit que ses entrées ; un chef d'équipe, aussi celles de son périmètre.
-    if g.workspace_role not in _MANAGER_ROLES:
-        allowed = [g.user.id, *managed_user_ids(g.workspace_id, g.user.id)]
-        if filters["user_id"] and filters["user_id"] not in allowed:
-            abort(403, "user outside your team")
-        if not filters["user_id"]:
-            filters["user_ids"] = allowed
-
-    rows = _detailed_rows(g.workspace_id, start, end, filters)
+    with connection() as conn:
+        tz = user_tz(conn, g.user.id)
+        today = datetime.now(tz).date()
+        start = _parse_date(request.args.get("from"), today.replace(day=1))
+        end = _parse_date(request.args.get("to"), today)
+        # Un membre ne voit que ses entrées et celles de son agent ; un chef d'équipe, aussi celles de son périmètre.
+        if g.workspace_role not in MANAGER_ROLES:
+            allowed = readable_user_ids(conn, g.workspace_id, g.user.id)
+            if filters["user_id"] and filters["user_id"] not in allowed:
+                abort(403, "user outside your team")
+            if not filters["user_id"]:
+                filters["user_ids"] = allowed
+        rows = _detailed_rows(conn, g.workspace_id, start, end, tz, filters)
     filename = f"clockifai-{start.isoformat()}_{end.isoformat()}"
 
     if fmt == "csv":
@@ -114,7 +115,7 @@ def export_report():
             writer.writerow([
                 r["user_name"], r["user_email"], member_kind_label(r), r["client_name"] or "", r["project_name"] or "",
                 r["task_name"] or "", r.get("subtask_name") or "", r["description"], r["tags"],
-                _fmt_dt(r["start_at"]), _fmt_dt(r["end_at"]),
+                _fmt_dt(r["start_at"], tz), _fmt_dt(r["end_at"], tz),
                 f"{(r['duration_seconds'] or 0) / 3600:.2f}".replace(".", ","),
                 "oui" if r["billable"] else "non",
                 f"{(r['hourly_rate_cents'] or 0) / 100:.2f}".replace(".", ",") if r["hourly_rate_cents"] else "",
@@ -125,19 +126,19 @@ def export_report():
         return _file_response(data, f"{filename}.csv", "text/csv; charset=utf-8")
 
     if fmt == "xlsx":
-        data = build_xlsx(rows, start, end)
+        data = build_xlsx(rows, start, end, tz=tz)
         return _file_response(data, f"{filename}.xlsx",
                               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
     if fmt == "pdf":
-        data = build_pdf(rows, start, end, workspace_id=g.workspace_id)
+        data = build_pdf(rows, start, end, tz=tz)
         return _file_response(data, f"{filename}.pdf", "application/pdf")
 
     abort(400, "format must be csv, xlsx or pdf")
 
 
-def _fmt_dt(value: datetime | None) -> str:
-    return value.astimezone().strftime("%Y-%m-%d %H:%M") if value else ""
+def _fmt_dt(value: datetime | None, tz: tzinfo) -> str:
+    return value.astimezone(tz).strftime("%Y-%m-%d %H:%M") if value else ""
 
 
 def _file_response(data: bytes, filename: str, mimetype: str) -> Response:

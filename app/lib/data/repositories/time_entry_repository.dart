@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../core/format.dart' show addDays;
 import '../drift/database.dart';
 
 /// Une entrée de temps, les identifiants de ses tags et, pour une entrée d'agent Claude, son usage IA (plan 10, D17).
@@ -263,7 +264,7 @@ class TimeEntryRepository {
   Future<void> stop(String entryId, {DateTime? at}) async {
     final end = (at ?? DateTime.now()).toUtc();
     final entry = await (db.select(db.timeEntries)..where((t) => t.id.equals(entryId))).getSingleOrNull();
-    if (entry == null) return;
+    if (entry == null || entry.endAt != null) return; // déjà arrêté (deux clics, deux appareils) : sa fin reste
     // Un chronomètre ne peut pas finir avant d'avoir commencé (horloges désynchronisées).
     final safeEnd = end.isBefore(entry.startAt) ? entry.startAt : end;
     await (db.update(db.timeEntries)..where((t) => t.id.equals(entryId)))
@@ -465,7 +466,7 @@ class TimeEntryRepository {
     String? createdBy,
   }) async {
     final dayStart = DateTime(dayLocal.year, dayLocal.month, dayLocal.day);
-    final dayEnd = dayStart.add(const Duration(days: 1));
+    final dayEnd = addDays(dayStart, 1);
     final all = await (db.select(db.timeEntries)
           ..where((t) =>
               t.workspaceId.equals(workspaceId) &
@@ -484,7 +485,7 @@ class TimeEntryRepository {
     await db.transaction(() async {
       if (delta > 0) {
         final lastEnd = all.isEmpty ? null : all.map((e) => e.endAt!).reduce((a, b) => a.isAfter(b) ? a : b);
-        var start = lastEnd?.toLocal() ?? dayStart.add(const Duration(hours: 9));
+        var start = lastEnd?.toLocal() ?? DateTime(dayStart.year, dayStart.month, dayStart.day, 9);
         if (!start.add(Duration(seconds: delta)).isBefore(dayEnd)) {
           start = dayEnd.subtract(Duration(seconds: delta));
         }
@@ -505,7 +506,9 @@ class TimeEntryRepository {
           if (toRemove <= 0) break;
           final len = e.endAt!.difference(e.startAt).inSeconds;
           if (len <= toRemove) {
-            await delete(e.id);
+            // Pas de delete() ici : il ouvre sa propre transaction, imbriquée dans celle-ci (refusé par sqlite_async).
+            await (db.update(db.timeEntries)..where((t) => t.id.equals(e.id)))
+                .write(TimeEntriesCompanion(deletedAt: Value(nowUtc())));
             toRemove -= len;
           } else {
             final newEnd = e.endAt!.subtract(Duration(seconds: toRemove));

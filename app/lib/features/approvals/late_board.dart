@@ -12,10 +12,8 @@ import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
-import '../../data/repositories/modules_repository.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../timesheet/week_tools.dart' show plannedMinutes;
-import '../today/day_plan.dart' show addDays;
 
 /// Équipe (plans/13-ux-moderne.md, lot 8) : qui n'a pas soumis sa semaine dernière, son temps face au planning, et
 /// « Relancer » (une relance par personne et par semaine, affichée dans son app).
@@ -35,7 +33,8 @@ class LateBoard extends StatelessWidget {
     final weekEnd = addDays(week, 7);
     final people = [
       for (final m in rights.visibleMembers)
-        if (!catalog.isAgent(m.userId) && m.userId != session.userId && rights.canApproveTimesheetOf(m.userId)) m,
+        if (m.status == 'active' && !catalog.isAgent(m.userId) && m.userId != session.userId
+            && rights.canApproveTimesheetOf(m.userId)) m,
     ];
     if (people.isEmpty) return const SizedBox.shrink();
     return StreamBuilder<List<TimesheetSubmission>>(

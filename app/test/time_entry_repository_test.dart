@@ -40,6 +40,14 @@ void main() {
     expect(a.durationSeconds, 3600);
   });
 
+  test('arrêter un chronomètre déjà arrêté ne change pas sa fin (deux clics, deux appareils)', () async {
+    final id = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'A'), at: DateTime.utc(2026, 10, 11, 8));
+    await repo.stop(id, at: DateTime.utc(2026, 10, 11, 9));
+    await repo.stop(id, at: DateTime.utc(2026, 10, 11, 10));
+    final e = await (db.select(db.timeEntries)..where((t) => t.id.equals(id))).getSingle();
+    expect(e.endAt, DateTime.utc(2026, 10, 11, 9));
+  });
+
   test('limite 2 : deux chronomètres tournent en parallèle, les plus récents d\'abord', () async {
     final a = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'A'), at: DateTime.utc(2026, 10, 11, 8), maxRunning: 2);
     final b = await repo.start(workspaceId: ws, userId: me, draft: EntryDraft(description: 'B'), at: DateTime.utc(2026, 10, 11, 9), maxRunning: 2);
@@ -302,9 +310,13 @@ void main() {
     expect(groups.first.children.map((c) => (c.label, c.seconds ~/ 60)), [('Écran des projets', 45), ('Migration', 30)],
         reason: 'le temps posé sur la tâche elle-même compte dans la tâche, pas dans une sous-tâche');
 
-    await catalogRepo.deleteTask(plan);
+    final before = await catalogRepo.deleteTask(plan);
     await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(catalog.task(migration), isNull, reason: 'les sous-tâches partent avec leur tâche');
+    expect(before.map((t) => t.id), unorderedEquals([plan, migration, ecran]));
+    await catalogRepo.restoreTasks(before);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(catalog.taskPath(migration), 'Plan 16 · Sous-tâches › Migration', reason: 'Annuler les rend');
     catalog.dispose();
   });
 

@@ -426,7 +426,8 @@ def collect(data: dict, now: float) -> list[dict]:
             events.append(event)
         if task_tool:
             # Seule exception à la liste blanche pour tool_input : l'objectif et l'étape que Claude a choisi d'envoyer.
-            tool_input = data.get("tool_input") or {}
+            tool_input = data.get("tool_input")
+            tool_input = tool_input if isinstance(tool_input, dict) else {}
             name = " ".join(str(tool_input.get("name") or "").split())[:TASK_NAME_MAX]
             step = " ".join(str(tool_input.get("step") or "").split())[:TASK_NAME_MAX]
             if name:
@@ -449,7 +450,8 @@ def collect(data: dict, now: float) -> list[dict]:
     # Commits (D13) : après une commande Bash et au Stop. Une commande git qui en crée les revendique.
     # SessionStart pose le point de départ du dossier.
     if hook in ("SessionStart", "Stop") or (hook == "PostToolUse" and data.get("tool_name") == "Bash"):
-        command = (data.get("tool_input") or {}).get("command") if hook == "PostToolUse" else None
+        tool_input = data.get("tool_input") if hook == "PostToolUse" else None
+        command = tool_input.get("command") if isinstance(tool_input, dict) else None
         claimed = git_write_dirs(command, cwd) if isinstance(command, str) else []
         started = now - duration_ms / 1000 if duration_ms is not None else None
         here = os.path.normpath(cwd)

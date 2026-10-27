@@ -13,7 +13,6 @@ import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
-import '../../data/repositories/modules_repository.dart';
 
 String invoiceStatusLabel(BuildContext context, String status) {
   final l = context.l10n;
@@ -95,7 +94,7 @@ class InvoicesPage extends StatelessWidget {
     if (clients.isEmpty) return showSnack(context, l.noClients);
     var clientId = clients.first.id;
     final now = DateTime.now();
-    var range = DateTimeRange(start: DateTime(now.year, now.month - 1), end: DateTime(now.year, now.month).subtract(const Duration(days: 1)));
+    var range = DateTimeRange(start: DateTime(now.year, now.month - 1), end: DateTime(now.year, now.month, 0));
     final tax = TextEditingController(text: ws.defaultTaxPercent.toString());
     var byTask = true;
     final ok = await showDialog<bool>(
@@ -147,12 +146,12 @@ class InvoicesPage extends StatelessWidget {
       userId: session.userId!,
       clientId: clientId,
       from: startOfDay(range.start),
-      to: startOfDay(range.end).add(const Duration(days: 1)),
+      to: addDays(range.end, 1),
       currency: client?.currencyOverride ?? ws.currency,
-      taxPercent: double.tryParse(tax.text.replaceAll(',', '.')) ?? ws.defaultTaxPercent,
-      projectNames: {for (final p in catalog.projects) p.id: p.name},
+      taxPercent: parseDecimal(tax.text) ?? ws.defaultTaxPercent,
+      projectNames: catalog.projectNames,
       byTask: byTask,
-      taskNames: {for (final t in catalog.tasks) t.id: catalog.taskPath(t.id)!},
+      taskNames: catalog.taskPaths,
     );
     if (!context.mounted) return;
     if (id == null) return showSnack(context, l.nothingToInvoice);
@@ -311,7 +310,7 @@ class _InvoiceDialog extends StatelessWidget {
     final l = context.l10n;
     final desc = TextEditingController(text: it?.description ?? '');
     final qty = TextEditingController(text: (it?.quantity ?? 1).toString());
-    final price = TextEditingController(text: ((it?.unitPriceCents ?? 0) / 100).toStringAsFixed(2));
+    final price = TextEditingController(text: centsToText(it?.unitPriceCents ?? 0));
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -333,8 +332,8 @@ class _InvoiceDialog extends StatelessWidget {
       ),
     );
     if (ok != true) return;
-    final q = double.tryParse(qty.text.replaceAll(',', '.')) ?? 1;
-    final p = ((double.tryParse(price.text.replaceAll(',', '.')) ?? 0) * 100).round();
+    final q = parseDecimal(qty.text) ?? 1;
+    final p = textToCents(price.text) ?? 0;
     await modulesRepo.saveItem(
       inv.workspaceId,
       inv.id,
@@ -374,7 +373,7 @@ class _PercentField extends StatelessWidget {
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(labelText: label, suffixText: '%'),
         onFieldSubmitted: (v) {
-          final d = double.tryParse(v.replaceAll(',', '.'));
+          final d = parseDecimal(v);
           if (d != null && d >= 0 && d <= 100) onChanged(d);
         },
       );

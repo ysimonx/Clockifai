@@ -67,9 +67,9 @@ class _ReportsPageState extends State<ReportsPage> {
     final ws = startOfWeek(now, weekStart);
     switch (_preset) {
       case RangePreset.thisWeek:
-        return DateTimeRange(start: ws, end: ws.add(const Duration(days: 7)));
+        return DateTimeRange(start: ws, end: addDays(ws, 7));
       case RangePreset.lastWeek:
-        return DateTimeRange(start: ws.subtract(const Duration(days: 7)), end: ws);
+        return DateTimeRange(start: addDays(ws, -7), end: ws);
       case RangePreset.thisMonth:
         return DateTimeRange(start: DateTime(now.year, now.month), end: DateTime(now.year, now.month + 1));
       case RangePreset.lastMonth:
@@ -77,8 +77,8 @@ class _ReportsPageState extends State<ReportsPage> {
       case RangePreset.thisYear:
         return DateTimeRange(start: DateTime(now.year), end: DateTime(now.year + 1));
       case RangePreset.custom:
-        final c = _custom ?? DateTimeRange(start: ws, end: ws.add(const Duration(days: 6)));
-        return DateTimeRange(start: startOfDay(c.start), end: startOfDay(c.end).add(const Duration(days: 1)));
+        final c = _custom ?? DateTimeRange(start: ws, end: addDays(ws, 6));
+        return DateTimeRange(start: startOfDay(c.start), end: addDays(c.end, 1));
     }
   }
 
@@ -364,7 +364,7 @@ class _ReportsPageState extends State<ReportsPage> {
           setState(() => _preset = p!);
         },
       ),
-      Text('${fmt.format(range.start)} – ${fmt.format(range.end.subtract(const Duration(days: 1)))}', style: Theme.of(context).textTheme.bodySmall),
+      Text('${fmt.format(range.start)} – ${fmt.format(addDays(range.end, -1))}', style: Theme.of(context).textTheme.bodySmall),
       // Humains / agents : quand des agents Claude sont visibles (ou si le filtre est posé, pour pouvoir le retirer).
       if (rights.seesOthers && (_kind != MemberKind.all || rights.visibleMembers.any((m) => catalog.isAgent(m.userId))))
         DropdownButton<MemberKind>(
@@ -429,7 +429,7 @@ class _ReportsPageState extends State<ReportsPage> {
     final session = context.read<SessionController>();
     final catalog = context.read<CatalogController>();
     final from = DateFormat('yyyy-MM-dd').format(range.start);
-    final to = DateFormat('yyyy-MM-dd').format(range.end.subtract(const Duration(days: 1)));
+    final to = dayKey(addDays(range.end, -1));
     final name = 'clockifai-$from-$to';
     try {
       if (fmt == 'csv-local') {
@@ -443,7 +443,7 @@ class _ReportsPageState extends State<ReportsPage> {
         for (final r in rows) {
           final e = r.entry;
           csv.writeln([
-            q(catalog.memberOf(e.userId)?.displayName ?? ''),
+            q(memberName(catalog.memberOf(e.userId))),
             catalog.isAgent(e.userId) ? 'agent' : 'human',
             q(catalog.clientOfProject(e.projectId)?.name ?? ''),
             q(catalog.project(e.projectId)?.name ?? ''),

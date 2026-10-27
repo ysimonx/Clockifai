@@ -10,6 +10,31 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Corrigé
+
+- **Exports Excel et PDF** : heures dans le fuseau de votre profil (elles étaient décalées d'une ou deux heures), et
+  une entrée commencée après minuit compte pour le bon jour ; un membre exporte aussi le temps de son agent Claude.
+- **Chronomètre** : démarrer un chronomètre arrête l'ancien même quand celui-ci est verrouillé par une approbation
+  (le nouveau était perdu).
+- **Droits** : une demande d'absence ne peut plus s'appuyer sur la politique d'un autre espace ; seul un
+  propriétaire nomme un propriétaire ; une relance ne peut plus être effacée par la personne relancée ; factures et
+  tags restent dans leur espace.
+- **Aujourd'hui, saisie express et récapitulatif** : les règles de l'espace s'appliquent (projet ou description
+  obligatoire, période verrouillée ou approuvée), un double clic ne crée plus d'entrée en double, une saisie faite en
+  regardant un autre jour ne se pose plus sur les entrées du jour, et une entrée verrouillée ne se déplace plus.
+- **Chronomètres** : le panneau des chronomètres en cours suit les arrêts ; arrêter deux fois ne rallonge plus une
+  entrée.
+- **Semaines** : la navigation et les totaux ne se décalent plus au changement d'heure (semaine commençant le
+  dimanche, Planning, Calendrier, Rapports).
+- **Entrées** : le menu ⋮ ne propose plus de modifier ou supprimer une entrée verrouillée ; l'assistant n'applique
+  ses propositions qu'aux entrées que vous pouvez modifier.
+- **Projets** : supprimer une tâche se rattrape avec Annuler.
+- **Chef d'équipe** : le Planning montre les affectations et les absences de son équipe ; « Qui n'a pas soumis » et
+  le Planning ignorent les personnes désactivées.
+- **Claude Code** : une session ne peut plus être modifiée par un autre membre ; « Une tâche par session » avec des
+  étapes ne bloque plus le chronomètre de Claude ; une sous-tâche renommée à la main reste celle de l'entrée ; le
+  plugin résiste à un poste dont la langue n'est pas en UTF-8 (`claude plugin update clockifai@clockifai`).
+
 ## [0.2.5] — 2026-10-27
 
 ### Ajouté

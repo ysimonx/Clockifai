@@ -30,8 +30,7 @@ String groupLineKey(DateTime day, EntryGroup group) => 'g:$day ${group.key}';
 
 /// Mêmes conditions que le dialogue d'entrée : le serveur refuserait une entrée verrouillée ou d'une période close.
 bool entryEditable(SessionController session, TeamRights rights, TimeEntry e) {
-  final lockDate = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
-  final locked = !session.isAdmin && (e.locked || (lockDate != null && e.startAt.toLocal().isBefore(lockDate)));
+  final locked = (e.locked && !session.isAdmin) || inLockedPeriod(session, e.startAt.toLocal());
   return !locked && rights.canEditTimeOf(e.userId);
 }
 
@@ -46,7 +45,6 @@ class EntrySelection extends ChangeNotifier {
   bool get isActive => _ids.isNotEmpty;
   String? get cursor => _cursor;
   EntryLine? get cursorLine => _lines.where((l) => l.key == _cursor).firstOrNull;
-  bool isSelected(String entryId) => _ids.contains(entryId);
 
   /// Les entrées sélectionnées, dans l'ordre affiché.
   List<EntryRow> get selectedRows => [

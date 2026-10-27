@@ -542,12 +542,6 @@ abstract class AppLocalizations {
   /// **'Journée type par défaut : {start} – {end}'**
   String journalTypicalDefault(String start, String end);
 
-  /// No description provided for @journalSelectHint.
-  ///
-  /// In fr, this message translates to:
-  /// **'Choisissez un bloc, ou glissez sur la ligne « Vous » pour en créer un.'**
-  String get journalSelectHint;
-
   /// No description provided for @journalDescriptionHint.
   ///
   /// In fr, this message translates to:
@@ -1914,12 +1908,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{count, plural, =1{1 entrée ajoutée d\'après le planning} other{{count} entrées ajoutées d\'après le planning}}'**
   String weekFilled(int count);
-
-  /// No description provided for @weekPlanned.
-  ///
-  /// In fr, this message translates to:
-  /// **'Prévu : {duration}'**
-  String weekPlanned(String duration);
 
   /// No description provided for @weekReviewTitle.
   ///
@@ -3984,18 +3972,6 @@ abstract class AppLocalizations {
   /// **'Rechercher ou créer un tag'**
   String get searchTags;
 
-  /// No description provided for @sectionManage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Gestion'**
-  String get sectionManage;
-
-  /// No description provided for @sectionTeam.
-  ///
-  /// In fr, this message translates to:
-  /// **'Équipe'**
-  String get sectionTeam;
-
   /// No description provided for @selectAll.
   ///
   /// In fr, this message translates to:
@@ -4775,6 +4751,24 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Sans tâche'**
   String get noTask;
+
+  /// No description provided for @periodLocked.
+  ///
+  /// In fr, this message translates to:
+  /// **'Période verrouillée : seule une personne administratrice peut y saisir du temps.'**
+  String get periodLocked;
+
+  /// No description provided for @periodApproved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Période déjà approuvée : demandez sa réouverture pour y ajouter du temps.'**
+  String get periodApproved;
+
+  /// No description provided for @taskDeleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tâche « {name} » supprimée, avec ses sous-tâches ; ses entrées restent'**
+  String taskDeleted(String name);
 }
 
 class _AppLocalizationsDelegate

@@ -286,10 +286,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get journalSelectHint =>
-      'Pick a block, or drag across the “You” line to create one.';
-
-  @override
   String get journalDescriptionHint => 'What did you do?';
 
   @override
@@ -1136,11 +1132,6 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 entry added from the schedule',
     );
     return '$_temp0';
-  }
-
-  @override
-  String weekPlanned(String duration) {
-    return 'Planned: $duration';
   }
 
   @override
@@ -2406,12 +2397,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchTags => 'Search or create a tag';
 
   @override
-  String get sectionManage => 'Manage';
-
-  @override
-  String get sectionTeam => 'Team';
-
-  @override
   String get selectAll => 'Select all';
 
   @override
@@ -2853,4 +2838,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noTask => 'No task';
+
+  @override
+  String get periodLocked =>
+      'Locked period: only an administrator can enter time there.';
+
+  @override
+  String get periodApproved =>
+      'Period already approved: ask for it to be reopened to add time.';
+
+  @override
+  String taskDeleted(String name) {
+    return 'Task “$name” deleted, with its subtasks; its entries remain';
+  }
 }

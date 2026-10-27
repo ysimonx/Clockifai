@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Supabase, UserAttri
 
 import '../../core/di.dart';
 import '../../core/display_prefs.dart';
+import '../../core/format.dart' show parseDecimal;
 import '../../core/guide.dart';
 import '../../core/launch_at_login.dart';
 import '../../core/l10n.dart';
@@ -648,7 +649,7 @@ class _BillingSettingsState extends State<_BillingSettings> {
                   companyName: Value(_company.text.trim().isEmpty ? null : _company.text.trim()),
                   companyDetails: Value(_details.text.trim().isEmpty ? null : _details.text.trim()),
                   invoicePrefix: Value(_prefix.text.trim().isEmpty ? 'F' : _prefix.text.trim()),
-                  defaultTaxPercent: Value(double.tryParse(_tax.text.replaceAll(',', '.')) ?? 20),
+                  defaultTaxPercent: Value(parseDecimal(_tax.text) ?? 20),
                   invoiceDueDays: Value(int.tryParse(_due.text) ?? 30),
                 ));
                 if (context.mounted) showSnack(context, l.saved);
@@ -684,9 +685,10 @@ class _KioskDevicesDialogState extends State<_KioskDevicesDialog> {
   Future<void> _load() async {
     try {
       final res = await ServicesApi.get('/api/kiosk/devices', {'workspace_id': widget.workspaceId});
+      if (!mounted) return;
       setState(() => _devices = (res['devices'] as List).cast<Map<String, dynamic>>());
     } catch (e) {
-      setState(() => _error = context.l10n.onlineOnly);
+      if (mounted) setState(() => _error = context.l10n.onlineOnly);
     }
   }
 
@@ -726,7 +728,12 @@ class _KioskDevicesDialogState extends State<_KioskDevicesDialog> {
                 tooltip: l.revoke,
                 icon: const Icon(Icons.delete_outline),
                 onPressed: () async {
-                  await ServicesApi.delete('/api/kiosk/devices/${d['id']}', {'workspace_id': widget.workspaceId});
+                  try {
+                    await ServicesApi.delete('/api/kiosk/devices/${d['id']}', {'workspace_id': widget.workspaceId});
+                  } catch (_) {
+                    if (context.mounted) showSnack(context, l.onlineOnly);
+                    return;
+                  }
                   await _load();
                 },
               ),

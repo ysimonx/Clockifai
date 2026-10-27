@@ -14,7 +14,6 @@ import '../../core/widgets/teammates.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/entry_dialog.dart';
 import '../timesheet/week_tools.dart';
-import '../today/day_plan.dart' show dayKey;
 
 /// Vue calendrier (semaine sur grand écran, jour sur mobile) : les entrées sont des blocs
 /// positionnés sur la grille horaire ; un clic sur un créneau vide crée une entrée.
@@ -53,21 +52,21 @@ class _CalendarPageState extends State<CalendarPage> {
     final first = wide ? startOfWeek(_anchor, ws.weekStart) : startOfDay(_anchor);
     final count = wide ? 7 : 1;
     final days = [for (var i = 0; i < count; i++) DateTime(first.year, first.month, first.day + i)];
-    final end = days.last.add(const Duration(days: 1));
+    final end = addDays(days.last, 1);
     final locale = context.localeTag;
 
     return PageScaffold(
       title: l.navWeek,
       maxWidth: 1400,
       actions: [
-        IconButton(onPressed: () => setState(() => _anchor = _anchor.subtract(Duration(days: count))), icon: const Icon(Icons.chevron_left)),
+        IconButton(onPressed: () => setState(() => _anchor = addDays(_anchor, -count)), icon: const Icon(Icons.chevron_left)),
         TextButton(
           onPressed: () => setState(() => _anchor = DateTime.now()),
           child: Text(wide
               ? '${DateFormat.MMMd(locale).format(days.first)} – ${DateFormat.MMMd(locale).format(days.last)}'
               : DateFormat.MMMEd(locale).format(days.first)),
         ),
-        IconButton(onPressed: () => setState(() => _anchor = _anchor.add(Duration(days: count))), icon: const Icon(Icons.chevron_right)),
+        IconButton(onPressed: () => setState(() => _anchor = addDays(_anchor, count)), icon: const Icon(Icons.chevron_right)),
       ],
       child: StreamBuilder<List<EntryRow>>(
         stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: userId, from: days.first, to: end, includeRunning: true),
@@ -154,7 +153,7 @@ class _CalendarPageState extends State<CalendarPage> {
   bool _overlaps(EntryRow r, DateTime day) {
     final s = r.entry.startAt.toLocal();
     final e = (r.entry.endAt ?? DateTime.now().toUtc()).toLocal();
-    final dayEnd = day.add(const Duration(days: 1));
+    final dayEnd = addDays(day, 1);
     return s.isBefore(dayEnd) && e.isAfter(day);
   }
 }
@@ -173,7 +172,7 @@ class _DayColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final catalog = context.watch<CatalogController>();
-    final dayEnd = day.add(const Duration(days: 1));
+    final dayEnd = addDays(day, 1);
     final lanes = _lanes(dayEnd);
     return LayoutBuilder(builder: (context, constraints) {
       return GestureDetector(

@@ -70,7 +70,7 @@ class _TimesheetPageState extends State<TimesheetPage> {
     final editable = rights.canCreateTimeFor(userId); // agent : feuille en lecture seule (D15)
     final ws = session.workspace!;
     final days = [for (var i = 0; i < 7; i++) DateTime(_weekStart.year, _weekStart.month, _weekStart.day + i)];
-    final weekEnd = days.last.add(const Duration(days: 1));
+    final weekEnd = addDays(days.last, 1);
     final locale = context.localeTag;
 
     return PageScaffold(
@@ -346,8 +346,7 @@ class _CellState extends State<_Cell> {
     final catalog = context.read<CatalogController>();
     final project = catalog.project(widget.projectId);
     final ws = session.workspace!;
-    final lock = DateTime.tryParse(ws.lockEntriesBefore ?? '');
-    if (lock != null && widget.day.isBefore(lock) && !session.isAdmin) {
+    if (inLockedPeriod(session, widget.day)) {
       showSnack(context, context.l10n.entryLocked);
       _c.text = _fmt(widget.seconds);
       return;

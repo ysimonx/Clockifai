@@ -72,7 +72,6 @@ Future<bool> _copyEntries(BuildContext context,
   final previous = await _entriesOf(ws.id, userId, from, addDays(from, days));
   final current = await _entriesOf(ws.id, userId, to, addDays(to, days));
   final taken = {for (final r in current) '${r.entry.projectId}|${r.entry.description}|${r.entry.startAt.toLocal()}'};
-  final lock = DateTime.tryParse(ws.lockEntriesBefore ?? '');
   // En jours civils (UTC : pas de décalage d'heure d'été).
   final shift = DateTime.utc(to.year, to.month, to.day).difference(DateTime.utc(from.year, from.month, from.day)).inDays;
   final ids = <String>[];
@@ -83,7 +82,7 @@ Future<bool> _copyEntries(BuildContext context,
     final day = addDays(DateTime(local.year, local.month, local.day), shift);
     final start = atMinute(day, minuteOf(e.startAt, local));
     if (taken.contains('${e.projectId}|${e.description}|$start')) continue;
-    if (lock != null && day.isBefore(lock) && !session.isAdmin) continue;
+    if (inLockedPeriod(session, day)) continue;
     if (await modulesRepo.isDayApproved(ws.id, userId, day)) continue;
     ids.add(await entriesRepo.createManual(
       workspaceId: ws.id,
@@ -121,12 +120,11 @@ Future<bool> fillFromPlanning(BuildContext context,
   final weekEnd = addDays(weekStart, 7);
   final rows = await _entriesOf(ws.id, userId, weekStart, weekEnd);
   final before = {for (final r in rows) r.entry.id};
-  final lock = DateTime.tryParse(ws.lockEntriesBefore ?? '');
   final today = DateTime.now();
   for (var i = 0; i < 7; i++) {
     final day = addDays(weekStart, i);
     if (day.isAfter(today)) break;
-    if (lock != null && day.isBefore(lock) && !session.isAdmin) continue;
+    if (inLockedPeriod(session, day)) continue;
     if (await modulesRepo.isDayApproved(ws.id, userId, day)) continue;
     for (final projectId in {for (final a in assignments) a.projectId}) {
       final planned = plannedMinutes(assignments, projectId, day);

@@ -49,18 +49,6 @@ def purge_soft_deleted(older_than_days: int = 30) -> int:
     return total
 
 
-def running_timers_summary() -> list[dict]:
-    """Diagnostic : chronomètres en cours (utilisé par les logs et les tests)."""
-    return fetch_all(
-        """
-        select te.workspace_id, te.user_id, te.start_at, now() - te.start_at as running_for
-          from public.time_entries te
-         where te.end_at is null and te.deleted_at is null
-         order by te.start_at
-        """
-    )
-
-
 def close_idle_agent_entries() -> int:
     """Recalcule les sessions dont une entrée d'agent tourne sans activité depuis le délai (plan 10, D7.4) :
     le chronomètre la ferme à sa dernière activité."""

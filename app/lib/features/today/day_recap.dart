@@ -17,6 +17,7 @@ import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import '../time_entries/own_entries.dart';
 import '../presence/presence.dart' show PresenceTracker;
 import 'day_plan.dart';
 import 'quick_place.dart';
@@ -93,33 +94,28 @@ class _RecapDialog extends StatefulWidget {
 class _RecapDialogState extends State<_RecapDialog> {
   late final _checked = {for (final d in widget.plan.drafts) d.key};
 
+  bool _busy = false;
+
   Future<void> _confirm() async {
+    if (_busy) return;
     final l = context.l10n;
-    final session = context.read<SessionController>();
-    final catalog = context.read<CatalogController>();
-    final ws = session.workspaceId!, me = session.userId!;
     final day = DateTime(widget.now.year, widget.now.month, widget.now.day);
     final chosen = [for (final d in widget.plan.drafts) if (_checked.contains(d.key)) d];
-    final ids = <String>[];
-    for (final d in chosen) {
-      ids.add(await entriesRepo.createManual(
-        workspaceId: ws,
-        userId: me,
-        start: atMinute(day, d.span.start),
-        end: atMinute(day, d.span.end),
-        createdBy: me,
-        draft: EntryDraft(
-          description: d.description,
-          projectId: d.projectId,
-          taskId: d.taskId,
-          billable: catalog.billableFor(projectId: d.projectId, userId: me),
-          hourlyRateCents: catalog.rateFor(projectId: d.projectId, userId: me),
-        ),
-      ));
+    _busy = true;
+    final List<String>? ids;
+    try {
+      ids = await createOwnEntries(context, [
+        for (final d in chosen)
+          OwnEntry(start: atMinute(day, d.span.start), end: atMinute(day, d.span.end), description: d.description,
+              projectId: d.projectId, taskId: d.taskId),
+      ]);
+    } finally {
+      _busy = false;
     }
-    if (!mounted) return;
+    if (ids == null || !mounted) return;
+    final created = ids;
     final minutes = chosen.fold(0, (a, d) => a + d.span.length);
-    showUndo(context, l.journalAdded(chosen.length, formatHm(minutes * 60)), () => entriesRepo.deleteMany(ids));
+    showUndo(context, l.journalAdded(chosen.length, formatHm(minutes * 60)), () => entriesRepo.deleteMany(created));
     Navigator.pop(context);
   }
 
@@ -338,7 +334,7 @@ class RecapNotifications {
       for (var weekday = DateTime.monday; weekday <= DateTime.friday; weekday++) {
         var at = tz.TZDateTime(location, now.year, now.month, now.day, minutes ~/ 60, minutes % 60);
         while (at.weekday != weekday || at.isBefore(now)) {
-          at = at.add(const Duration(days: 1));
+          at = tz.TZDateTime(location, at.year, at.month, at.day + 1, minutes ~/ 60, minutes % 60);
         }
         await _plugin.zonedSchedule(
           id: _id * 10 + weekday,

@@ -119,6 +119,10 @@ class CatalogController extends ChangeNotifier {
     return parent == null ? t.name : '${parent.name} › ${t.name}';
   }
 
+  /// Libellés des lignes d'une facture tirée du temps : projets, et tâches en « Tâche › Sous-tâche ».
+  Map<String, String> get projectNames => {for (final p in projects) p.id: p.name};
+  Map<String, String> get taskPaths => {for (final t in tasks) t.id: taskPath(t.id)!};
+
   /// Membres actifs d'un groupe.
   List<WorkspaceMember> membersOfGroup(String groupId) => [
         for (final gm in groupMembers)

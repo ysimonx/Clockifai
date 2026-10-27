@@ -103,11 +103,13 @@ paths:
         avec utilisateur, client, projet, tâche et tags. La colonne « Type » du détail vaut `humain`, ou
         `agent` pour le temps d'un agent Claude (`workspace_members.kind`). Le taux horaire d'une entrée est celui
         posé à sa saisie, sinon le taux actuel du projet, puis du membre (entrée saisie avant qu'ils aient un
-        taux) ; les montants du XLSX et du PDF en découlent.
+        taux) ; les montants du XLSX et du PDF en découlent. Jours et heures sont ceux du fuseau du profil de la
+        personne qui exporte (`profiles.timezone`) : une entrée commencée à 00:30 à Paris est de ce jour-là.
 
         Périmètre selon le rôle :
         - **manager+** : tout le workspace, filtres libres ;
-        - **membre** : ses entrées, plus celles de son périmètre s'il est chef d'équipe (`team_scope`).
+        - **membre** : ses entrées et celles de son agent Claude, plus celles de son périmètre s'il est chef
+          d'équipe (`team_scope`).
           Un `user_id` hors de ce périmètre est refusé (403).
 
         L'app propose aussi un export CSV calculé localement, hors ligne (« csv-local ») : il n'appelle pas
@@ -116,11 +118,11 @@ paths:
         - $ref: "#/components/parameters/WorkspaceIdQuery"
         - name: from
           in: query
-          description: "Premier jour inclus (`yyyy-MM-dd`). Défaut : 1er du mois en cours (date du serveur)."
+          description: "Premier jour inclus (`yyyy-MM-dd`). Défaut : 1er du mois en cours, dans le fuseau du profil."
           schema: { type: string, format: date }
         - name: to
           in: query
-          description: "Dernier jour inclus (`yyyy-MM-dd`). Défaut : aujourd'hui (date du serveur)."
+          description: "Dernier jour inclus (`yyyy-MM-dd`). Défaut : aujourd'hui, dans le fuseau du profil."
           schema: { type: string, format: date }
         - name: format
           in: query

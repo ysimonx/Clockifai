@@ -22,10 +22,15 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../presence/presence.dart' show PresenceTracker;
 import '../time_entries/entry_dialog.dart';
+import '../time_entries/own_entries.dart';
+import '../timer/timer_rules.dart' show newEntryViolation;
 import '../timesheet/week_tools.dart' show copyDay;
 import 'day_plan.dart';
 import 'quick_place.dart';
 import 'traces.dart';
+
+part 'journal_blocks.dart';
+part 'day_summary.dart';
 
 /// « Aujourd'hui », le journal automatique (plans/13-ux-moderne.md, lot 11) : la journée sur une frise, les entrées
 /// saisies, les créneaux vides et les propositions tirées des habitudes, du planning et des sessions de Claude, à
@@ -43,45 +48,15 @@ class TodayPage extends StatefulWidget {
   State<TodayPage> createState() => _TodayPageState();
 }
 
-enum _Kind { logged, draft, fresh }
-
-/// Un bloc de la ligne « Vous » : entrée saisie, proposition ou nouvelle entrée en cours de création.
-class _Block {
-  _Block({required this.id, required this.kind, required this.span, required this.title, this.projectId, this.taskId, this.entry, this.draft});
-  final String id;
-  final _Kind kind;
-  final Span span;
-  final String title;
-  final String? projectId;
-  final String? taskId;
-  final TimeEntry? entry;
-  final Draft? draft;
-
-  bool get running => entry != null && entry!.endAt == null;
-  bool get movable => kind != _Kind.logged || (!running && !entry!.locked);
-}
-
-class _DraftEdit {
-  const _DraftEdit({this.span, this.title, this.projectId, this.taskId, this.projectSet = false});
-  final Span? span;
-  final String? title;
-  final String? projectId;
-  final String? taskId;
-  final bool projectSet;
-  _DraftEdit copyWith({Span? span, String? title, String? projectId, String? taskId, bool? projectSet}) => _DraftEdit(
-        span: span ?? this.span,
-        title: title ?? this.title,
-        projectId: projectSet == true ? projectId : this.projectId,
-        taskId: projectSet == true ? taskId : this.taskId,
-        projectSet: projectSet ?? this.projectSet,
-      );
-}
-
-enum _Drag { create, move, left, right }
-
 class _TodayPageState extends State<TodayPage> {
   late DateTime _day = _midnight(widget.initialDay ?? widget.clock());
   String? _sel;
+
+  /// Un enregistrement à la fois : un double clic ou Entrée puis le bouton ne font pas de doublon.
+  bool _busy = false;
+
+  /// La dictée a été lancée depuis cette page.
+  bool _dictating = false;
   final Map<String, _DraftEdit> _edits = {};
   final Map<String, Span> _override = {};
   Span? _fresh;
@@ -152,6 +127,7 @@ class _TodayPageState extends State<TodayPage> {
 
   @override
   void dispose() {
+    if (_dictating) Dictation.instance.stop(); // micro ouvert par cette page : on le coupe en partant
     _tick?.cancel();
     PresenceTracker.instance.log.removeListener(_onPresence);
     _focus.dispose();
@@ -214,7 +190,8 @@ class _TodayPageState extends State<TodayPage> {
       required bool loading}) {
     final l = context.l10n;
     final now = widget.clock();
-    final typical = TypicalDay.ofProfile(context.read<SessionController>().profile);
+    final session = context.read<SessionController>();
+    final typical = TypicalDay.ofProfile(session.profile);
     final dayEnd = addDays(_day, 1);
     final mineRows = rows.where((r) => !r.entry.startAt.toLocal().isBefore(_day) && r.entry.startAt.toLocal().isBefore(dayEnd)).toList();
     final history = [for (final r in rows) if (r.entry.startAt.toLocal().isBefore(_day)) r.entry];
@@ -248,6 +225,8 @@ class _TodayPageState extends State<TodayPage> {
             projectId: r.entry.projectId,
             taskId: r.entry.taskId,
             entry: r.entry,
+            fixed: (r.entry.locked && !session.isAdmin) || inLockedPeriod(session, r.entry.startAt.toLocal())
+                || minuteOf(r.entry.startAt, _day) < 0 || minuteOf(r.entry.endAt ?? now, _day) > 1440,
           ),
       for (final d in plan.drafts)
         _Block(
@@ -284,24 +263,19 @@ class _TodayPageState extends State<TodayPage> {
     final range = Span((starts.reduce(math.min) ~/ 60) * 60, math.min(1440, ((ends.reduce(math.max) + 59) ~/ 60) * 60));
 
     Future<void> confirmDrafts(List<_Block> list) async {
-      final ids = <String>[];
-      for (final b in list) {
-        ids.add(await entriesRepo.createManual(
-          workspaceId: ws,
-          userId: me,
-          start: _at(b.span.start),
-          end: _at(b.span.end),
-          createdBy: me,
-          draft: EntryDraft(
-            description: b.title,
-            projectId: b.projectId,
-            taskId: b.taskId,
-            billable: catalog.billableFor(projectId: b.projectId, userId: me),
-            hourlyRateCents: catalog.rateFor(projectId: b.projectId, userId: me),
-          ),
-        ));
+      if (_busy || list.isEmpty) return;
+      _busy = true;
+      final List<String>? ids;
+      try {
+        ids = await createOwnEntries(this.context, [
+          for (final b in list)
+            OwnEntry(start: _at(b.span.start), end: _at(b.span.end), description: b.title, projectId: b.projectId, taskId: b.taskId),
+        ]);
+      } finally {
+        _busy = false;
       }
-      if (!mounted) return;
+      if (ids == null || !mounted) return;
+      final created = ids;
       final next = drafts.where((d) => !list.contains(d)).firstOrNull;
       setState(() {
         for (final b in list) {
@@ -310,7 +284,7 @@ class _TodayPageState extends State<TodayPage> {
         _sel = next?.id;
       });
       final minutes = list.fold(0, (a, b) => a + b.span.length);
-      showUndo(this.context, l.journalAdded(list.length, formatHm(minutes * 60)), () => entriesRepo.deleteMany(ids));
+      showUndo(this.context, l.journalAdded(list.length, formatHm(minutes * 60)), () => entriesRepo.deleteMany(created));
     }
 
     Future<void> dismiss(_Block b) async {
@@ -324,21 +298,18 @@ class _TodayPageState extends State<TodayPage> {
 
     Future<void> saveFresh() async {
       final sp = _fresh;
-      if (sp == null) return;
-      final id = await entriesRepo.createManual(
-        workspaceId: ws,
-        userId: me,
-        start: _at(sp.start),
-        end: _at(sp.end),
-        createdBy: me,
-        draft: EntryDraft(
-          description: _freshTitle,
-          projectId: _freshProject,
-          taskId: _freshTask,
-          billable: catalog.billableFor(projectId: _freshProject, userId: me),
-          hourlyRateCents: catalog.rateFor(projectId: _freshProject, userId: me),
-        ),
-      );
+      if (sp == null || _busy) return;
+      _busy = true;
+      final List<String>? ids;
+      try {
+        ids = await createOwnEntries(this.context, [
+          OwnEntry(start: _at(sp.start), end: _at(sp.end), description: _freshTitle, projectId: _freshProject, taskId: _freshTask),
+        ]);
+      } finally {
+        _busy = false;
+      }
+      if (ids == null) return;
+      final id = ids.single;
       if (!mounted) return;
       setState(() {
         _fresh = null;
@@ -454,7 +425,7 @@ class _TodayPageState extends State<TodayPage> {
     final inspector = selected == null
         ? null
         : _inspector(context, catalog: catalog, b: selected, onConfirm: (b) => confirmDrafts([b]), onDismiss: dismiss, onSaveFresh: saveFresh);
-    final summary = _summary(context, catalog: catalog, plan: plan, mine: mineRows, loggedMin: loggedMin, draftMin: draftMin, claude: claudeSpans);
+    final summary = _summary(context, day: _day, now: now, catalog: catalog, plan: plan, mine: mineRows, loggedMin: loggedMin, draftMin: draftMin, claude: claudeSpans);
     const gap = SizedBox(height: 16);
 
     return LayoutBuilder(builder: (context, c) {
@@ -566,9 +537,34 @@ class _TodayPageState extends State<TodayPage> {
     final task = catalog.task(q?.taskId);
 
     Future<void> save() async {
-      if (!ready) return;
-      final added = quickAddedMessage(context, q, slot, catalog, now);
-      final id = await saveQuick(q, slot, catalog: catalog, workspaceId: ws, userId: me);
+      if (!ready || _busy) return;
+      final session = context.read<SessionController>();
+      final day = addDays(now, q.dayOffset);
+      if (await newEntryViolation(l, session, userId: me, day: day, description: q.description, projectId: q.projectId)
+          case final blocked?) {
+        if (mounted) showSnack(this.context, blocked);
+        return;
+      }
+      _busy = true;
+      final String id;
+      final String added;
+      try {
+        // Rangée parmi les entrées du jour visé, relues : la page peut afficher un autre jour (« hier » depuis lundi).
+        final fresh = await entriesRepo
+            .watchEntries(workspaceId: ws, userId: me, from: addDays(day, -35), to: addDays(day, 1), includeRunning: true)
+            .first;
+        if (!mounted) return;
+        final placed = placeQuick(q,
+                now: now,
+                entries: [for (final r in fresh) r.entry],
+                typical: TypicalDay.ofProfile(session.profile),
+                proposedOn: (d) => d == _day ? proposed : const []) ??
+            slot;
+        added = quickAddedMessage(this.context, q, placed, catalog, now);
+        id = await saveQuick(q, placed, catalog: catalog, workspaceId: ws, userId: me);
+      } finally {
+        _busy = false;
+      }
       if (!mounted) return;
       _quick.clear();
       setState(() {});
@@ -675,6 +671,7 @@ class _TodayPageState extends State<TodayPage> {
         icon: Icon(listening ? Icons.mic : Icons.mic_none, color: listening ? Theme.of(context).colorScheme.error : null),
         onPressed: () async {
           if (listening) return dictation.stop();
+          _dictating = true;
           final ok = await dictation.start(context.localeTag, (text, done) {
             if (!mounted) return;
             setState(() {
@@ -778,17 +775,6 @@ class _TodayPageState extends State<TodayPage> {
   }
 
   // ------------------------------------------------------------------ à compléter (maquette « Aujourd'hui »)
-  Widget _label(BuildContext context, String text) {
-    final theme = Theme.of(context);
-    return Text(text.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline, letterSpacing: 0.6, fontWeight: FontWeight.w600));
-  }
-
-  TextStyle? _mono(BuildContext context, {bool muted = true}) {
-    final theme = Theme.of(context);
-    return theme.textTheme.bodySmall?.copyWith(
-        fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()], color: muted ? theme.colorScheme.outline : null);
-  }
 
   /// Ce qui reste à faire : les propositions à confirmer (une à une ou d'un geste), sinon les créneaux vides à
   /// remplir, sinon « Journée complète ».
@@ -1095,11 +1081,17 @@ class _TodayPageState extends State<TodayPage> {
 
             void endDrag(DragEndDetails _) {
               final sp = b.kind == _Kind.logged ? _override[b.id] : null;
+              final origin = _dragOrigin;
               setState(() {
                 _drag = null;
                 _dragOrigin = null;
               });
-              if (sp != null && sp != _dragOrigin) commitSpan(b, sp);
+              if (sp == null) return;
+              if (sp != origin) {
+                commitSpan(b, sp);
+              } else {
+                setState(() => _override.remove(b.id)); // revenu au point de départ : rien à écrire
+              }
             }
 
             Widget handle(_Drag side) => Positioned(
@@ -1420,32 +1412,15 @@ class _TodayPageState extends State<TodayPage> {
     return e > s ? Span(s, e) : null;
   }
 
-  Color _projectColor(CatalogController catalog, String? projectId, ThemeData theme) {
-    final p = catalog.project(projectId);
-    return p == null ? theme.colorScheme.outline : colorFromHex(p.color);
-  }
-
   // ------------------------------------------------------------------ panneau du bloc choisi
   Widget _inspector(BuildContext context,
       {required CatalogController catalog,
-      required _Block? b,
+      required _Block b,
       required Future<void> Function(_Block) onConfirm,
       required Future<void> Function(_Block) onDismiss,
       required Future<void> Function() onSaveFresh}) {
     final l = context.l10n;
     final theme = Theme.of(context);
-    if (b == null) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(children: [
-            Icon(Icons.touch_app_outlined, color: theme.colorScheme.outline),
-            const SizedBox(width: 12),
-            Expanded(child: Text(l.journalSelectHint, style: theme.textTheme.bodyMedium)),
-          ]),
-        ),
-      );
-    }
     final badge = switch (b.kind) {
       _Kind.draft => l.journalProposed,
       _Kind.fresh => l.journalNew,
@@ -1577,203 +1552,5 @@ class _TodayPageState extends State<TodayPage> {
     );
   }
 
-  /// Bilan par projet : vos minutes et celles de Claude, côte à côte.
-  List<Widget> _perProject(BuildContext context, CatalogController catalog, List<EntryRow> mine, List<(TimeEntry, Span)> claude) {
-    final l = context.l10n;
-    final theme = Theme.of(context);
-    final now = widget.clock();
-    final me = <String?, int>{}, agent = <String?, int>{};
-    for (final r in mine) {
-      if (spanOf(r.entry, _day, now) case final sp?) me[r.entry.projectId] = (me[r.entry.projectId] ?? 0) + sp.length;
-    }
-    for (final (e, sp) in claude) {
-      agent[e.projectId] = (agent[e.projectId] ?? 0) + sp.length;
-    }
-    final ids = {...me.keys, ...agent.keys}.toList()..sort((a, b) => ((me[b] ?? 0) + (agent[b] ?? 0)).compareTo((me[a] ?? 0) + (agent[a] ?? 0)));
-    if (ids.length < 2 && agent.isEmpty) return const [];
-    final mono = _mono(context, muted: false);
-    final head = theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline);
-    Widget cell(String text, TextStyle? style) => SizedBox(width: 52, child: Text(text, textAlign: TextAlign.right, style: style));
-    return [
-      const SizedBox(height: 12),
-      Row(children: [Expanded(child: Text(l.project, style: head)), cell(l.journalYou, head), if (agent.isNotEmpty) cell('Claude', head)]),
-      for (final id in ids.take(6))
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Row(children: [
-            Expanded(child: id == null ? Text(l.noProject, style: theme.textTheme.bodySmall) : ProjectLabel(projectId: id, dense: true)),
-            cell(me[id] == null ? '–' : formatHm(me[id]! * 60), mono),
-            if (agent.isNotEmpty) cell(agent[id] == null ? '–' : formatHm(agent[id]! * 60), mono),
-          ]),
-        ),
-    ];
-  }
-
   // ------------------------------------------------------------------ bilan
-  Widget _summary(BuildContext context,
-      {required CatalogController catalog,
-      required DayPlan plan,
-      required List<EntryRow> mine,
-      required int loggedMin,
-      required int draftMin,
-      required List<(TimeEntry, Span)> claude}) {
-    final l = context.l10n;
-    final theme = Theme.of(context);
-    final target = plan.typical.target;
-    final claudeMin = claude.fold(0, (a, c) => a + c.$2.length);
-    Widget line(String label, String value) => Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Row(children: [
-            Expanded(child: Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
-            Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()])),
-          ]),
-        );
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(l.journalSummary.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline, letterSpacing: 0.6)),
-          const SizedBox(height: 6),
-          Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-            Text(formatHm((loggedMin + draftMin) * 60),
-                style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w600, fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()])),
-            const SizedBox(width: 8),
-            Text(l.journalTarget(formatHm(target * 60)), style: theme.textTheme.bodyMedium),
-          ]),
-          const SizedBox(height: 10),
-          Semantics(
-            label: '${l.journalConfirmed} ${formatHm(loggedMin * 60)}, ${l.journalToConfirm} ${formatHm(draftMin * 60)}',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: SizedBox(
-                height: 10,
-                child: Stack(children: [
-                  Container(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
-                  FractionallySizedBox(
-                      widthFactor: target == 0 ? 0 : ((loggedMin + draftMin) / target).clamp(0.0, 1.0),
-                      child: Container(color: theme.colorScheme.tertiary.withValues(alpha: 0.45))),
-                  FractionallySizedBox(
-                      widthFactor: target == 0 ? 0 : (loggedMin / target).clamp(0.0, 1.0),
-                      child: Container(color: theme.colorScheme.onSurface)),
-                ]),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          line(l.journalConfirmed, formatHm(loggedMin * 60)),
-          line(l.journalToConfirm, formatHm(draftMin * 60)),
-          if (claude.isNotEmpty) line('Claude', formatHm(claudeMin * 60)),
-          ..._perProject(context, catalog, mine, claude),
-          const SizedBox(height: 10),
-          Text(
-            plan.typical.fromProfile
-                ? l.journalTypicalProfile(hm(plan.typical.start), hm(plan.typical.end))
-                : plan.typical.fromHistory
-                    ? l.journalTypicalDay(hm(plan.typical.start), hm(plan.typical.end))
-                    : l.journalTypicalDefault(hm(plan.typical.start), hm(plan.typical.end)),
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
-/// D'où vient une proposition : « Habitude », « Agenda », « Chantier »…
-String _sourceLabel(AppLocalizations l, DraftSource? source) => switch (source) {
-      DraftSource.presence => l.journalSourcePresence,
-      DraftSource.claude => l.journalSourceClaude,
-      DraftSource.calendar => l.journalSourceCalendar,
-      DraftSource.commits => l.journalSourceCommits,
-      DraftSource.habit => l.journalSourceHabit,
-      DraftSource.planning => l.journalSourcePlanning,
-      null => '',
-    };
-
-/// Lignes des heures sur une piste de la frise.
-class _GridPainter extends CustomPainter {
-  _GridPainter({required this.hours, required this.color});
-  final List<double> hours;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    final r = RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(10));
-    canvas.drawRRect(r, Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke);
-    for (final x in hours) {
-      if (x <= 0 || x >= size.width) continue;
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), p);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_GridPainter old) => old.hours != hours || old.color != color;
-}
-
-/// Bloc de la frise : fond, bord plein ou pointillé, trame hachurée (Claude, créneau vide), contour de sélection.
-class _BlockPainter extends CustomPainter {
-  _BlockPainter({required this.fill, required this.border, this.dashed = false, this.hatch, this.selected, this.runningEdge});
-  final Color fill;
-  final Color border;
-  final bool dashed;
-  final Color? hatch;
-  final Color? selected;
-  final Color? runningEdge;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(9));
-    canvas.drawRRect(rrect, Paint()..color = fill);
-    if (hatch != null) {
-      canvas.save();
-      canvas.clipRRect(rrect);
-      final hp = Paint()
-        ..color = hatch!
-        ..strokeWidth = 3;
-      for (double x = -size.height; x < size.width; x += 9) {
-        canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), hp);
-      }
-      canvas.restore();
-    }
-    final bp = Paint()
-      ..color = border
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = dashed ? 1.5 : 1;
-    if (dashed) {
-      final path = Path()..addRRect(rrect.deflate(0.75));
-      for (final metric in path.computeMetrics()) {
-        for (double d = 0; d < metric.length; d += 9) {
-          canvas.drawPath(metric.extractPath(d, math.min(d + 5, metric.length)), bp);
-        }
-      }
-    } else {
-      canvas.drawRRect(rrect.deflate(0.5), bp);
-    }
-    if (runningEdge != null) {
-      final ep = Paint()
-        ..color = runningEdge!
-        ..strokeWidth = 2;
-      for (double y = 4; y < size.height - 4; y += 7) {
-        canvas.drawLine(Offset(size.width - 1, y), Offset(size.width - 1, math.min(y + 4, size.height - 4)), ep);
-      }
-    }
-    if (selected != null) {
-      canvas.drawRRect(
-          rrect.inflate(1.5),
-          Paint()
-            ..color = selected!
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 2);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_BlockPainter old) =>
-      old.fill != fill || old.border != border || old.dashed != dashed || old.hatch != hatch || old.selected != selected || old.runningEdge != runningEdge;
 }

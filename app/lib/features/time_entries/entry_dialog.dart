@@ -286,11 +286,10 @@ class _EntryDialogState extends State<_EntryDialog> {
     final catalog = context.watch<CatalogController>();
     final project = catalog.project(_projectId);
     final rights = TeamRights.of(context);
-    final lockDate = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
-    final inLockedPeriod = lockDate != null && _date.isBefore(lockDate) && !session.isAdmin;
+    final lockedPeriod = inLockedPeriod(session, _date);
     final owner = widget.entry?.userId;
     final notAllowed = owner != null && !rights.canEditTimeOf(owner);
-    final readOnly = (locked && !session.isAdmin) || inLockedPeriod || notAllowed;
+    final readOnly = (locked && !session.isAdmin) || lockedPeriod || notAllowed;
     final author = widget.entry?.createdBy;
     // Une entrée d'agent porte son pilote comme auteur, mais c'est Claude Code qui l'a enregistrée.
     final enteredByOther = owner != null && author != null && author != owner && widget.entry?.source != 'agent';

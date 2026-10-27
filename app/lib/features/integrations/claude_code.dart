@@ -131,6 +131,7 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
     if (name == null || name.trim().isEmpty || !mounted) return;
     try {
       final res = await ServicesApi.post('/api/tokens', {'workspace_id': widget.workspaceId, 'name': name.trim()});
+      if (!mounted) return;
       setState(() => _created = (name: res['name'] as String, token: res['token'] as String));
       await _load();
     } catch (_) {

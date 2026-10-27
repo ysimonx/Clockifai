@@ -19,7 +19,6 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../timer/timer_rules.dart';
 import '../timesheet/week_tools.dart' show WeekViews;
-import '../today/day_plan.dart' show dayKey;
 import 'agents_banner.dart';
 import 'ai_usage.dart';
 import 'entry_dialog.dart';
@@ -115,7 +114,7 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
     final session = context.watch<SessionController>();
     final ws = session.workspace!;
     final weekStart = startOfWeek(DateTime.now(), ws.weekStart);
-    final from = weekStart.subtract(Duration(days: 7 * (_weeks - 1)));
+    final from = addDays(weekStart, -7 * (_weeks - 1));
     final to = DateTime.now().add(const Duration(days: 2));
 
     return StreamBuilder<List<EntryRow>>(
@@ -234,7 +233,7 @@ class _WeekHeader extends StatelessWidget {
     final thisWeek = startOfWeek(DateTime.now(), context.read<SessionController>().workspace!.weekStart);
     final label = weekStart == thisWeek
         ? l.thisWeek
-        : weekStart == thisWeek.subtract(const Duration(days: 7))
+        : weekStart == addDays(thisWeek, -7)
             ? l.lastWeek
             : l.weekOf(MaterialLocalizations.of(context).formatShortDate(weekStart));
     final theme = Theme.of(context);
@@ -345,11 +344,12 @@ class EntryTile extends StatelessWidget {
     final times = '${timeLabel(context, e.startAt)} – ${e.endAt == null ? '…' : timeLabel(context, e.endAt!)}';
     final isMine = e.userId == session.userId;
     final rights = TeamRights.of(context);
-    final canEdit = rights.canEditTimeOf(e.userId);
+    // Verrou compris : le menu ne propose pas une modification que le serveur refuserait.
+    final canEdit = entryEditable(session, rights, e);
     final canDuplicate = rights.canCreateTimeFor(e.userId);
     final author = e.createdBy;
     // Description et projet modifiables sur place, aux mêmes conditions que le dialogue.
-    final inline = inlineEdit && entryEditable(session, rights, e);
+    final inline = inlineEdit && canEdit;
     final selection = selectable ? context.watch<EntrySelection?>() : null;
     final line = selection == null ? null : EntryLine(entryLineKey(e.id), [row], selectable: inline);
 
@@ -373,7 +373,7 @@ class EntryTile extends StatelessWidget {
     final description = InlineDescription(key: ValueKey('description ${e.id}'), text: e.description, onSave: inline ? saveDescription : null);
 
     final meta = Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
-      if (showUser) Text(catalog.memberOf(e.userId)?.displayName ?? '?', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+      if (showUser) Text(memberName(catalog.memberOf(e.userId)), style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
       InlineProject(projectId: e.projectId, taskId: e.taskId, onPick: inline ? saveProject : null),
       TagChips(row.tagIds),
       if (author != null && author != e.userId && e.source != 'agent')
@@ -515,26 +515,8 @@ class _ContinueButton extends StatelessWidget {
 /// Relance l'activité d'une entrée, sauf si sa tâche a déjà un chronomètre en cours.
 /// Vérifie la base locale : la liste [EntryTile.running] n'est pas fournie partout (rapports, approbations).
 Future<void> continueEntry(BuildContext context, EntryRow row) async {
-  final session = context.read<SessionController>();
-  final l = context.l10n;
-  final e = row.entry;
-  final running = await entriesRepo.watchRunningAll(e.workspaceId, e.userId).first;
-  if (!context.mounted) return;
-  final blocked = alreadyRunningViolation(l, running, description: e.description, projectId: e.projectId, taskId: e.taskId);
-  if (blocked != null) return showSnack(context, blocked);
-  await entriesRepo.start(
-    workspaceId: e.workspaceId,
-    userId: e.userId,
-    draft: EntryDraft(
-      description: e.description,
-      projectId: e.projectId,
-      taskId: e.taskId,
-      billable: e.billable,
-      hourlyRateCents: e.hourlyRateCents,
-      tagIds: row.tagIds,
-    ),
-    maxRunning: session.runningTimersLimit,
-  );
+  final blocked = await restartEntry(context.l10n, row, maxRunning: context.read<SessionController>().runningTimersLimit);
+  if (blocked != null && context.mounted) showSnack(context, blocked);
 }
 
 /// Groupe d'entrées similaires d'une journée (plans/08-regroupement-entrees.md) : une ligne résumée
@@ -574,9 +556,7 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
     final aiTokens = g.rows.fold<int>(0, (s, r) => s + r.aiTokens);
     final aiCosts = [for (final r in g.rows) ?r.aiCostMicros];
     // Mêmes règles que le dialogue d'entrée : le serveur refuserait la modification d'une entrée verrouillée.
-    final lockDate = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
-    final inLockedPeriod = lockDate != null && widget.day.isBefore(lockDate) && !session.isAdmin;
-    final locked = (g.anyLocked && !session.isAdmin) || inLockedPeriod;
+    final locked = (g.anyLocked && !session.isAdmin) || inLockedPeriod(session, widget.day);
     final canEdit = !locked && TeamRights.of(context).canEditTimeOf(e.userId);
 
     final badge = Tooltip(
@@ -623,7 +603,7 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
               const SizedBox(height: 4),
               Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
                 if (widget.showUser)
-                  Text(context.watch<CatalogController>().memberOf(e.userId)?.displayName ?? '?',
+                  Text(memberName(context.watch<CatalogController>().memberOf(e.userId)),
                       style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
                 ProjectLabel(projectId: e.projectId, taskId: e.taskId, dense: true),
                 TagChips(g.first.tagIds),

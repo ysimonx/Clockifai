@@ -81,7 +81,7 @@ class CatalogRepository {
 
   // ------------------------------------------------------------------ tâches
   /// Nouvelle tâche du projet, ou sous-tâche de [parentId] (même projet, un seul niveau : le serveur le vérifie).
-  Future<String> createTask(String workspaceId, String projectId, String name, {int? estimateSeconds, String? parentId}) async {
+  Future<String> createTask(String workspaceId, String projectId, String name, {String? parentId}) async {
     final id = newId();
     await db.into(db.tasks).insert(TasksCompanion.insert(
           id: Value(id),
@@ -89,22 +89,31 @@ class CatalogRepository {
           projectId: projectId,
           parentId: Value(parentId),
           name: name.trim(),
-          estimateSeconds: Value(estimateSeconds),
         ));
     return id;
   }
 
-  Future<void> updateTask(String id, {String? name, String? status, int? estimateSeconds}) =>
+  Future<void> updateTask(String id, {String? name, String? status}) =>
       (db.update(db.tasks)..where((t) => t.id.equals(id))).write(TasksCompanion(
         name: name == null ? const Value.absent() : Value(name.trim()),
         status: status == null ? const Value.absent() : Value(status),
-        estimateSeconds: estimateSeconds == null ? const Value.absent() : Value(estimateSeconds),
       ));
 
-  /// Supprime la tâche et ses sous-tâches (même horodatage : le serveur les rend ensemble à la restauration).
-  Future<void> deleteTask(String id) => (db.update(db.tasks)
-        ..where((t) => (t.id.equals(id) | t.parentId.equals(id)) & t.deletedAt.isNull()))
-      .write(TasksCompanion(deletedAt: Value(nowUtc())));
+  /// Supprime la tâche et ses sous-tâches (même horodatage : le serveur les rend ensemble à la restauration) ;
+  /// renvoie les lignes d'avant, pour [restoreTasks] (Annuler).
+  Future<List<Task>> deleteTask(String id) => db.transaction(() async {
+        Expression<bool> family($TasksTable t) => (t.id.equals(id) | t.parentId.equals(id)) & t.deletedAt.isNull();
+        final before = await (db.select(db.tasks)..where(family)).get();
+        await (db.update(db.tasks)..where(family)).write(TasksCompanion(deletedAt: Value(nowUtc())));
+        return before;
+      });
+
+  /// Annuler une suppression : la tâche d'abord, puis ses sous-tâches.
+  Future<void> restoreTasks(List<Task> before) => db.transaction(() async {
+        for (final t in [...before.where((t) => t.parentId == null), ...before.where((t) => t.parentId != null)]) {
+          await db.restoreRow(db.tasks, t.toCompanion(false));
+        }
+      });
 
   // ------------------------------------------------------------------ tags
   Future<String> createTag(String workspaceId, String name, {String color = '#6B7280'}) async {

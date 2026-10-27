@@ -125,9 +125,9 @@ class _ReadyToBillState extends State<ReadyToBill> {
       to: DateTime.now().add(const Duration(days: 1)),
       currency: catalog.client(clientId)?.currencyOverride ?? ws.currency,
       taxPercent: ws.defaultTaxPercent,
-      projectNames: {for (final p in catalog.projects) p.id: p.name},
+      projectNames: catalog.projectNames,
       byTask: true,
-      taskNames: {for (final t in catalog.tasks) t.id: catalog.taskPath(t.id)!},
+      taskNames: catalog.taskPaths,
     );
     if (!mounted) return;
     setState(() => _busy = null);

@@ -56,7 +56,8 @@ class _MacMenuBarState extends State<MacMenuBar> {
   @override
   void initState() {
     super.initState();
-    if (MacMenuBar.supported) _channel.setMethodCallHandler(_onCall);
+    if (!MacMenuBar.supported) return; // ailleurs, _session et _catalog ne sont jamais posés
+    _channel.setMethodCallHandler(_onCall);
     recapNotice.addListener(_schedulePush);
   }
 
@@ -92,8 +93,10 @@ class _MacMenuBarState extends State<MacMenuBar> {
 
   @override
   void dispose() {
-    if (MacMenuBar.supported) _channel.setMethodCallHandler(null);
-    recapNotice.removeListener(_schedulePush);
+    if (MacMenuBar.supported) {
+      _channel.setMethodCallHandler(null);
+      recapNotice.removeListener(_schedulePush);
+    }
     _runningSub?.cancel();
     _recentSub?.cancel();
     super.dispose();
@@ -221,7 +224,7 @@ class _MacMenuBarState extends State<MacMenuBar> {
       draft: EntryDraft(
         description: description,
         projectId: projectId,
-        billable: _catalog.project(projectId)?.billableDefault ?? true,
+        billable: _catalog.billableFor(projectId: projectId, userId: userId),
         hourlyRateCents: _catalog.rateFor(projectId: projectId, userId: userId),
       ),
       maxRunning: _session.runningTimersLimit,
@@ -269,6 +272,9 @@ class _MacMenuBarState extends State<MacMenuBar> {
     final ready = q.isComplete && slot != null;
     if (!save) return {'preview': quickSummary(context, q, slot, _catalog, userId, now).join(' · '), 'ready': ready};
     if (!ready) return {'ok': false, 'message': q.duration == null ? _l.quickDurationMissing : _l.quickProjectMissing};
+    final blocked = await newEntryViolation(_l, _session,
+        userId: userId, day: slot.day, description: q.description, projectId: q.projectId);
+    if (blocked != null || !mounted) return {'ok': false, 'message': blocked};
     final message = quickAddedMessage(context, q, slot, _catalog, now);
     await saveQuick(q, slot, catalog: _catalog, workspaceId: ws.id, userId: userId);
     return {'ok': true, 'message': message};
@@ -278,23 +284,6 @@ class _MacMenuBarState extends State<MacMenuBar> {
   Future<String?> _continue(String? id) async {
     final row = _recent.where((r) => r.entry.id == id).firstOrNull;
     if (row == null) return null;
-    final e = row.entry;
-    final running = await entriesRepo.watchRunningAll(e.workspaceId, e.userId).first;
-    final blocked = alreadyRunningViolation(_l, running, description: e.description, projectId: e.projectId, taskId: e.taskId);
-    if (blocked != null) return blocked;
-    await entriesRepo.start(
-      workspaceId: e.workspaceId,
-      userId: e.userId,
-      draft: EntryDraft(
-        description: e.description,
-        projectId: e.projectId,
-        taskId: e.taskId,
-        billable: e.billable,
-        hourlyRateCents: e.hourlyRateCents,
-        tagIds: row.tagIds,
-      ),
-      maxRunning: _session.runningTimersLimit,
-    );
-    return null;
+    return restartEntry(_l, row, maxRunning: _session.runningTimersLimit);
   }
 }

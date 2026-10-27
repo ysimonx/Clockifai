@@ -64,7 +64,7 @@ class _TeamPageState extends State<TeamPage> {
         workspaceId: ws.id,
         userId: rights.seesOthers ? null : session.userId,
         from: weekStart,
-        to: weekStart.add(const Duration(days: 7)),
+        to: addDays(weekStart, 7),
         includeRunning: true,
       ),
       builder: (context, snap) {
@@ -348,7 +348,7 @@ class _MemberCard extends StatelessWidget {
     final theme = Theme.of(context);
     final session = context.read<SessionController>();
     final catalog = context.watch<CatalogController>();
-    final name = member.displayName.isEmpty ? (member.email ?? '?') : member.displayName;
+    final name = memberName(member);
     final inactive = member.status != 'active';
     // Agent Claude (plan 10) : ni rôle à choisir, ni e-mail (technique) à montrer, ni chef d'équipe.
     final agent = member.kind == 'agent';
@@ -473,14 +473,8 @@ class _AdminMenu extends StatelessWidget {
 
   Future<void> _editRates(BuildContext context) async {
     final l = context.l10n;
-    String fmt(int? c) => c == null ? '' : (c / 100).toStringAsFixed(2);
-    int? parse(String s) {
-      final v = double.tryParse(s.replaceAll(',', '.').trim());
-      return v == null ? null : (v * 100).round();
-    }
-
-    final hourly = TextEditingController(text: fmt(member.hourlyRateCents));
-    final cost = TextEditingController(text: fmt(member.costRateCents));
+    final hourly = TextEditingController(text: centsToText(member.hourlyRateCents));
+    final cost = TextEditingController(text: centsToText(member.costRateCents));
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -500,10 +494,10 @@ class _AdminMenu extends StatelessWidget {
       ),
     );
     if (ok != true) return;
-    final rate = parse(hourly.text);
+    final rate = textToCents(hourly.text);
     await workspaceRepo.updateMember(
       member.id,
-      WorkspaceMembersCompanion(hourlyRateCents: Value(rate), costRateCents: Value(parse(cost.text))),
+      WorkspaceMembersCompanion(hourlyRateCents: Value(rate), costRateCents: Value(textToCents(cost.text))),
     );
     if (rate == member.hourlyRateCents || !context.mounted) return;
     // Le taux du membre ne vaut que sur les projets sans taux.

@@ -215,7 +215,6 @@
       }
     }
   },
-  "journalSelectHint": "Choisissez un bloc, ou glissez sur la ligne « Vous » pour en créer un.",
   "journalDescriptionHint": "Qu’avez-vous fait ?",
   "journalDayRing": "{day} : {percent} % saisi",
   "@journalDayRing": {
@@ -777,14 +776,6 @@
     "placeholders": {
       "count": {
         "type": "int"
-      }
-    }
-  },
-  "weekPlanned": "Prévu : {duration}",
-  "@weekPlanned": {
-    "placeholders": {
-      "duration": {
-        "type": "String"
       }
     }
   },
@@ -1487,8 +1478,6 @@
   "search": "Rechercher",
   "searchProjectOrTask": "Rechercher un projet, une tâche, un client",
   "searchTags": "Rechercher ou créer un tag",
-  "sectionManage": "Gestion",
-  "sectionTeam": "Équipe",
   "selectAll": "Tout cocher",
   "selectProject": "Choisir un projet",
   "selectTeammates": "Choisir les collaborateurs",
@@ -1712,5 +1701,15 @@
   },
   "subtasks": "Sous-tâches",
   "task": "Tâche",
-  "noTask": "Sans tâche"
+  "noTask": "Sans tâche",
+  "periodLocked": "Période verrouillée : seule une personne administratrice peut y saisir du temps.",
+  "periodApproved": "Période déjà approuvée : demandez sa réouverture pour y ajouter du temps.",
+  "taskDeleted": "Tâche « {name} » supprimée, avec ses sous-tâches ; ses entrées restent",
+  "@taskDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

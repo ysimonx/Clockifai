@@ -215,7 +215,6 @@
       }
     }
   },
-  "journalSelectHint": "Pick a block, or drag across the “You” line to create one.",
   "journalDescriptionHint": "What did you do?",
   "journalDayRing": "{day}: {percent}% logged",
   "@journalDayRing": {
@@ -683,14 +682,6 @@
     "placeholders": {
       "count": {
         "type": "int"
-      }
-    }
-  },
-  "weekPlanned": "Planned: {duration}",
-  "@weekPlanned": {
-    "placeholders": {
-      "duration": {
-        "type": "String"
       }
     }
   },
@@ -1215,8 +1206,6 @@
   "search": "Search",
   "searchProjectOrTask": "Search project, task or client",
   "searchTags": "Search or create a tag",
-  "sectionManage": "Manage",
-  "sectionTeam": "Team",
   "selectAll": "Select all",
   "selectProject": "Select project",
   "selectTeammates": "Select teammates",
@@ -1412,5 +1401,15 @@
   },
   "subtasks": "Subtasks",
   "task": "Task",
-  "noTask": "No task"
+  "noTask": "No task",
+  "periodLocked": "Locked period: only an administrator can enter time there.",
+  "periodApproved": "Period already approved: ask for it to be reopened to add time.",
+  "taskDeleted": "Task “{name}” deleted, with its subtasks; its entries remain",
+  "@taskDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

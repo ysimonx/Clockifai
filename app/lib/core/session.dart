@@ -141,3 +141,10 @@ class SessionController extends ChangeNotifier {
     super.dispose();
   }
 }
+
+/// [day] tombe avant le verrou du workspace (`lock_entries_before`) pour qui n'est pas admin : le serveur y refuse
+/// toute saisie et toute modification.
+bool inLockedPeriod(SessionController session, DateTime day) {
+  final lock = DateTime.tryParse(session.workspace?.lockEntriesBefore ?? '');
+  return !session.isAdmin && lock != null && day.isBefore(lock);
+}

@@ -15,6 +15,10 @@ la date d'arrivée de chaque évolution.
 - **Tickets des clients** : une tâche peut porter l'adresse d'un ticket Jira, Linear ou GitHub (« Ticket du client »)
   et prend le nom « ENG-123 · Titre » ; coller l'adresse ou la clé dans le sélecteur de projet retrouve sa tâche, ou
   propose de la créer, et « Ouvrir le ticket » l'ouvre depuis la tâche ou l'entrée (27 octobre 2026).
+- **Claude Code et les tickets** : le ticket donné dans le premier message (ou dont la branche porte la clé) devient la
+  tâche de la session, et chaque sujet de Claude une sous-tâche ; un projet « Facturé par ticket » fait demander le
+  ticket par Claude au début de chaque session. Mettez à jour le plugin (`claude plugin update clockifai@clockifai`)
+  (27 octobre 2026).
 - **Claude Code** : une pastille au robot, en haut de chaque page à côté du chronomètre, montre la session de Claude
   en cours (sujet et durée) ; un clic liste les sessions (27 octobre 2026).
 

@@ -1893,5 +1893,7 @@
       }
     }
   },
-  "ticketTitle": "Titre (facultatif)"
+  "ticketTitle": "Titre (facultatif)",
+  "billedByTicket": "Facturé par ticket",
+  "billedByTicketHelp": "Chaque tâche est le ticket d'un client. Claude Code demande le ticket au début de chaque session dans les dépôts de ce projet, s'il n'est pas dans votre message ni dans le nom de la branche."
 }

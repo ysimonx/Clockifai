@@ -1478,5 +1478,7 @@
   "openTicket": "Open ticket {ticket}",
   "createTicketTaskIn": "Create the task of ticket {ticket} in:",
   "newTicketTask": "Task of ticket {ticket}",
-  "ticketTitle": "Title (optional)"
+  "ticketTitle": "Title (optional)",
+  "billedByTicket": "Billed by ticket",
+  "billedByTicketHelp": "Each task is a client's ticket. Claude Code asks for the ticket at the start of each session in this project's repositories, unless it is in your message or the branch name."
 }

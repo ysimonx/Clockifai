@@ -536,6 +536,11 @@ sur `main` n'a pas de branche pour distinguer ses sujets, et la tâche de D9 ne 
   sous-tâche (`tasks.parent_id`, 0021), reprise par son nom ou créée (`agent_tasks` aussi) ; le sujet du
   chronomètre est le couple objectif-étape, donc une nouvelle étape commence une nouvelle entrée sans nouvelle
   tâche, et une étape précisée juste après renomme sa sous-tâche. Sans `step` (plugin plus ancien), rien ne change.
+- **Ticket du client** (plans/19-tickets-clients.md, lot 2, 27 octobre 2026) : `set_current_task(…, ticket,
+  ticket_title)` ; le hook relaie `ticket` (500 caractères) et `ticket_title` (80), seules autres valeurs de
+  `tool_input` qui quittent le poste. Le ticket devient la tâche, collante pour la session, l'objectif sa sous-tâche.
+  Le hook `SessionStart` devient synchrone (délai réseau de 2 s) : si le serveur répond `ask_ticket` (projet
+  « facturé par ticket », session sans ticket), il écrit sur stdout la consigne fixe du plugin, seul cas où il le fait.
 - **Réglage « Tâches de Claude »** de chaque pilote (`profiles.claude_tasks`, 0015 ; Paramètres › Intégrations ›
   Claude Code) : « Une tâche par sujet » (défaut, ci-dessus), « Une tâche par session Claude Code » (toujours une
   nouvelle tâche, datée si le nom est pris, « Export PDF (25 oct.) » ; jamais de coupure ; un nom plus précis la

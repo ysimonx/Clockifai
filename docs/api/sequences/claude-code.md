@@ -35,16 +35,21 @@ sequenceDiagram
 
     rect rgba(127, 127, 127, 0.1)
     Note over P,PS: Une session de travail
+    CC->>F: SessionStart (hook synchrone) : POST /api/activity/events {session_start}
+    F-->>CC: ask_ticket {session: projet}, si le projet est facturé par ticket et la session sans ticket (plan 19)
+    opt ticket demandé
+        CC->>CC: consigne fixe du plugin ajoutée au contexte : Claude demande le ticket s'il manque au premier message
+    end
     P->>CC: prompt
     opt nouveau sujet (D18)
-        CC->>CC: Claude appelle set_current_task(nom), serveur MCP local du plugin, sans réseau
+        CC->>CC: Claude appelle set_current_task(nom, étape, ticket), serveur MCP local du plugin, sans réseau
     end
     CC->>CC: au Stop : transcription relue sur le poste depuis la dernière position, usage cumulé par 5 minutes (D17)
     CC->>F: POST /api/activity/events (Bearer clk_…) : prompt, session_task {task_name}, outils (1 par minute), Stop, commits, agent_usage
     F->>PG: activity_events (idempotent par id)
     F->>PG: verrou de la session, événements des 7 derniers jours, entrées existantes
     F->>F: agent_clock : intervalles de travail, coupés au changement de sujet, plages figées par un humain
-    F->>PG: tâche du sujet selon le réglage du pilote : reprise, renommée ou créée (subject_task)
+    F->>PG: tâche du ticket (par sa clé, collante pour la session, ou clé de la branche) et sujet en sous-tâche ; sinon tâche du sujet selon le réglage du pilote : reprise, renommée ou créée (subject_task)
     F->>PG: agent_entry_write (contrôles de la garde) puis agent_entries
     F->>PG: commits de la session → code_repositories, code_commits
     F->>PG: usage de la session → agent_usage par entrée, modèle et effort, coût au tarif de ai_model_prices

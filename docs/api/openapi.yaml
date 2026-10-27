@@ -1560,7 +1560,7 @@ components:
         duration_ms: { type: integer, minimum: 0, description: "`agent_tool` : durée de l'outil." }
         payload:
           type: object
-          description: "`session_task` : `{task_name}` (nom donné par Claude, 80 caractères : tâche reprise ou créée dans le projet de l'entrée) ou `{task_id, project_id}` ; `session_description` : `{description}` ; `agent_usage` : `{model, effort, speed, requests, input_tokens, output_tokens, cache_write_5m_tokens, cache_write_1h_tokens, cache_read_tokens}` (totaux d'une tranche de 5 minutes de la transcription, entiers positifs ; `effort` et `speed` facultatifs, `speed` vaut `standard` par défaut). 2000 caractères JSON au plus."
+          description: "`session_task` : `{task_name, step_name?, ticket?, ticket_title?}` (nom de l'objectif et de l'étape donnés par Claude, 80 caractères : tâche et sous-tâche reprises ou créées dans le projet de l'entrée ; `ticket`, l'adresse ou la clé du ticket d'un client, 500 caractères, et son titre : le ticket devient la tâche, collante pour la session, l'objectif sa sous-tâche) ou `{task_id, project_id}` ; `session_description` : `{description}` ; `agent_usage` : `{model, effort, speed, requests, input_tokens, output_tokens, cache_write_5m_tokens, cache_write_1h_tokens, cache_read_tokens}` (totaux d'une tranche de 5 minutes de la transcription, entiers positifs ; `effort` et `speed` facultatifs, `speed` vaut `standard` par défaut). 2000 caractères JSON au plus."
         editor: { type: string }
         machine: { type: string }
         active: { type: boolean }
@@ -1568,8 +1568,12 @@ components:
 
     ActivityEventsResult:
       type: object
-      required: [accepted, duplicates, rejected]
+      required: [accepted, duplicates, rejected, ask_ticket]
       properties:
+        ask_ticket:
+          type: object
+          additionalProperties: { type: string }
+          description: "Sessions dont le lot contient le démarrage (`session_start`, hors `compact`) et dont le projet est facturé par ticket, sans ticket connu (ni donné, ni dans le nom de la branche) : `{session_id: nom du projet}`. Le plugin fait alors demander le ticket par Claude."
         accepted: { type: integer, minimum: 0, description: Nouveaux événements enregistrés. }
         duplicates: { type: integer, minimum: 0, description: Événements valides déjà reçus. }
         rejected:

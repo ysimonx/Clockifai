@@ -91,6 +91,7 @@ erDiagram
     int hourly_rate_cents
     int budget_hours
     bool agent_billable "NULL = comme le workspace"
+    bool billed_by_ticket "Claude Code demande le ticket (0028)"
     float site_lat "chantier : position, rayon (m)"
     float site_lng
     int site_radius

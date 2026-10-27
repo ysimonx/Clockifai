@@ -10,6 +10,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from .profiles import DEFAULT_TZ, zone
+from .tickets import Ticket, ticket_task_name
 
 TASK_NAME_MAX = 80
 
@@ -87,16 +88,18 @@ def _task_named(conn, workspace_id: str, project_id: str, name: str, *, active_o
 
 
 def _create_task(conn, workspace_id: str, project_id: str, session_id: str, name: str,
-                 parent_id: str | None = None) -> str | None:
+                 parent_id: str | None = None, ticket: Ticket | None = None) -> str | None:
     """Nouvelle tâche (ou sous-tâche de [parent_id]), si le workspace laisse tout le monde en créer ; notée dans
-    agent_tasks pour la session."""
+    agent_tasks pour la session. [ticket] : la tâche d'un ticket client (plans/19-tickets-clients.md)."""
     ws = conn.execute("select task_creation from public.workspaces where id = %s", (workspace_id,)).fetchone()
     if not ws or (ws["task_creation"] or "everyone") != "everyone":
         return None
     row = conn.execute(
-        "insert into public.tasks (workspace_id, project_id, name, parent_id) select %s, id, %s, %s from public.projects "
+        "insert into public.tasks (workspace_id, project_id, name, parent_id, ticket_url, ticket_key) "
+        "select %s, id, %s, %s, %s, %s from public.projects "
         "where id = %s and workspace_id = %s and deleted_at is null returning id",
-        (workspace_id, name, parent_id, project_id, workspace_id),
+        (workspace_id, name, parent_id, ticket.url if ticket else None, ticket.key if ticket else None, project_id,
+         workspace_id),
     ).fetchone()
     if row is None:
         return None
@@ -224,6 +227,45 @@ def step_task(conn, workspace_id: str, session_id: str, project_id: str | None, 
     if existing:
         return existing, None
     return _create_task(conn, workspace_id, project_id, session_id, step, parent_id=parent_id), None
+
+
+def _ticket_row(conn, workspace_id: str, ticket: Ticket, project_id: str | None) -> dict | None:
+    """Tâche active de premier niveau du ticket (par sa clé, sinon par son URL), dans [project_id] ou dans tout
+    l'espace (projets actifs), la plus ancienne d'abord."""
+    match = "lower(t.ticket_key) = lower(%s)" if ticket.key else "t.ticket_url = %s"
+    return conn.execute(
+        "select t.id, t.project_id, t.name, t.ticket_url, a.name as agent_name from public.tasks t "
+        "join public.projects p on p.id = t.project_id and p.deleted_at is null and not p.archived "
+        "left join clockifai_private.agent_tasks a on a.task_id = t.id "
+        f"where t.workspace_id = %s and t.parent_id is null and t.deleted_at is null and t.status = 'active' and {match} "
+        "and (%s::uuid is null or t.project_id = %s::uuid) order by t.created_at limit 1",
+        (workspace_id, ticket.key or ticket.url, project_id, project_id),
+    ).fetchone()
+
+
+def ticket_task(conn, workspace_id: str, session_id: str, project_id: str | None, ticket: Ticket,
+                title: str | None, *, may_move: bool = True) -> tuple[str, str] | None:
+    """(projet, tâche) du ticket d'une session (plans/19-tickets-clients.md) : la tâche du ticket dans le projet de
+    l'entrée, sinon (si [may_move]) celle d'un autre projet de l'espace, sinon une nouvelle dans le projet, nommée
+    « ENG-123 · Titre ». Un titre donné après coup complète le nom de la tâche créée par le serveur (« ENG-123 »),
+    jamais celui d'une tâche nommée à la main. None sans projet ni tâche existante, ou sans droit de création."""
+    conn.execute("select pg_advisory_xact_lock(hashtextextended('ticket:' || %s || ':' || lower(%s), 0))",
+                 (workspace_id, ticket.label))
+    row = _ticket_row(conn, workspace_id, ticket, project_id) if project_id else None
+    if row is None and (may_move or not project_id):
+        row = _ticket_row(conn, workspace_id, ticket, None)
+    if row is None:
+        if not project_id:
+            return None
+        task_id = _create_task(conn, workspace_id, project_id, session_id, ticket_task_name(ticket, title),
+                               ticket=ticket)
+        return (project_id, task_id) if task_id else None
+    task_id = str(row["id"])
+    if ticket.url and not row["ticket_url"]:
+        conn.execute("update public.tasks set ticket_url = %s where id = %s", (ticket.url, task_id))
+    if title and row["name"] == ticket.label and row["agent_name"] == row["name"]:
+        _rename(conn, task_id, ticket_task_name(ticket, title))
+    return str(row["project_id"]), task_id
 
 
 def root_task(conn, task_id: str | None) -> str | None:

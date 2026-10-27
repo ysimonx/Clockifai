@@ -359,6 +359,8 @@ class _ProjectDialogState extends State<_ProjectDialog> {
   late bool _public = widget.project?.isPublic ?? true;
   /// Temps des agents Claude sur ce projet : nul = comme le workspace (plan 10, D16).
   late bool? _agentBillable = widget.project?.agentBillable;
+  /// Facturé par ticket (plans/19-tickets-clients.md) : Claude Code demande le ticket du client à chaque session.
+  late bool _billedByTicket = widget.project?.billedByTicket ?? false;
 
   @override
   void dispose() {
@@ -385,6 +387,7 @@ class _ProjectDialogState extends State<_ProjectDialog> {
       billableDefault: Value(_billable),
       isPublic: Value(_public),
       agentBillable: Value(_agentBillable),
+      billedByTicket: Value(_billedByTicket),
       hourlyRateCents: Value(textToCents(_rate.text)),
       budgetHours: Value(int.tryParse(_budget.text.trim())),
       budgetAmountCents: Value(textToCents(_budgetAmount.text)),
@@ -485,6 +488,13 @@ class _ProjectDialogState extends State<_ProjectDialog> {
                 ],
                 onChanged: (v) => setState(() => _agentBillable = v),
               ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l.billedByTicket),
+              subtitle: Text(l.billedByTicketHelp),
+              value: _billedByTicket,
+              onChanged: (v) => setState(() => _billedByTicket = v),
+            ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(l.publicProject),

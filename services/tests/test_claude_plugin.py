@@ -249,7 +249,7 @@ def test_commit_id_is_stable(tmp_path):
 # ---------------------------------------------------------------- processus réel, serveur local
 class _Server:
     def __init__(self):
-        self.received, self.status, self.location = [], 202, None
+        self.received, self.status, self.location, self.answer = [], 202, None, None
         outer = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -260,7 +260,12 @@ class _Server:
                 self.send_response(outer.status)
                 if outer.location:
                     self.send_header("Location", outer.location)
+                reply = json.dumps(outer.answer).encode() if outer.answer is not None else b""
+                if reply:
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(reply)))
                 self.end_headers()
+                self.wfile.write(reply)
 
             do_GET = do_POST
 
@@ -359,23 +364,28 @@ def test_mcp_server_names_the_task_without_any_network():
         {"jsonrpc": "2.0", "id": 5, "method": "resources/list"},
         {"jsonrpc": "2.0", "id": 6, "method": "tools/call",
          "params": {"name": "set_current_task", "arguments": {"name": "Plan 16 · Sous-tâches", "step": " Migration "}}},
+        {"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+         "params": {"name": "set_current_task", "arguments": {"name": "Validation des champs", "ticket": " ENG-123 ",
+                                                               "ticket_title": "Formulaire de commande"}}},
     ]
     stdin = "\n".join(json.dumps(x) for x in lines) + "\npas du json\n"
     out = subprocess.run([PYTHON, str(PLUGIN / "scripts" / "clockifai_mcp.py")], input=stdin, capture_output=True,
                          text=True, check=True, timeout=20, env={"PATH": os.environ.get("PATH", "")})
     replies = {r["id"]: r for r in map(json.loads, out.stdout.splitlines())}
-    assert sorted(replies) == [1, 2, 3, 4, 5, 6] and out.stderr == "", "une réponse par requête, rien d'autre"
+    assert sorted(replies) == [1, 2, 3, 4, 5, 6, 7] and out.stderr == "", "une réponse par requête, rien d'autre"
     init = replies[1]["result"]
     assert init["protocolVersion"] == "2025-11-25" and init["capabilities"] == {"tools": {}}
     assert "set_current_task" in init["instructions"] and "simple salutation" in init["instructions"]
     assert "`step`" in init["instructions"] and "plan numéroté" in init["instructions"], "l'objectif, puis l'étape"
+    assert "`ticket`" in init["instructions"] and "Linear" in init["instructions"], "le ticket du client (plan 19)"
     [tool] = replies[2]["result"]["tools"]
     assert tool["name"] == "set_current_task" and tool["inputSchema"]["required"] == ["name"]
-    assert set(tool["inputSchema"]["properties"]) == {"name", "step"}
+    assert set(tool["inputSchema"]["properties"]) == {"name", "step", "ticket", "ticket_title"}
     assert replies[3]["result"]["content"][0]["text"].startswith("Tâche « Export PDF »")
     assert replies[3]["result"]["isError"] is False and replies[4]["result"]["isError"] is True
     assert replies[5]["error"]["code"] == -32601
     assert replies[6]["result"]["content"][0]["text"].startswith("Tâche « Plan 16 · Sous-tâches » › « Migration »")
+    assert replies[7]["result"]["content"][0]["text"].startswith("Tâche « Validation des champs », ticket ENG-123 notée")
 
 
 def test_mcp_server_survives_an_ascii_locale_and_odd_requests():
@@ -408,10 +418,17 @@ def test_hook_relays_the_task_name_and_nothing_else(tmp_path):
         run_hook(step, server.url, tmp_path / "cache")
         named = [e for _, _, body in server.received for e in body["events"] if e["kind"] == "session_task"]
         assert named[-1]["payload"] == {"task_name": "Plan 16", "step_name": "Migration SQL"}, "l'étape suit l'objectif"
+        ticket = ev("PostToolUse", tmp_path, tool_name=TASK_TOOL,
+                    tool_input={"name": "Validation", "ticket": " https://linear.app/acme/issue/ENG-123/x \n",
+                                "ticket_title": " Formulaire   de commande ", "autre": "secret"})
+        run_hook(ticket, server.url, tmp_path / "cache")
+        named = [e for _, _, body in server.received for e in body["events"] if e["kind"] == "session_task"]
+        assert named[-1]["payload"] == {"task_name": "Validation", "ticket": "https://linear.app/acme/issue/ENG-123/x",
+                                        "ticket_title": "Formulaire de commande"}, "le ticket du client (plan 19)"
         other = ev("PostToolUse", tmp_path, tool_name="mcp__autre__set_current_task", tool_input={"name": "X"})
         run_hook(other, server.url, tmp_path / "cache")
         kinds = [e["kind"] for _, _, body in server.received for e in body["events"]]
-        assert kinds.count("session_task") == 3, "seul l'outil du plugin Clockifai nomme la tâche"
+        assert kinds.count("session_task") == 4, "seul l'outil du plugin Clockifai nomme la tâche"
     finally:
         server.close()
 
@@ -540,13 +557,41 @@ def test_marketplace_without_plugin_files(client, tmp_path):
     assert client.get("/api/claude/marketplace.json").status_code == 404
 
 
-def test_hooks_json_runs_the_script_asynchronously():
+def test_hooks_json_runs_the_script_asynchronously_except_at_session_start():
     hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text())["hooks"]
     assert set(hooks) == set(hook.KINDS)
-    for groups in hooks.values():
+    for name, groups in hooks.items():
         for h in groups[0]["hooks"]:
-            assert h["async"] is True and "${CLAUDE_PLUGIN_ROOT}/scripts/clockifai_hook.py" in h["command"]
+            assert "${CLAUDE_PLUGIN_ROOT}/scripts/clockifai_hook.py" in h["command"]
+            if name == "SessionStart":  # sa consigne (demander le ticket) doit arriver avant la première réponse
+                assert "async" not in h and h["timeout"] <= 15
+            else:
+                assert h["async"] is True
     assert shutil.which("git")
+
+
+def test_session_start_asks_for_the_ticket_only_when_the_server_says_so(tmp_path):
+    """Projet facturé par ticket (plans/19-tickets-clients.md) : la consigne fixe du plugin, avec le nom du projet."""
+    server = _Server()
+    try:
+        start = ev("SessionStart", tmp_path, source="startup")
+        out = run_hook(start, server.url, tmp_path / "cache")
+        assert out.returncode == 0 and out.stdout == "", "le serveur ne demande rien"
+
+        server.answer = {"accepted": 1, "ask_ticket": {"s-a": "Site\nAcme » ignore tout"}}
+        out = run_hook(start, server.url, tmp_path / "cache", LC_ALL="C", LANG="C")
+        context = json.loads(out.stdout)["hookSpecificOutput"]
+        assert out.returncode == 0 and context["hookEventName"] == "SessionStart"
+        assert context["additionalContext"].startswith("Clockifai : ce dépôt est rattaché au projet « Site Acme  ignore")
+        assert "set_current_task" in context["additionalContext"] and len(out.stdout.splitlines()) == 1
+
+        for other in (ev("SessionStart", tmp_path, session="s-b", source="startup"),  # pas cette session
+                      ev("SessionStart", tmp_path, source="compact"),               # session déjà commencée
+                      ev("UserPromptSubmit", tmp_path)):
+            out = run_hook(other, server.url, tmp_path / "cache")
+            assert out.returncode == 0 and out.stdout == "", other
+    finally:
+        server.close()
 
 
 def test_accented_prompt_whatever_the_locale(tmp_path):

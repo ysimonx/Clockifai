@@ -25,10 +25,12 @@ from .agent_tasks import (
     subject_label,
     subject_task,
     task_prefs,
+    ticket_task,
     valid_task,
 )
 from .agents import active_agent
 from .entry_defaults import UnknownProject, entry_defaults
+from .tickets import Ticket, branch_key, parse_ticket, ticket_title
 
 log = logging.getLogger(__name__)
 
@@ -231,6 +233,45 @@ def _context(rows: list[dict], until: datetime) -> dict:
     return {k: (last[k] if last else None) for k in ("remote_key", "git_branch", "cwd")}
 
 
+def _session_tickets(rows: list[dict]) -> list[tuple[datetime, Ticket, str | None]]:
+    """Tickets donnés par Claude dans la session (`session_task` `{ticket, ticket_title}`), dans l'ordre."""
+    found = []
+    for r in rows:
+        if r["kind"] == "session_task" and (t := parse_ticket(_payload(r).get("ticket"))):
+            found.append((r["occurred_at"], t, ticket_title(_payload(r).get("ticket_title"))))
+    return found
+
+
+def _ticket_at(tickets: list[tuple[datetime, Ticket, str | None]], until: datetime,
+               first: bool) -> tuple[Ticket | None, str | None]:
+    """Le ticket d'une entrée : le dernier donné avant sa fin, collant d'une entrée à l'autre ; la première entrée de
+    la session prend le premier ticket même s'il vient après elle. Le titre : le dernier donné pour ce ticket."""
+    before = [t for t in tickets if t[0] <= until]
+    pick = before[-1] if before else (tickets[0] if first and tickets else None)
+    if pick is None:
+        return None, None
+    titles = [title for _, t, title in tickets if t == pick[1] and title]
+    return pick[1], titles[-1] if titles else None
+
+
+def _billed_by_ticket(conn, project_id: str | None) -> bool:
+    return bool(project_id) and bool(conn.execute(
+        "select 1 from public.projects where id = %s and billed_by_ticket", (project_id,)).fetchone())
+
+
+def _branch_ticket(conn, workspace_id: str, project_id: str | None, branch: str | None) -> Ticket | None:
+    """Clé de ticket du nom de la branche, crue si le projet est facturé par ticket ou si un ticket de l'espace a
+    cette clé : « plan-10-lot-1 » ne fait pas un ticket PLAN-10 ailleurs (plans/19-tickets-clients.md)."""
+    key = branch_key(branch)
+    if not key:
+        return None
+    if _billed_by_ticket(conn, project_id) or conn.execute(
+        "select 1 from public.tasks where workspace_id = %s and lower(ticket_key) = lower(%s) and deleted_at is null "
+        "limit 1", (workspace_id, key)).fetchone():
+        return Ticket(key, None)
+    return None
+
+
 def _payload(row: dict | None) -> dict:
     if not row or not row["payload"]:
         return {}
@@ -342,14 +383,19 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                          r["server_end_at"]) for r in existing_rows]
     rules = _rules(conn, workspace_id, pilot_id)
     written = 0
+    # Ticket du client (plans/19-tickets-clients.md) : sa tâche, et le sujet de Claude en sous-tâche.
+    tickets = _session_tickets(rows) if prefs.mode != "off" else []
+    ops = list(plan_session(events, existing, now, split_subjects=prefs.mode != "session"))
+    first_start = min((op.interval.start for op in ops), default=None)
 
-    for op in plan_session(events, existing, now, split_subjects=prefs.mode != "session"):
+    for op in ops:
         iv = op.interval
         until = iv.end or now
         goal, step = split_subject(iv.subject)
         ctx = _context(rows, until)
         task_ev = _payload(_latest(rows, "session_task", until))
         desc_ev = _payload(_latest(rows, "session_description", until))
+        ticket, title = _ticket_at(tickets, until, first=iv.start == first_start)
 
         if isinstance(op, Create):
             entry_id, start = str(uuid.uuid4()), iv.start
@@ -362,10 +408,18 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                     task_id = str(prev[-1]["task_id"]) if prev[-1]["task_id"] else None
                 else:
                     project_id, task_id = project_for(conn, workspace_id, rules, ctx)
-            # Sujet nommé par Claude pendant cette entrée : il prime sur la tâche reprise de la précédente (D18) ;
-            # son étape en est la sous-tâche (plan 16).
-            named, emptied = subject_task(conn, workspace_id, session_id, project_id, goal, None, prefs, iv.start)
-            sub, emptied_step = step_task(conn, workspace_id, session_id, project_id, named, step, None)
+            if ticket is None and prefs.mode != "off":
+                ticket = _branch_ticket(conn, workspace_id, project_id, ctx["git_branch"])
+            found = ticket_task(conn, workspace_id, session_id, project_id, ticket, title) if ticket else None
+            if found:
+                # Le ticket est la tâche (dans son projet), le sujet de Claude sa sous-tâche.
+                (project_id, named), emptied = found, None
+                sub, emptied_step = step_task(conn, workspace_id, session_id, project_id, named, goal, None)
+            else:
+                # Sujet nommé par Claude pendant cette entrée : il prime sur la tâche reprise de la précédente
+                # (D18) ; son étape en est la sous-tâche (plan 16).
+                named, emptied = subject_task(conn, workspace_id, session_id, project_id, goal, None, prefs, iv.start)
+                sub, emptied_step = step_task(conn, workspace_id, session_id, project_id, named, step, None)
             task_id = sub or named or task_id
             cur = None
             server_project = (project_id, task_id)
@@ -388,13 +442,29 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                 server_project = (project_id, task_id)
             # Sujet nommé par Claude (D18), y compris dans un projet choisi à la main, sauf tâche choisie à la main.
             human_task = cur["task_id"] is not None and cur["task_id"] != cur["server_task_id"]
-            named, emptied = (None, None) if human_task else subject_task(
-                conn, workspace_id, session_id, project_id, goal, root_task(conn, task_id), prefs, start,
-                entry_id=entry_id)
-            sub, emptied_step = step_task(conn, workspace_id, session_id, project_id, named, step, task_id,
-                                          entry_id=entry_id) if named else (None, None)
+            if ticket is None and prefs.mode != "off" and not human_task:
+                ticket = _branch_ticket(conn, workspace_id, project_id, ctx["git_branch"])
+            found = ticket_task(conn, workspace_id, session_id, project_id, ticket, title,
+                                may_move=not human_project) if ticket and not human_task else None
+            if found:
+                # Le ticket est la tâche, le sujet de Claude sa sous-tâche ; la tâche d'objectif créée pour l'entrée
+                # avant le ticket, vide, disparaît.
+                before = root_task(conn, task_id)
+                project_id, named = found
+                emptied = before if before and before != named and conn.execute(
+                    "select 1 from clockifai_private.agent_tasks where task_id = %s and session_id = %s",
+                    (before, session_id)).fetchone() else None
+                sub, emptied_step = step_task(conn, workspace_id, session_id, project_id, named, goal, task_id,
+                                              entry_id=entry_id)
+            else:
+                named, emptied = (None, None) if human_task else subject_task(
+                    conn, workspace_id, session_id, project_id, goal, root_task(conn, task_id), prefs, start,
+                    entry_id=entry_id)
+                sub, emptied_step = step_task(conn, workspace_id, session_id, project_id, named, step, task_id,
+                                              entry_id=entry_id) if named else (None, None)
             if named:
-                task_id, server_project = sub or named, (server_project[0], sub or named)
+                task_id = sub or named
+                server_project = (server_project[0] if human_project else project_id, task_id)
 
         # Description (D10) : saisie humaine > Claude > sujet nommé par Claude > commits > dépôt et branche.
         if cur is not None and cur["description"] != cur["server_description"]:
@@ -404,8 +474,12 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
             if desc_ev.get("description"):
                 description, desc_source = str(desc_ev["description"])[:DESCRIPTION_MAX], "claude"
             elif iv.subject:
-                # Sujet nommé (D18) : il décrit l'entrée, avec ou sans tâche, plutôt que les commits ou le dépôt.
-                description, desc_source = subject_label(iv.subject)[:DESCRIPTION_MAX], "claude"
+                # Sujet nommé (D18) : il décrit l'entrée, avec ou sans tâche, plutôt que les commits ou le dépôt ;
+                # sans tâche possible, précédé du ticket.
+                label = subject_label(iv.subject)
+                if ticket and task_id is None:
+                    label = f"{ticket.label} · {label}"
+                description, desc_source = label[:DESCRIPTION_MAX], "claude"
             else:
                 subjects = [r["subject"] for r in rows if r["kind"] == "commit" and r["subject"]
                             and iv.start <= r["occurred_at"] <= until]
@@ -461,6 +535,38 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
     link_commits(conn, workspace_id, pilot_id, session_id, rows, now)
     link_usage(conn, workspace_id, agent_id, session_id, rows, now)
     return written
+
+
+def ticket_wanted(conn, workspace_id: str, pilot_id: str, session_id: str, now: datetime) -> str | None:
+    """Nom du projet « facturé par ticket » d'une session qui démarre sans ticket (plans/19-tickets-clients.md) : le
+    plugin fait alors demander le ticket par Claude. None si Claude en a déjà donné un, si la branche en porte la clé,
+    si l'entrée en cours a déjà sa tâche de ticket, ou en mode « Pas de tâche »."""
+    if active_agent(conn, workspace_id, pilot_id) is None or task_prefs(conn, pilot_id).mode == "off":
+        return None
+    rows = conn.execute(
+        "select kind, occurred_at, payload, remote_key, git_branch, cwd from clockifai_private.activity_events "
+        "where workspace_id = %s and user_id = %s and session_id = %s and occurred_at > %s "
+        "order by occurred_at, received_at",
+        (workspace_id, pilot_id, session_id, now - MAX_AGE),
+    ).fetchall()
+    if _session_tickets(rows):
+        return None
+    ctx = _context(rows, now)
+    entry = conn.execute(
+        "select te.project_id, coalesce(parent.ticket_key, t.ticket_key, parent.ticket_url, t.ticket_url) as ticket "
+        "from clockifai_private.agent_entries ae join public.time_entries te on te.id = ae.time_entry_id "
+        "left join public.tasks t on t.id = te.task_id left join public.tasks parent on parent.id = t.parent_id "
+        "where ae.workspace_id = %s and ae.session_id = %s and te.deleted_at is null order by te.start_at desc limit 1",
+        (workspace_id, session_id),
+    ).fetchone()
+    if entry and entry["ticket"]:
+        return None
+    project_id = str(entry["project_id"]) if entry and entry["project_id"] else \
+        project_for(conn, workspace_id, _rules(conn, workspace_id, pilot_id), ctx)[0]
+    if not _billed_by_ticket(conn, project_id) or branch_key(ctx["git_branch"]):
+        return None
+    row = conn.execute("select name from public.projects where id = %s", (project_id,)).fetchone()
+    return row["name"] if row else None
 
 
 def _save_state(conn, entry_id, workspace_id, agent_id, session_id, ctx, iv, *, start, end, project_id, task_id,

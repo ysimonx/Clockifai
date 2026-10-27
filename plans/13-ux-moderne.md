@@ -1,6 +1,6 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
-> Statut : **en cours** (lots 1 à 9 et 11 à 13 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
+> Statut : **fait** (27 octobre 2026 ; vidéos de démonstration à retourner). Maquettes : canevas « Clockifai, UX repensée »
 > (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
@@ -96,6 +96,19 @@ Ce que cela demande :
   7. Présence chantier : réglage personnel (chacun l'active pour soi), coordonnées des chantiers saisies par un
      manager, position lue sur le téléphone seulement, jamais envoyée ; seules des propositions d'arrivée et de
      départ en sortent, à confirmer comme les autres.
+
+### Lot 10, identité visuelle (fait)
+
+- Le bleu reste la couleur de marque (décision 4). Pas de police embarquée : celle du système, hors ligne et sans
+  alourdir l'app.
+- Jetons dans `core/theme.dart` : `Radii` (cartes 12, champs et boutons 8, dialogues 16) et `AppColors` (réussi,
+  à surveiller), réglés pour le clair et le sombre, à la place des verts et oranges écrits en dur.
+- Densité : `VisualDensity.adaptivePlatformDensity` (plus serrée à la souris), menu latéral à 44 px par ligne sur
+  ordinateur (il tient sans défiler pour un propriétaire) ; fond légèrement teinté et cartes au premier plan ;
+  bandeaux (Annuler) flottants.
+- Accessibilité : les cartes qui portent des champs (saisie express, détail d'un bloc d'« Aujourd'hui »,
+  pointage d'équipe) ne fondent plus tout leur contenu en un seul nœud (`semanticContainer: false`).
+- Frise d'« Aujourd'hui » : une heure sur deux, trois ou quatre quand la place manque (téléphone).
 
 ### Lot 13, présence chantier (fait)
 
@@ -291,7 +304,7 @@ Ce que cela demande :
 | 7 Rapports par questions | Questions toutes faites, comparaison, prêt à facturer et facture en un clic, usage IA au coût | M | fait |
 | 8 Équipe | Tableau des retards, relance par notification, approbation avec écart au planning | M | fait |
 | 9 Mobile chantier | « Comme hier », durée au pouce, dictée, glisser, badge hors ligne, pointage d'équipe repensé | M | fait |
-| 10 Identité visuelle | Polices, jetons de couleur, mode sombre, densité | S/M | envisagé |
+| 10 Identité visuelle | Polices, jetons de couleur, mode sombre, densité | S/M | fait (police du système) |
 | 11 Journal automatique | Brouillons tirés des traces, frise manipulable (glisser, tirer les bords, clavier), « pourquoi ce bloc », validation en un geste ; première version sur l'historique, le planning et les sessions de Claude | L | fait (traces : agenda, commits ; pas d'activité du poste) |
 | 12 Demander à Clockifai | Assistant ⌘J : questions sur les rapports, modifications avec aperçu et Annuler ; Claude par l'API, outils côté Flask | M/L | fait (actif avec une clé d'API) |
 | 13 Présence chantier | Géorepérage du chantier sur téléphone (opt-in), journée prête le soir, arrondi au planning selon l'entreprise | M/L | fait (arrondi sur la journée type ; tâche de la dernière entrée) |

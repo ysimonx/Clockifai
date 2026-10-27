@@ -9,6 +9,7 @@ import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../core/team_rights.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/modules_repository.dart';
@@ -274,7 +275,7 @@ class _RequestTile extends StatelessWidget {
     final fmt = DateFormat.yMMMd(context.localeTag);
     final start = parseDay(r.startDate), end = parseDay(r.endDate);
     final (color, label) = switch (r.status) {
-      'approved' => (Colors.green, l.statusApproved),
+      'approved' => (AppColors.of(context).success, l.statusApproved),
       'rejected' => (theme.colorScheme.error, l.statusRejected),
       'cancelled' => (theme.colorScheme.outline, l.statusCancelled),
       _ => (theme.colorScheme.tertiary, l.statusPending),

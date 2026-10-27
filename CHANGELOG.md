@@ -66,6 +66,9 @@ la date d'arrivée de chaque évolution.
 
 ### Modifié
 
+- **Apparence** : fond légèrement teinté et cartes au premier plan, coins et couleurs d'état harmonisés (vert
+  « réussi » et orange lisibles aussi en sombre), menu plus serré sur ordinateur, bandeaux flottants ; sur
+  téléphone, la frise d'« Aujourd'hui » ne superpose plus les heures (27 octobre 2026).
 - **Aujourd'hui** devient l'écran d'accueil ; « Suivi du temps » reste la liste complète des entrées
   (27 octobre 2026).
 - Suivi du temps : les durées et les totaux s'affichent à la minute (« 3:00 » au lieu de « 3:00:00 ») ; les

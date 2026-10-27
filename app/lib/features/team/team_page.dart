@@ -12,6 +12,7 @@ import '../../core/l10n.dart';
 import '../../core/services_api.dart';
 import '../../core/session.dart';
 import '../../core/team_rights.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../core/widgets/rate_change.dart';
@@ -340,7 +341,7 @@ class _MemberCard extends StatelessWidget {
       child: ListTile(
         leading: Badge(
           isLabelVisible: running.isNotEmpty,
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.of(context).success,
           smallSize: 10,
           label: running.length > 1 ? Text('${running.length}') : null,
           child: CircleAvatar(child: agent ? const Icon(Icons.smart_toy_outlined) : Text(name[0].toUpperCase())),
@@ -358,7 +359,7 @@ class _MemberCard extends StatelessWidget {
           if (showActivity) ...[
             for (final run in running)
               Row(children: [
-                const Icon(Icons.play_circle, size: 14, color: Colors.green),
+                Icon(Icons.play_circle, size: 14, color: AppColors.of(context).success),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(

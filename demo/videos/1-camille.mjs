@@ -12,6 +12,7 @@ export async function run(browser, failures) {
     await page.goto(APP);
     await h.wait(3500);
     await h.card('Vidéo 1 / 5 · Camille', 'Membre de l’équipe « Unité 4 »', [
+      'Sa journée proposée, une saisie en une ligne',
       'Saisir ses heures après coup, ou en direct',
       'Remplir et soumettre sa feuille de temps',
       'Absences, planning, rapports personnels',
@@ -24,7 +25,17 @@ export async function run(browser, failures) {
       await h.login('camille@demo.clockifai.fr');
     });
 
+    await h.scene('aujourd’hui', async () => {
+      await h.caption(C('Aujourd’hui'), 'Sa journée, prête à confirmer', 'À l’ouverture, « Aujourd’hui » : ce qu’elle a saisi, les créneaux vides de sa journée habituelle, et des propositions tirées de ses habitudes et du planning, à confirmer d’un geste.', ROLE, 6500);
+      await h.typeInto('Saisie express', '2h pose garde-corps unité 4 hier', 60);
+      await h.caption(C('Saisie express'), 'Une ligne en clair', 'Durée, projet, jour : Clockifai montre ce qu’il a compris et range l’entrée dans un créneau vide. Entrée enregistre.', ROLE, 5500);
+      await page.keyboard.press('Enter');
+      await h.wait(1500);
+      await h.caption(C('Saisie express'), 'Ajoutée, avec « Annuler »', 'Une erreur ? Le bandeau propose d’annuler pendant quelques secondes.', ROLE, 3500);
+    });
+
     await h.scene('accueil', async () => {
+      await h.nav('Suivi du temps');
       await h.caption(C('Suivi du temps'), 'Ses heures, jour par jour', 'Chaque ligne : la description, le projet et la tâche, les horaires et la durée. Total par jour et par semaine.', ROLE, 5000);
       await h.hover(/saisi par Karim Haddad/).catch(() => {});
       await h.caption(C('Suivi du temps'), '« saisi par Karim Haddad »', 'Jeudi, son chef d’équipe a pointé toute l’équipe. Les heures sont bien à Camille : elle peut les corriger si besoin.', ROLE, 5500);
@@ -122,12 +133,12 @@ export async function run(browser, failures) {
         await h.typeInto('Description', 'Montage niveau 5 (sans réseau)');
         await h.typeInto('Durée', '3:00', 150);
         await h.click(/^Enregistrer$/, 1500);
-        await h.click(/^(Synchronisé|Synchronisation…|Hors ligne)$/, 1500);
-        await h.caption(C('Hors ligne'), 'La saisie attend dans le téléphone', '« Modifications en attente d’envoi » : rien n’est perdu.', ROLE, 4000);
+        await h.click(/^(Synchronisé|Synchronisation…|Hors ligne)( · .*)?$/, 1500);
+        await h.caption(C('Hors ligne'), 'La saisie attend dans le téléphone', 'Un chiffre sur l’icône compte les « Modifications en attente d’envoi » : rien n’est perdu.', ROLE, 4000);
         await h.clickLast(/^Fermer$/, 500);
       });
       await h.caption(C('Hors ligne'), 'Le réseau revient…', 'L’envoi se fait tout seul, sans rien faire.', ROLE, 9000);
-      await h.click(/^(Synchronisé|Synchronisation…|Hors ligne)$/, 1500);
+      await h.click(/^(Synchronisé|Synchronisation…|Hors ligne)( · .*)?$/, 1500);
       await h.wait(3000);
       await h.clickLast(/^Fermer$/, 500);
     });
@@ -139,7 +150,7 @@ export async function run(browser, failures) {
     await h.wait(3500);
     await h.scene('mobile', async () => {
       await h.login('camille@demo.clockifai.fr');
-      await h.caption('Camille · Sur téléphone', 'La même app dans sa poche', 'iPhone ou Android : menu en bas, mêmes données.', ROLE, 4500, 92);
+      await h.caption('Camille · Sur téléphone', 'La même app dans sa poche', 'iPhone ou Android : menu en bas, mêmes données. Le micro de la saisie express permet de dicter ses heures.', ROLE, 5000, 92);
       await h.click(h.navRe('Feuille de temps'), 2000);
       await h.caption('Camille · Sur téléphone', 'Sa feuille de temps', 'On fait glisser la grille pour voir toute la semaine.', ROLE, 4000, 92);
     });

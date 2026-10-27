@@ -15,6 +15,7 @@ import '../../core/l10n.dart';
 import '../../core/services_api.dart';
 import '../../core/session.dart';
 import '../../core/team_rights.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/repositories/time_entry_repository.dart';
@@ -482,7 +483,7 @@ class _StatCard extends StatelessWidget {
             if (delta != null)
               Text(context.l10n.qDelta(delta!),
                   style: theme.textTheme.bodySmall?.copyWith(
-                      color: delta!.startsWith('+') ? Colors.green.shade700 : (delta!.startsWith('−') ? theme.colorScheme.error : theme.colorScheme.outline))),
+                      color: delta!.startsWith('+') ? AppColors.of(context).success : (delta!.startsWith('−') ? theme.colorScheme.error : theme.colorScheme.outline))),
           ]),
         ),
       ),

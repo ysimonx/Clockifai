@@ -218,6 +218,8 @@ class _TeamEntryPageState extends State<TeamEntryPage> {
         Text(l.teamEntryHelp, style: theme.textTheme.bodySmall),
         const SizedBox(height: 12),
         Card(
+          // Un nœud d'accessibilité par champ et par bouton, pas toute la carte fondue en un seul.
+          semanticContainer: false,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

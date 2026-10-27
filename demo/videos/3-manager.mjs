@@ -77,11 +77,14 @@ export async function run(browser, failures) {
       await h.menuItem('Excel (.xlsx)', 1500);
       await h.find(/^Export téléchargé/, { timeout: 20000 });
       await h.caption(C('Export'), 'Un fichier Excel pour la paie', 'Une ligne par entrée : personne, client, projet, tâche, horaires, durée. Existe aussi en CSV et en PDF.', ROLE, 5000);
+      await h.reveal(/^À facturer$/, 220).catch(() => {});
+      await h.caption(C('Rapports'), 'À facturer, par client', 'Les questions toutes faites en haut du rapport, la comparaison avec la période précédente, et le temps facturable pas encore facturé : « Facturer » prépare la facture d’un clic.', ROLE, 6000);
     });
 
     await h.scene('projets', async () => {
       await h.nav('Projets');
       await h.caption(C('Projets'), 'Les budgets des chantiers', 'Heures passées comparées au budget de chaque projet. Le manager crée aussi projets, tâches et clients.', ROLE, 5500);
+      await h.caption(C('Projets'), 'La position du chantier', 'Dans la fiche d’un projet : collée d’une carte, ou « Ici » sur place. Les téléphones des compagnons qui l’ont activé proposent alors leurs heures d’arrivée et de départ ; leur position reste sur leur téléphone.', ROLE, 6000);
     });
 
     await h.scene('paramètres', async () => {

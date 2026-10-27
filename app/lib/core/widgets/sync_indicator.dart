@@ -5,10 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:powersync/powersync.dart' show SyncStatus;
 import 'package:provider/provider.dart';
 
+import '../../data/powersync/sync_service.dart';
 import '../di.dart';
 import '../l10n.dart';
 import '../session.dart';
-import '../../data/powersync/sync_service.dart';
+import '../theme.dart';
 
 /// Erreur de réseau (pas de connexion, serveur injoignable) : rien à corriger pour l'utilisateur,
 /// c'est l'état « hors ligne », et les saisies partiront au retour du réseau.
@@ -67,7 +68,7 @@ class _SyncIndicatorState extends State<SyncIndicator> {
         ? (Icons.cloud_off, Theme.of(context).colorScheme.error, l.offline)
         : busy
             ? (Icons.cloud_sync, Theme.of(context).colorScheme.primary, l.syncing)
-            : (Icons.cloud_done, Colors.green, l.synced);
+            : (Icons.cloud_done, AppColors.of(context).success, l.synced);
     return IconButton(
       tooltip: _pending > 0 ? '$label · ${l.pendingCount(_pending)}' : label,
       icon: Badge(

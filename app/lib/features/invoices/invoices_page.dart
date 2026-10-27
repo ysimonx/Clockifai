@@ -10,6 +10,7 @@ import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/services_api.dart';
 import '../../core/session.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/modules_repository.dart';
@@ -25,8 +26,8 @@ String invoiceStatusLabel(BuildContext context, String status) {
 }
 
 Color invoiceStatusColor(BuildContext context, String status) => switch (status) {
-      'sent' => Colors.blue,
-      'paid' => Colors.green,
+      'sent' => Theme.of(context).colorScheme.primary,
+      'paid' => AppColors.of(context).success,
       'void' => Theme.of(context).colorScheme.outline,
       _ => Theme.of(context).colorScheme.tertiary,
     };

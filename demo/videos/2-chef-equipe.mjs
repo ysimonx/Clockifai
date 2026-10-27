@@ -34,13 +34,11 @@ export async function run(browser, failures) {
       await h.typeInto('Rechercher un projet, une tâche, un client', 'unité');
       await h.pick(/^\d+ tâches/, 900);
       await h.pick(/^Montage$/, 1000);
-      await h.caption(C('Pointage d’équipe'), 'Il coche les présents', 'Hugo était absent aujourd’hui : on ne le coche pas. Les horaires d’une personne peuvent être ajustés individuellement.', ROLE, 2500);
-      await h.pick(/Camille Martin/, 700);
-      await h.pick(/Léo Dubois/, 700);
-      await h.pick(/Karim Haddad/, 900).catch(() => {});
-      await h.wait(1500);
+      await h.caption(C('Pointage d’équipe'), 'Les présents sont déjà cochés', 'Une absence validée ou une journée déjà saisie se décoche d’office. Hugo n’est pas venu aujourd’hui : Karim le décoche.', ROLE, 4000);
+      await h.pick(/Hugo Petit/, 1200);
+      await h.caption(C('Pointage d’équipe'), 'Une exception ? Sur les horaires de la personne', '« Arrivée à… », « Départ à… » : la ligne affiche alors « Départ à 15:00 ».', ROLE, 3500);
       await h.click(/^Créer les entrées$/, 2000);
-      await h.caption(C('Pointage d’équipe'), 'Une entrée par personne, même sans réseau', 'Chez Camille et Léo, ces heures apparaissent avec la mention « saisi par Karim Haddad ».', ROLE, 5000);
+      await h.caption(C('Pointage d’équipe'), 'Une entrée par personne, même sans réseau', 'Chez Camille et Léo, ces heures apparaissent avec la mention « saisi par Karim Haddad ». Une erreur ? « Annuler » dans le bandeau.', ROLE, 5000);
     });
 
     await h.scene('saisie pour une collègue', async () => {
@@ -55,6 +53,7 @@ export async function run(browser, failures) {
 
     await h.scene('approbations', async () => {
       await h.nav('Approbations');
+      await h.caption(C('Approbations'), 'Semaine dernière : qui n’a pas soumis', 'Heures saisies et prévues au planning pour chacun, et « Relancer » : un bandeau et une notification chez la personne.', ROLE, 5000);
       await h.caption(C('Approbations'), 'Léo a soumis sa semaine', 'Karim ne voit que les feuilles de son équipe : celle de Nadia, soumise aussi, ne lui est pas présentée. Il ouvre celle de Léo…', ROLE, 4500);
       await h.click(/Léo Dubois/, 2500);
       await h.caption(C('Approbations'), '… puis il approuve', 'La semaine de Léo est verrouillée. En cas de souci, « Refuser » avec un commentaire la renvoie à Léo.', ROLE, 2500);

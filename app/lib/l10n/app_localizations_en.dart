@@ -286,10 +286,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get journalSelectHint =>
-      'Pick a block, or drag across the “You” line to create one.';
-
-  @override
   String get journalDescriptionHint => 'What did you do?';
 
   @override

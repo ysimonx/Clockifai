@@ -29,6 +29,9 @@ import 'day_plan.dart';
 import 'quick_place.dart';
 import 'traces.dart';
 
+part 'journal_blocks.dart';
+part 'day_summary.dart';
+
 /// « Aujourd'hui », le journal automatique (plans/13-ux-moderne.md, lot 11) : la journée sur une frise, les entrées
 /// saisies, les créneaux vides et les propositions tirées des habitudes, du planning et des sessions de Claude, à
 /// confirmer d'un geste. Glisser sur le vide crée un bloc ; tirer un bloc ou ses bords l'ajuste.
@@ -44,47 +47,6 @@ class TodayPage extends StatefulWidget {
   @override
   State<TodayPage> createState() => _TodayPageState();
 }
-
-enum _Kind { logged, draft, fresh }
-
-/// Un bloc de la ligne « Vous » : entrée saisie, proposition ou nouvelle entrée en cours de création.
-class _Block {
-  _Block({required this.id, required this.kind, required this.span, required this.title, this.projectId, this.taskId, this.entry, this.draft,
-      this.fixed = false});
-  final String id;
-  final _Kind kind;
-  final Span span;
-  final String title;
-  final String? projectId;
-  final String? taskId;
-  final TimeEntry? entry;
-  final Draft? draft;
-
-  /// Entrée qu'on ne déplace pas ici : verrouillée, dans une période verrouillée, d'une autre personne sans droit, ou à
-  /// cheval sur un autre jour (sa plage est coupée à minuit).
-  final bool fixed;
-
-  bool get running => entry != null && entry!.endAt == null;
-  bool get movable => kind != _Kind.logged || (!running && !fixed);
-}
-
-class _DraftEdit {
-  const _DraftEdit({this.span, this.title, this.projectId, this.taskId, this.projectSet = false});
-  final Span? span;
-  final String? title;
-  final String? projectId;
-  final String? taskId;
-  final bool projectSet;
-  _DraftEdit copyWith({Span? span, String? title, String? projectId, String? taskId, bool? projectSet}) => _DraftEdit(
-        span: span ?? this.span,
-        title: title ?? this.title,
-        projectId: projectSet == true ? projectId : this.projectId,
-        taskId: projectSet == true ? taskId : this.taskId,
-        projectSet: projectSet ?? this.projectSet,
-      );
-}
-
-enum _Drag { create, move, left, right }
 
 class _TodayPageState extends State<TodayPage> {
   late DateTime _day = _midnight(widget.initialDay ?? widget.clock());
@@ -463,7 +425,7 @@ class _TodayPageState extends State<TodayPage> {
     final inspector = selected == null
         ? null
         : _inspector(context, catalog: catalog, b: selected, onConfirm: (b) => confirmDrafts([b]), onDismiss: dismiss, onSaveFresh: saveFresh);
-    final summary = _summary(context, catalog: catalog, plan: plan, mine: mineRows, loggedMin: loggedMin, draftMin: draftMin, claude: claudeSpans);
+    final summary = _summary(context, day: _day, now: now, catalog: catalog, plan: plan, mine: mineRows, loggedMin: loggedMin, draftMin: draftMin, claude: claudeSpans);
     const gap = SizedBox(height: 16);
 
     return LayoutBuilder(builder: (context, c) {
@@ -813,17 +775,6 @@ class _TodayPageState extends State<TodayPage> {
   }
 
   // ------------------------------------------------------------------ à compléter (maquette « Aujourd'hui »)
-  Widget _label(BuildContext context, String text) {
-    final theme = Theme.of(context);
-    return Text(text.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline, letterSpacing: 0.6, fontWeight: FontWeight.w600));
-  }
-
-  TextStyle? _mono(BuildContext context, {bool muted = true}) {
-    final theme = Theme.of(context);
-    return theme.textTheme.bodySmall?.copyWith(
-        fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()], color: muted ? theme.colorScheme.outline : null);
-  }
 
   /// Ce qui reste à faire : les propositions à confirmer (une à une ou d'un geste), sinon les créneaux vides à
   /// remplir, sinon « Journée complète ».
@@ -1461,32 +1412,15 @@ class _TodayPageState extends State<TodayPage> {
     return e > s ? Span(s, e) : null;
   }
 
-  Color _projectColor(CatalogController catalog, String? projectId, ThemeData theme) {
-    final p = catalog.project(projectId);
-    return p == null ? theme.colorScheme.outline : colorFromHex(p.color);
-  }
-
   // ------------------------------------------------------------------ panneau du bloc choisi
   Widget _inspector(BuildContext context,
       {required CatalogController catalog,
-      required _Block? b,
+      required _Block b,
       required Future<void> Function(_Block) onConfirm,
       required Future<void> Function(_Block) onDismiss,
       required Future<void> Function() onSaveFresh}) {
     final l = context.l10n;
     final theme = Theme.of(context);
-    if (b == null) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(children: [
-            Icon(Icons.touch_app_outlined, color: theme.colorScheme.outline),
-            const SizedBox(width: 12),
-            Expanded(child: Text(l.journalSelectHint, style: theme.textTheme.bodyMedium)),
-          ]),
-        ),
-      );
-    }
     final badge = switch (b.kind) {
       _Kind.draft => l.journalProposed,
       _Kind.fresh => l.journalNew,
@@ -1618,203 +1552,5 @@ class _TodayPageState extends State<TodayPage> {
     );
   }
 
-  /// Bilan par projet : vos minutes et celles de Claude, côte à côte.
-  List<Widget> _perProject(BuildContext context, CatalogController catalog, List<EntryRow> mine, List<(TimeEntry, Span)> claude) {
-    final l = context.l10n;
-    final theme = Theme.of(context);
-    final now = widget.clock();
-    final me = <String?, int>{}, agent = <String?, int>{};
-    for (final r in mine) {
-      if (spanOf(r.entry, _day, now) case final sp?) me[r.entry.projectId] = (me[r.entry.projectId] ?? 0) + sp.length;
-    }
-    for (final (e, sp) in claude) {
-      agent[e.projectId] = (agent[e.projectId] ?? 0) + sp.length;
-    }
-    final ids = {...me.keys, ...agent.keys}.toList()..sort((a, b) => ((me[b] ?? 0) + (agent[b] ?? 0)).compareTo((me[a] ?? 0) + (agent[a] ?? 0)));
-    if (ids.length < 2 && agent.isEmpty) return const [];
-    final mono = _mono(context, muted: false);
-    final head = theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline);
-    Widget cell(String text, TextStyle? style) => SizedBox(width: 52, child: Text(text, textAlign: TextAlign.right, style: style));
-    return [
-      const SizedBox(height: 12),
-      Row(children: [Expanded(child: Text(l.project, style: head)), cell(l.journalYou, head), if (agent.isNotEmpty) cell('Claude', head)]),
-      for (final id in ids.take(6))
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Row(children: [
-            Expanded(child: id == null ? Text(l.noProject, style: theme.textTheme.bodySmall) : ProjectLabel(projectId: id, dense: true)),
-            cell(me[id] == null ? '–' : formatHm(me[id]! * 60), mono),
-            if (agent.isNotEmpty) cell(agent[id] == null ? '–' : formatHm(agent[id]! * 60), mono),
-          ]),
-        ),
-    ];
-  }
-
   // ------------------------------------------------------------------ bilan
-  Widget _summary(BuildContext context,
-      {required CatalogController catalog,
-      required DayPlan plan,
-      required List<EntryRow> mine,
-      required int loggedMin,
-      required int draftMin,
-      required List<(TimeEntry, Span)> claude}) {
-    final l = context.l10n;
-    final theme = Theme.of(context);
-    final target = plan.typical.target;
-    final claudeMin = claude.fold(0, (a, c) => a + c.$2.length);
-    Widget line(String label, String value) => Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Row(children: [
-            Expanded(child: Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
-            Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()])),
-          ]),
-        );
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(l.journalSummary.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline, letterSpacing: 0.6)),
-          const SizedBox(height: 6),
-          Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-            Text(formatHm((loggedMin + draftMin) * 60),
-                style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w600, fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()])),
-            const SizedBox(width: 8),
-            Text(l.journalTarget(formatHm(target * 60)), style: theme.textTheme.bodyMedium),
-          ]),
-          const SizedBox(height: 10),
-          Semantics(
-            label: '${l.journalConfirmed} ${formatHm(loggedMin * 60)}, ${l.journalToConfirm} ${formatHm(draftMin * 60)}',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: SizedBox(
-                height: 10,
-                child: Stack(children: [
-                  Container(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
-                  FractionallySizedBox(
-                      widthFactor: target == 0 ? 0 : ((loggedMin + draftMin) / target).clamp(0.0, 1.0),
-                      child: Container(color: theme.colorScheme.tertiary.withValues(alpha: 0.45))),
-                  FractionallySizedBox(
-                      widthFactor: target == 0 ? 0 : (loggedMin / target).clamp(0.0, 1.0),
-                      child: Container(color: theme.colorScheme.onSurface)),
-                ]),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          line(l.journalConfirmed, formatHm(loggedMin * 60)),
-          line(l.journalToConfirm, formatHm(draftMin * 60)),
-          if (claude.isNotEmpty) line('Claude', formatHm(claudeMin * 60)),
-          ..._perProject(context, catalog, mine, claude),
-          const SizedBox(height: 10),
-          Text(
-            plan.typical.fromProfile
-                ? l.journalTypicalProfile(hm(plan.typical.start), hm(plan.typical.end))
-                : plan.typical.fromHistory
-                    ? l.journalTypicalDay(hm(plan.typical.start), hm(plan.typical.end))
-                    : l.journalTypicalDefault(hm(plan.typical.start), hm(plan.typical.end)),
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
-/// D'où vient une proposition : « Habitude », « Agenda », « Chantier »…
-String _sourceLabel(AppLocalizations l, DraftSource? source) => switch (source) {
-      DraftSource.presence => l.journalSourcePresence,
-      DraftSource.claude => l.journalSourceClaude,
-      DraftSource.calendar => l.journalSourceCalendar,
-      DraftSource.commits => l.journalSourceCommits,
-      DraftSource.habit => l.journalSourceHabit,
-      DraftSource.planning => l.journalSourcePlanning,
-      null => '',
-    };
-
-/// Lignes des heures sur une piste de la frise.
-class _GridPainter extends CustomPainter {
-  _GridPainter({required this.hours, required this.color});
-  final List<double> hours;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    final r = RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(10));
-    canvas.drawRRect(r, Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke);
-    for (final x in hours) {
-      if (x <= 0 || x >= size.width) continue;
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), p);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_GridPainter old) => old.hours != hours || old.color != color;
-}
-
-/// Bloc de la frise : fond, bord plein ou pointillé, trame hachurée (Claude, créneau vide), contour de sélection.
-class _BlockPainter extends CustomPainter {
-  _BlockPainter({required this.fill, required this.border, this.dashed = false, this.hatch, this.selected, this.runningEdge});
-  final Color fill;
-  final Color border;
-  final bool dashed;
-  final Color? hatch;
-  final Color? selected;
-  final Color? runningEdge;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(9));
-    canvas.drawRRect(rrect, Paint()..color = fill);
-    if (hatch != null) {
-      canvas.save();
-      canvas.clipRRect(rrect);
-      final hp = Paint()
-        ..color = hatch!
-        ..strokeWidth = 3;
-      for (double x = -size.height; x < size.width; x += 9) {
-        canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), hp);
-      }
-      canvas.restore();
-    }
-    final bp = Paint()
-      ..color = border
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = dashed ? 1.5 : 1;
-    if (dashed) {
-      final path = Path()..addRRect(rrect.deflate(0.75));
-      for (final metric in path.computeMetrics()) {
-        for (double d = 0; d < metric.length; d += 9) {
-          canvas.drawPath(metric.extractPath(d, math.min(d + 5, metric.length)), bp);
-        }
-      }
-    } else {
-      canvas.drawRRect(rrect.deflate(0.5), bp);
-    }
-    if (runningEdge != null) {
-      final ep = Paint()
-        ..color = runningEdge!
-        ..strokeWidth = 2;
-      for (double y = 4; y < size.height - 4; y += 7) {
-        canvas.drawLine(Offset(size.width - 1, y), Offset(size.width - 1, math.min(y + 4, size.height - 4)), ep);
-      }
-    }
-    if (selected != null) {
-      canvas.drawRRect(
-          rrect.inflate(1.5),
-          Paint()
-            ..color = selected!
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 2);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_BlockPainter old) =>
-      old.fill != fill || old.border != border || old.dashed != dashed || old.hatch != hatch || old.selected != selected || old.runningEdge != runningEdge;
 }

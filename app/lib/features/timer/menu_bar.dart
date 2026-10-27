@@ -224,7 +224,7 @@ class _MacMenuBarState extends State<MacMenuBar> {
       draft: EntryDraft(
         description: description,
         projectId: projectId,
-        billable: _catalog.project(projectId)?.billableDefault ?? true,
+        billable: _catalog.billableFor(projectId: projectId, userId: userId),
         hourlyRateCents: _catalog.rateFor(projectId: projectId, userId: userId),
       ),
       maxRunning: _session.runningTimersLimit,
@@ -284,23 +284,6 @@ class _MacMenuBarState extends State<MacMenuBar> {
   Future<String?> _continue(String? id) async {
     final row = _recent.where((r) => r.entry.id == id).firstOrNull;
     if (row == null) return null;
-    final e = row.entry;
-    final running = await entriesRepo.watchRunningAll(e.workspaceId, e.userId).first;
-    final blocked = alreadyRunningViolation(_l, running, description: e.description, projectId: e.projectId, taskId: e.taskId);
-    if (blocked != null) return blocked;
-    await entriesRepo.start(
-      workspaceId: e.workspaceId,
-      userId: e.userId,
-      draft: EntryDraft(
-        description: e.description,
-        projectId: e.projectId,
-        taskId: e.taskId,
-        billable: e.billable,
-        hourlyRateCents: e.hourlyRateCents,
-        tagIds: row.tagIds,
-      ),
-      maxRunning: _session.runningTimersLimit,
-    );
-    return null;
+    return restartEntry(_l, row, maxRunning: _session.runningTimersLimit);
   }
 }

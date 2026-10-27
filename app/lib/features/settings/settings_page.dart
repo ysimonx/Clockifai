@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Supabase, UserAttri
 
 import '../../core/di.dart';
 import '../../core/display_prefs.dart';
+import '../../core/format.dart' show parseDecimal;
 import '../../core/guide.dart';
 import '../../core/launch_at_login.dart';
 import '../../core/l10n.dart';
@@ -648,7 +649,7 @@ class _BillingSettingsState extends State<_BillingSettings> {
                   companyName: Value(_company.text.trim().isEmpty ? null : _company.text.trim()),
                   companyDetails: Value(_details.text.trim().isEmpty ? null : _details.text.trim()),
                   invoicePrefix: Value(_prefix.text.trim().isEmpty ? 'F' : _prefix.text.trim()),
-                  defaultTaxPercent: Value(double.tryParse(_tax.text.replaceAll(',', '.')) ?? 20),
+                  defaultTaxPercent: Value(parseDecimal(_tax.text) ?? 20),
                   invoiceDueDays: Value(int.tryParse(_due.text) ?? 30),
                 ));
                 if (context.mounted) showSnack(context, l.saved);

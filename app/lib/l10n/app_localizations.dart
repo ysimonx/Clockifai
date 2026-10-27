@@ -542,12 +542,6 @@ abstract class AppLocalizations {
   /// **'Journée type par défaut : {start} – {end}'**
   String journalTypicalDefault(String start, String end);
 
-  /// No description provided for @journalSelectHint.
-  ///
-  /// In fr, this message translates to:
-  /// **'Choisissez un bloc, ou glissez sur la ligne « Vous » pour en créer un.'**
-  String get journalSelectHint;
-
   /// No description provided for @journalDescriptionHint.
   ///
   /// In fr, this message translates to:

@@ -288,10 +288,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get journalSelectHint =>
-      'Choisissez un bloc, ou glissez sur la ligne « Vous » pour en créer un.';
-
-  @override
   String get journalDescriptionHint => 'Qu’avez-vous fait ?';
 
   @override

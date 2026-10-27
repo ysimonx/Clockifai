@@ -164,8 +164,8 @@ class _MemberRow extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(10),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(member.displayName, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
-              Text('${capacity.toStringAsFixed(capacity % 1 == 0 ? 0 : 1)} h/${context.l10n.daysShort}', style: theme.textTheme.bodySmall),
+              Text(memberName(member), style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+              Text('${formatQuantity(capacity)} h/${context.l10n.daysShort}', style: theme.textTheme.bodySmall),
             ]),
           ),
         ),
@@ -197,14 +197,14 @@ class _MemberRow extends StatelessWidget {
                     for (final a in dayAssign)
                       _Chip(
                         color: catalog.project(a.projectId)?.color ?? '#64748B',
-                        text: '${catalog.project(a.projectId)?.name ?? context.l10n.noProject} · ${a.hoursPerDay.toStringAsFixed(a.hoursPerDay % 1 == 0 ? 0 : 1)}h',
+                        text: '${catalog.project(a.projectId)?.name ?? context.l10n.noProject} · ${formatQuantity(a.hoursPerDay)}h',
                         onTap: session.isManager ? () => showAssignmentDialog(context, assignment: a) : null,
                       ),
                   if (planned > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        '${planned.toStringAsFixed(planned % 1 == 0 ? 0 : 1)}/${capacity.toStringAsFixed(capacity % 1 == 0 ? 0 : 1)}h',
+                        '${formatQuantity(planned)}/${formatQuantity(capacity)}h',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.labelSmall?.copyWith(color: over ? theme.colorScheme.error : theme.colorScheme.outline, fontWeight: over ? FontWeight.bold : null),
                       ),
@@ -316,7 +316,7 @@ Future<void> showAssignmentDialog(BuildContext context, {ScheduleAssignment? ass
   );
   if (res == 'delete' && a != null) return modulesRepo.deleteAssignment(a.id);
   if (res != 'save') return;
-  final h = double.tryParse(hours.text.replaceAll(',', '.'));
+  final h = parseDecimal(hours.text);
   if (h == null || h <= 0 || h > 24) {
     if (context.mounted) showSnack(context, l.invalidHours);
     return;

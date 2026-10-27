@@ -215,7 +215,6 @@
       }
     }
   },
-  "journalSelectHint": "Choisissez un bloc, ou glissez sur la ligne « Vous » pour en créer un.",
   "journalDescriptionHint": "Qu’avez-vous fait ?",
   "journalDayRing": "{day} : {percent} % saisi",
   "@journalDayRing": {

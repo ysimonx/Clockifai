@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../data/drift/database.dart';
 import 'catalog.dart';
 import 'session.dart';
+import 'widgets/teammates.dart' show memberName;
 
 /// Droits « équipe » de l'utilisateur connecté dans le workspace courant.
 ///
@@ -102,6 +103,6 @@ class TeamRights {
     ..sort((a, b) {
       if (a.userId == me) return -1;
       if (b.userId == me) return 1;
-      return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+      return memberName(a).toLowerCase().compareTo(memberName(b).toLowerCase());
     });
 }

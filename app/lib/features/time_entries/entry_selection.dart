@@ -45,7 +45,6 @@ class EntrySelection extends ChangeNotifier {
   bool get isActive => _ids.isNotEmpty;
   String? get cursor => _cursor;
   EntryLine? get cursorLine => _lines.where((l) => l.key == _cursor).firstOrNull;
-  bool isSelected(String entryId) => _ids.contains(entryId);
 
   /// Les entrées sélectionnées, dans l'ordre affiché.
   List<EntryRow> get selectedRows => [

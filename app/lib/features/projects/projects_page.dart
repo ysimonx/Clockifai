@@ -220,7 +220,7 @@ class _ProjectDialog extends StatefulWidget {
 
 class _ProjectDialogState extends State<_ProjectDialog> {
   late final _name = TextEditingController(text: widget.project?.name ?? '');
-  late final _rate = TextEditingController(text: _centsToText(widget.project?.hourlyRateCents));
+  late final _rate = TextEditingController(text: centsToText(widget.project?.hourlyRateCents));
   late final _budget = TextEditingController(text: widget.project?.budgetHours?.toString() ?? '');
   late final _note = TextEditingController(text: widget.project?.note ?? '');
   // Chantier (plan 13, lot 13) : position et rayon, pour la présence détectée par le téléphone.
@@ -233,12 +233,6 @@ class _ProjectDialogState extends State<_ProjectDialog> {
   late bool _public = widget.project?.isPublic ?? true;
   /// Temps des agents Claude sur ce projet : nul = comme le workspace (plan 10, D16).
   late bool? _agentBillable = widget.project?.agentBillable;
-
-  static String _centsToText(int? c) => c == null ? '' : (c / 100).toStringAsFixed(2);
-  static int? _textToCents(String t) {
-    final v = double.tryParse(t.replaceAll(',', '.').trim());
-    return v == null ? null : (v * 100).round();
-  }
 
   @override
   void dispose() {
@@ -264,7 +258,7 @@ class _ProjectDialogState extends State<_ProjectDialog> {
       billableDefault: Value(_billable),
       isPublic: Value(_public),
       agentBillable: Value(_agentBillable),
-      hourlyRateCents: Value(_textToCents(_rate.text)),
+      hourlyRateCents: Value(textToCents(_rate.text)),
       budgetHours: Value(int.tryParse(_budget.text.trim())),
       note: Value(_note.text.trim().isEmpty ? null : _note.text.trim()),
       siteLat: Value(site?.$1),

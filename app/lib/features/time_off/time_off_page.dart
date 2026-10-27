@@ -11,8 +11,10 @@ import '../../core/session.dart';
 import '../../core/team_rights.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/pickers.dart' show promptText;
 import '../../data/drift/database.dart';
 import '../approvals/submission_bar.dart' show askDecisionNote;
+import '../../core/widgets/teammates.dart' show memberName;
 
 /// Jours ouvrés (lundi–vendredi hors jours fériés) entre deux dates incluses.
 double workingDays(DateTime start, DateTime end, Set<String> holidays) {
@@ -107,7 +109,7 @@ class TimeOffPage extends StatelessWidget {
 
     void recompute() {
       final days = workingDays(range.start, range.end, holidays) * (halfDay ? 0.5 : 1);
-      amount.text = (policy.unit == 'hours' ? days * capacity : days).toStringAsFixed(policy.unit == 'hours' ? 1 : 1).replaceAll('.0', '');
+      amount.text = (policy.unit == 'hours' ? days * capacity : days).toStringAsFixed(1).replaceAll('.0', '');
     }
 
     recompute();
@@ -178,7 +180,7 @@ class TimeOffPage extends StatelessWidget {
         );
       }),
     );
-    final value = double.tryParse(amount.text.replaceAll(',', '.'));
+    final value = parseDecimal(amount.text);
     if (ok != true || value == null || value <= 0) return;
     await modulesRepo.requestTimeOff(
       workspaceId: ws,
@@ -231,7 +233,6 @@ class _Balances extends StatelessWidget {
                     .fold(0.0, (s, r) => s + r.amount);
                 final used = sum('approved'), pending = sum('pending');
                 final unit = p.unit == 'hours' ? 'h' : l.daysShort;
-                String n(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
                 return SizedBox(
                   width: 240,
                   child: Card(
@@ -240,11 +241,11 @@ class _Balances extends StatelessWidget {
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Row(children: [ColorDot(p.color), const SizedBox(width: 8), Expanded(child: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)))]),
                         const SizedBox(height: 8),
-                        Text(allowance == null ? l.unlimited : '${n(allowance - used)} $unit ${l.remaining}',
+                        Text(allowance == null ? l.unlimited : '${formatQuantity(allowance - used)} $unit ${l.remaining}',
                             style: Theme.of(context).textTheme.headlineSmall),
-                        Text('${l.used} : ${n(used)} $unit${pending > 0 ? ' · ${l.pending} : ${n(pending)} $unit' : ''}',
+                        Text('${l.used} : ${formatQuantity(used)} $unit${pending > 0 ? ' · ${l.pending} : ${formatQuantity(pending)} $unit' : ''}',
                             style: Theme.of(context).textTheme.bodySmall),
-                        if (allowance != null) Text('${l.allowance} : ${n(allowance)} $unit', style: Theme.of(context).textTheme.bodySmall),
+                        if (allowance != null) Text('${l.allowance} : ${formatQuantity(allowance)} $unit', style: Theme.of(context).textTheme.bodySmall),
                       ]),
                     ),
                   ),
@@ -279,13 +280,13 @@ class _RequestTile extends StatelessWidget {
       'cancelled' => (theme.colorScheme.outline, l.statusCancelled),
       _ => (theme.colorScheme.tertiary, l.statusPending),
     };
-    final who = managerView ? '${catalog.memberOf(r.userId)?.displayName ?? '?'} · ' : '';
+    final who = managerView ? '${memberName(catalog.memberOf(r.userId))} · ' : '';
     final unit = policy?.unit == 'hours' ? 'h' : l.daysShort;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: ColorDot(policy?.color ?? '#999999', size: 14),
-        title: Text('$who${policy?.name ?? '?'} · ${r.amount.toStringAsFixed(r.amount % 1 == 0 ? 0 : 1)} $unit'),
+        title: Text('$who${policy?.name ?? '?'} · ${formatQuantity(r.amount)} $unit'),
         subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(start == end ? fmt.format(start) : '${fmt.format(start)} → ${fmt.format(end)}${r.halfDay ? ' (½)' : ''}'),
           Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
@@ -339,7 +340,7 @@ class _PoliciesAdmin extends StatelessWidget {
               leading: ColorDot(p.color, size: 14),
               title: Text(p.name, style: p.archived ? TextStyle(color: Theme.of(context).colorScheme.outline) : null),
               subtitle: Text([
-                p.annualAllowance == null ? l.unlimited : '${p.annualAllowance} ${p.unit == 'hours' ? 'h' : l.daysShort} / ${l.year}',
+                p.annualAllowance == null ? l.unlimited : '${formatQuantity(p.annualAllowance!)} ${p.unit == 'hours' ? 'h' : l.daysShort} / ${l.year}',
                 p.requiresApproval
                     ? (p.approvers == 'managers_and_team_managers' ? '${l.requiresApproval} (${l.approversManagersAndTeamManagers})' : l.requiresApproval)
                     : l.noApproval,
@@ -431,7 +432,7 @@ class _PoliciesAdmin extends StatelessWidget {
     final data = TimeOffPoliciesCompanion(
       name: Value(name.text.trim()),
       unit: Value(unit),
-      annualAllowance: Value(double.tryParse(allowance.text.replaceAll(',', '.'))),
+      annualAllowance: Value(parseDecimal(allowance.text)),
       paid: Value(paid),
       requiresApproval: Value(approval),
       approvers: Value(approvers),
@@ -466,7 +467,7 @@ class _PoliciesAdmin extends StatelessWidget {
                 child: TextField(
                   controller: controllers[m.userId],
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(labelText: m.displayName),
+                  decoration: InputDecoration(labelText: memberName(m)),
                 ),
               ),
           ]),
@@ -479,7 +480,7 @@ class _PoliciesAdmin extends StatelessWidget {
     );
     if (ok != true) return;
     for (final e in controllers.entries) {
-      final v = double.tryParse(e.value.text.replaceAll(',', '.'));
+      final v = parseDecimal(e.value.text);
       if (v != null) {
         await modulesRepo.setAllowance(workspaceId: p.workspaceId, userId: e.key, policyId: p.id, year: year, allowance: v);
       }
@@ -508,7 +509,7 @@ class _HolidaysAdmin extends StatelessWidget {
               onPressed: () async {
                 final d = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: DateTime.now());
                 if (d == null || !context.mounted) return;
-                final name = await _ask(context, l.addHoliday);
+                final name = (await promptText(context, title: l.addHoliday, label: l.name))?.trim();
                 if (name != null && name.isNotEmpty) await modulesRepo.addHoliday(ws, name, d);
               },
             ),
@@ -527,21 +528,6 @@ class _HolidaysAdmin extends StatelessWidget {
           ),
         ]);
       },
-    );
-  }
-
-  Future<String?> _ask(BuildContext context, String title) {
-    final c = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: TextField(controller: c, autofocus: true, decoration: InputDecoration(labelText: ctx.l10n.name)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(ctx.l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(ctx, c.text.trim()), child: Text(ctx.l10n.save)),
-        ],
-      ),
     );
   }
 }

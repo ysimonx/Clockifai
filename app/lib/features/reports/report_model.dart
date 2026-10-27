@@ -1,5 +1,6 @@
 import '../../core/catalog.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import '../../core/widgets/teammates.dart' show memberName;
 
 enum GroupBy { project, task, client, user, tag, day, description }
 
@@ -115,7 +116,7 @@ class ReportCalculator {
           final c = catalog.clientOfProject(e.projectId);
           add(c?.id, c?.name ?? noClient, r);
         case GroupBy.user:
-          add(e.userId, catalog.memberOf(e.userId)?.displayName ?? e.userId.substring(0, 8), r);
+          add(e.userId, memberName(catalog.memberOf(e.userId)), r);
         case GroupBy.tag:
           // Une entrée avec plusieurs tags compte dans chacun (comme Clockify).
           if (r.tagIds.isEmpty) {

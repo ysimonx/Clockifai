@@ -77,20 +77,18 @@ Future<Set<String>?> showMembersPicker(
   required String title,
   required List<WorkspaceMember> members,
   required Set<String> selected,
-  String? help,
 }) {
   return showDialog<Set<String>>(
     context: context,
-    builder: (_) => _MembersPickerDialog(title: title, members: members, selected: selected, help: help),
+    builder: (_) => _MembersPickerDialog(title: title, members: members, selected: selected),
   );
 }
 
 class _MembersPickerDialog extends StatefulWidget {
-  const _MembersPickerDialog({required this.title, required this.members, required this.selected, this.help});
+  const _MembersPickerDialog({required this.title, required this.members, required this.selected});
   final String title;
   final List<WorkspaceMember> members;
   final Set<String> selected;
-  final String? help;
 
   @override
   State<_MembersPickerDialog> createState() => _MembersPickerDialogState();
@@ -110,11 +108,6 @@ class _MembersPickerDialogState extends State<_MembersPickerDialog> {
         width: 380,
         height: 420,
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          if (widget.help != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-              child: Text(widget.help!, style: Theme.of(context).textTheme.bodySmall),
-            ),
           CheckboxListTile(
             value: all,
             title: Text(l.selectAll, style: const TextStyle(fontWeight: FontWeight.w600)),

@@ -373,7 +373,7 @@ class EntryTile extends StatelessWidget {
     final description = InlineDescription(key: ValueKey('description ${e.id}'), text: e.description, onSave: inline ? saveDescription : null);
 
     final meta = Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
-      if (showUser) Text(catalog.memberOf(e.userId)?.displayName ?? '?', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+      if (showUser) Text(memberName(catalog.memberOf(e.userId)), style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
       InlineProject(projectId: e.projectId, taskId: e.taskId, onPick: inline ? saveProject : null),
       TagChips(row.tagIds),
       if (author != null && author != e.userId && e.source != 'agent')
@@ -515,26 +515,8 @@ class _ContinueButton extends StatelessWidget {
 /// Relance l'activité d'une entrée, sauf si sa tâche a déjà un chronomètre en cours.
 /// Vérifie la base locale : la liste [EntryTile.running] n'est pas fournie partout (rapports, approbations).
 Future<void> continueEntry(BuildContext context, EntryRow row) async {
-  final session = context.read<SessionController>();
-  final l = context.l10n;
-  final e = row.entry;
-  final running = await entriesRepo.watchRunningAll(e.workspaceId, e.userId).first;
-  if (!context.mounted) return;
-  final blocked = alreadyRunningViolation(l, running, description: e.description, projectId: e.projectId, taskId: e.taskId);
-  if (blocked != null) return showSnack(context, blocked);
-  await entriesRepo.start(
-    workspaceId: e.workspaceId,
-    userId: e.userId,
-    draft: EntryDraft(
-      description: e.description,
-      projectId: e.projectId,
-      taskId: e.taskId,
-      billable: e.billable,
-      hourlyRateCents: e.hourlyRateCents,
-      tagIds: row.tagIds,
-    ),
-    maxRunning: session.runningTimersLimit,
-  );
+  final blocked = await restartEntry(context.l10n, row, maxRunning: context.read<SessionController>().runningTimersLimit);
+  if (blocked != null && context.mounted) showSnack(context, blocked);
 }
 
 /// Groupe d'entrées similaires d'une journée (plans/08-regroupement-entrees.md) : une ligne résumée
@@ -621,7 +603,7 @@ class _EntryGroupTileState extends State<EntryGroupTile> {
               const SizedBox(height: 4),
               Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
                 if (widget.showUser)
-                  Text(context.watch<CatalogController>().memberOf(e.userId)?.displayName ?? '?',
+                  Text(memberName(context.watch<CatalogController>().memberOf(e.userId)),
                       style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
                 ProjectLabel(projectId: e.projectId, taskId: e.taskId, dense: true),
                 TagChips(g.first.tagIds),

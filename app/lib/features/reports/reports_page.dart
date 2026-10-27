@@ -443,7 +443,7 @@ class _ReportsPageState extends State<ReportsPage> {
         for (final r in rows) {
           final e = r.entry;
           csv.writeln([
-            q(catalog.memberOf(e.userId)?.displayName ?? ''),
+            q(memberName(catalog.memberOf(e.userId))),
             catalog.isAgent(e.userId) ? 'agent' : 'human',
             q(catalog.clientOfProject(e.projectId)?.name ?? ''),
             q(catalog.project(e.projectId)?.name ?? ''),

@@ -38,6 +38,30 @@ String? alreadyRunningViolation(AppLocalizations l, Iterable<TimeEntry> running,
   return same ? l.timerAlreadyRunningOnTask : null;
 }
 
+/// Relance [row] en nouveau chronomètre (« Continuer ») : description, projet, tâche, tags, facturation et taux
+/// repris. Message si un chronomètre tourne déjà sur cette tâche, sinon null. Partagé par la liste des entrées et la
+/// barre de menus du Mac.
+Future<String?> restartEntry(AppLocalizations l, EntryRow row, {required int maxRunning}) async {
+  final e = row.entry;
+  final running = await entriesRepo.watchRunningAll(e.workspaceId, e.userId).first;
+  final blocked = alreadyRunningViolation(l, running, description: e.description, projectId: e.projectId, taskId: e.taskId);
+  if (blocked != null) return blocked;
+  await entriesRepo.start(
+    workspaceId: e.workspaceId,
+    userId: e.userId,
+    draft: EntryDraft(
+      description: e.description,
+      projectId: e.projectId,
+      taskId: e.taskId,
+      billable: e.billable,
+      hourlyRateCents: e.hourlyRateCents,
+      tagIds: row.tagIds,
+    ),
+    maxRunning: maxRunning,
+  );
+  return null;
+}
+
 /// Arrête un chronomètre en cours après les règles du workspace (message sinon).
 Future<void> stopTimer(BuildContext context, TimeEntry entry) async {
   final ws = context.read<SessionController>().workspace!;

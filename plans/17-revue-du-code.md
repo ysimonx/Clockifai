@@ -19,7 +19,7 @@ aucune fonction `security definer` sans `search_path`, RLS sur toutes les tables
 |---|---|---|
 | 1 Base et serveur | Migration 0022 ; Flask (sessions Claude, exports, assistant) ; serveur MCP du plugin | fait |
 | 2 App : bugs | Constats « bug » de l'app ci-dessous | fait |
-| 3 App : nettoyage | Code mort, duplications, découpage de `today_page.dart` | à faire |
+| 3 Nettoyage | Code mort, duplications, découpage de `today_page.dart` et d'`activity.py` | fait (découpage partiel, voir plus bas) |
 | 4 À décider | Constats qui changent une règle ou un montant | à décider avec Yannick |
 
 ## Lot 1 — base et serveur (fait)
@@ -74,6 +74,22 @@ ignore un `tool_input` qui n'est pas un objet.
   soumis » sans personnes désactivées. Barre de menus : plus d'écouteur hors macOS (erreur quotidienne sur le web et
   les téléphones). `mounted` vérifié après les appels réseau (kiosque, jetons, tags, clients).
 
+## Lot 3 — nettoyage
+
+- Code mort retiré : `Draft.withSpan`, `DayPlan.draftMinutes`, `EntrySelection.isSelected`, branche vide de
+  l'inspecteur (et la clé `journalSelectHint`), paramètres `estimateSeconds` (tâches) et `help` (choix des personnes).
+- Utilitaires partagés dans `core/format.dart` : `parseDecimal`, `textToCents`, `centsToText`, `formatQuantity` (dix
+  copies) ; `catalog.projectNames` / `taskPaths` pour les factures ; `promptText` pour les jours fériés ;
+  `restartEntry` (« Continuer », liste et barre de menus) ; `memberName` pour tout nom affiché (selon l'écran, un nom
+  vide donnait « ? », un identifiant tronqué ou rien).
+- `today_page.dart` (1 800 lignes) : modèle et dessin des blocs dans `journal_blocks.dart`, bilan et temps par projet
+  dans `day_summary.dart` (fichiers `part`). Reste à extraire en widgets : la frise (`_timeline`, 420 lignes),
+  l'inspecteur et la saisie express, qui tiennent à l'état de la page.
+- `activity.py` : la désignation des tâches de Claude passe dans `agent_tasks.py`.
+
+Pas encore fait : l'appel à `planDay` recopié entre la page et le récapitulatif de fin de journée, la ligne de
+chronomètre en double (`RunningTimerRow`, `_AgentSessionRow`), le contrôleur de `promptText` jamais libéré.
+
 ## Lot 4 — à décider
 
 - **Taux des entrées** : un membre peut changer `hourly_rate_cents` de ses propres entrées par l'API (les exports le
@@ -83,5 +99,7 @@ ignore un `tool_input` qui n'est pas un objet.
 - **Agenda iCal** : le contrôle d'adresse (pas d'IP privée) résout le nom puis le laisse résoudre à nouveau à la
   connexion ; un DNS complaisant pourrait viser le réseau Docker. Épingler l'adresse vérifiée.
 - **Agent désactivé** : son entrée en cours reste ouverte (`process_session` sort sans rien écrire).
+- **Temps suivi d'un projet** (page Projets) : un chef d'équipe n'y voit que le sien, alors que les rapports comptent
+  son équipe.
 - **Sujet sans tâche possible** (création réservée aux managers) : la nouvelle entrée garde la tâche de l'entrée
   précédente de la session.

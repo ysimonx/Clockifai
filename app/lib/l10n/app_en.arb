@@ -215,7 +215,6 @@
       }
     }
   },
-  "journalSelectHint": "Pick a block, or drag across the “You” line to create one.",
   "journalDescriptionHint": "What did you do?",
   "journalDayRing": "{day}: {percent}% logged",
   "@journalDayRing": {

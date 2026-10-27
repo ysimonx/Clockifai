@@ -120,7 +120,6 @@ class Draft {
   final String? taskId;
   final List<DraftReason> reasons;
 
-  Draft withSpan(Span s) => Draft(key: key, source: source, span: s, description: description, projectId: projectId, taskId: taskId, reasons: reasons);
 }
 
 /// Journée type déduite de l'historique : arrivée, pause de midi, départ, durée visée.
@@ -170,7 +169,6 @@ class DayPlan {
   final List<Span> gaps;
 
   int get loggedMinutes => busy.fold(0, (a, s) => a + s.length);
-  int get draftMinutes => drafts.fold(0, (a, d) => a + d.span.length);
 }
 
 const _minDraft = 10;

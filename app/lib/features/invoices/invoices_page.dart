@@ -148,10 +148,10 @@ class InvoicesPage extends StatelessWidget {
       from: startOfDay(range.start),
       to: addDays(range.end, 1),
       currency: client?.currencyOverride ?? ws.currency,
-      taxPercent: double.tryParse(tax.text.replaceAll(',', '.')) ?? ws.defaultTaxPercent,
-      projectNames: {for (final p in catalog.projects) p.id: p.name},
+      taxPercent: parseDecimal(tax.text) ?? ws.defaultTaxPercent,
+      projectNames: catalog.projectNames,
       byTask: byTask,
-      taskNames: {for (final t in catalog.tasks) t.id: catalog.taskPath(t.id)!},
+      taskNames: catalog.taskPaths,
     );
     if (!context.mounted) return;
     if (id == null) return showSnack(context, l.nothingToInvoice);
@@ -310,7 +310,7 @@ class _InvoiceDialog extends StatelessWidget {
     final l = context.l10n;
     final desc = TextEditingController(text: it?.description ?? '');
     final qty = TextEditingController(text: (it?.quantity ?? 1).toString());
-    final price = TextEditingController(text: ((it?.unitPriceCents ?? 0) / 100).toStringAsFixed(2));
+    final price = TextEditingController(text: centsToText(it?.unitPriceCents ?? 0));
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -332,8 +332,8 @@ class _InvoiceDialog extends StatelessWidget {
       ),
     );
     if (ok != true) return;
-    final q = double.tryParse(qty.text.replaceAll(',', '.')) ?? 1;
-    final p = ((double.tryParse(price.text.replaceAll(',', '.')) ?? 0) * 100).round();
+    final q = parseDecimal(qty.text) ?? 1;
+    final p = textToCents(price.text) ?? 0;
     await modulesRepo.saveItem(
       inv.workspaceId,
       inv.id,
@@ -373,7 +373,7 @@ class _PercentField extends StatelessWidget {
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(labelText: label, suffixText: '%'),
         onFieldSubmitted: (v) {
-          final d = double.tryParse(v.replaceAll(',', '.'));
+          final d = parseDecimal(v);
           if (d != null && d >= 0 && d <= 100) onChanged(d);
         },
       );

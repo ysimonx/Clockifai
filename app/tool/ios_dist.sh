@@ -48,7 +48,7 @@ if ! xcodebuild_asc -exportArchive -archivePath "$ARCHIVE" -exportPath "$OUT" \
   -exportOptionsPlist "$OUT/ExportOptions.plist" -allowProvisioningUpdates > "$OUT/export.log" 2>&1; then
   tail -5 "$OUT/export.log" >&2
   if grep -q "Failed to Use Accounts" "$OUT/export.log"; then
-    # « Invalid credentials in keychain … missing Xcode-Token » : la session du compte dans Xcode a expiré.
+    # « Invalid credentials in keychain … missing Xcode-Token » : écran verrouillé, ou session du compte expirée.
     asc_expired_hint
   else
     echo "Envoi refusé. « App record … not found » : créez l'app dans App Store Connect" >&2

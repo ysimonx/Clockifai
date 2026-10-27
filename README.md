@@ -143,7 +143,8 @@ Prérequis : `make app-config-prod HOST=…`. Côté Apple, le compte développe
 équipe `APPLE_TEAM`, `9SGKL7VUD3` par défaut) et la fiche « clockifai » (`com.kysoe.clockifai`, plateformes iOS et
 macOS) dans App Store Connect. Côté Google, la clé d'envoi créée une fois et **sauvegardée**.
 
-La session du compte dans Xcode expire (envoi refusé, « missing Xcode-Token »). Pour ne plus en dépendre : une clé
+Le jeton du compte dans Xcode n'est lisible que session déverrouillée, et il expire : écran du Mac verrouillé (lancé à
+distance, par exemple) ou session expirée, l'envoi est refusé (« missing Xcode-Token »). Pour ne plus en dépendre : une clé
 d'API App Store Connect (Utilisateurs et accès > Intégrations > App Store Connect API, clé d'équipe, rôle Admin),
 rangée hors du dépôt dans `~/.config/clockifai/apple/` : `AuthKey_<ID>.p8` et `asc.env` (`ASC_KEY_ID=<ID>`,
 `ASC_ISSUER_ID=<émetteur>`). Les scripts l'emploient dès qu'elle est là (`app/tool/apple_auth.sh`).

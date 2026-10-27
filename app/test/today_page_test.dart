@@ -8,6 +8,8 @@ import 'package:clockifai/data/repositories/modules_repository.dart';
 import 'package:clockifai/data/repositories/team_repository.dart';
 import 'package:clockifai/data/repositories/time_entry_repository.dart';
 import 'package:clockifai/data/repositories/workspace_repository.dart';
+import 'package:clockifai/features/presence/presence.dart';
+import 'package:clockifai/features/presence/presence_log.dart';
 import 'package:clockifai/features/today/day_plan.dart' show CalendarEvent;
 import 'package:clockifai/features/today/day_recap.dart';
 import 'package:clockifai/features/today/today_page.dart';
@@ -81,6 +83,7 @@ void main() {
 
   tearDown(() async {
     TracesApi.override = null;
+    PresenceTracker.instance.log.value = PresenceLog();
     catalog.dispose();
     await getIt.reset();
     await db.close();
@@ -274,6 +277,20 @@ void main() {
     await close(tester);
     await open(tester);
     expect(find.textContaining(RegExp(r'^Comme (hier|vendredi|le )')), findsNothing, reason: 'lundi 26 a déjà « Maquettes »');
+    await close(tester);
+  });
+
+  testWidgets('présence chantier : l’après-midi sur le chantier devient une proposition, avec sa raison', (tester) async {
+    final site = catalog.projects.firstWhere((p) => p.name == 'Site').id;
+    PresenceTracker.instance.log.value = PresenceLog()
+      ..record(at(26, 13, 25), {site})
+      ..record(at(26, 16, 55), {site})
+      ..record(at(26, 17), {});
+    await open(tester);
+    await tester.tap(find.text('Site, après-midi du 23').first);
+    await settle(tester);
+    expect(find.text('Chantier'), findsOneWidget);
+    expect(find.textContaining("Sur le chantier de 13:25 à 17:00, d'après ce téléphone"), findsOneWidget);
     await close(tester);
   });
 }

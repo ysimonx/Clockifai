@@ -1,6 +1,6 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
-> Statut : **en cours** (lots 1 à 9, 11 et 12 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
+> Statut : **en cours** (lots 1 à 9 et 11 à 13 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
 > (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
@@ -96,6 +96,21 @@ Ce que cela demande :
   7. Présence chantier : réglage personnel (chacun l'active pour soi), coordonnées des chantiers saisies par un
      manager, position lue sur le téléphone seulement, jamais envoyée ; seules des propositions d'arrivée et de
      départ en sortent, à confirmer comme les autres.
+
+### Lot 13, présence chantier (fait)
+
+- Chantier = position d'un projet : `projects.site_lat`, `site_lng`, `site_radius` (mètres, 150 par défaut ;
+  migration 0020), saisis par un manager dans la fiche projet (collés d'une carte, ou « Ici » sur place) ;
+  synchronisés par `workspace_core`.
+- Réglage personnel, par téléphone (`presence_enabled:<user_id>` dans les préférences locales) ; suivi par
+  `geolocator` en arrière-plan (service au premier plan avec notification sur Android, indicateur de position sur
+  iPhone), une relève toutes les 5 minutes en plus des mouvements. Pas sur Mac ni sur le web.
+- Le téléphone ne garde que des heures par projet et par jour (`PresenceLog`, quatorze jours, effacé à la
+  déconnexion) : jamais de position, rien envoyé au serveur ; seules les entrées confirmées partent.
+- Propositions (`planDay`, source « Chantier », avant Claude) : arrivée → départ (ou maintenant), hors pause et
+  temps déjà saisi, même hors de la journée type ; description et tâche de la dernière entrée sur ce projet (le
+  planning ne porte pas de tâche). Règle de l'entreprise `workspaces.presence_rounding` : heures détectées à
+  5 minutes près, ou calées sur la journée type à moins de 30 minutes.
 
 ### Lot 9, mobile chantier (fait)
 
@@ -279,7 +294,7 @@ Ce que cela demande :
 | 10 Identité visuelle | Polices, jetons de couleur, mode sombre, densité | S/M | envisagé |
 | 11 Journal automatique | Brouillons tirés des traces, frise manipulable (glisser, tirer les bords, clavier), « pourquoi ce bloc », validation en un geste ; première version sur l'historique, le planning et les sessions de Claude | L | fait (traces : agenda, commits ; pas d'activité du poste) |
 | 12 Demander à Clockifai | Assistant ⌘J : questions sur les rapports, modifications avec aperçu et Annuler ; Claude par l'API, outils côté Flask | M/L | fait (actif avec une clé d'API) |
-| 13 Présence chantier | Géorepérage du chantier sur téléphone (opt-in), journée prête le soir, arrondi au planning selon l'entreprise | M/L | envisagé |
+| 13 Présence chantier | Géorepérage du chantier sur téléphone (opt-in), journée prête le soir, arrondi au planning selon l'entreprise | M/L | fait (arrondi sur la journée type ; tâche de la dernière entrée) |
 
 Ordre proposé : 1 (gains immédiats, sans changer la structure), puis 2 et 3 ensemble (le cœur de la proposition),
 puis 4 et 11 (la journée qui se remplit seule), 5 et 6, puis 12, 7, 8, 9, 13 ; 10 au fil de l'eau.

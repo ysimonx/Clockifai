@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../../data/drift/database.dart';
+import '../presence/presence_log.dart' show SiteVisit;
 
 /// Journal automatique (plans/13-ux-moderne.md, lot 11) : la journée se remplit à partir de ce que Clockifai sait
 /// déjà, et la personne valide. Calcul pur, sans base ni widget : il reçoit les entrées et le planning, et rend la
@@ -39,7 +40,7 @@ int? parseHm(String? s) {
 
 String hm(int m) => '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
 
-enum DraftSource { claude, calendar, commits, habit, planning }
+enum DraftSource { presence, claude, calendar, commits, habit, planning }
 
 /// Un événement de l'agenda de la personne (heure et titre seulement), lu par le serveur (plan 13, lot 4).
 class CalendarEvent {
@@ -62,6 +63,10 @@ class CommitTrace {
 
 /// Pourquoi une proposition existe, à traduire par l'interface.
 enum ReasonKind {
+  /// Sur le chantier, d'après le téléphone : arrivée [a], départ [b] (-1 : encore sur place).
+  presence,
+  /// Heures calées sur la journée type (règle de l'entreprise).
+  presenceRounded,
   /// Claude travaillait sur ce projet : [a] début, [b] fin.
   claudeSession,
   /// Le temps de piloter la session : la suivre, la relire.
@@ -276,9 +281,10 @@ String _fnv(String text) {
   return h.toRadixString(36);
 }
 
-/// Calcule la journée [day] : propositions tirées des sessions de Claude ([agentEntries], celles des agents du
-/// pilote), des habitudes ([history] : ses entrées des semaines précédentes) et du [planning], dans cet ordre de
-/// priorité, sur les créneaux que [mine] (ses entrées du jour) laisse vides. [dismissed] : clés ignorées.
+/// Calcule la journée [day] : propositions tirées de la présence sur un chantier ([presence], détectée par le
+/// téléphone), des sessions de Claude ([agentEntries], celles des agents du pilote), de l'agenda, des commits, des
+/// habitudes ([history] : ses entrées des semaines précédentes) et du [planning], dans cet ordre de priorité, sur
+/// les créneaux que [mine] (ses entrées du jour) laisse vides. [dismissed] : clés ignorées.
 DayPlan planDay({
   required DateTime day,
   required DateTime now,
@@ -290,6 +296,8 @@ DayPlan planDay({
   TypicalDay? typical,
   List<CalendarEvent> calendar = const [],
   List<CommitTrace> commits = const [],
+  List<SiteVisit> presence = const [],
+  String? presenceRounding,
   ({String? projectId, String? taskId})? Function(String text)? guessProject,
 }) {
   final d0 = _midnight(day);
@@ -309,6 +317,39 @@ DayPlan planDay({
     if (dismissed.contains(d.key)) return;
     drafts.add(d);
     free = subtract(free, [d.span], min: _minDraft);
+  }
+
+  // 0. Présence chantier : de l'arrivée au départ, hors pause de midi et hors temps déjà saisi, même en dehors de la
+  // journée type ; à 5 minutes près, ou calé sur la journée type à moins de 30 minutes (règle de l'entreprise).
+  // Description et tâche : celles de sa dernière entrée sur ce projet.
+  final snapToTypical = presenceRounding == 'planning';
+  for (final v in presence) {
+    if (_midnight(v.arrived) != d0 || isFuture) continue;
+    final arrived = minuteOf(v.arrived, d0), left = v.left == null ? null : minuteOf(v.left!, d0);
+    var a = _snap(arrived), b = _snap(left ?? minuteOf(isToday ? now : v.lastSeen, d0));
+    if (snapToTypical && (a - typical.start).abs() <= 30) a = typical.start;
+    if (snapToTypical && (b - typical.end).abs() <= 30) b = typical.end;
+    if (isToday && b > nowMin) b = nowMin;
+    if (b - a < _minDraft) continue;
+    TimeEntry? sample;
+    for (final e in history) {
+      if (e.projectId == v.projectId && (sample == null || e.startAt.isAfter(sample.startAt))) sample = e;
+    }
+    final rounded = snapToTypical && (a == typical.start || b == typical.end);
+    for (final piece in subtract([Span(a, b)], [?typical.lunch, ...busy], min: _minDraft)) {
+      place(Draft(
+        key: 'site:${v.projectId}:${piece.start}',
+        source: DraftSource.presence,
+        span: piece,
+        description: sample?.description ?? '',
+        projectId: v.projectId,
+        taskId: sample?.taskId,
+        reasons: [
+          DraftReason(ReasonKind.presence, a: arrived, b: left ?? -1),
+          if (rounded) const DraftReason(ReasonKind.presenceRounded),
+        ],
+      ));
+    }
   }
 
   // 1. Claude travaillait : le pilote suivait la session (prompts, relecture).

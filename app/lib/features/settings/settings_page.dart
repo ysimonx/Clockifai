@@ -18,6 +18,8 @@ import '../../core/widgets/pickers.dart';
 import '../../data/drift/database.dart';
 import '../integrations/calendar_tile.dart';
 import '../integrations/claude_code.dart';
+import '../presence/presence.dart' show PresenceTracker;
+import '../presence/presence_settings.dart';
 import '../today/day_plan.dart' show TypicalDay, hm, parseHm;
 
 class SettingsPage extends StatelessWidget {
@@ -72,6 +74,7 @@ class SettingsPage extends StatelessWidget {
           const _ThemeTile(),
           const _MyDayTile(),
           const _RecapTile(),
+          if (PresenceTracker.supported) const PresenceTile(),
           SwitchListTile(
             secondary: const Icon(Icons.layers_outlined),
             title: Text(l.groupSimilarEntries),
@@ -545,6 +548,21 @@ class _WorkspaceSettingsState extends State<_WorkspaceSettings> {
               DropdownMenuItem(value: 'never', child: Text(l.agentBillingNever)),
             ],
             onChanged: !e ? null : (v) => _update(WorkspacesCompanion(agentBilling: Value(v))),
+          ),
+        ]),
+      ),
+      ListTile(
+        title: Text(l.presenceRounding),
+        subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l.presenceRoundingHelp),
+          DropdownButton<String>(
+            value: ws.presenceRounding ?? 'actual',
+            isExpanded: true,
+            items: [
+              DropdownMenuItem(value: 'actual', child: Text(l.presenceRoundingActual)),
+              DropdownMenuItem(value: 'planning', child: Text(l.presenceRoundingPlanning)),
+            ],
+            onChanged: !e ? null : (v) => _update(WorkspacesCompanion(presenceRounding: Value(v))),
           ),
         ]),
       ),

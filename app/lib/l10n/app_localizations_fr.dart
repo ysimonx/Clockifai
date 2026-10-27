@@ -717,6 +717,87 @@ class AppLocalizationsFr extends AppLocalizations {
   String get undo => 'Annuler';
 
   @override
+  String get presenceTitle => 'Présence chantier';
+
+  @override
+  String get presenceHelp =>
+      'Ce téléphone note votre arrivée et votre départ sur les chantiers ; Aujourd\'hui vous les propose, à confirmer. Votre position reste sur le téléphone : seules les heures servent.';
+
+  @override
+  String get presenceOn => 'Présence chantier activée sur ce téléphone.';
+
+  @override
+  String get presenceDenied =>
+      'Accès à la position refusé : autorisez-le dans les réglages du téléphone.';
+
+  @override
+  String get presenceServiceOff =>
+      'Localisation indisponible : activez-la sur l\'appareil.';
+
+  @override
+  String get presenceForget => 'Oublier les heures notées';
+
+  @override
+  String get presenceForgotten =>
+      'Heures de présence effacées de ce téléphone.';
+
+  @override
+  String get presenceNotification =>
+      'Présence chantier : arrivée et départ notés sur ce téléphone';
+
+  @override
+  String get presenceRounding => 'Heures de présence chantier';
+
+  @override
+  String get presenceRoundingHelp =>
+      'Ce que proposent les téléphones des personnes qui ont activé la présence chantier.';
+
+  @override
+  String get presenceRoundingActual =>
+      'Telles que détectées (à 5 minutes près)';
+
+  @override
+  String get presenceRoundingPlanning =>
+      'Calées sur la journée type, à moins de 30 minutes';
+
+  @override
+  String get sitePosition => 'Position du chantier';
+
+  @override
+  String get sitePositionHelp =>
+      'Latitude et longitude, copiées d\'une carte, ou « Ici » sur place. Sert à la présence chantier.';
+
+  @override
+  String get sitePositionInvalid =>
+      'Attendu : latitude, longitude (48.8566, 2.3522)';
+
+  @override
+  String get siteOnMap => 'Voir sur la carte';
+
+  @override
+  String get siteRadius => 'Rayon';
+
+  @override
+  String get siteHere => 'Ici';
+
+  @override
+  String get journalSourcePresence => 'Chantier';
+
+  @override
+  String journalReasonPresence(String from, String to) {
+    return 'Sur le chantier de $from à $to, d\'après ce téléphone';
+  }
+
+  @override
+  String journalReasonPresenceSince(String from) {
+    return 'Sur le chantier depuis $from, d\'après ce téléphone';
+  }
+
+  @override
+  String get journalReasonPresenceRounded =>
+      'Heures calées sur votre journée type (règle de l\'entreprise)';
+
+  @override
   String pendingCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

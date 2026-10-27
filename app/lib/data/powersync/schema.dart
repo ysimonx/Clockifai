@@ -45,6 +45,7 @@ const schema = Schema([
     Column.text('task_creation'),
     Column.integer('max_running_timers'),
     Column.text('agent_billing'),
+    Column.text('presence_rounding'),
     Column.text('created_by'),
     ..._audit,
     ..._softDelete,
@@ -92,6 +93,9 @@ const schema = Schema([
     Column.integer('archived'),
     Column.text('note'),
     Column.integer('agent_billable'),
+    Column.real('site_lat'),
+    Column.real('site_lng'),
+    Column.integer('site_radius'),
     ..._audit,
     ..._softDelete,
   ], indexes: [

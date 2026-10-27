@@ -62,6 +62,7 @@ erDiagram
     text task_creation "everyone | managers"
     smallint max_running_timers "1 ; 0 = illimité"
     text agent_billing "like_humans | never"
+    text presence_rounding "NULL ou actual | planning"
     uuid created_by
   }
   workspace_members {
@@ -89,6 +90,9 @@ erDiagram
     int hourly_rate_cents
     int budget_hours
     bool agent_billable "NULL = comme le workspace"
+    float site_lat "chantier : position, rayon (m)"
+    float site_lng
+    int site_radius
     bool archived
   }
   tasks {
@@ -349,6 +353,12 @@ Ce que chaque utilisateur connecté reçoit dans sa base locale. Toutes les requ
 | `my_time_entries` | automatique | 2 | `time_entries`, `time_entry_tags`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments`, `reminders` | `user_id` = soi, dans tous ses workspaces |
 | `managed_team` | automatique | 3 | `time_entries`, `time_entry_tags`, `agent_usage`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments`, `reminders` | lignes des collaborateurs encadrés : jointure sur `team_scope` par `(workspace_id, user_id)` avec `manager_id` = soi, rien d'un autre workspace du collaborateur |
 | `team_data` | à la demande, paramètre `workspace_id` | 3 | `time_entries`, `time_entry_tags`, `agent_usage`, `timesheet_submissions`, `time_off_requests`, `time_off_allowances`, `schedule_assignments`, `reminders`, `invoices`, `invoice_items`, `invoice_entries` | tout le workspace demandé, si l'on y a un rôle autre que `member` |
+
+Présence chantier (plan 13, lot 13) : `projects.site_lat`, `site_lng`, `site_radius` (saisis par un manager)
+descendent avec `workspace_core` ; le téléphone de qui a activé le réglage y compare sa propre position et ne
+garde que des heures d'arrivée et de départ par projet, dans ses préférences locales (`presence_log:<user_id>`,
+quatorze jours, effacé à la déconnexion). Aucune position ni heure de présence ne remonte au serveur : seules les
+entrées confirmées depuis « Aujourd'hui » partent, comme les autres.
 
 `SessionController` souscrit `team_data` pour le workspace courant quand le rôle est owner, admin ou manager, et
 change de souscription avec le workspace. Ne sont jamais synchronisés : `kiosk_devices` (géré par Flask),

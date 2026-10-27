@@ -1055,6 +1055,17 @@ class $WorkspacesTable extends Workspaces
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _presenceRoundingMeta = const VerificationMeta(
+    'presenceRounding',
+  );
+  @override
+  late final GeneratedColumn<String> presenceRounding = GeneratedColumn<String>(
+    'presence_rounding',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdByMeta = const VerificationMeta(
     'createdBy',
   );
@@ -1121,6 +1132,7 @@ class $WorkspacesTable extends Workspaces
     taskCreation,
     maxRunningTimers,
     agentBilling,
+    presenceRounding,
     createdBy,
     createdAt,
     updatedAt,
@@ -1293,6 +1305,15 @@ class $WorkspacesTable extends Workspaces
         ),
       );
     }
+    if (data.containsKey('presence_rounding')) {
+      context.handle(
+        _presenceRoundingMeta,
+        presenceRounding.isAcceptableOrUnknown(
+          data['presence_rounding']!,
+          _presenceRoundingMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_by')) {
       context.handle(
         _createdByMeta,
@@ -1402,6 +1423,10 @@ class $WorkspacesTable extends Workspaces
         DriftSqlType.string,
         data['${effectivePrefix}agent_billing'],
       ),
+      presenceRounding: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}presence_rounding'],
+      ),
       createdBy: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_by'],
@@ -1455,6 +1480,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
 
   /// Temps des agents Claude : 'like_humans' | 'never' (plan 10, D16 ; nullable côté client : rempli par la sync).
   final String? agentBilling;
+
+  /// Présence chantier : null ou 'actual' (heures détectées), 'planning' (calées sur la journée type ; plan 13, lot 13).
+  final String? presenceRounding;
   final String? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -1479,6 +1507,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     this.taskCreation,
     this.maxRunningTimers,
     this.agentBilling,
+    this.presenceRounding,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -1519,6 +1548,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     }
     if (!nullToAbsent || agentBilling != null) {
       map['agent_billing'] = Variable<String>(agentBilling);
+    }
+    if (!nullToAbsent || presenceRounding != null) {
+      map['presence_rounding'] = Variable<String>(presenceRounding);
     }
     if (!nullToAbsent || createdBy != null) {
       map['created_by'] = Variable<String>(createdBy);
@@ -1570,6 +1602,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       agentBilling: agentBilling == null && nullToAbsent
           ? const Value.absent()
           : Value(agentBilling),
+      presenceRounding: presenceRounding == null && nullToAbsent
+          ? const Value.absent()
+          : Value(presenceRounding),
       createdBy: createdBy == null && nullToAbsent
           ? const Value.absent()
           : Value(createdBy),
@@ -1612,6 +1647,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       taskCreation: serializer.fromJson<String?>(json['taskCreation']),
       maxRunningTimers: serializer.fromJson<int?>(json['maxRunningTimers']),
       agentBilling: serializer.fromJson<String?>(json['agentBilling']),
+      presenceRounding: serializer.fromJson<String?>(json['presenceRounding']),
       createdBy: serializer.fromJson<String?>(json['createdBy']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
@@ -1641,6 +1677,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       'taskCreation': serializer.toJson<String?>(taskCreation),
       'maxRunningTimers': serializer.toJson<int?>(maxRunningTimers),
       'agentBilling': serializer.toJson<String?>(agentBilling),
+      'presenceRounding': serializer.toJson<String?>(presenceRounding),
       'createdBy': serializer.toJson<String?>(createdBy),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
@@ -1668,6 +1705,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     Value<String?> taskCreation = const Value.absent(),
     Value<int?> maxRunningTimers = const Value.absent(),
     Value<String?> agentBilling = const Value.absent(),
+    Value<String?> presenceRounding = const Value.absent(),
     Value<String?> createdBy = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
@@ -1700,6 +1738,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
         ? maxRunningTimers.value
         : this.maxRunningTimers,
     agentBilling: agentBilling.present ? agentBilling.value : this.agentBilling,
+    presenceRounding: presenceRounding.present
+        ? presenceRounding.value
+        : this.presenceRounding,
     createdBy: createdBy.present ? createdBy.value : this.createdBy,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
@@ -1756,6 +1797,9 @@ class Workspace extends DataClass implements Insertable<Workspace> {
       agentBilling: data.agentBilling.present
           ? data.agentBilling.value
           : this.agentBilling,
+      presenceRounding: data.presenceRounding.present
+          ? data.presenceRounding.value
+          : this.presenceRounding,
       createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -1785,6 +1829,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
           ..write('taskCreation: $taskCreation, ')
           ..write('maxRunningTimers: $maxRunningTimers, ')
           ..write('agentBilling: $agentBilling, ')
+          ..write('presenceRounding: $presenceRounding, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1814,6 +1859,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
     taskCreation,
     maxRunningTimers,
     agentBilling,
+    presenceRounding,
     createdBy,
     createdAt,
     updatedAt,
@@ -1842,6 +1888,7 @@ class Workspace extends DataClass implements Insertable<Workspace> {
           other.taskCreation == this.taskCreation &&
           other.maxRunningTimers == this.maxRunningTimers &&
           other.agentBilling == this.agentBilling &&
+          other.presenceRounding == this.presenceRounding &&
           other.createdBy == this.createdBy &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -1868,6 +1915,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
   final Value<String?> taskCreation;
   final Value<int?> maxRunningTimers;
   final Value<String?> agentBilling;
+  final Value<String?> presenceRounding;
   final Value<String?> createdBy;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
@@ -1893,6 +1941,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     this.taskCreation = const Value.absent(),
     this.maxRunningTimers = const Value.absent(),
     this.agentBilling = const Value.absent(),
+    this.presenceRounding = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1919,6 +1968,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     this.taskCreation = const Value.absent(),
     this.maxRunningTimers = const Value.absent(),
     this.agentBilling = const Value.absent(),
+    this.presenceRounding = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1945,6 +1995,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     Expression<String>? taskCreation,
     Expression<int>? maxRunningTimers,
     Expression<String>? agentBilling,
+    Expression<String>? presenceRounding,
     Expression<String>? createdBy,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1972,6 +2023,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
       if (taskCreation != null) 'task_creation': taskCreation,
       if (maxRunningTimers != null) 'max_running_timers': maxRunningTimers,
       if (agentBilling != null) 'agent_billing': agentBilling,
+      if (presenceRounding != null) 'presence_rounding': presenceRounding,
       if (createdBy != null) 'created_by': createdBy,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2000,6 +2052,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     Value<String?>? taskCreation,
     Value<int?>? maxRunningTimers,
     Value<String?>? agentBilling,
+    Value<String?>? presenceRounding,
     Value<String?>? createdBy,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
@@ -2026,6 +2079,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
       taskCreation: taskCreation ?? this.taskCreation,
       maxRunningTimers: maxRunningTimers ?? this.maxRunningTimers,
       agentBilling: agentBilling ?? this.agentBilling,
+      presenceRounding: presenceRounding ?? this.presenceRounding,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2094,6 +2148,9 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
     if (agentBilling.present) {
       map['agent_billing'] = Variable<String>(agentBilling.value);
     }
+    if (presenceRounding.present) {
+      map['presence_rounding'] = Variable<String>(presenceRounding.value);
+    }
     if (createdBy.present) {
       map['created_by'] = Variable<String>(createdBy.value);
     }
@@ -2134,6 +2191,7 @@ class WorkspacesCompanion extends UpdateCompanion<Workspace> {
           ..write('taskCreation: $taskCreation, ')
           ..write('maxRunningTimers: $maxRunningTimers, ')
           ..write('agentBilling: $agentBilling, ')
+          ..write('presenceRounding: $presenceRounding, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -3845,6 +3903,39 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
       'CHECK ("agent_billable" IN (0, 1))',
     ),
   );
+  static const VerificationMeta _siteLatMeta = const VerificationMeta(
+    'siteLat',
+  );
+  @override
+  late final GeneratedColumn<double> siteLat = GeneratedColumn<double>(
+    'site_lat',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _siteLngMeta = const VerificationMeta(
+    'siteLng',
+  );
+  @override
+  late final GeneratedColumn<double> siteLng = GeneratedColumn<double>(
+    'site_lng',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _siteRadiusMeta = const VerificationMeta(
+    'siteRadius',
+  );
+  @override
+  late final GeneratedColumn<int> siteRadius = GeneratedColumn<int>(
+    'site_radius',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3894,6 +3985,9 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
     archived,
     note,
     agentBillable,
+    siteLat,
+    siteLng,
+    siteRadius,
     createdAt,
     updatedAt,
     deletedAt,
@@ -4007,6 +4101,24 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
         ),
       );
     }
+    if (data.containsKey('site_lat')) {
+      context.handle(
+        _siteLatMeta,
+        siteLat.isAcceptableOrUnknown(data['site_lat']!, _siteLatMeta),
+      );
+    }
+    if (data.containsKey('site_lng')) {
+      context.handle(
+        _siteLngMeta,
+        siteLng.isAcceptableOrUnknown(data['site_lng']!, _siteLngMeta),
+      );
+    }
+    if (data.containsKey('site_radius')) {
+      context.handle(
+        _siteRadiusMeta,
+        siteRadius.isAcceptableOrUnknown(data['site_radius']!, _siteRadiusMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -4086,6 +4198,18 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
         DriftSqlType.bool,
         data['${effectivePrefix}agent_billable'],
       ),
+      siteLat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}site_lat'],
+      ),
+      siteLng: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}site_lng'],
+      ),
+      siteRadius: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}site_radius'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -4123,6 +4247,11 @@ class Project extends DataClass implements Insertable<Project> {
 
   /// Temps des agents sur ce projet : null = comme le workspace, sinon facturable ou non (plan 10, D16).
   final bool? agentBillable;
+
+  /// Chantier : position et rayon en mètres, pour la présence détectée par le téléphone (plan 13, lot 13).
+  final double? siteLat;
+  final double? siteLng;
+  final int? siteRadius;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
@@ -4140,6 +4269,9 @@ class Project extends DataClass implements Insertable<Project> {
     required this.archived,
     this.note,
     this.agentBillable,
+    this.siteLat,
+    this.siteLng,
+    this.siteRadius,
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
@@ -4171,6 +4303,15 @@ class Project extends DataClass implements Insertable<Project> {
     }
     if (!nullToAbsent || agentBillable != null) {
       map['agent_billable'] = Variable<bool>(agentBillable);
+    }
+    if (!nullToAbsent || siteLat != null) {
+      map['site_lat'] = Variable<double>(siteLat);
+    }
+    if (!nullToAbsent || siteLng != null) {
+      map['site_lng'] = Variable<double>(siteLng);
+    }
+    if (!nullToAbsent || siteRadius != null) {
+      map['site_radius'] = Variable<int>(siteRadius);
     }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
@@ -4209,6 +4350,15 @@ class Project extends DataClass implements Insertable<Project> {
       agentBillable: agentBillable == null && nullToAbsent
           ? const Value.absent()
           : Value(agentBillable),
+      siteLat: siteLat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(siteLat),
+      siteLng: siteLng == null && nullToAbsent
+          ? const Value.absent()
+          : Value(siteLng),
+      siteRadius: siteRadius == null && nullToAbsent
+          ? const Value.absent()
+          : Value(siteRadius),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -4240,6 +4390,9 @@ class Project extends DataClass implements Insertable<Project> {
       archived: serializer.fromJson<bool>(json['archived']),
       note: serializer.fromJson<String?>(json['note']),
       agentBillable: serializer.fromJson<bool?>(json['agentBillable']),
+      siteLat: serializer.fromJson<double?>(json['siteLat']),
+      siteLng: serializer.fromJson<double?>(json['siteLng']),
+      siteRadius: serializer.fromJson<int?>(json['siteRadius']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
@@ -4262,6 +4415,9 @@ class Project extends DataClass implements Insertable<Project> {
       'archived': serializer.toJson<bool>(archived),
       'note': serializer.toJson<String?>(note),
       'agentBillable': serializer.toJson<bool?>(agentBillable),
+      'siteLat': serializer.toJson<double?>(siteLat),
+      'siteLng': serializer.toJson<double?>(siteLng),
+      'siteRadius': serializer.toJson<int?>(siteRadius),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
@@ -4282,6 +4438,9 @@ class Project extends DataClass implements Insertable<Project> {
     bool? archived,
     Value<String?> note = const Value.absent(),
     Value<bool?> agentBillable = const Value.absent(),
+    Value<double?> siteLat = const Value.absent(),
+    Value<double?> siteLng = const Value.absent(),
+    Value<int?> siteRadius = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
     Value<DateTime?> deletedAt = const Value.absent(),
@@ -4305,6 +4464,9 @@ class Project extends DataClass implements Insertable<Project> {
     agentBillable: agentBillable.present
         ? agentBillable.value
         : this.agentBillable,
+    siteLat: siteLat.present ? siteLat.value : this.siteLat,
+    siteLng: siteLng.present ? siteLng.value : this.siteLng,
+    siteRadius: siteRadius.present ? siteRadius.value : this.siteRadius,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
@@ -4336,6 +4498,11 @@ class Project extends DataClass implements Insertable<Project> {
       agentBillable: data.agentBillable.present
           ? data.agentBillable.value
           : this.agentBillable,
+      siteLat: data.siteLat.present ? data.siteLat.value : this.siteLat,
+      siteLng: data.siteLng.present ? data.siteLng.value : this.siteLng,
+      siteRadius: data.siteRadius.present
+          ? data.siteRadius.value
+          : this.siteRadius,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
@@ -4358,6 +4525,9 @@ class Project extends DataClass implements Insertable<Project> {
           ..write('archived: $archived, ')
           ..write('note: $note, ')
           ..write('agentBillable: $agentBillable, ')
+          ..write('siteLat: $siteLat, ')
+          ..write('siteLng: $siteLng, ')
+          ..write('siteRadius: $siteRadius, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt')
@@ -4380,6 +4550,9 @@ class Project extends DataClass implements Insertable<Project> {
     archived,
     note,
     agentBillable,
+    siteLat,
+    siteLng,
+    siteRadius,
     createdAt,
     updatedAt,
     deletedAt,
@@ -4401,6 +4574,9 @@ class Project extends DataClass implements Insertable<Project> {
           other.archived == this.archived &&
           other.note == this.note &&
           other.agentBillable == this.agentBillable &&
+          other.siteLat == this.siteLat &&
+          other.siteLng == this.siteLng &&
+          other.siteRadius == this.siteRadius &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt);
@@ -4420,6 +4596,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
   final Value<bool> archived;
   final Value<String?> note;
   final Value<bool?> agentBillable;
+  final Value<double?> siteLat;
+  final Value<double?> siteLng;
+  final Value<int?> siteRadius;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> deletedAt;
@@ -4438,6 +4617,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     this.archived = const Value.absent(),
     this.note = const Value.absent(),
     this.agentBillable = const Value.absent(),
+    this.siteLat = const Value.absent(),
+    this.siteLng = const Value.absent(),
+    this.siteRadius = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -4457,6 +4639,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     this.archived = const Value.absent(),
     this.note = const Value.absent(),
     this.agentBillable = const Value.absent(),
+    this.siteLat = const Value.absent(),
+    this.siteLng = const Value.absent(),
+    this.siteRadius = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
@@ -4477,6 +4662,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     Expression<bool>? archived,
     Expression<String>? note,
     Expression<bool>? agentBillable,
+    Expression<double>? siteLat,
+    Expression<double>? siteLng,
+    Expression<int>? siteRadius,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
@@ -4496,6 +4684,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
       if (archived != null) 'archived': archived,
       if (note != null) 'note': note,
       if (agentBillable != null) 'agent_billable': agentBillable,
+      if (siteLat != null) 'site_lat': siteLat,
+      if (siteLng != null) 'site_lng': siteLng,
+      if (siteRadius != null) 'site_radius': siteRadius,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
@@ -4517,6 +4708,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     Value<bool>? archived,
     Value<String?>? note,
     Value<bool?>? agentBillable,
+    Value<double?>? siteLat,
+    Value<double?>? siteLng,
+    Value<int?>? siteRadius,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? updatedAt,
     Value<DateTime?>? deletedAt,
@@ -4536,6 +4730,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
       archived: archived ?? this.archived,
       note: note ?? this.note,
       agentBillable: agentBillable ?? this.agentBillable,
+      siteLat: siteLat ?? this.siteLat,
+      siteLng: siteLng ?? this.siteLng,
+      siteRadius: siteRadius ?? this.siteRadius,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -4585,6 +4782,15 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     if (agentBillable.present) {
       map['agent_billable'] = Variable<bool>(agentBillable.value);
     }
+    if (siteLat.present) {
+      map['site_lat'] = Variable<double>(siteLat.value);
+    }
+    if (siteLng.present) {
+      map['site_lng'] = Variable<double>(siteLng.value);
+    }
+    if (siteRadius.present) {
+      map['site_radius'] = Variable<int>(siteRadius.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -4616,6 +4822,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
           ..write('archived: $archived, ')
           ..write('note: $note, ')
           ..write('agentBillable: $agentBillable, ')
+          ..write('siteLat: $siteLat, ')
+          ..write('siteLng: $siteLng, ')
+          ..write('siteRadius: $siteRadius, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
@@ -17464,6 +17673,7 @@ typedef $$WorkspacesTableCreateCompanionBuilder = WorkspacesCompanion Function({
   Value<String?> taskCreation,
   Value<int?> maxRunningTimers,
   Value<String?> agentBilling,
+  Value<String?> presenceRounding,
   Value<String?> createdBy,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
@@ -17490,6 +17700,7 @@ typedef $$WorkspacesTableUpdateCompanionBuilder = WorkspacesCompanion Function({
   Value<String?> taskCreation,
   Value<int?> maxRunningTimers,
   Value<String?> agentBilling,
+  Value<String?> presenceRounding,
   Value<String?> createdBy,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
@@ -17598,6 +17809,11 @@ class $$WorkspacesTableFilterComposer
 
   ColumnFilters<String> get agentBilling => $composableBuilder(
     column: $table.agentBilling,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get presenceRounding => $composableBuilder(
+    column: $table.presenceRounding,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17726,6 +17942,11 @@ class $$WorkspacesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get presenceRounding => $composableBuilder(
+    column: $table.presenceRounding,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdBy => $composableBuilder(
     column: $table.createdBy,
     builder: (column) => ColumnOrderings(column),
@@ -17843,6 +18064,11 @@ class $$WorkspacesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get presenceRounding => $composableBuilder(
+    column: $table.presenceRounding,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdBy =>
       $composableBuilder(column: $table.createdBy, builder: (column) => column);
 
@@ -17906,6 +18132,7 @@ class $$WorkspacesTableTableManager
                 Value<String?> taskCreation = const Value.absent(),
                 Value<int?> maxRunningTimers = const Value.absent(),
                 Value<String?> agentBilling = const Value.absent(),
+                Value<String?> presenceRounding = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -17931,6 +18158,7 @@ class $$WorkspacesTableTableManager
                 taskCreation: taskCreation,
                 maxRunningTimers: maxRunningTimers,
                 agentBilling: agentBilling,
+                presenceRounding: presenceRounding,
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -17958,6 +18186,7 @@ class $$WorkspacesTableTableManager
                 Value<String?> taskCreation = const Value.absent(),
                 Value<int?> maxRunningTimers = const Value.absent(),
                 Value<String?> agentBilling = const Value.absent(),
+                Value<String?> presenceRounding = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
@@ -17983,6 +18212,7 @@ class $$WorkspacesTableTableManager
                 taskCreation: taskCreation,
                 maxRunningTimers: maxRunningTimers,
                 agentBilling: agentBilling,
+                presenceRounding: presenceRounding,
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -18773,6 +19003,9 @@ typedef $$ProjectsTableCreateCompanionBuilder = ProjectsCompanion Function({
   Value<bool> archived,
   Value<String?> note,
   Value<bool?> agentBillable,
+  Value<double?> siteLat,
+  Value<double?> siteLng,
+  Value<int?> siteRadius,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> deletedAt,
@@ -18792,6 +19025,9 @@ typedef $$ProjectsTableUpdateCompanionBuilder = ProjectsCompanion Function({
   Value<bool> archived,
   Value<String?> note,
   Value<bool?> agentBillable,
+  Value<double?> siteLat,
+  Value<double?> siteLng,
+  Value<int?> siteRadius,
   Value<DateTime?> createdAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> deletedAt,
@@ -18869,6 +19105,21 @@ class $$ProjectsTableFilterComposer
 
   ColumnFilters<bool> get agentBillable => $composableBuilder(
     column: $table.agentBillable,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get siteLat => $composableBuilder(
+    column: $table.siteLat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get siteLng => $composableBuilder(
+    column: $table.siteLng,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get siteRadius => $composableBuilder(
+    column: $table.siteRadius,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18962,6 +19213,21 @@ class $$ProjectsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get siteLat => $composableBuilder(
+    column: $table.siteLat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get siteLng => $composableBuilder(
+    column: $table.siteLng,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get siteRadius => $composableBuilder(
+    column: $table.siteRadius,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -19038,6 +19304,17 @@ class $$ProjectsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get siteLat =>
+      $composableBuilder(column: $table.siteLat, builder: (column) => column);
+
+  GeneratedColumn<double> get siteLng =>
+      $composableBuilder(column: $table.siteLng, builder: (column) => column);
+
+  GeneratedColumn<int> get siteRadius => $composableBuilder(
+    column: $table.siteRadius,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -19089,6 +19366,9 @@ class $$ProjectsTableTableManager
                 Value<bool> archived = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool?> agentBillable = const Value.absent(),
+                Value<double?> siteLat = const Value.absent(),
+                Value<double?> siteLng = const Value.absent(),
+                Value<int?> siteRadius = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -19107,6 +19387,9 @@ class $$ProjectsTableTableManager
                 archived: archived,
                 note: note,
                 agentBillable: agentBillable,
+                siteLat: siteLat,
+                siteLng: siteLng,
+                siteRadius: siteRadius,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
@@ -19127,6 +19410,9 @@ class $$ProjectsTableTableManager
                 Value<bool> archived = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool?> agentBillable = const Value.absent(),
+                Value<double?> siteLat = const Value.absent(),
+                Value<double?> siteLng = const Value.absent(),
+                Value<int?> siteRadius = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
@@ -19145,6 +19431,9 @@ class $$ProjectsTableTableManager
                 archived: archived,
                 note: note,
                 agentBillable: agentBillable,
+                siteLat: siteLat,
+                siteLng: siteLng,
+                siteRadius: siteRadius,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,

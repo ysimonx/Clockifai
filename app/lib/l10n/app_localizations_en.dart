@@ -714,6 +714,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String get presenceTitle => 'Site presence';
+
+  @override
+  String get presenceHelp =>
+      'This phone notes when you arrive at and leave a site; Today offers them for you to confirm. Your location stays on the phone: only the times are used.';
+
+  @override
+  String get presenceOn => 'Site presence is on for this phone.';
+
+  @override
+  String get presenceDenied =>
+      'Location access denied: allow it in the phone settings.';
+
+  @override
+  String get presenceServiceOff =>
+      'Location unavailable: turn it on for this device.';
+
+  @override
+  String get presenceForget => 'Forget recorded times';
+
+  @override
+  String get presenceForgotten => 'Presence times erased from this phone.';
+
+  @override
+  String get presenceNotification =>
+      'Site presence: arrival and departure noted on this phone';
+
+  @override
+  String get presenceRounding => 'Site presence times';
+
+  @override
+  String get presenceRoundingHelp =>
+      'What the phones of people who turned on site presence suggest.';
+
+  @override
+  String get presenceRoundingActual => 'As detected (to the nearest 5 minutes)';
+
+  @override
+  String get presenceRoundingPlanning =>
+      'Snapped to the usual day, within 30 minutes';
+
+  @override
+  String get sitePosition => 'Site location';
+
+  @override
+  String get sitePositionHelp =>
+      'Latitude and longitude, copied from a map, or \"Here\" on site. Used for site presence.';
+
+  @override
+  String get sitePositionInvalid =>
+      'Expected: latitude, longitude (48.8566, 2.3522)';
+
+  @override
+  String get siteOnMap => 'Show on map';
+
+  @override
+  String get siteRadius => 'Radius';
+
+  @override
+  String get siteHere => 'Here';
+
+  @override
+  String get journalSourcePresence => 'Site';
+
+  @override
+  String journalReasonPresence(String from, String to) {
+    return 'On site from $from to $to, according to this phone';
+  }
+
+  @override
+  String journalReasonPresenceSince(String from) {
+    return 'On site since $from, according to this phone';
+  }
+
+  @override
+  String get journalReasonPresenceRounded =>
+      'Times snapped to your usual day (company rule)';
+
+  @override
   String pendingCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

@@ -21,6 +21,7 @@ import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/entry_dialog.dart';
 import '../timesheet/week_tools.dart' show copyDay;
+import '../presence/presence.dart' show PresenceTracker;
 import 'day_plan.dart';
 import 'quick_place.dart';
 import 'traces.dart';
@@ -140,11 +141,18 @@ class _TodayPageState extends State<TodayPage> {
     _tick = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) setState(() {});
     });
+    PresenceTracker.instance.log.addListener(_onPresence);
+  }
+
+  /// Arrivée ou départ noté par le téléphone (lot 13) : la journée se recalcule.
+  void _onPresence() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _tick?.cancel();
+    PresenceTracker.instance.log.removeListener(_onPresence);
     _focus.dispose();
     _title.dispose();
     _quick.dispose();
@@ -220,6 +228,8 @@ class _TodayPageState extends State<TodayPage> {
       typical: typical,
       calendar: _traces.events,
       commits: _traces.commits,
+      presence: [for (final v in PresenceTracker.instance.log.value.visitsOn(_day)) if (catalog.project(v.projectId) != null) v],
+      presenceRounding: context.read<SessionController>().workspace?.presenceRounding,
       guessProject: (text) {
         final q = parseQuick(text, catalog, now);
         return q?.projectId == null ? null : (projectId: q!.projectId, taskId: q.taskId);
@@ -1215,6 +1225,7 @@ class _TodayPageState extends State<TodayPage> {
       _Kind.logged => b.running ? l.journalRunning : l.journalLogged,
     };
     final source = switch (b.draft?.source) {
+      DraftSource.presence => l.journalSourcePresence,
       DraftSource.claude => l.journalSourceClaude,
       DraftSource.calendar => l.journalSourceCalendar,
       DraftSource.commits => l.journalSourceCommits,
@@ -1225,6 +1236,8 @@ class _TodayPageState extends State<TodayPage> {
     final reasons = <String>[
       for (final r in b.draft?.reasons ?? const <DraftReason>[])
         switch (r.kind) {
+          ReasonKind.presence => r.b < 0 ? l.journalReasonPresenceSince(hm(r.a)) : l.journalReasonPresence(hm(r.a), hm(r.b)),
+          ReasonKind.presenceRounded => l.journalReasonPresenceRounded,
           ReasonKind.claudeSession => l.journalReasonClaudeSession(hm(r.a), hm(r.b)),
           ReasonKind.claudePilot => l.journalReasonClaudePilot,
           ReasonKind.calendar => l.journalReasonCalendar(hm(r.a), hm(r.b)),

@@ -387,6 +387,45 @@
     }
   },
   "undo": "Undo",
+  "presenceTitle": "Site presence",
+  "presenceHelp": "This phone notes when you arrive at and leave a site; Today offers them for you to confirm. Your location stays on the phone: only the times are used.",
+  "presenceOn": "Site presence is on for this phone.",
+  "presenceDenied": "Location access denied: allow it in the phone settings.",
+  "presenceServiceOff": "Location unavailable: turn it on for this device.",
+  "presenceForget": "Forget recorded times",
+  "presenceForgotten": "Presence times erased from this phone.",
+  "presenceNotification": "Site presence: arrival and departure noted on this phone",
+  "presenceRounding": "Site presence times",
+  "presenceRoundingHelp": "What the phones of people who turned on site presence suggest.",
+  "presenceRoundingActual": "As detected (to the nearest 5 minutes)",
+  "presenceRoundingPlanning": "Snapped to the usual day, within 30 minutes",
+  "sitePosition": "Site location",
+  "sitePositionHelp": "Latitude and longitude, copied from a map, or \"Here\" on site. Used for site presence.",
+  "sitePositionInvalid": "Expected: latitude, longitude (48.8566, 2.3522)",
+  "siteOnMap": "Show on map",
+  "siteRadius": "Radius",
+  "siteHere": "Here",
+  "journalSourcePresence": "Site",
+  "journalReasonPresence": "On site from {from} to {to}, according to this phone",
+  "@journalReasonPresence": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonPresenceSince": "On site since {from}, according to this phone",
+  "@journalReasonPresenceSince": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "journalReasonPresenceRounded": "Times snapped to your usual day (company rule)",
   "pendingCount": "{count, plural, =1{1 change waiting} other{{count} changes waiting}}",
   "@pendingCount": {
     "placeholders": {

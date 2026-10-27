@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/catalog.dart';
+import '../../core/dictation.dart';
 import '../../core/di.dart';
 import '../../core/display_prefs.dart';
 import '../../core/format.dart';
@@ -19,6 +20,7 @@ import '../../core/widgets/pickers.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/entry_dialog.dart';
+import '../timesheet/week_tools.dart' show copyDay;
 import 'day_plan.dart';
 import 'quick_place.dart';
 import 'traces.dart';
@@ -382,8 +384,11 @@ class _TodayPageState extends State<TodayPage> {
       return KeyEventResult.ignored;
     }
 
+    // Journée vide : « Comme vendredi » recopie la dernière journée travaillée (lot 9).
+    final copyFrom = mineRows.isEmpty && !_day.isAfter(_midnight(now)) ? lastWorkedDay(history, _day) : null;
     final hero = _hero(context, plan: plan, drafts: drafts, gaps: gaps, loggedMin: loggedMin, draftMin: draftMin,
-        onConfirmAll: () => confirmDrafts(drafts), onReview: () => setState(() => _sel = drafts.firstOrNull?.id));
+        onConfirmAll: () => confirmDrafts(drafts), onReview: () => setState(() => _sel = drafts.firstOrNull?.id),
+        copyFrom: copyFrom, now: now, onCopy: copyFrom == null ? null : () => copyDay(context, userId: me, from: copyFrom, to: _day));
     final quick = _quickEntry(context,
         catalog: catalog, rows: rows, proposed: [for (final b in blocks) if (b.kind != _Kind.logged) b.span], now: now, me: me, ws: ws);
 
@@ -515,6 +520,7 @@ class _TodayPageState extends State<TodayPage> {
                     labelText: l.quickEntry,
                     hintText: l.quickEntryHint,
                     prefixIcon: const Icon(Icons.add),
+                    suffixIcon: Dictation.supported ? _dictateButton(context) : null,
                     border: InputBorder.none,
                   ),
                   onChanged: (_) => setState(() {}),
@@ -556,6 +562,31 @@ class _TodayPageState extends State<TodayPage> {
           const SizedBox(height: 6),
           Text(l.quickEntryHelp, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
         ]),
+      ),
+    );
+  }
+
+  /// Micro de la saisie express (lot 9) : la phrase dite remplit le champ, analysée comme si elle était tapée.
+  Widget _dictateButton(BuildContext context) {
+    final l = context.l10n;
+    final dictation = Dictation.instance;
+    return ValueListenableBuilder<bool>(
+      valueListenable: dictation.listening,
+      builder: (context, listening, _) => IconButton(
+        tooltip: listening ? l.dictationStop : l.dictate,
+        icon: Icon(listening ? Icons.mic : Icons.mic_none, color: listening ? Theme.of(context).colorScheme.error : null),
+        onPressed: () async {
+          if (listening) return dictation.stop();
+          final ok = await dictation.start(context.localeTag, (text, done) {
+            if (!mounted) return;
+            setState(() {
+              _quick.text = text;
+              _quick.selection = TextSelection.collapsed(offset: text.length);
+            });
+            if (done) _quickFocus.requestFocus();
+          });
+          if (!ok && context.mounted) showSnack(context, l.dictationUnavailable);
+        },
       ),
     );
   }
@@ -656,7 +687,10 @@ class _TodayPageState extends State<TodayPage> {
       required int loggedMin,
       required int draftMin,
       required VoidCallback onConfirmAll,
-      required VoidCallback onReview}) {
+      required VoidCallback onReview,
+      required DateTime now,
+      DateTime? copyFrom,
+      VoidCallback? onCopy}) {
     final l = context.l10n;
     final theme = Theme.of(context);
     final String title;
@@ -709,15 +743,32 @@ class _TodayPageState extends State<TodayPage> {
                 ]),
               ),
             ]),
-            if (drafts.isNotEmpty)
+            if (drafts.isNotEmpty || copyFrom != null)
               Wrap(spacing: 8, runSpacing: 8, children: [
-                OutlinedButton(onPressed: onReview, child: Text(l.journalReviewOne)),
-                FilledButton(onPressed: onConfirmAll, child: Text(l.journalConfirmAll(drafts.length))),
+                if (copyFrom != null)
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.content_copy, size: 18),
+                    label: Text(_likeDay(context, copyFrom, now)),
+                    onPressed: onCopy,
+                  ),
+                if (drafts.isNotEmpty) ...[
+                  OutlinedButton(onPressed: onReview, child: Text(l.journalReviewOne)),
+                  FilledButton(onPressed: onConfirmAll, child: Text(l.journalConfirmAll(drafts.length))),
+                ],
               ]),
           ],
         ),
       ),
     );
+  }
+
+  /// « Comme hier », « Comme vendredi » (la semaine écoulée), sinon « Comme le 12 oct. ».
+  String _likeDay(BuildContext context, DateTime day, DateTime now) {
+    final l = context.l10n;
+    final locale = context.localeTag;
+    if (_day == _midnight(now) && day == addDays(_day, -1)) return l.likeYesterday;
+    if (!day.isBefore(addDays(_day, -6))) return l.likeDay(DateFormat.EEEE(locale).format(day));
+    return l.likeDate(DateFormat.MMMd(locale).format(day));
   }
 
   // ------------------------------------------------------------------ frise

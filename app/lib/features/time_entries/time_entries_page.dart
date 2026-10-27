@@ -424,14 +424,54 @@ class EntryTile extends StatelessWidget {
         );
 
     if (line == null) return tile(false);
-    return KeyedSubtree(
+    final content = KeyedSubtree(
       key: selection!.keyFor(line.key),
       child: DecoratedBox(
         decoration: lineDecoration(context, selected: selection.stateOf(line) != false, cursor: selection.cursor == line.key),
         child: HoverRegion(builder: (context, hovered) => tile(hovered)),
       ),
     );
+    // Téléphone (lot 9) : glisser vers la droite duplique sur aujourd'hui, vers la gauche supprime (Annuler).
+    final canSwipeCopy = canDuplicate && e.endAt != null;
+    if (wide || (!canSwipeCopy && !inline)) return content;
+    return Dismissible(
+      key: ValueKey('swipe ${e.id}'),
+      direction: canSwipeCopy && inline
+          ? DismissDirection.horizontal
+          : (canSwipeCopy ? DismissDirection.startToEnd : DismissDirection.endToStart),
+      background: _SwipeBackground(icon: Icons.content_copy, label: l.duplicateToday, color: theme.colorScheme.primaryContainer, start: true),
+      secondaryBackground: _SwipeBackground(icon: Icons.delete_outline, label: l.delete, color: theme.colorScheme.errorContainer, start: false),
+      // L'action est faite ici et la ligne reste en place : le flux de la base la retire (suppression) ou ajoute la
+      // copie, sans ligne « écartée » encore présente dans l'arbre.
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          final now = DateTime.now();
+          await duplicateRows(context, [row], day: DateTime(now.year, now.month, now.day));
+        } else {
+          final before = await entriesRepo.delete(e.id);
+          if (context.mounted) showUndo(context, l.entryDeleted, () => entriesRepo.restore(before));
+        }
+        return false;
+      },
+      child: content,
+    );
   }
+}
+
+class _SwipeBackground extends StatelessWidget {
+  const _SwipeBackground({required this.icon, required this.label, required this.color, required this.start});
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool start;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        color: color,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        alignment: start ? Alignment.centerLeft : Alignment.centerRight,
+        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon), const SizedBox(width: 8), Text(label)]),
+      );
 }
 
 /// ▶ « Continuer » ; ■ « Arrêter » si un chronomètre tourne déjà sur la même tâche ([sameTimerTarget]).

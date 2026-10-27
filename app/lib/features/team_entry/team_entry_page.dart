@@ -11,11 +11,16 @@ import '../../core/team_rights.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../core/widgets/teammates.dart';
+import '../../data/drift/database.dart';
+import '../../data/repositories/modules_repository.dart' show dayKey;
 import '../../data/repositories/time_entry_repository.dart';
+import '../time_entries/duration_chips.dart';
+import '../today/day_plan.dart' show TypicalDay, addDays;
 
-/// Pointage d'équipe (chef d'équipe, manager) : on coche les présents d'une journée,
-/// une entrée terminée est créée pour chacun, hors ligne compris. Horaires communs,
-/// ajustables personne par personne (arrivée tardive, départ anticipé).
+/// Pointage d'équipe (chef d'équipe, manager) : une entrée terminée par présent, hors ligne compris. Les présents
+/// sont cochés d'office (sauf soi) ; une absence validée ce jour-là exclut la personne, une journée déjà saisie la
+/// décoche.
+/// Horaires communs, et exceptions personne par personne (« Départ à 15:00 ») ; plans/13-ux-moderne.md, lot 9.
 class TeamEntryPage extends StatefulWidget {
   const TeamEntryPage({super.key});
 
@@ -36,6 +41,12 @@ class _TeamEntryPageState extends State<TeamEntryPage> {
   List<String> _tagIds = const [];
   bool _billable = true;
   bool _saving = false;
+
+  /// Jour (`yyyy-MM-dd`) dont les présents ont été cochés d'office ; un autre jour les recoche.
+  String? _presetFor;
+  Stream<List<TimeOffRequest>>? _requests;
+  String? _dayKey;
+  Stream<List<EntryRow>>? _dayEntries;
 
   @override
   void dispose() {
@@ -97,7 +108,7 @@ class _TeamEntryPageState extends State<TeamEntryPage> {
     }
     setState(() => _saving = true);
     try {
-      await entriesRepo.createForMembers(
+      final ids = await entriesRepo.createForMembers(
         workspaceId: ws.id,
         createdBy: session.userId,
         slots: slots,
@@ -110,7 +121,10 @@ class _TeamEntryPageState extends State<TeamEntryPage> {
         ),
       );
       if (!mounted) return;
-      showSnack(context, l.entriesCreated(targets.length));
+      showUndo(context, l.entriesCreated(targets.length), () async {
+        await entriesRepo.deleteMany(ids);
+        if (mounted) setState(() => _presetFor = null); // les présents se recochent
+      });
       setState(() {
         _selected.clear();
         _overrides.clear();
@@ -120,17 +134,82 @@ class _TeamEntryPageState extends State<TeamEntryPage> {
     }
   }
 
+  Future<void> _exception(String userId, String kind) async {
+    final l = context.l10n;
+    final h = _hoursOf(userId);
+    _Hours? next;
+    switch (kind) {
+      case 'arrive':
+        final t = await showTimePicker(context: context, initialTime: h.start, helpText: l.arrivedAtPick);
+        if (t != null) next = (start: t, end: h.end);
+      case 'leave':
+        final t = await showTimePicker(context: context, initialTime: h.end, helpText: l.leftAtPick);
+        if (t != null) next = (start: h.start, end: t);
+      case 'hours':
+        next = await _pickHours(h);
+      case 'reset':
+        setState(() => _overrides.remove(userId));
+        return;
+    }
+    if (next == null || !mounted) return;
+    setState(() {
+      _overrides[userId] = next!;
+      _selected.add(userId);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final theme = Theme.of(context);
-    final locale = context.localeTag;
     final rights = TeamRights.of(context);
     if (!rights.canEditOthers) return EmptyState(icon: Icons.lock_outline, title: l.managersOnly);
+    final ws = context.read<SessionController>().workspaceId!;
+    final key = dayKey(_date);
+    if (_dayKey != key) {
+      _dayKey = key;
+      _dayEntries = entriesRepo.watchEntries(workspaceId: ws, from: _date, to: addDays(_date, 1));
+    }
+    return StreamBuilder<List<TimeOffRequest>>(
+      stream: _requests ??= modulesRepo.watchRequests(ws),
+      builder: (context, reqSnap) => StreamBuilder<List<EntryRow>>(
+        stream: _dayEntries,
+        builder: (context, entrySnap) => _page(context, rights,
+            requests: reqSnap.data, entries: entrySnap.data, key: key),
+      ),
+    );
+  }
+
+  Widget _page(BuildContext context, TeamRights rights,
+      {required List<TimeOffRequest>? requests, required List<EntryRow>? entries, required String key}) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    final locale = context.localeTag;
     final members = rights.editableMembers;
-    final chosen = members.where((m) => _selected.contains(m.userId)).map((m) => m.userId).toList();
+    // Absence validée ce jour-là (null : aucune ; vrai : journée entière).
+    bool? absence(String userId) {
+      final r = (requests ?? const <TimeOffRequest>[])
+          .where((r) => r.userId == userId && r.status == 'approved' && r.startDate.compareTo(key) <= 0 && r.endDate.compareTo(key) >= 0)
+          .firstOrNull;
+      return r == null ? null : !r.halfDay;
+    }
+
+    int logged(String userId) =>
+        (entries ?? const <EntryRow>[]).where((r) => r.entry.userId == userId).fold(0, (s, r) => s + r.seconds);
+    if (_presetFor != key && requests != null && entries != null) {
+      _presetFor = key;
+      _overrides.clear();
+      _selected
+        ..clear()
+        ..addAll([
+          // Soi-même non : on pointe son équipe, son propre temps se saisit à part.
+          for (final m in members)
+            if (m.userId != rights.me && absence(m.userId) == null && logged(m.userId) == 0) m.userId,
+        ]);
+    }
+    final available = [for (final m in members) if (absence(m.userId) != true) m.userId];
+    final chosen = members.where((m) => _selected.contains(m.userId) && available.contains(m.userId)).map((m) => m.userId).toList();
     final total = chosen.fold<int>(0, (s, uid) => s + _seconds(_hoursOf(uid)));
-    final allChosen = members.isNotEmpty && chosen.length == members.length;
+    final allChosen = available.isNotEmpty && chosen.length == available.length;
 
     return PageScaffold(
       title: l.teamEntry,
@@ -207,6 +286,15 @@ class _TeamEntryPageState extends State<TeamEntryPage> {
                   },
                 ),
               ]),
+              const SizedBox(height: 8),
+              DurationChips(
+                typical: TypicalDay.ofProfile(context.read<SessionController>().profile) ?? TypicalDay.fallback,
+                onNudge: (m) => setState(() {
+                  final end = _hours.end.hour * 60 + _hours.end.minute + m;
+                  _hours = (start: _hours.start, end: TimeOfDay(hour: (end ~/ 60) % 24, minute: end % 60));
+                }),
+                onRange: (start, end) => setState(() => _hours = (start: start, end: end)),
+              ),
             ]),
           ),
         ),
@@ -219,7 +307,7 @@ class _TeamEntryPageState extends State<TeamEntryPage> {
               subtitle: Text('${l.peopleCount(chosen.length)} · ${formatHm(total)}'),
               onChanged: (v) => setState(() {
                 if (v == true) {
-                  _selected.addAll(members.map((m) => m.userId));
+                  _selected.addAll(available);
                 } else {
                   _selected.clear();
                 }
@@ -229,20 +317,20 @@ class _TeamEntryPageState extends State<TeamEntryPage> {
             for (final m in members)
               _MemberRow(
                 name: memberName(m),
-                selected: _selected.contains(m.userId),
+                selected: chosen.contains(m.userId),
+                absent: absence(m.userId) == true,
+                note: switch ((absence(m.userId), logged(m.userId))) {
+                  (true, _) => l.teamAbsent,
+                  (false, _) => l.teamAbsentHalf,
+                  (_, final s) when s > 0 => l.teamAlreadyLogged(formatHm(s)),
+                  _ => null,
+                },
                 hours: _hoursOf(m.userId),
+                common: _hours,
                 overridden: _overrides.containsKey(m.userId),
                 seconds: _seconds(_hoursOf(m.userId)),
                 onSelected: (v) => setState(() => v ? _selected.add(m.userId) : _selected.remove(m.userId)),
-                onEditHours: () async {
-                  final h = await _pickHours(_hoursOf(m.userId));
-                  if (h == null) return;
-                  setState(() {
-                    _overrides[m.userId] = h;
-                    _selected.add(m.userId);
-                  });
-                },
-                onResetHours: () => setState(() => _overrides.remove(m.userId)),
+                onException: (kind) => _exception(m.userId, kind),
               ),
           ]),
         ),
@@ -264,40 +352,69 @@ class _MemberRow extends StatelessWidget {
   const _MemberRow({
     required this.name,
     required this.selected,
+    required this.absent,
+    required this.note,
     required this.hours,
+    required this.common,
     required this.overridden,
     required this.seconds,
     required this.onSelected,
-    required this.onEditHours,
-    required this.onResetHours,
+    required this.onException,
   });
   final String name;
   final bool selected;
+
+  /// Absence validée toute la journée : la ligne ne peut pas être cochée.
+  final bool absent;
+
+  /// « Absence validée », « Déjà saisi : 7:30 »…
+  final String? note;
   final _Hours hours;
+  final _Hours common;
   final bool overridden;
   final int seconds;
   final ValueChanged<bool> onSelected;
-  final VoidCallback onEditHours;
-  final VoidCallback onResetHours;
+  final ValueChanged<String> onException;
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final theme = Theme.of(context);
     final style = theme.textTheme.bodySmall?.copyWith(
       color: overridden ? theme.colorScheme.primary : null,
       fontWeight: overridden ? FontWeight.w600 : null,
     );
+    // Une exception se lit telle qu'on la dit : « Départ à 15:00 », « Arrivée à 9:15 ».
+    final sameStart = hours.start == common.start, sameEnd = hours.end == common.end;
+    final label = !overridden || (sameStart && sameEnd)
+        ? '${hours.start.format(context)} – ${hours.end.format(context)}'
+        : sameStart
+            ? l.leftAt(hours.end.format(context))
+            : sameEnd
+                ? l.arrivedAt(hours.start.format(context))
+                : '${hours.start.format(context)} – ${hours.end.format(context)}';
     return ListTile(
-      leading: Checkbox(value: selected, onChanged: (v) => onSelected(v ?? false)),
+      enabled: !absent,
+      leading: Checkbox(value: selected, onChanged: absent ? null : (v) => onSelected(v ?? false)),
       title: Text(name),
-      onTap: () => onSelected(!selected),
-      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-        TextButton(
-          onPressed: onEditHours,
-          child: Text('${hours.start.format(context)} – ${hours.end.format(context)} · ${formatHm(seconds)}', style: style),
-        ),
-        if (overridden) IconButton(icon: const Icon(Icons.undo, size: 18), onPressed: onResetHours),
-      ]),
+      subtitle: note == null ? null : Text(note!),
+      onTap: absent ? null : () => onSelected(!selected),
+      trailing: absent
+          ? null
+          : PopupMenuButton<String>(
+              tooltip: l.teamException,
+              onSelected: onException,
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'arrive', child: Text(l.arrivedAtPick)),
+                PopupMenuItem(value: 'leave', child: Text(l.leftAtPick)),
+                PopupMenuItem(value: 'hours', child: Text(l.otherHours)),
+                if (overridden) PopupMenuItem(value: 'reset', child: Text(l.commonHours)),
+              ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                child: Text('$label · ${formatHm(seconds)}', style: style),
+              ),
+            ),
     );
   }
 }

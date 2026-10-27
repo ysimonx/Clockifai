@@ -34,6 +34,10 @@ class _Session extends ChangeNotifier implements SessionController {
   @override
   Profile? profile;
   @override
+  Workspace? workspace;
+  @override
+  bool get isAdmin => false;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -57,6 +61,7 @@ void main() {
       ..registerSingleton<ModulesRepository>(ModulesRepository(db));
     await db.into(db.workspaces).insert(WorkspacesCompanion.insert(id: const Value(ws), name: 'Studio'));
     await db.into(db.workspaceMembers).insert(member(me));
+    session.workspace = await db.select(db.workspaces).getSingle();
     final catalogRepo = CatalogRepository(db);
     final interne = await catalogRepo.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'Interne'));
     final site = await catalogRepo.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'Site'));
@@ -239,6 +244,36 @@ void main() {
     await settle(tester);
     final rows = (await tester.runAsync(() => (db.select(db.timeEntries)..where((t) => t.startAt.isSmallerThanValue(at(26, 0).toUtc()) & t.startAt.isBiggerOrEqualValue(at(25, 0).toUtc()))).get()))!;
     expect((rows.single.startAt.toLocal(), rows.single.endAt!.toLocal()), (at(25, 9), at(25, 10, 30)));
+    await close(tester);
+  });
+
+  testWidgets('journée vide : « Comme vendredi » recopie la dernière journée travaillée, Annuler la retire', (tester) async {
+    await tester.runAsync(() => (db.delete(db.timeEntries)..where((t) => t.description.equals('Maquettes'))).go());
+    await open(tester);
+    await tester.tap(find.text('Comme vendredi'));
+    await settle(tester);
+    Future<List<TimeEntry>> monday() async => (await tester.runAsync(() => (db.select(db.timeEntries)
+          ..where((t) => t.deletedAt.isNull() & t.startAt.isBiggerOrEqualValue(at(26, 0).toUtc())))
+        .get()))!;
+    final copies = await monday();
+    expect({for (final e in copies) e.description: e.startAt.toLocal()},
+        {'Courriels': at(26, 8, 30), 'Site, matin du 23': at(26, 9), 'Site, après-midi du 23': at(26, 13, 30)});
+    expect(find.text('3 entrées dupliquées'), findsOneWidget);
+    expect(find.text('Comme vendredi'), findsNothing, reason: 'la journée n’est plus vide');
+
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('Annuler'));
+    await settle(tester);
+    expect(await monday(), isEmpty);
+    await close(tester);
+  });
+
+  testWidgets('« Comme hier » le lendemain d’une journée saisie ; rien sur une journée déjà commencée', (tester) async {
+    await open(tester, body: TodayPage(clock: () => DateTime(2026, 10, 27, 8)));
+    expect(find.text('Comme hier'), findsOneWidget);
+    await close(tester);
+    await open(tester);
+    expect(find.textContaining(RegExp(r'^Comme (hier|vendredi|le )')), findsNothing, reason: 'lundi 26 a déjà « Maquettes »');
     await close(tester);
   });
 }

@@ -87,8 +87,8 @@ void main() {
     }
   }
 
-  Future<void> open(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1200, 900);
+  Future<void> open(WidgetTester tester, {Size size = const Size(1200, 900)}) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MultiProvider(
@@ -181,6 +181,39 @@ void main() {
     await settle(tester);
     expect(find.textContaining('sélectionnée'), findsNothing);
     expect((await entries(tester)).values.where((v) => v.$2), isEmpty);
+    await close(tester);
+  });
+
+  testWidgets('téléphone : glisser à gauche supprime (Annuler), à droite duplique sur aujourd’hui', (tester) async {
+    await open(tester, size: const Size(600, 900));
+    Future<void> swipe(String text, double dx) async {
+      await tester.drag(find.text(text), Offset(dx, 0));
+      // L'animation du glisser (deux images : départ, puis fin), puis l'action en base.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    await swipe('Pose', -400);
+    await settle(tester);
+    expect((await entries(tester))['Pose']!.$2, isTrue);
+    expect(find.text('Entrée supprimée'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('Annuler'));
+    await settle(tester);
+    expect((await entries(tester))['Pose']!.$2, isFalse);
+
+    await swipe('Câblage', 400);
+    await settle(tester);
+    final copies = (await tester.runAsync(() => (db.select(db.timeEntries)..where((t) => t.description.equals('Câblage'))).get()))!;
+    expect(copies, hasLength(2));
+    expect(copies.map((e) => e.startAt.toLocal()).toSet(), {at(9)}, reason: 'même heure, aujourd’hui');
+    expect(find.text('1 entrée dupliquée'), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('écran large : pas de glisser', (tester) async {
+    await open(tester);
+    expect(find.byType(Dismissible), findsNothing);
     await close(tester);
   });
 }

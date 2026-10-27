@@ -185,6 +185,18 @@ int minuteOf(DateTime t, DateTime day) {
   return days * 1440 + l.hour * 60 + l.minute;
 }
 
+/// Le dernier jour travaillé avant [day] (entrées terminées), à minuit ; null sans historique (« Comme vendredi »).
+DateTime? lastWorkedDay(Iterable<TimeEntry> history, DateTime day) {
+  DateTime? last;
+  for (final e in history) {
+    if (e.endAt == null) continue;
+    final l = e.startAt.toLocal();
+    final d = DateTime(l.year, l.month, l.day);
+    if (d.isBefore(day) && (last == null || d.isAfter(last))) last = d;
+  }
+  return last;
+}
+
 /// Plage d'une entrée dans la journée [day] (minuit local), en minutes ; une entrée en cours s'arrête à [now].
 Span? spanOf(TimeEntry e, DateTime day, DateTime now) {
   final s = minuteOf(e.startAt, day);

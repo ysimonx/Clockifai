@@ -481,6 +481,69 @@
     }
   },
   "undo": "Annuler",
+  "pendingCount": "{count, plural, =1{1 modification en attente} other{{count} modifications en attente}}",
+  "@pendingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dayNothingToCopy": "Rien à copier de ce jour-là.",
+  "likeYesterday": "Comme hier",
+  "likeDay": "Comme {day}",
+  "@likeDay": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "likeDate": "Comme le {date}",
+  "@likeDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "duplicateToday": "Dupliquer sur aujourd'hui",
+  "morning": "Matin",
+  "afternoon": "Après-midi",
+  "dictate": "Dicter",
+  "dictationStop": "Arrêter la dictée",
+  "dictationUnavailable": "Dictée indisponible : micro refusé ou pas de reconnaissance vocale sur cet appareil.",
+  "teamAbsent": "Absence validée",
+  "teamAbsentHalf": "Absence validée (demi-journée)",
+  "teamAlreadyLogged": "Déjà saisi : {time}",
+  "@teamAlreadyLogged": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "leftAt": "Départ à {time}",
+  "@leftAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "arrivedAt": "Arrivée à {time}",
+  "@arrivedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "arrivedAtPick": "Arrivée à…",
+  "leftAtPick": "Départ à…",
+  "otherHours": "Autres horaires…",
+  "commonHours": "Horaires communs",
+  "teamException": "Exception",
   "lateTitle": "Semaine dernière",
   "lateHelp": "Qui n'a pas encore soumis sa feuille de temps de la semaine du {date}.",
   "@lateHelp": {
@@ -1459,7 +1522,7 @@
   "taxPercent": "TVA",
   "team": "Équipe",
   "teamEntry": "Pointage d'équipe",
-  "teamEntryHelp": "Cochez les présents : une entrée est créée pour chacun, même hors ligne. Touchez les horaires d'une personne pour les ajuster.",
+  "teamEntryHelp": "Les présents sont cochés d'office (sauf absence validée ou journée déjà saisie) : une entrée est créée pour chacun, même hors ligne. Touchez les horaires d'une personne pour noter une exception (« Départ à 15:00 »).",
   "teamManagerOf": "Chef d'équipe de…",
   "teamManagerOfHelp": "Ce membre verra le temps des personnes choisies et approuvera leurs feuilles de temps. La saisie pour autrui dépend du réglage du workspace.",
   "teamMemberHint": "Seuls les managers voient l'activité de toute l'équipe.",

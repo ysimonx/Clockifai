@@ -151,4 +151,11 @@ void main() {
     expect(plan.gaps, [const Span(510, 540), const Span(630, 750)]);
     expect(plan.drafts, isEmpty);
   });
+
+  test('dernier jour travaillé : le plus récent avant le jour, entrées terminées seulement', () {
+    expect(lastWorkedDay(history(), at(10, 26, 0)), DateTime(2026, 10, 23), reason: 'vendredi, par-dessus le week-end');
+    expect(lastWorkedDay(history(), at(10, 20, 0)), DateTime(2026, 10, 19));
+    expect(lastWorkedDay([entry('run', at(10, 25, 9), null)], at(10, 26, 0)), isNull, reason: 'chronomètre en cours');
+    expect(lastWorkedDay(const [], at(10, 26, 0)), isNull);
+  });
 }

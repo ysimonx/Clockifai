@@ -1,6 +1,6 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
-> Statut : **en cours** (lots 1 à 8, 11 et 12 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
+> Statut : **en cours** (lots 1 à 9, 11 et 12 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
 > (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
@@ -96,6 +96,25 @@ Ce que cela demande :
   7. Présence chantier : réglage personnel (chacun l'active pour soi), coordonnées des chantiers saisies par un
      manager, position lue sur le téléphone seulement, jamais envoyée ; seules des propositions d'arrivée et de
      départ en sortent, à confirmer comme les autres.
+
+### Lot 9, mobile chantier (fait)
+
+- « Comme vendredi » : sur une journée vide (aujourd'hui ou passée), le bandeau d'« Aujourd'hui » recopie la
+  dernière journée travaillée (`lastWorkedDay`, `copyDay` dans `week_tools.dart`, même code que la copie de la
+  semaine : ni doublon, ni jour verrouillé ou approuvé) ; Annuler retire les copies.
+- Dictée : `speech_to_text` (reconnaissance du système, iOS, Android, macOS, navigateur ; Swift Package Manager),
+  micro dans la saisie express (`core/dictation.dart`) ; autorisations micro et reconnaissance dans les
+  `Info.plist`, `device.audio-input` dans les entitlements macOS, `RECORD_AUDIO` sur Android. Rien ne passe par
+  le serveur de Clockifai.
+- Durée au pouce (`DurationChips`) : ±15 min sur la fin, 30 min à 4 h, matin ou après-midi de la journée type ;
+  tâches du projet en pastilles (jusqu'à douze) dans le dialogue d'entrée.
+- Glisser (écran de moins de 700 px, « Suivi du temps ») : à droite, dupliquer sur aujourd'hui ; à gauche,
+  supprimer (Annuler). L'action se fait dans `confirmDismiss` et la ligne reste : le flux de la base la retire.
+- Badge hors ligne : nombre de modifications en attente (`getUploadQueueStats`, relu toutes les 3 s) sur l'icône
+  de synchronisation.
+- Pointage d'équipe : présents cochés d'office (sauf soi), absence validée du jour exclue (demi-journée signalée),
+  journée déjà saisie décochée ; exceptions « Arrivée à… », « Départ à… », « Autres horaires… » ; pastilles
+  matin, après-midi et ±15 min ; Annuler après la création.
 
 ### Lot 2, journal du jour (fait)
 
@@ -256,7 +275,7 @@ Ce que cela demande :
 | 6 Fin de journée | Récapitulatif à heure réglable (barre de menus macOS, notification mobile) avec les pistes à cocher | S/M | fait |
 | 7 Rapports par questions | Questions toutes faites, comparaison, prêt à facturer et facture en un clic, usage IA au coût | M | fait |
 | 8 Équipe | Tableau des retards, relance par notification, approbation avec écart au planning | M | fait |
-| 9 Mobile chantier | « Comme hier », durée au pouce, dictée, glisser, badge hors ligne, pointage d'équipe repensé | M | envisagé |
+| 9 Mobile chantier | « Comme hier », durée au pouce, dictée, glisser, badge hors ligne, pointage d'équipe repensé | M | fait |
 | 10 Identité visuelle | Polices, jetons de couleur, mode sombre, densité | S/M | envisagé |
 | 11 Journal automatique | Brouillons tirés des traces, frise manipulable (glisser, tirer les bords, clavier), « pourquoi ce bloc », validation en un geste ; première version sur l'historique, le planning et les sessions de Claude | L | fait (traces : agenda, commits ; pas d'activité du poste) |
 | 12 Demander à Clockifai | Assistant ⌘J : questions sur les rapports, modifications avec aperçu et Annuler ; Claude par l'API, outils côté Flask | M/L | fait (actif avec une clé d'API) |

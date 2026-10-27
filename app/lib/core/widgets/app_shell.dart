@@ -10,6 +10,7 @@ import '../../features/approvals/reminder_banner.dart';
 import '../../features/assistant/assistant.dart';
 import '../../features/commands/command_palette.dart';
 import '../../features/commands/shortcuts_help.dart';
+import '../../features/time_entries/agents_banner.dart';
 import '../../features/time_entries/entry_dialog.dart';
 import '../../features/time_entries/quick_add_sheet.dart';
 import '../../features/timer/timer_control.dart';
@@ -239,6 +240,7 @@ class _AppShellState extends State<AppShell> {
                     const SizedBox(width: 8),
                     OutlinedButton.icon(onPressed: () => showEntryDialog(context), icon: const Icon(Icons.add, size: 20), label: Text(l.addTime)),
                     const SizedBox(width: 8),
+                    const AgentsWorkingChip(),
                     const TimerControl(),
                   ]),
                 ),
@@ -259,6 +261,7 @@ class _AppShellState extends State<AppShell> {
         actions: [
           IconButton(tooltip: l.commandPaletteTooltip('${commandKeyLabel}K'), icon: const Icon(Icons.search), onPressed: () => showCommandPalette(context)),
           const SyncIndicator(),
+          const AgentsWorkingChip(compact: true),
           const Padding(padding: EdgeInsets.only(right: 12, left: 4), child: TimerControl(compact: true)),
         ],
       ),

@@ -10,6 +10,16 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Claude Code** : une pastille au robot, en haut de chaque page à côté du chronomètre, montre la session de Claude
+  en cours (sujet et durée) ; un clic liste les sessions (27 octobre 2026).
+
+### Modifié
+
+- **Claude Code** : une entrée de Claude est décrite par le sujet qu'il a nommé (« Version 0.2.6 des applications »)
+  plutôt que par ses commits ou par « dépôt (branche) » (27 octobre 2026).
+
 ## [0.2.6] — 2026-10-27
 
 ### Ajouté

@@ -67,24 +67,26 @@ void main() {
       (await tester.runAsync(() => repo.start(
           workspaceId: ws, userId: userId, draft: EntryDraft(description: description, projectId: projectId), maxRunning: 0)))!;
 
-  testWidgets('bandeau « Claude travaille » : sessions en cours de mon agent seulement', (tester) async {
-    await tester.pumpWidget(MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionController>.value(value: _Session()),
-        ChangeNotifierProvider<CatalogController>.value(value: catalog),
-      ],
-      child: MaterialApp(
-        locale: const Locale('fr'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
+  Widget app(Widget body) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SessionController>.value(value: _Session()),
+          ChangeNotifierProvider<CatalogController>.value(value: catalog),
         ],
-        home: const Scaffold(body: AgentsWorkingBanner()),
-      ),
-    ));
+        child: MaterialApp(
+          locale: const Locale('fr'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(body: body),
+        ),
+      );
+
+  testWidgets('bandeau « Claude travaille » : sessions en cours de mon agent seulement', (tester) async {
+    await tester.pumpWidget(app(const AgentsWorkingBanner()));
     await settle(tester);
     expect(find.text('Claude travaille'), findsNothing, reason: 'aucune session en cours');
 
@@ -109,5 +111,40 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump(Duration.zero); // minuteurs de Drift à la fermeture des flux
+  });
+
+  testWidgets('pastille « Claude » de la barre du haut : la session la plus récente, un clic les liste', (tester) async {
+    await tester.pumpWidget(app(const Align(alignment: Alignment.topRight, child: AgentsWorkingChip())));
+    await settle(tester);
+    expect(find.byIcon(Icons.smart_toy_outlined), findsNothing, reason: 'aucune session en cours');
+
+    await start(tester, me, 'Mon propre chronomètre');
+    await settle(tester);
+    expect(find.byIcon(Icons.smart_toy_outlined), findsNothing, reason: 'mon chronomètre a sa propre pastille');
+
+    final ancienne = await start(tester, 'claude-pilote', 'Export PDF', projectId: chantier);
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 5)));
+    final recente = await start(tester, 'claude-pilote', 'Version 0.2.6 des applications');
+    await settle(tester);
+    expect(find.byIcon(Icons.smart_toy_outlined), findsOneWidget);
+    expect(find.text('Version 0.2.6 des applications'), findsOneWidget);
+    expect(find.text('Export PDF'), findsNothing, reason: 'la pastille ne montre que la plus récente');
+    expect(find.text('+ 1 autre'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.smart_toy_outlined));
+    await settle(tester);
+    expect(find.text('Claude travaille'), findsOneWidget, reason: 'titre du panneau');
+    expect(find.text('Export PDF'), findsOneWidget);
+    expect(find.text('Chantier'), findsOneWidget);
+    expect(find.text('Version 0.2.6 des applications'), findsNWidgets(2), reason: 'pastille et panneau');
+
+    await repo.stop(ancienne);
+    await repo.stop(recente);
+    await settle(tester);
+    expect(find.byIcon(Icons.smart_toy_outlined), findsNothing, reason: 'sessions closes : pastille et panneau partis');
+    expect(find.text('Claude travaille'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(Duration.zero);
   });
 }

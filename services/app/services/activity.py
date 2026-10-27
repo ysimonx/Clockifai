@@ -396,16 +396,16 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
             if named:
                 task_id, server_project = sub or named, (server_project[0], sub or named)
 
-        # Description (D10) : saisie humaine > Claude > commits > dépôt et branche.
+        # Description (D10) : saisie humaine > Claude > sujet nommé par Claude > commits > dépôt et branche.
         if cur is not None and cur["description"] != cur["server_description"]:
             description, desc_source = cur["description"], cur["description_source"]
             server_description = cur["server_description"]
         else:
             if desc_ev.get("description"):
                 description, desc_source = str(desc_ev["description"])[:DESCRIPTION_MAX], "claude"
-            elif iv.subject and task_id is None:
-                # Sujet nommé sans tâche possible (pas de projet, ou création réservée) : il décrit l'entrée.
-                description, desc_source = subject_label(iv.subject), "claude"
+            elif iv.subject:
+                # Sujet nommé (D18) : il décrit l'entrée, avec ou sans tâche, plutôt que les commits ou le dépôt.
+                description, desc_source = subject_label(iv.subject)[:DESCRIPTION_MAX], "claude"
             else:
                 subjects = [r["subject"] for r in rows if r["kind"] == "commit" and r["subject"]
                             and iv.start <= r["occurred_at"] <= until]

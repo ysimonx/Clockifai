@@ -64,7 +64,7 @@ Dans l'ordre recommandé.
 | 3 Connexion Google et Microsoft | GoTrue, boutons de connexion, règle 4.8 de l'App Store (§4.3) | S | envisagé |
 | 4 Coût, marge, confidentialité des taux | Taux hors de `workspace_members`, coût daté, colonnes Coût et Marge, taux par tâche (§4.4) | M | envisagé |
 | 5 Factures : envoi et paiements | Email du client, envoi du PDF, paiements partiels, impayés (§4.5) | S/M | envisagé |
-| 6 Rapports | Lien public, envoi planifié, présence, alertes de budget (§4.6) | M/L | envisagé |
+| 6 Rapports | Lien public, envoi planifié, présence, alertes de budget (§4.6) ; suivi dans le plan 18 | M/L | en cours (plan 18) |
 | 7 Dépenses | Catégories, dépenses, justificatifs, approbation, facturation (§4.7) | L | envisagé |
 | 8 API publique et webhooks | Échange de jeton vers PostgREST, webhooks signés (§4.8) | M/L | envisagé |
 | 9 Pauses et planning | Entrées de pause ; jalons, capacité, publication (§4.9) | M | envisagé |
@@ -236,5 +236,6 @@ Dans l'ordre recommandé.
 ## 7. Décisions
 
 - 27 octobre 2026 : inventaire et ordre proposé. Rien n'est validé.
+- 27 octobre 2026 : lot 6 (Rapports) choisi en premier, détaillé dans `18-rapports-presence-alertes-partage.md`.
 - 27 octobre 2026 : constat mis à jour après la revue du code (plan 17) : taux des entrées posé par le serveur,
   arrondi des factures, fuseau du profil dans les exports.

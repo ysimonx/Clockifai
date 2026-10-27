@@ -10,6 +10,14 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Rapports › Présence** : arrivée, départ, pauses et temps travaillé de chaque personne, jour par jour, face à sa
+  capacité journalière (hors week-ends, jours fériés et absences) : heures sup ou heures manquantes sur la période.
+  Question « Heures sup du mois » et export « Présence (CSV) », même hors ligne.
+- **Équipe › Taux et capacité** : la capacité par jour ouvré de chaque personne se règle (administrateurs) ; elle
+  sert à la Présence et au Planning.
+
 ### Modifié
 
 - **Factures** : chaque durée suit l'arrondi du workspace (Paramètres › Arrondi des durées), comme le bloc

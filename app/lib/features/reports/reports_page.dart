@@ -22,8 +22,12 @@ import '../../data/repositories/time_entry_repository.dart';
 import '../time_entries/ai_usage.dart';
 import '../time_entries/entry_dialog.dart';
 import '../time_entries/time_entries_page.dart';
+import 'attendance.dart';
 import 'report_model.dart';
 import 'report_questions.dart';
+
+/// Résumé (par regroupement), détail jour par jour, ou présence (arrivées, départs, heures sup).
+enum ReportView { summary, detailed, attendance }
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -42,7 +46,7 @@ class _ReportsPageState extends State<ReportsPage> {
   String? _clientId;
   bool? _billable;
   bool _applyRounding = false;
-  bool _detailed = false;
+  ReportView _view = ReportView.summary;
   // Rapports par questions (plan 13, lot 7).
   bool _compare = false;
   // Tâches dont les sous-tâches sont dépliées (« Grouper par tâche »).
@@ -50,13 +54,18 @@ class _ReportsPageState extends State<ReportsPage> {
   bool _toBill = false;
 
   /// Une question toute faite : règle la période, le regroupement et les filtres d'un geste.
-  void _ask({required RangePreset preset, required GroupBy groupBy, MemberKind kind = MemberKind.all, bool toBill = false}) =>
+  void _ask(
+          {required RangePreset preset,
+          required GroupBy groupBy,
+          MemberKind kind = MemberKind.all,
+          bool toBill = false,
+          ReportView view = ReportView.summary}) =>
       setState(() {
         _preset = preset;
         _groupBy = groupBy;
         _kind = kind;
         _toBill = toBill;
-        _detailed = false;
+        _view = view;
         _projectId = null;
         _clientId = null;
         _billable = null;
@@ -154,6 +163,7 @@ class _ReportsPageState extends State<ReportsPage> {
           onSelected: (fmt) => _export(fmt, range, userFilter),
           itemBuilder: (_) => [
             PopupMenuItem(value: 'csv-local', child: Text(l.exportCsvOffline)),
+            PopupMenuItem(value: 'attendance-csv', child: Text(l.exportAttendanceCsv)),
             const PopupMenuItem(value: 'csv', child: Text('CSV')),
             const PopupMenuItem(value: 'xlsx', child: Text('Excel (.xlsx)')),
             const PopupMenuItem(value: 'pdf', child: Text('PDF')),
@@ -219,6 +229,11 @@ class _ReportsPageState extends State<ReportsPage> {
                   label: Text(l.qReadyToBill),
                   onPressed: () => _ask(preset: RangePreset.thisMonth, groupBy: GroupBy.client, toBill: true),
                 ),
+              ActionChip(
+                avatar: const Icon(Icons.schedule_outlined, size: 18),
+                label: Text(l.qOvertime),
+                onPressed: () => _ask(preset: RangePreset.thisMonth, groupBy: GroupBy.user, view: ReportView.attendance),
+              ),
               if (hasAgents)
                 ActionChip(
                   avatar: const Icon(Icons.smart_toy_outlined, size: 18),
@@ -253,14 +268,19 @@ class _ReportsPageState extends State<ReportsPage> {
             const SizedBox(height: 16),
             if (rows.isNotEmpty) _DailyChart(rows: rows, range: range, calc: calc),
             const SizedBox(height: 16),
-            Row(children: [
-              SegmentedButton<bool>(
-                segments: [ButtonSegment(value: false, label: Text(l.summary)), ButtonSegment(value: true, label: Text(l.detailed))],
-                selected: {_detailed},
-                onSelectionChanged: (s) => setState(() => _detailed = s.first),
+            // Le regroupement passe à la ligne sur un écran étroit.
+            Wrap(alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center, runSpacing: 8, children: [
+              SegmentedButton<ReportView>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(value: ReportView.summary, label: Text(l.summary)),
+                  ButtonSegment(value: ReportView.detailed, label: Text(l.detailed)),
+                  ButtonSegment(value: ReportView.attendance, label: Text(l.attendance)),
+                ],
+                selected: {_view},
+                onSelectionChanged: (s) => setState(() => _view = s.first),
               ),
-              const Spacer(),
-              if (!_detailed)
+              if (_view == ReportView.summary)
                 DropdownButton<GroupBy>(
                   value: _groupBy,
                   underline: const SizedBox.shrink(),
@@ -269,9 +289,16 @@ class _ReportsPageState extends State<ReportsPage> {
                 ),
             ]),
             const SizedBox(height: 8),
-            if (rows.isEmpty)
+            if (_view == ReportView.attendance)
+              // Tout le temps des personnes, hors filtres de projet, de client et de facturation.
+              AttendanceReport(
+                entries: [for (final r in snap.data ?? const <EntryRow>[]) if (visible(r)) r.entry],
+                userIds: _attendancePeople(session, rights, catalog, userFilter, snap.data ?? const []),
+                range: range,
+              )
+            else if (rows.isEmpty)
               EmptyState(icon: Icons.bar_chart, title: l.noDataForPeriod)
-            else if (_detailed)
+            else if (_view == ReportView.detailed)
               // Jour par jour, les entrées similaires d'une journée réunies sur une ligne dépliable.
               for (final day in _byDay(rows).entries)
                 DayCard(day: day.key, rows: day.value, grouped: true, showUser: rights.seesOthers)
@@ -424,6 +451,19 @@ class _ReportsPageState extends State<ReportsPage> {
     ]);
   }
 
+  /// Personnes de la présence : la personne choisie, sinon les humains actifs visibles, plus ceux qui ont du temps
+  /// sur la période (une personne désactivée depuis).
+  List<String> _attendancePeople(
+      SessionController session, TeamRights rights, CatalogController catalog, String? userFilter, List<EntryRow> rows) {
+    if (userFilter != null) return catalog.isAgent(userFilter) ? const [] : [userFilter];
+    final ids = [for (final m in rights.visibleMembers) if (m.kind != 'agent' && m.status == 'active') m.userId];
+    for (final r in rows) {
+      final uid = r.entry.userId;
+      if (!ids.contains(uid) && !catalog.isAgent(uid) && (uid == session.userId || rights.manages(uid))) ids.add(uid);
+    }
+    return ids;
+  }
+
   Future<void> _export(String fmt, DateTimeRange range, String? userId) async {
     final l = context.l10n;
     final session = context.read<SessionController>();
@@ -432,7 +472,26 @@ class _ReportsPageState extends State<ReportsPage> {
     final to = dayKey(addDays(range.end, -1));
     final name = 'clockifai-$from-$to';
     try {
-      if (fmt == 'csv-local') {
+      if (fmt == 'attendance-csv') {
+        final rights = TeamRights.read(context);
+        final all = await entriesRepo.watchEntries(workspaceId: session.workspaceId!, userId: userId, from: range.start, to: range.end).first;
+        final visible = [for (final r in all) if (r.entry.userId == session.userId || rights.manages(r.entry.userId)) r];
+        final src = await attendanceSources(session.workspaceId!);
+        final people = attendanceOfPeople(
+          userIds: _attendancePeople(session, rights, catalog, userId, visible),
+          entries: [for (final r in visible) r.entry],
+          from: range.start,
+          to: range.end,
+          now: DateTime.now(),
+          capacityOf: (uid) => catalog.memberOf(uid)?.capacityHoursPerDay ?? 7,
+          holidays: src.holidays,
+          requests: src.requests,
+          policyUnits: src.policyUnits,
+        );
+        final csv = attendanceCsv(people, (uid) => memberName(catalog.memberOf(uid)));
+        await FileSaver.instance.saveFile(
+            name: 'clockifai-presence-$from-$to', bytes: Uint8List.fromList(utf8.encode(csv)), fileExtension: 'csv', mimeType: MimeType.csv);
+      } else if (fmt == 'csv-local') {
         final rights = TeamRights.read(context);
         final rows = _filter(
           await entriesRepo.watchEntries(workspaceId: session.workspaceId!, userId: userId, from: range.start, to: range.end).first,

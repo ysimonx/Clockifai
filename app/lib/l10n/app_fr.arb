@@ -321,6 +321,33 @@
       }
     }
   },
+  "attendance": "Présence",
+  "attendanceHelp": "Tout le temps de chaque personne, quels que soient le projet et le client. Prévu : la capacité journalière des jours ouvrés, hors jours fériés et absences approuvées.",
+  "attendanceArrival": "Arrivée",
+  "attendanceDeparture": "Départ",
+  "attendanceBreaks": "Pauses",
+  "attendanceWorked": "Travaillé",
+  "attendanceExpected": "Prévu",
+  "attendanceDifference": "Écart",
+  "attendanceOvertime": "Heures sup : {time}",
+  "@attendanceOvertime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "attendanceMissing": "Manque : {time}",
+  "@attendanceMissing": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "attendanceHoliday": "Férié",
+  "attendanceTimeOff": "Absence",
+  "exportAttendanceCsv": "Présence (CSV)",
   "approvals": "Approbations",
   "approve": "Approuver",
   "approvedPeriodFor": "Période déjà approuvée pour {name}.",
@@ -654,6 +681,7 @@
   "qWhoWhat": "Qui a fait quoi cette semaine",
   "qReadyToBill": "Prêt à facturer",
   "qAiCost": "Usage IA au coût",
+  "qOvertime": "Heures sup du mois",
   "qCompare": "Comparer à la période précédente",
   "qDelta": "{delta} vs période précédente",
   "@qDelta": {
@@ -1035,6 +1063,9 @@
   "editPolicy": "Modifier la politique",
   "editProject": "Modifier le projet",
   "editRates": "Modifier les taux",
+  "editRatesAndCapacity": "Taux et capacité",
+  "capacityPerDay": "Capacité par jour ouvré",
+  "capacityPerDayHelp": "Heures prévues du lundi au vendredi : Présence (heures sup) et Planning.",
   "editSimilarEntries": "Modifier les {count} entrées",
   "@editSimilarEntries": {
     "placeholders": {

@@ -421,6 +421,50 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get attendance => 'Présence';
+
+  @override
+  String get attendanceHelp =>
+      'Tout le temps de chaque personne, quels que soient le projet et le client. Prévu : la capacité journalière des jours ouvrés, hors jours fériés et absences approuvées.';
+
+  @override
+  String get attendanceArrival => 'Arrivée';
+
+  @override
+  String get attendanceDeparture => 'Départ';
+
+  @override
+  String get attendanceBreaks => 'Pauses';
+
+  @override
+  String get attendanceWorked => 'Travaillé';
+
+  @override
+  String get attendanceExpected => 'Prévu';
+
+  @override
+  String get attendanceDifference => 'Écart';
+
+  @override
+  String attendanceOvertime(String time) {
+    return 'Heures sup : $time';
+  }
+
+  @override
+  String attendanceMissing(String time) {
+    return 'Manque : $time';
+  }
+
+  @override
+  String get attendanceHoliday => 'Férié';
+
+  @override
+  String get attendanceTimeOff => 'Absence';
+
+  @override
+  String get exportAttendanceCsv => 'Présence (CSV)';
+
+  @override
   String get approvals => 'Approbations';
 
   @override
@@ -950,6 +994,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get qAiCost => 'Usage IA au coût';
+
+  @override
+  String get qOvertime => 'Heures sup du mois';
 
   @override
   String get qCompare => 'Comparer à la période précédente';
@@ -1551,6 +1598,16 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get editRates => 'Modifier les taux';
+
+  @override
+  String get editRatesAndCapacity => 'Taux et capacité';
+
+  @override
+  String get capacityPerDay => 'Capacité par jour ouvré';
+
+  @override
+  String get capacityPerDayHelp =>
+      'Heures prévues du lundi au vendredi : Présence (heures sup) et Planning.';
 
   @override
   String editSimilarEntries(int count) {

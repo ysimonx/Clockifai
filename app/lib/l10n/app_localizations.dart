@@ -733,6 +733,84 @@ abstract class AppLocalizations {
   /// **'Arrondi {minutes} min'**
   String applyRounding(int minutes);
 
+  /// No description provided for @attendance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Présence'**
+  String get attendance;
+
+  /// No description provided for @attendanceHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout le temps de chaque personne, quels que soient le projet et le client. Prévu : la capacité journalière des jours ouvrés, hors jours fériés et absences approuvées.'**
+  String get attendanceHelp;
+
+  /// No description provided for @attendanceArrival.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrivée'**
+  String get attendanceArrival;
+
+  /// No description provided for @attendanceDeparture.
+  ///
+  /// In fr, this message translates to:
+  /// **'Départ'**
+  String get attendanceDeparture;
+
+  /// No description provided for @attendanceBreaks.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pauses'**
+  String get attendanceBreaks;
+
+  /// No description provided for @attendanceWorked.
+  ///
+  /// In fr, this message translates to:
+  /// **'Travaillé'**
+  String get attendanceWorked;
+
+  /// No description provided for @attendanceExpected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prévu'**
+  String get attendanceExpected;
+
+  /// No description provided for @attendanceDifference.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écart'**
+  String get attendanceDifference;
+
+  /// No description provided for @attendanceOvertime.
+  ///
+  /// In fr, this message translates to:
+  /// **'Heures sup : {time}'**
+  String attendanceOvertime(String time);
+
+  /// No description provided for @attendanceMissing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Manque : {time}'**
+  String attendanceMissing(String time);
+
+  /// No description provided for @attendanceHoliday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Férié'**
+  String get attendanceHoliday;
+
+  /// No description provided for @attendanceTimeOff.
+  ///
+  /// In fr, this message translates to:
+  /// **'Absence'**
+  String get attendanceTimeOff;
+
+  /// No description provided for @exportAttendanceCsv.
+  ///
+  /// In fr, this message translates to:
+  /// **'Présence (CSV)'**
+  String get exportAttendanceCsv;
+
   /// No description provided for @approvals.
   ///
   /// In fr, this message translates to:
@@ -1633,6 +1711,12 @@ abstract class AppLocalizations {
   /// **'Usage IA au coût'**
   String get qAiCost;
 
+  /// No description provided for @qOvertime.
+  ///
+  /// In fr, this message translates to:
+  /// **'Heures sup du mois'**
+  String get qOvertime;
+
   /// No description provided for @qCompare.
   ///
   /// In fr, this message translates to:
@@ -2507,6 +2591,24 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Modifier les taux'**
   String get editRates;
+
+  /// No description provided for @editRatesAndCapacity.
+  ///
+  /// In fr, this message translates to:
+  /// **'Taux et capacité'**
+  String get editRatesAndCapacity;
+
+  /// No description provided for @capacityPerDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Capacité par jour ouvré'**
+  String get capacityPerDay;
+
+  /// No description provided for @capacityPerDayHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Heures prévues du lundi au vendredi : Présence (heures sup) et Planning.'**
+  String get capacityPerDayHelp;
 
   /// No description provided for @editSimilarEntries.
   ///

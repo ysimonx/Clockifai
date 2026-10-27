@@ -525,7 +525,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get billingEmail => 'Billing email';
 
   @override
-  String get budgetHours => 'Budget';
+  String get budgetHours => 'Budget (hours)';
+
+  @override
+  String get budgetAmount => 'Budget (amount)';
+
+  @override
+  String budgetAmountUsed(int percent, String amount) {
+    return '$percent% of $amount budget';
+  }
+
+  @override
+  String get editTask => 'Edit task';
+
+  @override
+  String get estimate => 'Estimate';
+
+  @override
+  String get estimateHint => 'e.g. 4h, 1:30, 2.5';
+
+  @override
+  String estimateUsed(String used, String estimate) {
+    return '$used of $estimate estimated';
+  }
+
+  @override
+  String get watchList => 'To watch';
+
+  @override
+  String get watchListHelp =>
+      'Projects and tasks at 80% or more of their budget or estimate. Managers also get an email at 80% then 100%.';
+
+  @override
+  String watchHours(int percent, String used, String budget) {
+    return '$percent% of the hours budget ($used of $budget)';
+  }
+
+  @override
+  String watchAmount(int percent, String used, String budget) {
+    return '$percent% of the amount budget ($used of $budget)';
+  }
+
+  @override
+  String watchEstimate(int percent, String used, String budget) {
+    return '$percent% of the estimate ($used of $budget)';
+  }
 
   @override
   String budgetUsed(int percent, int hours) {

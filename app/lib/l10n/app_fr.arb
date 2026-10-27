@@ -381,7 +381,77 @@
   "billing": "Facturation",
   "billingAddress": "Adresse de facturation",
   "billingEmail": "Email de facturation",
-  "budgetHours": "Budget",
+  "budgetHours": "Budget (heures)",
+  "budgetAmount": "Budget (montant)",
+  "budgetAmountUsed": "{percent} % du budget de {amount}",
+  "@budgetAmountUsed": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "editTask": "Modifier la tâche",
+  "estimate": "Estimation",
+  "estimateHint": "ex. 4h, 1:30, 2,5",
+  "estimateUsed": "{used} sur {estimate} estimées",
+  "@estimateUsed": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "estimate": {
+        "type": "String"
+      }
+    }
+  },
+  "watchList": "À surveiller",
+  "watchListHelp": "Projets et tâches à 80 % ou plus de leur budget ou de leur estimation. Les managers reçoivent aussi un email à 80 % puis à 100 %.",
+  "watchHours": "{percent} % du budget en heures ({used} sur {budget})",
+  "@watchHours": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "used": {
+        "type": "String"
+      },
+      "budget": {
+        "type": "String"
+      }
+    }
+  },
+  "watchAmount": "{percent} % du budget en montant ({used} sur {budget})",
+  "@watchAmount": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "used": {
+        "type": "String"
+      },
+      "budget": {
+        "type": "String"
+      }
+    }
+  },
+  "watchEstimate": "{percent} % de l'estimation ({used} sur {budget})",
+  "@watchEstimate": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "used": {
+        "type": "String"
+      },
+      "budget": {
+        "type": "String"
+      }
+    }
+  },
   "budgetUsed": "{percent} % du budget de {hours} h",
   "@budgetUsed": {
     "placeholders": {

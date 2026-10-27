@@ -928,8 +928,74 @@ abstract class AppLocalizations {
   /// No description provided for @budgetHours.
   ///
   /// In fr, this message translates to:
-  /// **'Budget'**
+  /// **'Budget (heures)'**
   String get budgetHours;
+
+  /// No description provided for @budgetAmount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Budget (montant)'**
+  String get budgetAmount;
+
+  /// No description provided for @budgetAmountUsed.
+  ///
+  /// In fr, this message translates to:
+  /// **'{percent} % du budget de {amount}'**
+  String budgetAmountUsed(int percent, String amount);
+
+  /// No description provided for @editTask.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier la tâche'**
+  String get editTask;
+
+  /// No description provided for @estimate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Estimation'**
+  String get estimate;
+
+  /// No description provided for @estimateHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'ex. 4h, 1:30, 2,5'**
+  String get estimateHint;
+
+  /// No description provided for @estimateUsed.
+  ///
+  /// In fr, this message translates to:
+  /// **'{used} sur {estimate} estimées'**
+  String estimateUsed(String used, String estimate);
+
+  /// No description provided for @watchList.
+  ///
+  /// In fr, this message translates to:
+  /// **'À surveiller'**
+  String get watchList;
+
+  /// No description provided for @watchListHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Projets et tâches à 80 % ou plus de leur budget ou de leur estimation. Les managers reçoivent aussi un email à 80 % puis à 100 %.'**
+  String get watchListHelp;
+
+  /// No description provided for @watchHours.
+  ///
+  /// In fr, this message translates to:
+  /// **'{percent} % du budget en heures ({used} sur {budget})'**
+  String watchHours(int percent, String used, String budget);
+
+  /// No description provided for @watchAmount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{percent} % du budget en montant ({used} sur {budget})'**
+  String watchAmount(int percent, String used, String budget);
+
+  /// No description provided for @watchEstimate.
+  ///
+  /// In fr, this message translates to:
+  /// **'{percent} % de l\'estimation ({used} sur {budget})'**
+  String watchEstimate(int percent, String used, String budget);
 
   /// No description provided for @budgetUsed.
   ///

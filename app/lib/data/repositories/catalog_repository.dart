@@ -93,10 +93,12 @@ class CatalogRepository {
     return id;
   }
 
-  Future<void> updateTask(String id, {String? name, String? status}) =>
+  /// [estimateSeconds] : `Value(null)` retire l'estimation (managers seulement, `tasks_guard`).
+  Future<void> updateTask(String id, {String? name, String? status, Value<int?> estimateSeconds = const Value.absent()}) =>
       (db.update(db.tasks)..where((t) => t.id.equals(id))).write(TasksCompanion(
         name: name == null ? const Value.absent() : Value(name.trim()),
         status: status == null ? const Value.absent() : Value(status),
+        estimateSeconds: estimateSeconds,
       ));
 
   /// Supprime la tâche et ses sous-tâches (même horodatage : le serveur les rend ensemble à la restauration) ;

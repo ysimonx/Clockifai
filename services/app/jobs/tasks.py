@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import logging
 
+from flask import current_app
+
 from ..db import connection, execute, fetch_all
+from ..services import budget_alerts as budgets
 from ..services.activity import process_session
 from ..services.agent_clock import IDLE_TIMEOUT
+from ..services.mailer import send_mail
 
 log = logging.getLogger(__name__)
 
@@ -85,3 +89,16 @@ def purge_activity_events(older_than_days: int = 30) -> int:
     if count:
         log.info("purge des événements d'activité : %s ligne(s)", count)
     return count
+
+
+def budget_alerts() -> int:
+    """Alertes de budget (plan 18, lot 2) : seuils franchis notés, puis un email par manager. Le seuil est noté même
+    sans SMTP ou si l'envoi échoue : jamais de rafale d'emails en retard. Dans le contexte de l'app Flask (mailer)."""
+    with connection() as conn:
+        alerts = budgets.new_alerts(conn)
+        mails = budgets.messages(conn, alerts, current_app.config["APP_PUBLIC_URL"])
+        conn.commit()
+    sent = sum(send_mail(to, subject, text) for to, subject, text in mails)
+    if alerts:
+        log.info("budgets : %s alerte(s), %s email(s) envoyé(s)", len(alerts), sent)
+    return len(alerts)

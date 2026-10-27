@@ -25,7 +25,7 @@ clockify.me avant de valider un lot.
 | Écart | Clockify | Clockifai aujourd'hui | Où |
 |---|---|---|---|
 | Import | CSV d'entrées, de clients, de projets, de tâches, de tags | Rien | — |
-| Rappels par email | Saisie, soumission, approbation ; verrouillage automatique | Relances manuelles dans l'app (`reminders`). `mailer.py` envoie déjà les invitations. Jobs existants : arrêt automatique, purges, clôture des entrées d'agent | `0019_reminders.sql`, `services/app/services/mailer.py`, `services/app/jobs/` |
+| Rappels par email | Saisie, soumission, approbation ; verrouillage automatique | Relances manuelles dans l'app (`reminders`). `mailer.py` envoie déjà les invitations. Jobs existants : arrêt automatique, purges, clôture des entrées d'agent, alertes de budget (plan 18) | `0019_reminders.sql`, `services/app/services/mailer.py`, `services/app/jobs/` |
 | Fuseau horaire | Réglage du profil | `profiles.timezone` (Europe/Paris), lu par Flask (`activity`, `assistant`, exports depuis le plan 17 : `profiles.user_tz`) et le récapitulatif du jour, sans écran pour le changer | `0001_core.sql`, `features/today/day_recap.dart` |
 | Connexion Google / Microsoft | Oui | Prête côté GoTrue (`GOOGLE_*`, `AZURE_*` commentés dans `deploy/.env.example`), rien dans l'app | `deploy/.env.example`, `supabase/docker/docker-compose.yml` |
 | Coût et marge | Taux de coût par membre ; coût de main-d'œuvre et profit dans les rapports | `workspace_members.cost_rate_cents` se saisit dans Équipe, mais rien ne le lit. Seul le coût IA est calculé | `features/team/team_page.dart`, `features/reports/report_model.dart` |

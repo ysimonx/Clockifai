@@ -28,7 +28,8 @@ Comme pour macOS (`06-macos-barre-de-menus.md`) : une version de développement 
 3. **TestFlight** (`make app-dist-ios`, `app/tool/ios_dist.sh`) : archive Release signée automatiquement avec l'équipe
    `9SGKL7VUD3`, export `app-store-connect` avec `destination=upload`, via le compte ajouté dans Xcode
    (`-allowProvisioningUpdates`) : ni mot de passe ni clé d'API dans le dépôt. Sa session expirant (« missing
-   Xcode-Token », 26 octobre 2026), une clé d'API App Store Connect rangée dans `~/.config/clockifai/apple/`
+   Xcode-Token », 26 octobre 2026), et son jeton n'étant lisible que session déverrouillée (tous les échecs du
+   27 octobre ont eu lieu écran verrouillé), une clé d'API App Store Connect rangée dans `~/.config/clockifai/apple/`
    prend le relais quand elle est présente (`app/tool/apple_auth.sh`, aussi pour macOS) ; `make app-dist-testflight`
    enchaîne iPhone et Mac. `ITSAppUsesNonExemptEncryption = NO`
    (HTTPS seulement) évite la question d'export à chaque build. Prérequis unique : la fiche de l'app dans

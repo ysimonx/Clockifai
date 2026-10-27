@@ -102,6 +102,20 @@ void main() {
     expect(spanOf(entry('x', at(10, 25, 10), at(10, 25, 11)), sunday, now), const Span(600, 660));
   });
 
+  test('journée type réglée dans le profil : elle prime sur l’historique', () {
+    Profile profile({String? start, String? ls, String? le, String? end}) =>
+        Profile(id: 'me', displayName: '', timezone: 'Europe/Paris', locale: 'fr', dayStart: start, lunchStart: ls, lunchEnd: le, dayEnd: end);
+    final mine = TypicalDay.ofProfile(profile(start: '09:00', ls: '12:00', le: '13:00', end: '18:00'))!;
+    expect((mine.start, mine.lunch, mine.end, mine.target, mine.fromProfile), (540, const Span(720, 780), 1080, 480, true));
+    expect(TypicalDay.ofProfile(profile(start: '09:00', ls: '13:00', le: '12:00', end: '18:00'))!.lunch, isNull,
+        reason: 'pause incohérente ignorée');
+    expect(TypicalDay.ofProfile(profile(start: '09:00')), isNull, reason: 'sans départ : automatique');
+    expect(TypicalDay.ofProfile(null), isNull);
+
+    final plan = planDay(day: at(10, 26, 0), now: now, mine: const [], history: history(), typical: mine);
+    expect(plan.windows, [const Span(540, 720), const Span(780, 1022)]);
+  });
+
   test('créneaux vides sans proposition possible', () {
     final plan = planDay(day: at(10, 26, 0), now: now, mine: mine, history: const []);
     // Valeurs par défaut : 08:30–12:30 et 14:00–17:30, coupé à 17:02.

@@ -27,6 +27,14 @@ class Span {
   String toString() => 'Span(${hm(start)}–${hm(end)})';
 }
 
+/// « 08:30 » → 510 ; null si vide ou mal formé.
+int? parseHm(String? s) {
+  final m = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(s?.trim() ?? '');
+  if (m == null) return null;
+  final h = int.parse(m.group(1)!), min = int.parse(m.group(2)!);
+  return h < 24 && min < 60 ? h * 60 + min : null;
+}
+
 String hm(int m) => '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
 
 enum DraftSource { claude, habit, planning }
@@ -82,14 +90,29 @@ class Draft {
 
 /// Journée type déduite de l'historique : arrivée, pause de midi, départ, durée visée.
 class TypicalDay {
-  const TypicalDay({required this.start, required this.lunch, required this.end, required this.target, required this.fromHistory});
+  const TypicalDay(
+      {required this.start, required this.lunch, required this.end, required this.target, required this.fromHistory, this.fromProfile = false});
   final int start;
   final Span? lunch;
   final int end;
   final int target;
   final bool fromHistory;
 
+  /// Réglée par la personne dans ses paramètres (« Ma journée type »).
+  final bool fromProfile;
+
   static const fallback = TypicalDay(start: 510, lunch: Span(750, 840), end: 1050, target: 450, fromHistory: false);
+
+  /// La journée réglée dans le profil (plan 13, lot 2), ou null si arrivée et départ ne sont pas réglés ; une pause
+  /// incomplète ou hors de la journée est ignorée.
+  static TypicalDay? ofProfile(Profile? p) {
+    final start = parseHm(p?.dayStart), end = parseHm(p?.dayEnd);
+    if (start == null || end == null || end <= start) return null;
+    final ls = parseHm(p?.lunchStart), le = parseHm(p?.lunchEnd);
+    final lunch = ls != null && le != null && start < ls && ls < le && le < end ? Span(ls, le) : null;
+    return TypicalDay(
+        start: start, lunch: lunch, end: end, target: end - start - (lunch?.length ?? 0), fromHistory: false, fromProfile: true);
+  }
 
   /// Plages de travail (hors pause).
   List<Span> get windows => lunch == null
@@ -226,12 +249,13 @@ DayPlan planDay({
   List<TimeEntry> agentEntries = const [],
   List<ScheduleAssignment> planning = const [],
   Set<String> dismissed = const {},
+  TypicalDay? typical,
 }) {
   final d0 = _midnight(day);
   final isToday = d0 == _midnight(now);
   final isFuture = d0.isAfter(_midnight(now));
   final nowMin = minuteOf(now, d0);
-  final typical = typicalDay(history.where((e) => e.startAt.toLocal().isBefore(d0)).toList(), now);
+  typical ??= typicalDay(history.where((e) => e.startAt.toLocal().isBefore(d0)).toList(), now);
   final busy = [for (final e in mine) ?spanOf(e, d0, now)]..sort((a, b) => a.start.compareTo(b.start));
 
   // Un week-end sans habitude de travail ne se remplit pas ; un jour à venir non plus.

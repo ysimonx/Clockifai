@@ -1,6 +1,6 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
-> Statut : **en cours** (lot 1 fait, lot 3 et lot 11 en partie, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
+> Statut : **en cours** (lots 1, 2 et 3 faits, lot 11 en partie, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
 > (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
@@ -83,6 +83,28 @@ Ce que cela demande :
   lot 2) : Yannick n'en est pas encore convaincu. Le lot 2 du plan 10 passe en attente ; la ligne « Traces » des
   maquettes n'est pas construite.
 
+- **27 octobre 2026** : Yannick laisse décider et demande de tout faire. Réponses aux questions :
+  1. « Aujourd'hui » devient l'accueil et complète « Suivi du temps » (la liste complète) sans le remplacer ;
+     « Voir la journée » relie les deux, et le calendrier.
+  2. Tags et facturation restent dans la ligne de la saisie express ; anglais : durées, plages et jours.
+  3. Agenda : adresse iCal privée (lecture seule) que chacun colle dans ses paramètres, lue par le serveur ; seuls
+     l'heure et le titre des événements servent ; pas d'application Google ou Microsoft à enregistrer.
+  4. Le bleu actuel reste la couleur de marque ; le lot 10 se limite à la densité et à la cohérence.
+  5. Les propositions s'affichent d'office (aucune source à régler pour l'historique, le planning et Claude).
+  6. Assistant : seuls des agrégats partent vers Claude (durées par projet, client, tâche, jour, personne, et
+     les noms du référentiel), jamais les descriptions des entrées ; désactivé sans clé d'API sur le serveur.
+  7. Présence chantier : réglage personnel (chacun l'active pour soi), coordonnées des chantiers saisies par un
+     manager, position lue sur le téléphone seulement, jamais envoyée ; seules des propositions d'arrivée et de
+     départ en sortent, à confirmer comme les autres.
+
+### Lot 2, journal du jour (fait)
+
+- « Aujourd'hui » est l'accueil (`router.dart`, après connexion aussi) ; `/today?day=2026-10-23` ouvre un jour
+  précis, depuis « Suivi du temps » (soleil à côté du jour) ou un jour du calendrier (le sien seulement).
+- Ma journée type (Paramètres) : `profiles.day_start`, `lunch_start`, `lunch_end`, `day_end` (« 08:30 »,
+  migration 0017), synchronisées ; `TypicalDay.ofProfile` prime sur la journée déduite de l'historique, pour la
+  frise, les propositions et la saisie express (page et barre de menus).
+
 ### Lot 11, première version (faite)
 
 - Page **Aujourd'hui** (`/today`, `features/today/today_page.dart`), en tête du menu ; l'accueil reste
@@ -158,7 +180,7 @@ Ce que cela demande :
 | Lot | Contenu | Taille | État |
 |---|---|---|---|
 | 1 Petits gains | Annuler au lieu des confirmations ; durées sans secondes ; description et projet modifiables sur place ; sélection multiple et barre d'actions ; raccourcis à une touche ; ⌘K (navigation et actions) | M | fait |
-| 2 Journal du jour | Page « Aujourd'hui » (pistes Vous et Claude, trous, pause habituelle dans le profil, bilan du jour) ; remplace la vue jour de « Suivi du temps » et du calendrier | M/L | envisagé |
+| 2 Journal du jour | Page « Aujourd'hui » (pistes Vous et Claude, trous, pause habituelle dans le profil, bilan du jour) ; remplace la vue jour de « Suivi du temps » et du calendrier | M/L | fait |
 | 3 Saisie express | Analyseur FR/EN (durée, plage, jour, projet et tâche flous, `#tag`, facturable), étiquettes à la frappe, placement dans les trous ; aussi dans la barre de menus (⌥⌘T) | M | fait |
 | 4 Pistes | Moteur de suggestions : planning, habitudes, sessions de Claude et commits (rejoint le plan 10, lot 2, `time_suggestions`) ; agenda en option (Google, Microsoft) | M/L | envisagé |
 | 5 Semaine | Une page, trois vues ; copie de la semaine précédente, remplissage par le planning, suggestions en pointillé, liste avant soumission | M | envisagé |

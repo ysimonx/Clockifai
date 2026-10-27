@@ -31,6 +31,11 @@ class Profiles extends Table {
   TextColumn get defaultWorkspaceId => text().nullable()();
   /// Tâches de Claude (plan 10, D18) : `subject`, `session` ou `off` ; nul tant que la colonne n'est pas synchronisée.
   TextColumn get claudeTasks => text().nullable()();
+  /// Journée type (plan 13, lot 2) : « 08:30 », à l'horloge ; nulles = déduite des semaines passées.
+  TextColumn get dayStart => text().nullable()();
+  TextColumn get lunchStart => text().nullable()();
+  TextColumn get lunchEnd => text().nullable()();
+  TextColumn get dayEnd => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable().clientDefault(nowUtc)();
   DateTimeColumn get updatedAt => dateTime().nullable()();
 

@@ -20,6 +20,10 @@ const schema = Schema([
     Column.text('locale'),
     Column.text('default_workspace_id'),
     Column.text('claude_tasks'),
+    Column.text('day_start'),
+    Column.text('lunch_start'),
+    Column.text('lunch_end'),
+    Column.text('day_end'),
     ..._audit,
   ], ignoreEmptyUpdates: true),
   Table('workspaces', [

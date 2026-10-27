@@ -12,7 +12,7 @@ import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
-import '../today/day_plan.dart' show addDays;
+import '../today/day_plan.dart' show TypicalDay, addDays;
 import '../today/quick_place.dart';
 import 'timer_rules.dart';
 
@@ -250,7 +250,7 @@ class _MacMenuBarState extends State<MacMenuBar> {
     final rows = await entriesRepo
         .watchEntries(workspaceId: ws.id, userId: userId, from: addDays(now, -35), to: addDays(now, 1), includeRunning: true)
         .first;
-    final slot = placeQuick(q, now: now, entries: [for (final r in rows) r.entry]);
+    final slot = placeQuick(q, now: now, entries: [for (final r in rows) r.entry], typical: TypicalDay.ofProfile(_session.profile));
     if (!mounted) return const {};
     final ready = q.isComplete && slot != null;
     if (!save) return {'preview': quickSummary(context, q, slot, _catalog, userId, now).join(' · '), 'ready': ready};

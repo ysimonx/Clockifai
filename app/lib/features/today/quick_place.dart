@@ -38,8 +38,9 @@ QuickEntry? parseQuick(String text, CatalogController catalog, DateTime now) => 
 /// Où ranger [q] : sa plage, sinon le premier créneau vide assez grand de son jour, en laissant d'abord en place les
 /// propositions affichées ce jour-là ([proposedOn]), puis à leur place, sinon après la dernière entrée du jour.
 /// [entries] : celles de la personne, ce jour-là et les semaines d'avant (journée type).
+/// [typical] : la journée type du profil, si elle est réglée.
 QuickSlot? placeQuick(QuickEntry q,
-    {required DateTime now, required List<TimeEntry> entries, List<Span> Function(DateTime day)? proposedOn}) {
+    {required DateTime now, required List<TimeEntry> entries, TypicalDay? typical, List<Span> Function(DateTime day)? proposedOn}) {
   final day = addDays(now, q.dayOffset);
   if (q.hasRange) return QuickSlot(day, Span(q.startMinute!, q.endMinute!));
   final d = q.minutes;
@@ -56,6 +57,7 @@ QuickSlot? placeQuick(QuickEntry q,
       for (final e in entries)
         if (e.startAt.toLocal().isBefore(day)) e,
     ],
+    typical: typical,
   );
   Span? fit(List<Span> taken) => subtract(plan.windows, taken, min: 5).where((g) => g.length >= d).firstOrNull;
   if (fit([...plan.busy, ...?proposedOn?.call(day)]) case final g?) return QuickSlot(day, Span(g.start, g.start + d), inGap: true);

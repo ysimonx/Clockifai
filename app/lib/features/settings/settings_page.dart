@@ -17,6 +17,7 @@ import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../data/drift/database.dart';
 import '../integrations/claude_code.dart';
+import '../today/day_plan.dart' show TypicalDay, hm, parseHm;
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -68,6 +69,7 @@ class SettingsPage extends StatelessWidget {
           ),
           const _LanguageTile(),
           const _ThemeTile(),
+          const _MyDayTile(),
           SwitchListTile(
             secondary: const Icon(Icons.layers_outlined),
             title: Text(l.groupSimilarEntries),
@@ -234,6 +236,96 @@ class _ThemeTile extends StatelessWidget {
         ],
         onChanged: (v) => prefs.setThemeMode(v ?? ThemeMode.system),
       ),
+    );
+  }
+}
+
+/// Ma journée type (plans/13-ux-moderne.md, lot 2) : arrivée, pause, départ, dans le profil (synchronisé). Sans
+/// réglage, la page « Aujourd'hui » la déduit des semaines passées.
+class _MyDayTile extends StatelessWidget {
+  const _MyDayTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final session = context.watch<SessionController>();
+    final day = TypicalDay.ofProfile(session.profile);
+    return ListTile(
+      leading: const Icon(Icons.wb_sunny_outlined),
+      title: Text(l.myDay),
+      subtitle: Text(day == null
+          ? l.myDayAuto
+          : [
+              '${hm(day.start)} – ${hm(day.end)}',
+              if (day.lunch case final lunch?) '${l.lunchStart.toLowerCase()} ${hm(lunch.start)} – ${hm(lunch.end)}',
+            ].join(' · ')),
+      onTap: () => showDialog<void>(context: context, builder: (_) => _MyDayDialog(session.profile)),
+    );
+  }
+}
+
+class _MyDayDialog extends StatefulWidget {
+  const _MyDayDialog(this.profile);
+  final Profile? profile;
+
+  @override
+  State<_MyDayDialog> createState() => _MyDayDialogState();
+}
+
+class _MyDayDialogState extends State<_MyDayDialog> {
+  late final _times = <int?>[
+    parseHm(widget.profile?.dayStart) ?? 510,
+    parseHm(widget.profile?.lunchStart) ?? 750,
+    parseHm(widget.profile?.lunchEnd) ?? 840,
+    parseHm(widget.profile?.dayEnd) ?? 1050,
+  ];
+  String? _error;
+
+  Future<void> _pick(int i) async {
+    final t = _times[i] ?? 0;
+    final picked = await showTimePicker(context: context, initialTime: TimeOfDay(hour: t ~/ 60, minute: t % 60));
+    if (picked != null) setState(() => _times[i] = picked.hour * 60 + picked.minute);
+  }
+
+  Future<void> _save({bool reset = false}) async {
+    final session = context.read<SessionController>();
+    final t = _times;
+    if (!reset && !(t[0]! < t[1]! && t[1]! < t[2]! && t[2]! < t[3]!)) {
+      return setState(() => _error = context.l10n.myDayInvalid);
+    }
+    String? v(int i) => reset ? null : hm(t[i]!);
+    await workspaceRepo.updateProfile(
+      session.userId!,
+      ProfilesCompanion(dayStart: Value(v(0)), lunchStart: Value(v(1)), lunchEnd: Value(v(2)), dayEnd: Value(v(3))),
+    );
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final labels = [l.dayStart, l.lunchStart, l.lunchEnd, l.dayEnd];
+    return AlertDialog(
+      title: Text(l.myDay),
+      content: SizedBox(
+        width: 380,
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l.myDayHelp, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 8),
+          for (var i = 0; i < 4; i++)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(labels[i]),
+              trailing: OutlinedButton(onPressed: () => _pick(i), child: Text(hm(_times[i]!))),
+            ),
+          if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ]),
+      ),
+      actions: [
+        if (TypicalDay.ofProfile(widget.profile) != null) TextButton(onPressed: () => _save(reset: true), child: Text(l.myDayReset)),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
+        FilledButton(onPressed: _save, child: Text(l.save)),
+      ],
     );
   }
 }

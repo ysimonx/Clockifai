@@ -387,6 +387,27 @@
     }
   },
   "undo": "Undo",
+  "journalTypicalProfile": "Typical day: {start} – {end}, set in your settings",
+  "@journalTypicalProfile": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "myDay": "My typical day",
+  "myDayHelp": "Usual arrival, break and departure: the Today page uses them for empty slots. When not set, Clockifai infers them from your past weeks.",
+  "myDayAuto": "Automatic, from your past weeks",
+  "myDayReset": "Back to automatic",
+  "myDayInvalid": "Times must follow each other: arrival, break, departure.",
+  "dayStart": "Arrival",
+  "lunchStart": "Break starts",
+  "lunchEnd": "Break ends",
+  "dayEnd": "Departure",
+  "openDay": "Open the day",
   "commandPalette": "Commands",
   "commandPaletteTooltip": "Commands ({shortcut})",
   "@commandPaletteTooltip": {

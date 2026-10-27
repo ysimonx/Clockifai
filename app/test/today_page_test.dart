@@ -29,6 +29,8 @@ class _Session extends ChangeNotifier implements SessionController {
   @override
   String? get userId => me;
   @override
+  Profile? profile;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -37,12 +39,14 @@ void main() {
   late TestDb db;
   late CatalogController catalog;
   late DisplayPrefs prefs;
+  late _Session session;
 
   DateTime at(int day, int h, [int m = 0]) => DateTime(2026, 10, day, h, m);
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     prefs = DisplayPrefs(await SharedPreferences.getInstance());
+    session = _Session();
     db = TestDb();
     getIt
       ..registerSingleton<TimeEntryRepository>(TimeEntryRepository(db))
@@ -85,7 +89,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MultiProvider(
       providers: [
-        ChangeNotifierProvider<SessionController>.value(value: _Session()),
+        ChangeNotifierProvider<SessionController>.value(value: session),
         ChangeNotifierProvider<CatalogController>.value(value: catalog),
         ChangeNotifierProvider<DisplayPrefs>.value(value: prefs),
       ],
@@ -126,6 +130,15 @@ void main() {
     expect((added.single.startAt.toLocal(), added.single.endAt!.toLocal()), (at(26, 8, 30), at(26, 9)));
     expect(find.text('Il reste des créneaux vides'), findsOneWidget, reason: 'rien ne propose la fin de matinée ni l’après-midi');
     expect(find.text('1 entrée ajoutée · 0:30'), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('journée type du profil : créneaux et mention dans le bilan', (tester) async {
+    session.profile = const Profile(
+        id: me, displayName: '', timezone: 'Europe/Paris', locale: 'fr', dayStart: '09:00', lunchStart: '12:00', lunchEnd: '13:00', dayEnd: '18:00');
+    await open(tester);
+    expect(find.text('Journée type : 09:00 – 18:00, réglée dans vos paramètres'), findsOneWidget);
+    expect(find.text('Courriels'), findsNothing, reason: 'l’habitude de 08:30 tombe avant l’arrivée réglée');
     await close(tester);
   });
 

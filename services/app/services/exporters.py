@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import io
 from collections import defaultdict
-from datetime import date
+from datetime import UTC, date, tzinfo
 
 from flask import render_template_string
 from openpyxl import Workbook
@@ -31,7 +31,7 @@ def _amount(row: dict) -> float:
     return round((row["duration_seconds"] or 0) / 3600 * row["hourly_rate_cents"] / 100, 2)
 
 
-def build_xlsx(rows: list[dict], start: date, end: date) -> bytes:
+def build_xlsx(rows: list[dict], start: date, end: date, *, tz: tzinfo = UTC) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "Détail"
@@ -48,8 +48,8 @@ def build_xlsx(rows: list[dict], start: date, end: date) -> bytes:
         ws.append([
             r["user_name"], member_kind_label(r), r["client_name"] or "", r["project_name"] or "", r["task_name"] or "",
             r.get("subtask_name") or "", r["description"], r["tags"],
-            r["start_at"].astimezone().replace(tzinfo=None) if r["start_at"] else None,
-            r["end_at"].astimezone().replace(tzinfo=None) if r["end_at"] else None,
+            r["start_at"].astimezone(tz).replace(tzinfo=None) if r["start_at"] else None,
+            r["end_at"].astimezone(tz).replace(tzinfo=None) if r["end_at"] else None,
             round((r["duration_seconds"] or 0) / 3600, 2),
             "oui" if r["billable"] else "non",
             _amount(r),
@@ -133,7 +133,7 @@ _PDF_TEMPLATE = """
   <tr>
     <td>{{ r.user_name }}</td><td>{{ kind(r) }}</td><td>{{ r.client_name or '' }}</td><td>{{ r.project_name or '' }}</td><td>{{ r.task_name or '' }}</td>
     <td>{{ r.subtask_name or '' }}</td><td>{{ r.description }}</td><td>{{ r.tags }}</td>
-    <td>{{ r.start_at.astimezone().strftime('%d/%m %H:%M') }}</td><td>{{ r.end_at.astimezone().strftime('%d/%m %H:%M') if r.end_at else '' }}</td>
+    <td>{{ r.start_at.astimezone(tz).strftime('%d/%m %H:%M') }}</td><td>{{ r.end_at.astimezone(tz).strftime('%d/%m %H:%M') if r.end_at else '' }}</td>
     <td class="num">{{ '%.2f' % ((r.duration_seconds or 0) / 3600) }}</td>
     <td>{{ 'oui' if r.billable else 'non' }}</td>
     <td class="num">{{ '%.2f' % r.amount }}</td>
@@ -145,7 +145,7 @@ _PDF_TEMPLATE = """
 """
 
 
-def build_pdf(rows: list[dict], start: date, end: date, workspace_id: str) -> bytes:
+def build_pdf(rows: list[dict], start: date, end: date, *, tz: tzinfo = UTC) -> bytes:
     from weasyprint import HTML  # import tardif : lib lourde
 
     for r in rows:
@@ -154,7 +154,7 @@ def build_pdf(rows: list[dict], start: date, end: date, workspace_id: str) -> by
     summary = [{"project": k[0], "client": k[1], "hours": v[0], "amount": v[1], "ai_cost": v[2]}
                for k, v in sorted(agg.items())]
     html = render_template_string(
-        _PDF_TEMPLATE, rows=rows, start=start, end=end, summary=summary, kind=member_kind_label,
+        _PDF_TEMPLATE, rows=rows, start=start, end=end, summary=summary, kind=member_kind_label, tz=tz,
         total_hours=sum(v[0] for v in agg.values()), total_amount=sum(v[1] for v in agg.values()),
         total_ai_cost=sum(v[2] for v in agg.values()), has_ai=any(r.get("ai_tokens") for r in rows),
     )

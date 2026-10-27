@@ -686,14 +686,6 @@
       }
     }
   },
-  "weekPlanned": "Planned: {duration}",
-  "@weekPlanned": {
-    "placeholders": {
-      "duration": {
-        "type": "String"
-      }
-    }
-  },
   "weekReviewTitle": "Before submitting",
   "weekReviewAllGood": "All good: every working day has its time.",
   "weekReviewFix": "Fix",
@@ -1215,8 +1207,6 @@
   "search": "Search",
   "searchProjectOrTask": "Search project, task or client",
   "searchTags": "Search or create a tag",
-  "sectionManage": "Manage",
-  "sectionTeam": "Team",
   "selectAll": "Select all",
   "selectProject": "Select project",
   "selectTeammates": "Select teammates",

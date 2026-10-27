@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
 import anthropic
 from flask import Blueprint, current_app, g, jsonify, request
@@ -19,6 +18,7 @@ from flask import Blueprint, current_app, g, jsonify, request
 from ..auth import require_user, require_workspace
 from ..db import connection
 from ..services import assistant
+from ..services.profiles import user_tz
 
 bp = Blueprint("assistant", __name__)
 log = logging.getLogger(__name__)
@@ -53,12 +53,8 @@ def ask():
     if not assistant.allow(g.user.id):
         return jsonify(error="rate_limited"), 429
     with connection() as conn:
-        row = conn.execute("select timezone from public.profiles where id = %s", (g.user.id,)).fetchone()
-        tz = (row or {}).get("timezone") or "Europe/Paris"
-        try:
-            today = datetime.now(ZoneInfo(tz)).date()
-        except (KeyError, ValueError):
-            tz, today = "Europe/Paris", datetime.now(ZoneInfo("Europe/Paris")).date()
+        zone = user_tz(conn, g.user.id)
+        tz, today = zone.key, datetime.now(zone).date()
         scope = assistant.scope_for(conn, g.workspace_id, g.user.id, g.workspace_role)
         try:
             result = assistant.ask(

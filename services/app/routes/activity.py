@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime, time
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from flask import Blueprint, abort, g, jsonify, request
 
@@ -27,6 +26,7 @@ from ..services.activity import (
 )
 from ..services.agents import active_agent
 from ..services.entry_defaults import UnknownProject, entry_defaults
+from ..services.profiles import user_tz
 
 log = logging.getLogger(__name__)
 bp = Blueprint("activity", __name__)
@@ -62,14 +62,6 @@ def events():
     return jsonify(accepted=inserted, duplicates=len(rows) - inserted, rejected=rejected), 202
 
 
-def _tz(conn, user_id: str) -> ZoneInfo:
-    row = conn.execute("select timezone from public.profiles where id = %s", (user_id,)).fetchone()
-    try:
-        return ZoneInfo(row["timezone"] if row and row["timezone"] else "Europe/Paris")
-    except ZoneInfoNotFoundError:
-        return ZoneInfo("Europe/Paris")
-
-
 def _union_seconds(spans: list[tuple[datetime, datetime]]) -> int:
     total, cur_start, cur_end = 0.0, None, None
     for start, end in sorted(spans):
@@ -89,7 +81,7 @@ def _union_seconds(spans: list[tuple[datetime, datetime]]) -> int:
 def today():
     now = datetime.now(UTC)
     with connection() as conn:
-        tz = _tz(conn, g.user.id)
+        tz = user_tz(conn, g.user.id)
         day_start = datetime.combine(now.astimezone(tz).date(), time.min, tz).astimezone(UTC)
         agent_id = active_agent(conn, g.workspace_id, g.user.id)
         rows = conn.execute(

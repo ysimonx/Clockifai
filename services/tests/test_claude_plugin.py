@@ -378,6 +378,22 @@ def test_mcp_server_names_the_task_without_any_network():
     assert replies[6]["result"]["content"][0]["text"].startswith("Tâche « Plan 16 · Sous-tâches » › « Migration »")
 
 
+def test_mcp_server_survives_an_ascii_locale_and_odd_requests():
+    lines = [
+        {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": [1]},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+         "params": {"name": "set_current_task", "arguments": {"name": "Révision du thème"}}},
+        {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "set_current_task", "arguments": "x"}},
+    ]
+    stdin = ("\n".join(json.dumps(x, ensure_ascii=False) for x in lines) + "\n").encode("utf-8")
+    out = subprocess.run([PYTHON, str(PLUGIN / "scripts" / "clockifai_mcp.py")], input=stdin, capture_output=True,
+                         check=True, timeout=20, env={"PATH": os.environ.get("PATH", ""), "LC_ALL": "C", "LANG": "C"})
+    replies = {r["id"]: r for r in map(json.loads, out.stdout.decode("utf-8").splitlines())}
+    assert sorted(replies) == [1, 2, 3] and out.stderr == b""
+    assert replies[2]["result"]["content"][0]["text"].startswith("Tâche « Révision du thème »")
+    assert replies[3]["result"]["isError"] is True
+
+
 def test_hook_relays_the_task_name_and_nothing_else(tmp_path):
     server = _Server()
     try:

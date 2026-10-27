@@ -12,7 +12,6 @@ Appareil (en-tête X-Kiosk-Token, aucun compte utilisateur sur la tablette) :
 
 from __future__ import annotations
 
-import hashlib
 import secrets
 import threading
 import time
@@ -20,7 +19,7 @@ from functools import wraps
 
 from flask import Blueprint, abort, g, jsonify, request
 
-from ..auth import require_user, require_workspace
+from ..auth import hash_token, require_user, require_workspace
 from ..db import connection, fetch_all
 from ..services.entry_defaults import UnknownProject, entry_defaults
 
@@ -30,10 +29,6 @@ bp = Blueprint("kiosk", __name__)
 _MAX_FAILS, _LOCK_SECONDS = 5, 300
 _fails: dict[tuple[str, str], tuple[int, float]] = {}
 _fails_lock = threading.Lock()
-
-
-def _hash(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
 
 
 # ---------------------------------------------------------------- administration
@@ -46,7 +41,7 @@ def create_device():
     with connection() as conn:
         row = conn.execute(
             "insert into public.kiosk_devices (workspace_id, name, token_hash, created_by) values (%s, %s, %s, %s) returning id",
-            (g.workspace_id, name, _hash(token), g.user.id),
+            (g.workspace_id, name, hash_token(token), g.user.id),
         ).fetchone()
         conn.commit()
     return jsonify(id=str(row["id"]), name=name, token=token), 201
@@ -90,7 +85,7 @@ def require_device(fn):
             dev = conn.execute(
                 "update public.kiosk_devices set last_seen_at = now() where token_hash = %s and deleted_at is null "
                 "returning id, workspace_id, name",
-                (_hash(token),),
+                (hash_token(token),),
             ).fetchone()
             conn.commit()
         if dev is None:

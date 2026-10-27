@@ -18,12 +18,12 @@ from functools import wraps
 import jwt
 from flask import abort, current_app, g, request
 
-from .db import connection, fetch_all, fetch_one
+from .db import connection, fetch_one
 
 API_TOKEN_PREFIX = "clk_"
 
-_MANAGER_ROLES = ("owner", "admin", "manager")
-_ADMIN_ROLES = ("owner", "admin")
+MANAGER_ROLES = ("owner", "admin", "manager")
+ADMIN_ROLES = ("owner", "admin")
 
 
 @dataclass(frozen=True)
@@ -72,13 +72,19 @@ def workspace_role(workspace_id: str, user_id: str) -> str | None:
     return row["role"] if row else None
 
 
-def managed_user_ids(workspace_id: str, user_id: str) -> list[str]:
-    """Collaborateurs encadrés par un chef d'équipe (périmètre calculé par la base, cf. team_scope)."""
-    rows = fetch_all(
-        "select user_id::text as user_id from public.team_scope where workspace_id = %(wid)s and manager_id = %(uid)s",
+def readable_user_ids(conn, workspace_id: str, user_id: str) -> list[str]:
+    """Personnes dont un membre (hors managers) lit le temps, comme la RLS : lui-même, son équipe s'il est chef
+    d'équipe (team_scope) et son agent Claude (pilots_agent)."""
+    rows = conn.execute(
+        """
+        select user_id::text as id from public.team_scope where workspace_id = %(wid)s and manager_id = %(uid)s
+        union
+        select user_id::text from public.workspace_members
+         where workspace_id = %(wid)s and kind = 'agent' and agent_owner_id = %(uid)s and deleted_at is null
+        """,
         {"wid": workspace_id, "uid": user_id},
-    )
-    return [r["user_id"] for r in rows]
+    ).fetchall()
+    return sorted({user_id, *(r["id"] for r in rows)})
 
 
 def new_api_token() -> str:
@@ -151,9 +157,9 @@ def require_workspace(min_role: str = "member"):
             role = workspace_role(wid, g.user.id)
             if role is None:
                 abort(403, "not a member of this workspace")
-            if min_role == "manager" and role not in _MANAGER_ROLES:
+            if min_role == "manager" and role not in MANAGER_ROLES:
                 abort(403, "manager role required")
-            if min_role == "admin" and role not in _ADMIN_ROLES:
+            if min_role == "admin" and role not in ADMIN_ROLES:
                 abort(403, "admin role required")
             g.workspace_id = wid
             g.workspace_role = role

@@ -780,14 +780,6 @@
       }
     }
   },
-  "weekPlanned": "Prévu : {duration}",
-  "@weekPlanned": {
-    "placeholders": {
-      "duration": {
-        "type": "String"
-      }
-    }
-  },
   "weekReviewTitle": "Avant de soumettre",
   "weekReviewAllGood": "Tout est en ordre : chaque jour ouvré a son temps.",
   "weekReviewFix": "Corriger",
@@ -1487,8 +1479,6 @@
   "search": "Rechercher",
   "searchProjectOrTask": "Rechercher un projet, une tâche, un client",
   "searchTags": "Rechercher ou créer un tag",
-  "sectionManage": "Gestion",
-  "sectionTeam": "Équipe",
   "selectAll": "Tout cocher",
   "selectProject": "Choisir un projet",
   "selectTeammates": "Choisir les collaborateurs",

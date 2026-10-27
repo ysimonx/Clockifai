@@ -23,7 +23,7 @@ def entry_defaults(conn: psycopg.Connection, workspace_id: str, user_id: str,
     if project_id:
         project = conn.execute(
             "select billable_default, hourly_rate_cents, agent_billable from public.projects "
-            "where id = %s and workspace_id = %s",
+            "where id = %s and workspace_id = %s and deleted_at is null",
             (project_id, workspace_id),
         ).fetchone()
         if project is None:

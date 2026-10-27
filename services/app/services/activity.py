@@ -13,13 +13,14 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 
 import psycopg
 
 from .agent_clock import Create, Event, Existing, Update, plan_session
 from .agents import active_agent
 from .entry_defaults import UnknownProject, entry_defaults
+from .profiles import DEFAULT_TZ, zone
 
 log = logging.getLogger(__name__)
 
@@ -308,7 +309,6 @@ def subject_label(subject: str | None) -> str | None:
     return f"{name} · {step}" if step else name
 
 
-_PARIS = ZoneInfo("Europe/Paris")
 _MONTHS = {"fr": ("janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."),
            "en": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")}
 
@@ -319,7 +319,7 @@ class TaskPrefs:
     langue des noms datés (D18)."""
 
     mode: str = "subject"
-    tz: ZoneInfo = _PARIS
+    tz: ZoneInfo = DEFAULT_TZ
     locale: str = "fr"
 
 
@@ -327,11 +327,8 @@ def task_prefs(conn, pilot_id: str) -> TaskPrefs:
     row = conn.execute("select claude_tasks, timezone, locale from public.profiles where id = %s", (pilot_id,)).fetchone()
     if not row:
         return TaskPrefs()
-    try:
-        tz = ZoneInfo(row["timezone"]) if row["timezone"] else _PARIS
-    except (ZoneInfoNotFoundError, ValueError):
-        tz = _PARIS
-    return TaskPrefs(row["claude_tasks"] or "subject", tz, "en" if (row["locale"] or "").startswith("en") else "fr")
+    return TaskPrefs(row["claude_tasks"] or "subject", zone(row["timezone"]),
+                     "en" if (row["locale"] or "").startswith("en") else "fr")
 
 
 def _lock_name(conn, project_id: str, name: str) -> None:
@@ -432,7 +429,7 @@ def subject_task(conn, workspace_id: str, session_id: str, project_id: str | Non
         row = conn.execute(
             "select a.task_id from clockifai_private.agent_tasks a join public.tasks t on t.id = a.task_id "
             "where a.session_id = %s and a.workspace_id = %s and t.project_id = %s and t.deleted_at is null "
-            "order by a.created_at desc limit 1",
+            "and t.parent_id is null order by a.created_at desc, t.created_at desc limit 1",
             (session_id, workspace_id, project_id),
         ).fetchone()
         if row:
@@ -473,8 +470,13 @@ def step_task(conn, workspace_id: str, session_id: str, project_id: str | None, 
     _lock_name(conn, parent_id, step)
     own = None
     if entry_id and current_task_id and current_task_id != parent_id:
-        row = conn.execute("select parent_id from public.tasks where id = %s", (current_task_id,)).fetchone()
+        row = conn.execute(
+            "select t.parent_id, t.name <> a.name as renamed from public.tasks t left join clockifai_private.agent_tasks a "
+            "on a.task_id = t.id and a.session_id = %s where t.id = %s", (session_id, current_task_id),
+        ).fetchone()
         if row and row["parent_id"] and str(row["parent_id"]) == parent_id:
+            if row["renamed"]:
+                return current_task_id, None  # sous-tâche renommée à la main : un choix humain, elle reste
             own = _own_task(conn, workspace_id, session_id, current_task_id, entry_id=entry_id, whole_session=False)
     existing = _task_named(conn, workspace_id, project_id, step, parent_id=parent_id)
     if own and own["name"].casefold() != step.casefold():
@@ -530,6 +532,16 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
     if agent_id is None:
         return 0  # agent absent, désactivé ou retiré : événements gardés, aucune entrée (D7.10)
     conn.execute("select pg_advisory_xact_lock(hashtextextended('session:' || %s, 0))", (session_id,))
+    # L'id de session vient du poste, et tout membre le lit dans code_commits : une session déjà tenue par l'agent
+    # d'un autre pilote n'est jamais recalculée ici (ni ses entrées, ni ses tâches, ni son usage IA).
+    if conn.execute(
+        "select 1 from clockifai_private.agent_entries ae join public.workspace_members m "
+        "on m.workspace_id = ae.workspace_id and m.user_id = ae.agent_user_id "
+        "where ae.workspace_id = %s and ae.session_id = %s and m.agent_owner_id is distinct from %s limit 1",
+        (workspace_id, session_id, pilot_id),
+    ).fetchone():
+        log.warning("session %s : tenue par l'agent d'un autre pilote, ignorée", session_id)
+        return 0
 
     rows = conn.execute(
         """
@@ -582,9 +594,8 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
                     project_id, task_id = project_for(conn, workspace_id, rules, ctx)
             # Sujet nommé par Claude pendant cette entrée : il prime sur la tâche reprise de la précédente (D18) ;
             # son étape en est la sous-tâche (plan 16).
-            named, emptied = subject_task(conn, workspace_id, session_id, project_id, goal, _root_task(conn, task_id),
-                                          prefs, iv.start)
-            sub, emptied_step = step_task(conn, workspace_id, session_id, project_id, named, step, task_id)
+            named, emptied = subject_task(conn, workspace_id, session_id, project_id, goal, None, prefs, iv.start)
+            sub, emptied_step = step_task(conn, workspace_id, session_id, project_id, named, step, None)
             task_id = sub or named or task_id
             cur = None
             server_project = (project_id, task_id)
@@ -726,8 +737,11 @@ def link_commits(conn, workspace_id: str, pilot_id: str, session_id: str, rows: 
             """,
             (workspace_id, session_id, r["occurred_at"], now, r["occurred_at"]),
         ).fetchone()
+        # L'adresse de l'auteur est déclarée par le poste : seul un membre de ce workspace peut en être l'auteur.
         author = conn.execute(
-            "select id from auth.users where lower(email) = lower(%s)", (r["author_email"] or "",)
+            "select u.id from auth.users u join public.workspace_members m on m.user_id = u.id "
+            "where m.workspace_id = %s and m.deleted_at is null and lower(u.email) = lower(%s) limit 1",
+            (workspace_id, r["author_email"] or ""),
         ).fetchone()
         conn.execute(
             """

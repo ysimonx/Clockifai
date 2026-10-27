@@ -1151,11 +1151,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String weekPlanned(String duration) {
-    return 'Prévu : $duration';
-  }
-
-  @override
   String get weekReviewTitle => 'Avant de soumettre';
 
   @override
@@ -2422,12 +2417,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get searchTags => 'Rechercher ou créer un tag';
-
-  @override
-  String get sectionManage => 'Gestion';
-
-  @override
-  String get sectionTeam => 'Équipe';
 
   @override
   String get selectAll => 'Tout cocher';

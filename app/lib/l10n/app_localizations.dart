@@ -1915,12 +1915,6 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 entrée ajoutée d\'après le planning} other{{count} entrées ajoutées d\'après le planning}}'**
   String weekFilled(int count);
 
-  /// No description provided for @weekPlanned.
-  ///
-  /// In fr, this message translates to:
-  /// **'Prévu : {duration}'**
-  String weekPlanned(String duration);
-
   /// No description provided for @weekReviewTitle.
   ///
   /// In fr, this message translates to:
@@ -3983,18 +3977,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Rechercher ou créer un tag'**
   String get searchTags;
-
-  /// No description provided for @sectionManage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Gestion'**
-  String get sectionManage;
-
-  /// No description provided for @sectionTeam.
-  ///
-  /// In fr, this message translates to:
-  /// **'Équipe'**
-  String get sectionTeam;
 
   /// No description provided for @selectAll.
   ///

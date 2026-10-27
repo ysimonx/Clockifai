@@ -54,7 +54,8 @@ def handle(msg: dict) -> dict | None:
     """Réponse à une requête JSON-RPC ; None pour une notification (sans `id`)."""
     if "id" not in msg:
         return None
-    method, params = msg.get("method"), msg.get("params") or {}
+    method, params = msg.get("method"), msg.get("params")
+    params = params if isinstance(params, dict) else {}
     if method == "initialize":
         result = {
             # La version demandée par le client : ce serveur n'utilise que des messages communs à toutes.
@@ -68,7 +69,8 @@ def handle(msg: dict) -> dict | None:
     elif method == "tools/list":
         result = {"tools": TOOLS}
     elif method == "tools/call" and params.get("name") == TOOL:
-        args = params.get("arguments") or {}
+        args = params.get("arguments")
+        args = args if isinstance(args, dict) else {}
         name = " ".join(str(args.get("name") or "").split())[:NAME_MAX]
         step = " ".join(str(args.get("step") or "").split())[:NAME_MAX]
         noted = f"« {name} » › « {step} »" if step else f"« {name} »"
@@ -80,15 +82,21 @@ def handle(msg: dict) -> dict | None:
 
 
 def main() -> None:
-    for line in sys.stdin:
+    # Octets UTF-8 dans les deux sens, quelle que soit la locale du poste (LANG=C ne doit pas couper l'outil).
+    for line in sys.stdin.buffer:
         try:
-            msg = json.loads(line)
+            msg = json.loads(line.decode("utf-8"))
         except ValueError:
             continue
-        reply = handle(msg) if isinstance(msg, dict) else None
+        if not isinstance(msg, dict):
+            continue
+        try:
+            reply = handle(msg)
+        except Exception as e:  # noqa: BLE001 - une requête inattendue ne doit pas arrêter le serveur
+            reply = {"jsonrpc": "2.0", "id": msg.get("id"), "error": {"code": -32603, "message": type(e).__name__}}
         if reply is not None:
-            sys.stdout.write(json.dumps(reply, ensure_ascii=False) + "\n")
-            sys.stdout.flush()
+            sys.stdout.buffer.write((json.dumps(reply, ensure_ascii=False) + "\n").encode("utf-8"))
+            sys.stdout.buffer.flush()
 
 
 if __name__ == "__main__":

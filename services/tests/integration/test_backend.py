@@ -254,9 +254,24 @@ def test_flask_export_uses_the_current_rate_of_an_entry_without_rate(alice, alic
                                 f"&from={day}&to={date.today().isoformat()}&format=csv", alice["token"])
     assert status == 200, body
     header, *lines = body.decode("utf-8-sig").strip().splitlines()
-    rate = header.split(";").index("Taux horaire")
-    rates = {line.split(";")[6]: line.split(";")[rate] for line in lines}
+    desc, rate = header.split(";").index("Description"), header.split(";").index("Taux horaire")
+    rates = {line.split(";")[desc]: line.split(";")[rate] for line in lines}
     assert rates == {"taux None": "123,45", "taux 9000": "90,00"}
+
+
+def test_flask_export_uses_the_time_zone_of_the_profile(alice, alice_ws):
+    # Entrée commencée le 20 octobre à 00:30 à Paris (le 19 à 22:30 UTC) : elle est du 20, affichée à 00:30.
+    pid = str(uuid.uuid4())
+    assert rest("POST", "projects", alice["token"], {"id": pid, "workspace_id": alice_ws, "name": "Nuit"})[0] == 201
+    assert rest("POST", "time_entries", alice["token"], {
+        "id": str(uuid.uuid4()), "workspace_id": alice_ws, "user_id": alice["id"], "project_id": pid,
+        "description": "après minuit", "start_at": "2026-10-19T22:30:00Z", "end_at": "2026-10-19T23:30:00Z"})[0] == 201
+    status, body = _call("GET", f"{SERVICES}/api/exports/report?workspace_id={alice_ws}&project_id={pid}"
+                                "&from=2026-10-20&to=2026-10-20&format=csv", alice["token"])
+    assert status == 200, body
+    header, *lines = body.decode("utf-8-sig").strip().splitlines()
+    start = header.split(";").index("Début")
+    assert [line.split(";")[start] for line in lines] == ["2026-10-20 00:30"]
 
 
 def test_flask_export_forbidden_for_outsider(alice_ws):

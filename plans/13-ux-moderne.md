@@ -1,6 +1,6 @@
 # Plan 13 — UX repensée : saisir sans effort, revoir en un coup d'œil
 
-> Statut : **en cours** (lots 1, 2, 3, 4 et 11 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
+> Statut : **en cours** (lots 1 à 5 et 11 faits, 27 octobre 2026). Maquettes : canevas « Clockifai, UX repensée »
 > (https://claude.ai/artifact/U6KHyAhd2xoKwYDnzggnRT, privé), treize écrans dont huit interactifs.
 
 ## Constat
@@ -119,6 +119,18 @@ Ce que cela demande :
   habitudes > planning, sur les créneaux de travail libres. Ligne « Traces » sur la frise (événements, commits).
 - Toujours pas de mesure de l'activité sur le poste (décision du 26 octobre).
 
+### Lot 5, semaine (fait)
+
+- Une page, trois vues de la même semaine (`WeekViews`, `features/timesheet/week_tools.dart`) : grille
+  (`/timesheet`), calendrier (`/calendar`), liste (`/timesheet?view=list`, entrées modifiables sur place) ;
+  `?week=` garde la semaine d'une vue à l'autre.
+- Heures prévues au planning en italique dans les cases vides, et la ligne de leur projet ; « Compléter d'après le
+  planning » complète chaque jour ouvré passé jusqu'aux heures prévues (`setDayTotal`), avec Annuler.
+- « Copier la semaine précédente » : mêmes jours et heures, sans doublon, hors période verrouillée ou approuvée,
+  avec Annuler.
+- « Avant de soumettre » (`weekIssues`, calcul pur) : jours ouvrés passés vides ou sous le planning, entrées sans
+  projet ou description exigés, chronomètres en cours, chevauchements ; « Corriger » ou « Soumettre quand même ».
+
 ### Lot 11, première version (faite)
 
 - Page **Aujourd'hui** (`/today`, `features/today/today_page.dart`), en tête du menu ; l'accueil reste
@@ -197,7 +209,7 @@ Ce que cela demande :
 | 2 Journal du jour | Page « Aujourd'hui » (pistes Vous et Claude, trous, pause habituelle dans le profil, bilan du jour) ; remplace la vue jour de « Suivi du temps » et du calendrier | M/L | fait |
 | 3 Saisie express | Analyseur FR/EN (durée, plage, jour, projet et tâche flous, `#tag`, facturable), étiquettes à la frappe, placement dans les trous ; aussi dans la barre de menus (⌥⌘T) | M | fait |
 | 4 Pistes | Moteur de suggestions : planning, habitudes, sessions de Claude et commits (rejoint le plan 10, lot 2, `time_suggestions`) ; agenda en option (Google, Microsoft) | M/L | fait (agenda iCal, commits ; sans Google ni Microsoft en direct) |
-| 5 Semaine | Une page, trois vues ; copie de la semaine précédente, remplissage par le planning, suggestions en pointillé, liste avant soumission | M | envisagé |
+| 5 Semaine | Une page, trois vues ; copie de la semaine précédente, remplissage par le planning, suggestions en pointillé, liste avant soumission | M | fait |
 | 6 Fin de journée | Récapitulatif à heure réglable (barre de menus macOS, notification mobile) avec les pistes à cocher | S/M | envisagé |
 | 7 Rapports par questions | Questions toutes faites, comparaison, prêt à facturer et facture en un clic, usage IA au coût | M | envisagé |
 | 8 Équipe | Tableau des retards, relance par notification, approbation avec écart au planning | M | envisagé |

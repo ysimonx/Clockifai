@@ -15,6 +15,8 @@ sequenceDiagram
     actor D as Décideur
 
     M->>A: Soumettre la semaine
+    A->>A: « Avant de soumettre » (weekIssues, sur l'appareil) : jours ouvrés vides ou sous le planning,<br/>entrées sans projet ou description exigés, chronomètre en cours, chevauchements
+    M->>A: Soumettre (ou Corriger)
     A->>A: insert, ou remise en submitted d'une soumission existante
     A->>PG: upsert (file d'envoi)
     PG->>PG: timesheet_submissions_guard, une soumission commence en submitted

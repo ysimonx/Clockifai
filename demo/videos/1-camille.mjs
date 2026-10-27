@@ -80,8 +80,9 @@ export async function run(browser, failures) {
       await h.click(/^Semaine précédente$/, 1200);
       await h.caption(C('Feuille de temps'), 'Semaine précédente : complète', 'Camille vérifie sa semaine passée puis la soumet à son chef d’équipe.', ROLE, 3000);
       await h.click(/^Soumettre pour approbation$/, 1000);
+      await h.caption(C('Feuille de temps'), 'Avant de soumettre', 'Clockifai signale ce qui mérite un coup d’œil : jour vide, heures sous le planning, chronomètre oublié.', ROLE, 3500);
       await h.typeInto('Commentaire (facultatif)', 'Semaine sur l’unité 4');
-      await h.clickLast(/^Confirmer$/, 2000);
+      await h.clickLast(/^Soumettre( quand même)?$/, 2000);
       await h.caption(C('Feuille de temps'), 'En attente d’approbation', 'Karim, son chef d’équipe, la validera. Une fois approuvée, la semaine est verrouillée.', ROLE, 4500);
     });
 

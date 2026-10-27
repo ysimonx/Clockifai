@@ -387,6 +387,98 @@
     }
   },
   "undo": "Undo",
+  "weekGrid": "Grid",
+  "weekList": "List",
+  "weekCopyPrevious": "Copy previous week",
+  "weekFillPlanning": "Fill from the schedule",
+  "weekNothingToCopy": "Nothing to copy from the previous week.",
+  "weekNothingToFill": "Nothing to fill: the schedule is already covered.",
+  "weekFilled": "{count, plural, =1{1 entry added from the schedule} other{{count} entries added from the schedule}}",
+  "@weekFilled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "weekPlanned": "Planned: {duration}",
+  "@weekPlanned": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "weekReviewTitle": "Before submitting",
+  "weekReviewAllGood": "All good: every working day has its time.",
+  "weekReviewFix": "Fix",
+  "weekReviewSubmit": "Submit",
+  "weekReviewSubmitAnyway": "Submit anyway",
+  "issueEmptyDay": "{day}: no time entered",
+  "@issueEmptyDay": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "issueEmptyDayPlanned": "{day}: no time entered ({planned} planned)",
+  "@issueEmptyDayPlanned": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "planned": {
+        "type": "String"
+      }
+    }
+  },
+  "issueBelowPlan": "{day}: {logged} entered out of {planned} planned",
+  "@issueBelowPlan": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "logged": {
+        "type": "String"
+      },
+      "planned": {
+        "type": "String"
+      }
+    }
+  },
+  "issueNoProject": "{count, plural, =1{1 entry without a project} other{{count} entries without a project}}",
+  "@issueNoProject": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "issueNoDescription": "{count, plural, =1{1 entry without a description} other{{count} entries without a description}}",
+  "@issueNoDescription": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "issueRunning": "{count, plural, =1{1 timer still running} other{{count} timers still running}}",
+  "@issueRunning": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "issueOverlap": "{count, plural, =1{1 overlap between two entries} other{{count} overlaps between entries}}",
+  "@issueOverlap": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "journalSourceCalendar": "Calendar",
   "journalSourceCommits": "Commits",
   "journalReasonCalendar": "In your calendar, from {start} to {end}",

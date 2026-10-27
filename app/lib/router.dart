@@ -52,8 +52,22 @@ GoRouter buildRouter(SessionController session) {
               return page(TodayPage(key: ValueKey(day), initialDay: day));
             },
           ),
-          GoRoute(path: '/timesheet', pageBuilder: (_, _) => page(const TimesheetPage())),
-          GoRoute(path: '/calendar', pageBuilder: (_, _) => page(const CalendarPage())),
+          // La semaine : grille, liste (?view=list) ou calendrier, la même semaine (?week=2026-10-19).
+          GoRoute(
+            path: '/timesheet',
+            pageBuilder: (_, state) {
+              final week = DateTime.tryParse(state.uri.queryParameters['week'] ?? '');
+              final view = state.uri.queryParameters['view'] == 'list' ? 'list' : 'grid';
+              return page(TimesheetPage(key: ValueKey('$view $week'), initialWeek: week, view: view));
+            },
+          ),
+          GoRoute(
+            path: '/calendar',
+            pageBuilder: (_, state) {
+              final week = DateTime.tryParse(state.uri.queryParameters['week'] ?? '');
+              return page(CalendarPage(key: ValueKey(week), initialWeek: week));
+            },
+          ),
           GoRoute(path: '/reports', pageBuilder: (_, _) => page(const ReportsPage())),
           GoRoute(path: '/schedule', pageBuilder: (_, _) => page(const SchedulePage())),
           GoRoute(path: '/team-entry', pageBuilder: (_, _) => page(const TeamEntryPage())),

@@ -717,6 +717,116 @@ class AppLocalizationsFr extends AppLocalizations {
   String get undo => 'Annuler';
 
   @override
+  String get weekGrid => 'Grille';
+
+  @override
+  String get weekList => 'Liste';
+
+  @override
+  String get weekCopyPrevious => 'Copier la semaine précédente';
+
+  @override
+  String get weekFillPlanning => 'Compléter d\'après le planning';
+
+  @override
+  String get weekNothingToCopy => 'Rien à copier de la semaine précédente.';
+
+  @override
+  String get weekNothingToFill =>
+      'Rien à compléter : le planning est déjà couvert.';
+
+  @override
+  String weekFilled(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entrées ajoutées d\'après le planning',
+      one: '1 entrée ajoutée d\'après le planning',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String weekPlanned(String duration) {
+    return 'Prévu : $duration';
+  }
+
+  @override
+  String get weekReviewTitle => 'Avant de soumettre';
+
+  @override
+  String get weekReviewAllGood =>
+      'Tout est en ordre : chaque jour ouvré a son temps.';
+
+  @override
+  String get weekReviewFix => 'Corriger';
+
+  @override
+  String get weekReviewSubmit => 'Soumettre';
+
+  @override
+  String get weekReviewSubmitAnyway => 'Soumettre quand même';
+
+  @override
+  String issueEmptyDay(String day) {
+    return '$day : aucun temps saisi';
+  }
+
+  @override
+  String issueEmptyDayPlanned(String day, String planned) {
+    return '$day : aucun temps saisi ($planned prévues)';
+  }
+
+  @override
+  String issueBelowPlan(String day, String logged, String planned) {
+    return '$day : $logged saisies sur $planned prévues';
+  }
+
+  @override
+  String issueNoProject(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entrées sans projet',
+      one: '1 entrée sans projet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String issueNoDescription(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entrées sans description',
+      one: '1 entrée sans description',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String issueRunning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chronomètres encore en cours',
+      one: '1 chronomètre encore en cours',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String issueOverlap(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chevauchements entre entrées',
+      one: '1 chevauchement entre deux entrées',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get journalSourceCalendar => 'Agenda';
 
   @override

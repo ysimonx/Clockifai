@@ -1255,6 +1255,126 @@ abstract class AppLocalizations {
   /// **'Annuler'**
   String get undo;
 
+  /// No description provided for @weekGrid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Grille'**
+  String get weekGrid;
+
+  /// No description provided for @weekList.
+  ///
+  /// In fr, this message translates to:
+  /// **'Liste'**
+  String get weekList;
+
+  /// No description provided for @weekCopyPrevious.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier la semaine précédente'**
+  String get weekCopyPrevious;
+
+  /// No description provided for @weekFillPlanning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compléter d\'après le planning'**
+  String get weekFillPlanning;
+
+  /// No description provided for @weekNothingToCopy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien à copier de la semaine précédente.'**
+  String get weekNothingToCopy;
+
+  /// No description provided for @weekNothingToFill.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien à compléter : le planning est déjà couvert.'**
+  String get weekNothingToFill;
+
+  /// No description provided for @weekFilled.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 entrée ajoutée d\'après le planning} other{{count} entrées ajoutées d\'après le planning}}'**
+  String weekFilled(int count);
+
+  /// No description provided for @weekPlanned.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prévu : {duration}'**
+  String weekPlanned(String duration);
+
+  /// No description provided for @weekReviewTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Avant de soumettre'**
+  String get weekReviewTitle;
+
+  /// No description provided for @weekReviewAllGood.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout est en ordre : chaque jour ouvré a son temps.'**
+  String get weekReviewAllGood;
+
+  /// No description provided for @weekReviewFix.
+  ///
+  /// In fr, this message translates to:
+  /// **'Corriger'**
+  String get weekReviewFix;
+
+  /// No description provided for @weekReviewSubmit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Soumettre'**
+  String get weekReviewSubmit;
+
+  /// No description provided for @weekReviewSubmitAnyway.
+  ///
+  /// In fr, this message translates to:
+  /// **'Soumettre quand même'**
+  String get weekReviewSubmitAnyway;
+
+  /// No description provided for @issueEmptyDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'{day} : aucun temps saisi'**
+  String issueEmptyDay(String day);
+
+  /// No description provided for @issueEmptyDayPlanned.
+  ///
+  /// In fr, this message translates to:
+  /// **'{day} : aucun temps saisi ({planned} prévues)'**
+  String issueEmptyDayPlanned(String day, String planned);
+
+  /// No description provided for @issueBelowPlan.
+  ///
+  /// In fr, this message translates to:
+  /// **'{day} : {logged} saisies sur {planned} prévues'**
+  String issueBelowPlan(String day, String logged, String planned);
+
+  /// No description provided for @issueNoProject.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 entrée sans projet} other{{count} entrées sans projet}}'**
+  String issueNoProject(int count);
+
+  /// No description provided for @issueNoDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 entrée sans description} other{{count} entrées sans description}}'**
+  String issueNoDescription(int count);
+
+  /// No description provided for @issueRunning.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 chronomètre encore en cours} other{{count} chronomètres encore en cours}}'**
+  String issueRunning(int count);
+
+  /// No description provided for @issueOverlap.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 chevauchement entre deux entrées} other{{count} chevauchements entre entrées}}'**
+  String issueOverlap(int count);
+
   /// No description provided for @journalSourceCalendar.
   ///
   /// In fr, this message translates to:

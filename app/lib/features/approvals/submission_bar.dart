@@ -8,15 +8,21 @@ import '../../core/session.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/modules_repository.dart';
+import '../timesheet/week_tools.dart';
 
 /// Bandeau de la feuille de temps : état d'approbation de la période et action de soumission.
 /// Pour la feuille d'un collaborateur ([userId] ≠ soi) : état seul, l'approbation se fait dans Approbations.
 class SubmissionBar extends StatelessWidget {
-  const SubmissionBar({super.key, this.userId, required this.periodStart, required this.periodEnd, required this.totalSeconds});
+  const SubmissionBar(
+      {super.key, this.userId, required this.periodStart, required this.periodEnd, required this.totalSeconds, this.review});
   final String? userId;
   final DateTime periodStart;
   final DateTime periodEnd;
   final int totalSeconds;
+
+  /// Vérification de la période avant soumission (plans/13-ux-moderne.md, lot 5) : montrée dans la boîte de
+  /// soumission, avec « Corriger » ou « Soumettre quand même ».
+  final List<WeekIssue> Function(DateTime now)? review;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +62,9 @@ class SubmissionBar extends StatelessWidget {
                   onPressed: totalSeconds == 0
                       ? null
                       : () async {
-                          final note = await _askNote(context, l.submitForApproval);
+                          final note = review == null
+                              ? await _askNote(context, l.submitForApproval)
+                              : await _reviewAndNote(context, review!(DateTime.now()));
                           if (note == null) return;
                           await modulesRepo.submitPeriod(
                             workspaceId: session.workspaceId!,
@@ -96,3 +104,55 @@ Future<String?> _askNote(BuildContext context, String title) {
 }
 
 Future<String?> askDecisionNote(BuildContext context, String title) => _askNote(context, title);
+
+/// « Avant de soumettre » : ce qui mérite un coup d'œil, puis la note ; null si la personne préfère corriger.
+Future<String?> _reviewAndNote(BuildContext context, List<WeekIssue> issues) {
+  final c = TextEditingController();
+  final l = context.l10n;
+  String day(DateTime d) => dayLabel(context, d, today: l.today, yesterday: l.yesterday);
+  String text(WeekIssue i) => switch (i.kind) {
+        WeekIssueKind.emptyDay => i.planned > 0 ? l.issueEmptyDayPlanned(day(i.day!), formatHm(i.planned * 60)) : l.issueEmptyDay(day(i.day!)),
+        WeekIssueKind.belowPlan => l.issueBelowPlan(day(i.day!), formatHm(i.minutes * 60), formatHm(i.planned * 60)),
+        WeekIssueKind.noProject => l.issueNoProject(i.count),
+        WeekIssueKind.noDescription => l.issueNoDescription(i.count),
+        WeekIssueKind.running => l.issueRunning(i.count),
+        WeekIssueKind.overlap => l.issueOverlap(i.count),
+      };
+  return showDialog<String>(
+    context: context,
+    builder: (ctx) {
+      final theme = Theme.of(ctx);
+      return AlertDialog(
+        title: Text(l.weekReviewTitle),
+        content: SizedBox(
+          width: 460,
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (issues.isEmpty)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.check_circle, color: Colors.green),
+                title: Text(l.weekReviewAllGood),
+              )
+            else
+              for (final i in issues)
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.warning_amber_rounded, color: theme.colorScheme.tertiary),
+                  title: Text(text(i)),
+                ),
+            const SizedBox(height: 8),
+            TextField(controller: c, maxLines: 3, decoration: InputDecoration(labelText: l.noteOptional)),
+          ]),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(issues.isEmpty ? l.cancel : l.weekReviewFix)),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, c.text.trim()),
+            child: Text(issues.isEmpty ? l.weekReviewSubmit : l.weekReviewSubmitAnyway),
+          ),
+        ],
+      );
+    },
+  );
+}

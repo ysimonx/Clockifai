@@ -38,6 +38,9 @@ la date d'arrivée de chaque évolution.
 - Aujourd'hui : vos **réunions** (agenda relié par son adresse iCal privée, dans Paramètres › Intégrations ›
   Agenda) et vos **commits** deviennent des propositions, avec une ligne « Traces » sur la frise
   (27 octobre 2026).
+- **Semaine** : trois vues de la même semaine (grille, calendrier, liste) ; heures prévues au planning en
+  italique dans la grille, **Compléter d'après le planning**, **Copier la semaine précédente**, et **Avant de
+  soumettre**, la liste de ce qui mérite un coup d'œil (27 octobre 2026).
 
 ### Modifié
 

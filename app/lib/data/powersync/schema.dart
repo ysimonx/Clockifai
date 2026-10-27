@@ -239,6 +239,17 @@ const schema = Schema([
     ..._audit,
     ..._softDelete,
   ], ignoreEmptyUpdates: true),
+  // Relances de feuille de temps (plan 13, lot 8)
+  Table('reminders', [
+    Column.text('workspace_id'),
+    Column.text('user_id'),
+    Column.text('kind'),
+    Column.text('period_start'),
+    Column.text('created_by'),
+    Column.text('seen_at'),
+    ..._audit,
+    ..._softDelete,
+  ], ignoreEmptyUpdates: true),
   Table('invoices', [
     Column.text('workspace_id'),
     Column.text('client_id'),

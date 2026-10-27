@@ -387,6 +387,71 @@
     }
   },
   "undo": "Undo",
+  "lateTitle": "Last week",
+  "lateHelp": "Who has not yet submitted their timesheet for the week of {date}.",
+  "@lateHelp": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lateAllGood": "Everyone has submitted their week.",
+  "lateLine": "{logged} entered out of {planned} planned",
+  "@lateLine": {
+    "placeholders": {
+      "logged": {
+        "type": "String"
+      },
+      "planned": {
+        "type": "String"
+      }
+    }
+  },
+  "lateLineNoPlan": "{logged} entered",
+  "@lateLineNoPlan": {
+    "placeholders": {
+      "logged": {
+        "type": "String"
+      }
+    }
+  },
+  "lateNotSubmitted": "Not submitted",
+  "remind": "Remind",
+  "reminded": "Reminded",
+  "remindedSnack": "Reminder sent to {name}",
+  "@remindedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderTitle": "Timesheet",
+  "reminderBanner": "{who} reminds you to submit your week of {date}",
+  "@reminderBanner": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderOpen": "Open the timesheet",
+  "reminderOk": "OK",
+  "plannedVsSubmitted": "{planned} planned · difference {delta}",
+  "@plannedVsSubmitted": {
+    "placeholders": {
+      "planned": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
   "reportQuestions": "Questions:",
   "qMyWeek": "My time this week",
   "qTeamWeek": "The team's time this week",

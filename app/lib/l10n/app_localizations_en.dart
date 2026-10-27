@@ -714,6 +714,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String get lateTitle => 'Last week';
+
+  @override
+  String lateHelp(String date) {
+    return 'Who has not yet submitted their timesheet for the week of $date.';
+  }
+
+  @override
+  String get lateAllGood => 'Everyone has submitted their week.';
+
+  @override
+  String lateLine(String logged, String planned) {
+    return '$logged entered out of $planned planned';
+  }
+
+  @override
+  String lateLineNoPlan(String logged) {
+    return '$logged entered';
+  }
+
+  @override
+  String get lateNotSubmitted => 'Not submitted';
+
+  @override
+  String get remind => 'Remind';
+
+  @override
+  String get reminded => 'Reminded';
+
+  @override
+  String remindedSnack(String name) {
+    return 'Reminder sent to $name';
+  }
+
+  @override
+  String get reminderTitle => 'Timesheet';
+
+  @override
+  String reminderBanner(String who, String date) {
+    return '$who reminds you to submit your week of $date';
+  }
+
+  @override
+  String get reminderOpen => 'Open the timesheet';
+
+  @override
+  String get reminderOk => 'OK';
+
+  @override
+  String plannedVsSubmitted(String planned, String delta) {
+    return '$planned planned · difference $delta';
+  }
+
+  @override
   String get reportQuestions => 'Questions:';
 
   @override

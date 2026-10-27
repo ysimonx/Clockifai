@@ -14,6 +14,12 @@ sequenceDiagram
     participant C as App du chef d'équipe ou du manager
     actor D as Décideur
 
+    opt Oubli
+        D->>C: Relancer (tableau « Semaine dernière »)
+        C->>PG: insert reminders (manages(), auteur posé par le serveur)
+        PG->>PS: réplication
+        PS-->>A: flux my_time_entries : bandeau « … vous rappelle de soumettre », notification
+    end
     M->>A: Soumettre la semaine
     A->>A: « Avant de soumettre » (weekIssues, sur l'appareil) : jours ouvrés vides ou sous le planning,<br/>entrées sans projet ou description exigés, chronomètre en cours, chevauchements
     M->>A: Soumettre (ou Corriger)

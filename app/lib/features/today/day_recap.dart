@@ -297,6 +297,26 @@ class RecapNotifications {
     }
   }
 
+  /// Notification immédiate (Mac, téléphone), l'app étant ouverte : une relance reçue, par exemple.
+  Future<void> alert(String title, String body) async {
+    if (!_mac && !_mobile) return;
+    try {
+      await _init();
+      await _plugin.show(
+        id: 3,
+        title: title,
+        body: body,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails('reminders', 'Relances', channelDescription: 'Relances de feuille de temps'),
+          iOS: DarwinNotificationDetails(),
+          macOS: DarwinNotificationDetails(),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Notification indisponible : $e');
+    }
+  }
+
   /// Téléphone : une notification chaque jour ouvré à [time] (« 17:30 »), dans le fuseau du profil ; rien si
   /// [enabled] est faux.
   Future<void> schedule({required bool enabled, required String time, required String timezone, required String title, required String body}) async {

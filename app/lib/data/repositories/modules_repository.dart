@@ -25,6 +25,38 @@ class ModulesRepository {
     return q.watch();
   }
 
+  // ------------------------------------------------------------------ relances (plan 13, lot 8)
+
+  /// Relances du workspace ; [userId] : celles d'une personne ; [unseen] : pas encore vues.
+  Stream<List<Reminder>> watchReminders(String workspaceId, {String? userId, bool unseen = false}) {
+    final q = db.select(db.reminders)
+      ..where((t) {
+        Expression<bool> e = t.workspaceId.equals(workspaceId) & t.deletedAt.isNull();
+        if (userId != null) e = e & t.userId.equals(userId);
+        if (unseen) e = e & t.seenAt.isNull();
+        return e;
+      })
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    return q.watch();
+  }
+
+  /// Relance [userId] pour la semaine commençant le [periodStart] ; l'auteur est posé par le serveur (RLS : il faut
+  /// encadrer la personne).
+  Future<String> remind({required String workspaceId, required String userId, required DateTime periodStart, String? by}) async {
+    final id = newId();
+    await db.into(db.reminders).insert(RemindersCompanion.insert(
+          id: Value(id),
+          workspaceId: workspaceId,
+          userId: userId,
+          periodStart: dayKey(periodStart),
+          createdBy: Value(by),
+        ));
+    return id;
+  }
+
+  Future<void> markReminderSeen(String id) =>
+      (db.update(db.reminders)..where((t) => t.id.equals(id))).write(RemindersCompanion(seenAt: Value(nowUtc())));
+
   /// Soumet (ou re-soumet) une période pour approbation.
   Future<void> submitPeriod({
     required String workspaceId,

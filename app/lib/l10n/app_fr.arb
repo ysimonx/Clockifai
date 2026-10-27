@@ -481,6 +481,71 @@
     }
   },
   "undo": "Annuler",
+  "lateTitle": "Semaine dernière",
+  "lateHelp": "Qui n'a pas encore soumis sa feuille de temps de la semaine du {date}.",
+  "@lateHelp": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lateAllGood": "Tout le monde a soumis sa semaine.",
+  "lateLine": "{logged} saisies sur {planned} prévues",
+  "@lateLine": {
+    "placeholders": {
+      "logged": {
+        "type": "String"
+      },
+      "planned": {
+        "type": "String"
+      }
+    }
+  },
+  "lateLineNoPlan": "{logged} saisies",
+  "@lateLineNoPlan": {
+    "placeholders": {
+      "logged": {
+        "type": "String"
+      }
+    }
+  },
+  "lateNotSubmitted": "Pas soumise",
+  "remind": "Relancer",
+  "reminded": "Relancé",
+  "remindedSnack": "Relance envoyée à {name}",
+  "@remindedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderTitle": "Feuille de temps",
+  "reminderBanner": "{who} vous rappelle de soumettre votre semaine du {date}",
+  "@reminderBanner": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderOpen": "Ouvrir la feuille",
+  "reminderOk": "OK",
+  "plannedVsSubmitted": "{planned} prévues · écart {delta}",
+  "@plannedVsSubmitted": {
+    "placeholders": {
+      "planned": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
   "reportQuestions": "Questions :",
   "qMyWeek": "Mon temps cette semaine",
   "qTeamWeek": "Le temps de l'équipe cette semaine",

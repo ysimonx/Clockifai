@@ -10,6 +10,8 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.3] — 2026-10-27
+
 ### Ajouté
 
 - **Aujourd'hui**, la journée proposée : votre journée sur une frise, avec les créneaux vides de votre journée

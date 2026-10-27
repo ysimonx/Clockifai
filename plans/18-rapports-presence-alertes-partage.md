@@ -19,7 +19,7 @@
 | Lot | Contenu | État |
 |---|---|---|
 | 1 Présence | Vue « Présence » des rapports, calculée dans l'app (hors ligne), export CSV | fait |
-| 2 Alertes de budget | Champs montant et estimation, jauges, « À surveiller », job horaire et email | validé |
+| 2 Alertes de budget | Champs montant et estimation, jauges, « À surveiller », job horaire et email | fait |
 | 3 Lien public | Rapports enregistrés (Flask), page HTML et PDF publics, révocation | validé |
 | 4 Envoi planifié | Fréquence, destinataires, PDF en pièce jointe | validé |
 
@@ -61,6 +61,10 @@
   `clockifai_private.budget_alerts` (cible, seuil, valeur du budget) : une seule alerte par seuil, un budget relevé
   réarme. Sans SMTP, rien ne part mais l'alerte est notée (pas de rafale le jour où le SMTP est configuré).
 - **Tests** : intégration (seuils, une seule fois, réarmement, managers seulement), app (jauges, « À surveiller »).
+- **Livré** : `app/lib/features/projects/budget_watch.dart` (calcul et carte), `watchBudgetUsage` (dépôt des
+  entrées), fiche « Modifier la tâche » (nom et estimation) ; `services/app/services/budget_alerts.py`, job
+  `budget_alerts` (chaque heure, contexte Flask pour l'envoi), migration `0024_budget_alerts.admin.sql`. Un email
+  par manager et par passage du job, regroupant les alertes de son workspace.
 
 ## Lot 3 — Rapports enregistrés et lien public
 

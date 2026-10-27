@@ -17,6 +17,9 @@ la date d'arrivée de chaque évolution.
   Question « Heures sup du mois » et export « Présence (CSV) », même hors ligne.
 - **Équipe › Taux et capacité** : la capacité par jour ouvré de chaque personne se règle (administrateurs) ; elle
   sert à la Présence et au Planning.
+- **Budgets et alertes** : budget en montant pour un projet et estimation pour une tâche (sous-tâches comprises),
+  avec leurs jauges ; « À surveiller » en tête des Projets pour les managers (80 % et plus), et un email aux
+  managers au passage de 80 % puis de 100 %.
 
 ### Modifié
 

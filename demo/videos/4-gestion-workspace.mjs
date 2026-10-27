@@ -94,7 +94,7 @@ export async function run(browser, failures) {
       await h.click(/^Nouveau projet$/, 1200);
       await h.typeInto('Nom', 'Démontage hangar B');
       await h.typeInto('Taux horaire', '48');
-      await h.typeInto('Budget', '60');
+      await h.typeInto('Budget (heures)', '60');
       await h.caption(C('Projets'), 'Taux horaire et budget', 'Le taux sert aux montants des rapports et des factures ; un taux par personne existe aussi.', ROLE, 3000);
       await h.reveal(/^Position du chantier/, 600, { x: 720 }).catch(() => {});
       await h.typeInto('Position du chantier', '50.725600, 1.613300', 30).catch(() => {});

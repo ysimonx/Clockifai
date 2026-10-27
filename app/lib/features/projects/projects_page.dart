@@ -7,12 +7,14 @@ import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../core/widgets/rate_change.dart';
 import '../../data/drift/database.dart';
 import '../presence/presence_log.dart' show Site;
 import '../presence/presence_settings.dart';
+import 'budget_watch.dart';
 
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
@@ -57,18 +59,26 @@ class _ProjectsPageState extends State<ProjectsPage> {
           ]),
         ),
         Expanded(
-          child: StreamBuilder<Map<String?, int>>(
-            stream: entriesRepo.watchTotalsByProject(session.workspaceId!, userId: session.isManager ? null : session.userId),
+          child: StreamBuilder(
+            stream: entriesRepo.watchBudgetUsage(session.workspaceId!, userId: session.isManager ? null : session.userId),
             builder: (context, snap) {
-              final totals = snap.data ?? const {};
+              final usage = snap.data?.projects ?? const {};
+              final taskSeconds = snap.data?.tasks ?? const {};
               if (projects.isEmpty) {
                 return EmptyState(icon: Icons.folder_outlined, title: l.noProjects, message: session.isManager ? l.noProjectsMessage : null);
               }
+              // Managers : ce qui approche ou dépasse son budget, en tête (plan 18, lot 2).
+              final watch = !session.isManager || snap.data == null
+                  ? const <BudgetAlert>[]
+                  : budgetWatch(projects: catalog.projects, tasks: catalog.tasks, usage: usage, taskSeconds: taskSeconds);
+              final head = watch.isEmpty ? 0 : 1;
               return ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                itemCount: projects.length,
+                itemCount: projects.length + head,
                 separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, i) => _ProjectTile(project: projects[i], trackedSeconds: totals[projects[i].id] ?? 0),
+                itemBuilder: (context, i) => i < head
+                    ? BudgetWatchCard(alerts: watch, currency: session.workspace!.currency)
+                    : _ProjectTile(project: projects[i - head], usage: usage[projects[i - head].id], taskSeconds: taskSeconds),
               );
             },
           ),
@@ -79,9 +89,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
 }
 
 class _ProjectTile extends StatelessWidget {
-  const _ProjectTile({required this.project, required this.trackedSeconds});
+  const _ProjectTile({required this.project, required this.usage, required this.taskSeconds});
   final Project project;
-  final int trackedSeconds;
+  final ProjectUsage? usage;
+
+  /// Temps par tâche (sans ses sous-tâches).
+  final Map<String, int> taskSeconds;
 
   @override
   Widget build(BuildContext context) {
@@ -90,9 +103,26 @@ class _ProjectTile extends StatelessWidget {
     final session = context.read<SessionController>();
     final catalog = context.watch<CatalogController>();
     final client = catalog.client(project.clientId);
+    final trackedSeconds = usage?.seconds ?? 0;
     final budget = project.budgetHours;
     final progress = budget == null || budget == 0 ? null : trackedSeconds / (budget * 3600);
+    final budgetAmount = project.budgetAmountCents;
+    final amountProgress = budgetAmount == null || budgetAmount == 0 ? null : (usage?.amountCents ?? 0) / budgetAmount;
     final currency = session.workspace!.currency;
+    final locale = context.localeTag;
+    String hours(int s) => budgetHours(s, locale);
+    // Temps d'une tâche, sous-tâches comprises.
+    int taskUsed(Task t) =>
+        (taskSeconds[t.id] ?? 0) + catalog.tasks.where((s) => s.parentId == t.id).fold(0, (n, s) => n + (taskSeconds[s.id] ?? 0));
+    Widget gauge(double value, String label) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const SizedBox(height: 6),
+          LinearProgressIndicator(
+            value: value.clamp(0, 1).toDouble(),
+            color: value >= 1 ? theme.colorScheme.error : (value >= 0.8 ? AppColors.of(context).warning : colorFromHex(project.color)),
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+          ),
+          Text(label, style: theme.textTheme.bodySmall),
+        ]);
     // Tâches de premier niveau, chacune suivie de ses sous-tâches (plans/16-sous-taches.md).
     final tasks = catalog.tasks.where((t) => t.projectId == project.id && t.parentId == null).toList();
     List<Task> subtasks(Task t) => catalog.tasks.where((s) => s.parentId == t.id).toList();
@@ -105,6 +135,13 @@ class _ProjectTile extends StatelessWidget {
               size: 18,
               color: sub ? theme.colorScheme.outline : null),
           title: Text(t.name, style: t.status == 'done' ? TextStyle(decoration: TextDecoration.lineThrough, color: theme.colorScheme.outline) : null),
+          subtitle: t.estimateSeconds == null || t.estimateSeconds! <= 0
+              ? null
+              : Text(l.estimateUsed(hours(taskUsed(t)), hours(t.estimateSeconds!)),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: taskUsed(t) >= t.estimateSeconds!
+                          ? theme.colorScheme.error
+                          : (taskUsed(t) * 10 >= t.estimateSeconds! * 8 ? AppColors.of(context).warning : null))),
           trailing: session.isManager
               ? Row(mainAxisSize: MainAxisSize.min, children: [
                   if (!sub)
@@ -124,12 +161,9 @@ class _ProjectTile extends StatelessWidget {
                     onPressed: () => catalogRepo.updateTask(t.id, status: t.status == 'done' ? 'active' : 'done'),
                   ),
                   IconButton(
-                    tooltip: l.rename,
+                    tooltip: l.editTask,
                     icon: const Icon(Icons.edit_outlined),
-                    onPressed: () async {
-                      final name = await promptText(context, title: l.rename, label: l.name, initial: t.name);
-                      if (name != null && name.trim().isNotEmpty) await catalogRepo.updateTask(t.id, name: name);
-                    },
+                    onPressed: () => _editTask(context, t),
                   ),
                   IconButton(
                     tooltip: l.delete,
@@ -158,15 +192,9 @@ class _ProjectTile extends StatelessWidget {
             '${l.tracked}: ${formatDecimalHours(trackedSeconds, context.localeTag)} h',
             if (project.hourlyRateCents != null) formatMoney(project.hourlyRateCents! / 100, currency, context.localeTag) + l.perHour,
           ].join(' · ')),
-          if (progress != null) ...[
-            const SizedBox(height: 6),
-            LinearProgressIndicator(
-              value: progress.clamp(0, 1).toDouble(),
-              color: progress > 1 ? theme.colorScheme.error : colorFromHex(project.color),
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-            ),
-            Text(l.budgetUsed((progress * 100).round(), budget!), style: theme.textTheme.bodySmall),
-          ],
+          if (progress != null) gauge(progress, l.budgetUsed((progress * 100).floor(), budget!)),
+          if (amountProgress != null)
+            gauge(amountProgress, l.budgetAmountUsed((amountProgress * 100).floor(), budgetMoney(budgetAmount!, currency, locale))),
         ]),
         trailing: session.isManager
             ? PopupMenuButton<String>(
@@ -207,6 +235,35 @@ class _ProjectTile extends StatelessWidget {
   }
 }
 
+/// Nom et estimation d'une tâche (managers) ; l'estimation s'écrit comme une durée (« 4h », « 1:30 », « 2,5 »).
+Future<void> _editTask(BuildContext context, Task t) async {
+  final l = context.l10n;
+  final name = TextEditingController(text: t.name);
+  final estimate = TextEditingController(text: t.estimateSeconds == null ? '' : formatHm(t.estimateSeconds!));
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.editTask),
+      content: SizedBox(
+        width: 360,
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: name, autofocus: true, decoration: InputDecoration(labelText: l.name)),
+          const SizedBox(height: 12),
+          TextField(controller: estimate, decoration: InputDecoration(labelText: l.estimate, hintText: l.estimateHint, suffixText: 'h')),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.save)),
+      ],
+    ),
+  );
+  if (ok != true || name.text.trim().isEmpty) return;
+  final seconds = estimate.text.trim().isEmpty ? null : parseDuration(estimate.text);
+  if (estimate.text.trim().isNotEmpty && seconds == null) return;
+  await catalogRepo.updateTask(t.id, name: name.text, estimateSeconds: Value(seconds == 0 ? null : seconds));
+}
+
 Future<void> showProjectDialog(BuildContext context, {Project? project}) =>
     showDialog<void>(context: context, builder: (_) => _ProjectDialog(project: project));
 
@@ -222,6 +279,8 @@ class _ProjectDialogState extends State<_ProjectDialog> {
   late final _name = TextEditingController(text: widget.project?.name ?? '');
   late final _rate = TextEditingController(text: centsToText(widget.project?.hourlyRateCents));
   late final _budget = TextEditingController(text: widget.project?.budgetHours?.toString() ?? '');
+  late final _budgetAmount =
+      TextEditingController(text: widget.project?.budgetAmountCents == null ? '' : '${widget.project!.budgetAmountCents! ~/ 100}');
   late final _note = TextEditingController(text: widget.project?.note ?? '');
   // Chantier (plan 13, lot 13) : position et rayon, pour la présence détectée par le téléphone.
   late final _site = TextEditingController(
@@ -239,6 +298,7 @@ class _ProjectDialogState extends State<_ProjectDialog> {
     _name.dispose();
     _rate.dispose();
     _budget.dispose();
+    _budgetAmount.dispose();
     _note.dispose();
     _site.dispose();
     _radius.dispose();
@@ -260,6 +320,7 @@ class _ProjectDialogState extends State<_ProjectDialog> {
       agentBillable: Value(_agentBillable),
       hourlyRateCents: Value(textToCents(_rate.text)),
       budgetHours: Value(int.tryParse(_budget.text.trim())),
+      budgetAmountCents: Value(textToCents(_budgetAmount.text)),
       note: Value(_note.text.trim().isEmpty ? null : _note.text.trim()),
       siteLat: Value(site?.$1),
       siteLng: Value(site?.$2),
@@ -339,6 +400,12 @@ class _ProjectDialogState extends State<_ProjectDialog> {
                 ),
               ),
             ]),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _budgetAmount,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(labelText: l.budgetAmount, suffixText: session.workspace!.currency),
+            ),
             SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(l.billableByDefault), value: _billable, onChanged: (v) => setState(() => _billable = v)),
             if (catalog.agents.isNotEmpty || _agentBillable != null)
               DropdownButtonFormField<bool?>(

@@ -189,24 +189,44 @@ class TimeEntryRepository {
         aiTokens: row.data['ai_tokens'] as int? ?? 0, aiCostMicros: row.data['ai_cost_micros'] as int?);
   }
 
-  /// Temps total (terminé) par projet : clé null = sans projet.
+  /// Consommation des budgets (plans/18-rapports-presence-alertes-partage.md, lot 2), entrées terminées depuis le
+  /// début : par projet, temps et montant facturable (taux de l'entrée, sinon du projet, sinon du membre, durées
+  /// brutes) ; par tâche, le temps (les sous-tâches se cumulent à l'affichage). Même calcul que le job serveur.
   /// [userId] null = toutes les entrées présentes localement (équipe si synchronisée).
-  Stream<Map<String?, int>> watchTotalsByProject(String workspaceId, {String? userId}) {
+  Stream<({Map<String?, ({int seconds, int amountCents})> projects, Map<String, int> tasks})> watchBudgetUsage(String workspaceId,
+      {String? userId}) {
     final vars = <Variable>[Variable<String>(workspaceId)];
-    var where = 'workspace_id = ?1 AND deleted_at IS NULL AND end_at IS NOT NULL';
+    var where = 'te.workspace_id = ?1 AND te.deleted_at IS NULL AND te.end_at IS NOT NULL';
     if (userId != null) {
-      where += ' AND user_id = ?2';
+      where += ' AND te.user_id = ?2';
       vars.add(Variable<String>(userId));
     }
     return db
         .customSelect(
-          'SELECT project_id, SUM(unixepoch(end_at) - unixepoch(start_at)) AS secs '
-          'FROM time_entries WHERE $where GROUP BY project_id',
+          'SELECT te.project_id, te.task_id, SUM(unixepoch(te.end_at) - unixepoch(te.start_at)) AS secs, '
+          'SUM(CASE WHEN te.billable = 1 THEN (unixepoch(te.end_at) - unixepoch(te.start_at)) / 3600.0 '
+          '* COALESCE(te.hourly_rate_cents, p.hourly_rate_cents, m.hourly_rate_cents, 0) ELSE 0 END) AS amount '
+          'FROM time_entries te LEFT JOIN projects p ON p.id = te.project_id '
+          'LEFT JOIN workspace_members m ON m.workspace_id = te.workspace_id AND m.user_id = te.user_id '
+          'WHERE $where GROUP BY te.project_id, te.task_id',
           variables: vars,
-          readsFrom: {db.timeEntries},
+          readsFrom: {db.timeEntries, db.projects, db.workspaceMembers},
         )
         .watch()
-        .map((rows) => {for (final r in rows) r.read<String?>('project_id'): r.read<int?>('secs') ?? 0});
+        .map((rows) {
+      final projects = <String?, ({int seconds, int amountCents})>{};
+      final tasks = <String, int>{};
+      for (final r in rows) {
+        final secs = r.read<int?>('secs') ?? 0;
+        final amount = (r.read<double?>('amount') ?? 0).round();
+        final p = r.read<String?>('project_id');
+        final prev = projects[p];
+        projects[p] = (seconds: (prev?.seconds ?? 0) + secs, amountCents: (prev?.amountCents ?? 0) + amount);
+        final t = r.read<String?>('task_id');
+        if (t != null) tasks[t] = (tasks[t] ?? 0) + secs;
+      }
+      return (projects: projects, tasks: tasks);
+    });
   }
 
   /// Démarre un chronomètre. Au-delà de [maxRunning] chronomètres en cours (0 = illimité),

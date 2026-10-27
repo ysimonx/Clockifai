@@ -8,6 +8,7 @@ import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../core/team_rights.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/modules_repository.dart';
@@ -78,7 +79,7 @@ class _SubmissionCard extends StatelessWidget {
     final fmt = DateFormat.MMMd(context.localeTag);
     final start = parseDay(sub.periodStart), end = parseDay(sub.periodEnd);
     final statusColor = switch (sub.status) {
-      'approved' => Colors.green,
+      'approved' => AppColors.of(context).success,
       'rejected' => theme.colorScheme.error,
       'withdrawn' => theme.colorScheme.outline,
       _ => theme.colorScheme.tertiary,

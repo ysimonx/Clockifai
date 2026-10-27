@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/l10n.dart';
 import '../../core/services_api.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 
 /// Mode kiosque : tablette partagée (entrée d'atelier, base vie de chantier…).
@@ -149,7 +150,7 @@ class _KioskPageState extends State<KioskPage> {
           });
           final isIn = out['action'] == 'in';
           return AlertDialog(
-            icon: Icon(isIn ? Icons.login : Icons.logout, size: 48, color: isIn ? Colors.green : Colors.orange),
+            icon: Icon(isIn ? Icons.login : Icons.logout, size: 48, color: isIn ? AppColors.of(ctx).success : AppColors.of(ctx).warning),
             title: Text(isIn ? l.kioskHello(name) : l.kioskGoodbye(name)),
             content: Text(isIn ? l.kioskClockedIn : l.kioskClockedOut, textAlign: TextAlign.center),
           );
@@ -175,7 +176,7 @@ class _MemberTile extends StatelessWidget {
     final since = member['running_since'] == null ? null : DateTime.parse(member['running_since'] as String);
     final name = member['display_name'] as String? ?? '?';
     return Card(
-      color: since != null ? Colors.green.withValues(alpha: 0.12) : null,
+      color: since != null ? AppColors.of(context).successContainer : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
@@ -188,7 +189,7 @@ class _MemberTile extends StatelessWidget {
             if (since != null) ...[
               const SizedBox(height: 4),
               Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.circle, size: 10, color: Colors.green),
+                Icon(Icons.circle, size: 10, color: AppColors.of(context).success),
                 const SizedBox(width: 4),
                 ElapsedText(since.toUtc(), style: theme.textTheme.bodySmall),
               ]),

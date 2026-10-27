@@ -5,6 +5,7 @@ import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/modules_repository.dart';
@@ -38,7 +39,7 @@ class SubmissionBar extends StatelessWidget {
         final status = sub?.status;
         final (icon, color, label) = switch (status) {
           'submitted' => (Icons.hourglass_top, theme.colorScheme.tertiary, l.statusSubmitted),
-          'approved' => (Icons.verified, Colors.green, l.statusApproved),
+          'approved' => (Icons.verified, AppColors.of(context).success, l.statusApproved),
           'rejected' => (Icons.report_gmailerrorred, theme.colorScheme.error, l.statusRejected),
           _ => (Icons.edit_calendar, theme.colorScheme.outline, l.statusNotSubmitted),
         };
@@ -130,7 +131,7 @@ Future<String?> _reviewAndNote(BuildContext context, List<WeekIssue> issues) {
             if (issues.isEmpty)
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.check_circle, color: Colors.green),
+                leading: Icon(Icons.check_circle, color: AppColors.of(context).success),
                 title: Text(l.weekReviewAllGood),
               )
             else

@@ -66,6 +66,8 @@ export async function run(browser, failures) {
       await h.caption(C('Règles'), 'Les règles de l’entreprise', 'Projet ou description obligatoires, arrondi des durées, arrêt automatique des chronomètres oubliés.', ROLE, 5000);
       await h.reveal(/Saisie du temps pour autrui/, 330);
       await h.caption(C('Règles'), 'Qui peut saisir le temps des autres', '« Administrateurs et chefs d’équipe » : c’est ce réglage qui permet à Karim de pointer son équipe. Et qui peut créer des tâches.', ROLE, 6000);
+      await h.reveal(/^Heures de présence chantier/, 360).catch(() => {});
+      await h.caption(C('Règles'), 'Les heures de présence chantier', 'Telles que détectées par les téléphones, ou calées sur la journée type à moins de 30 minutes. Chacun confirme ensuite sa journée.', ROLE, 4500);
       await h.reveal(/Verrouiller les entrées antérieures au/, 360);
       await h.caption(C('Règles'), 'Verrouiller les périodes passées', 'Après la paie, plus personne ne modifie le mois écoulé, sauf un administrateur.', ROLE, 4500);
       await h.reveal(/^Facturation$/, 200);
@@ -84,6 +86,9 @@ export async function run(browser, failures) {
       await h.typeInto('Taux horaire', '48');
       await h.typeInto('Budget', '60');
       await h.caption(C('Projets'), 'Taux horaire et budget', 'Le taux sert aux montants des rapports et des factures ; un taux par personne existe aussi.', ROLE, 3000);
+      await h.reveal(/^Position du chantier/, 600, { x: 720 }).catch(() => {});
+      await h.typeInto('Position du chantier', '50.725600, 1.613300', 30).catch(() => {});
+      await h.caption(C('Projets'), 'La position du chantier', 'Collée d’une carte, ou « Ici » sur place. Les compagnons qui activent la présence chantier se voient proposer leurs heures d’arrivée et de départ.', ROLE, 4500);
       await h.clickLast(/^Enregistrer$/, 2000);
     });
 

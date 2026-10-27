@@ -14,6 +14,7 @@ import '../../core/display_prefs.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../presence/presence.dart' show PresenceTracker;
@@ -138,7 +139,7 @@ class _RecapDialogState extends State<_RecapDialog> {
           if (plan.drafts.isEmpty)
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.check_circle, color: Colors.green),
+              leading: Icon(Icons.check_circle, color: AppColors.of(context).success),
               title: Text(l.recapNothing),
             )
           else

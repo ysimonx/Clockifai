@@ -8,6 +8,7 @@ import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../core/team_rights.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
@@ -75,7 +76,7 @@ class LateBoard extends StatelessWidget {
                         style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
                     const SizedBox(height: 4),
                     if (lines.isEmpty)
-                      ListTile(contentPadding: EdgeInsets.zero, leading: const Icon(Icons.check_circle, color: Colors.green), title: Text(l.lateAllGood))
+                      ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.check_circle, color: AppColors.of(context).success), title: Text(l.lateAllGood))
                     else
                       for (final line in lines)
                         ListTile(

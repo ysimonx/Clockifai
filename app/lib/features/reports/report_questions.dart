@@ -6,6 +6,7 @@ import '../../core/di.dart';
 import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/repositories/time_entry_repository.dart';
 import '../invoices/invoices_page.dart' show showInvoice;
@@ -85,7 +86,7 @@ class _ReadyToBillState extends State<ReadyToBill> {
                   if (!snap.hasData || !inv.hasData)
                     const LinearProgressIndicator()
                   else if (lines.isEmpty)
-                    ListTile(contentPadding: EdgeInsets.zero, leading: const Icon(Icons.check_circle, color: Colors.green), title: Text(l.readyToBillNone))
+                    ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.check_circle, color: AppColors.of(context).success), title: Text(l.readyToBillNone))
                   else
                     for (final line in lines)
                       ListTile(

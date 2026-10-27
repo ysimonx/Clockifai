@@ -3,7 +3,7 @@
 # Rejouable : supprime puis recrée les comptes *@demo.clockifai.fr et leurs données.
 #
 #   sh demo/prepare-demo.sh                        # données de démo
-#   sh demo/prepare-demo.sh --clean-test-accounts  # supprime aussi les comptes *@test.local des tests automatiques
+#   sh demo/prepare-demo.sh --clean-test-accounts  # supprime aussi les comptes *test.local des tests automatiques
 #
 # Entreprise « Échafaudages du Nord » :
 #   Sophie Laurent   owner   gère le workspace (réglages, équipe, facturation)
@@ -22,10 +22,13 @@ SUPABASE=${SUPABASE_URL:-http://localhost:8000}
 PSQL="docker exec -i -e PGTZ=Europe/Paris supabase-db psql -U postgres -v ON_ERROR_STOP=1 -q"
 
 if [ "${1:-}" = "--clean-test-accounts" ]; then
-  echo "[demo] suppression des comptes de test automatiques (*@test.local, demo@clockifai.local)"
+  echo "[demo] suppression des comptes de test automatiques (*@test.local, agents *@agents.test.local, demo@clockifai.local)"
   $PSQL <<'SQL'
-delete from public.workspaces where created_by in (select id from auth.users where email like '%@test.local' or email = 'demo@clockifai.local');
-delete from auth.users where email like '%@test.local' or email = 'demo@clockifai.local';
+delete from public.workspaces where created_by in (select id from auth.users where email like '%test.local' or email = 'demo@clockifai.local');
+delete from auth.users where email like '%test.local' or email = 'demo@clockifai.local';
+-- Comptes techniques d'agents Claude dont le pilote n'existe plus (comptes de test supprimés).
+delete from auth.users a where a.raw_app_meta_data ->> 'kind' = 'agent'
+   and not exists (select 1 from auth.users o where o.id::text = a.raw_app_meta_data ->> 'owner_id');
 -- Workspaces orphelins et vides laissés par la suppression de comptes de test.
 delete from public.workspaces w where w.created_by is null
    and not exists (select 1 from public.workspace_members m where m.workspace_id = w.id)

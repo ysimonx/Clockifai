@@ -15,13 +15,14 @@ import '../../core/format.dart';
 import '../../core/l10n.dart';
 import '../../core/session.dart';
 import '../../core/text_search.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/pickers.dart';
 import '../../data/drift/database.dart';
 import '../../data/repositories/time_entry_repository.dart';
+import '../presence/presence.dart' show PresenceTracker;
 import '../time_entries/entry_dialog.dart';
 import '../timesheet/week_tools.dart' show copyDay;
-import '../presence/presence.dart' show PresenceTracker;
 import 'day_plan.dart';
 import 'quick_place.dart';
 import 'traces.dart';
@@ -514,6 +515,8 @@ class _TodayPageState extends State<TodayPage> {
         );
 
     return Card(
+      // Un nœud d'accessibilité par champ et par bouton, pas toute la carte fondue en un seul.
+      semanticContainer: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -669,7 +672,7 @@ class _TodayPageState extends State<TodayPage> {
                             value: weekend && m == 0 ? 0 : pct,
                             strokeWidth: 3,
                             backgroundColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-                            color: pct >= 1 ? Colors.green.shade700 : theme.colorScheme.onSurface,
+                            color: pct >= 1 ? AppColors.of(context).success : theme.colorScheme.onSurface,
                           ),
                           Text('${d.day}', style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600)),
                         ]),
@@ -726,7 +729,7 @@ class _TodayPageState extends State<TodayPage> {
       title = l.journalHeroDone;
       text = l.journalHeroDoneText(formatHm(loggedMin * 60));
       icon = Icons.check_circle;
-      tint = Colors.green.withValues(alpha: 0.15);
+      tint = AppColors.of(context).successContainer;
     }
     return Card(
       child: Padding(
@@ -973,17 +976,21 @@ class _TodayPageState extends State<TodayPage> {
             );
           }
 
+          // Une heure sur deux, ou sur trois, quand la place manque (téléphone) : jamais d'étiquettes qui se chevauchent.
+          final perHour = hours.length < 2 ? width : x(60) - x(0);
+          final labelEvery = perHour >= 44 ? 1 : (perHour >= 22 ? 2 : (perHour >= 15 ? 3 : 4));
           final ruler = SizedBox(
             width: width,
             height: 18,
             child: Stack(clipBehavior: Clip.none, children: [
               for (final h in hours)
-                Positioned(
-                  left: (x(h * 60) - 18).clamp(0.0, math.max(0.0, width - 36)),
-                  width: 36,
-                  child: Text('${h.toString().padLeft(2, '0')}:00', textAlign: TextAlign.center,
-                      style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline, fontFeatures: const [FontFeature.tabularFigures()])),
-                ),
+                if (h % labelEvery == 0)
+                  Positioned(
+                    left: (x(h * 60) - 18).clamp(0.0, math.max(0.0, width - 36)),
+                    width: 36,
+                    child: Text('${h.toString().padLeft(2, '0')}:00', textAlign: TextAlign.center,
+                        style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline, fontFeatures: const [FontFeature.tabularFigures()])),
+                  ),
             ]),
           );
 
@@ -1341,6 +1348,8 @@ class _TodayPageState extends State<TodayPage> {
           );
 
     return Card(
+      // Un nœud d'accessibilité par champ et par bouton, pas toute la carte fondue en un seul.
+      semanticContainer: false,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: LayoutBuilder(builder: (context, c) {

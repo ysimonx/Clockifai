@@ -41,4 +41,4 @@ livrés : on les cite par leur nom de fichier.
 | [10-suivi-claude-code.md](10-suivi-claude-code.md) | Temps de Claude (agents membres de l'équipe), mon temps (suggestions) et usage IA (tokens, modèle, effort) | en cours | — |
 | [11-documentation.md](11-documentation.md) | Documentation tenue à jour : architecture, API, guide, exploitation | fait | — |
 | [12-taux-et-factures-par-tache.md](12-taux-et-factures-par-tache.md) | Taux des entrées saisies sans taux, nouveau taux appliqué aux entrées non facturées, factures détaillées par tâche | fait | — |
-| [13-ux-moderne.md](13-ux-moderne.md) | UX repensée : journal du jour, saisie express, ⌘K, semaine pré-remplie, édition en place, rapports par questions, téléphone pour le chantier | en cours | — |
+| [13-ux-moderne.md](13-ux-moderne.md) | UX repensée : journal du jour, saisie express, ⌘K, semaine pré-remplie, édition en place, rapports par questions, téléphone pour le chantier | fait | — |

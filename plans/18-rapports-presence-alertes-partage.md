@@ -1,6 +1,6 @@
 # Plan 18 — Rapports : présence, alertes de budget, lien public, envoi planifié
 
-> Statut : **en cours** (27 octobre 2026), validé le 27 octobre. Reprend le lot 6 du plan 15 (« Rapports »), choisi
+> Statut : **fait** (27 octobre 2026), validé et livré le 27 octobre. Reprend le lot 6 du plan 15 (« Rapports »), choisi
 > par Yannick comme prochain écart avec Clockify à combler.
 
 ## Décisions (27 octobre 2026)
@@ -21,7 +21,7 @@
 | 1 Présence | Vue « Présence » des rapports, calculée dans l'app (hors ligne), export CSV | fait |
 | 2 Alertes de budget | Champs montant et estimation, jauges, « À surveiller », job horaire et email | fait |
 | 3 Lien public | Rapports enregistrés (Flask), page HTML et PDF publics, révocation | fait |
-| 4 Envoi planifié | Fréquence, destinataires, PDF en pièce jointe | validé |
+| 4 Envoi planifié | Fréquence, destinataires, PDF en pièce jointe | fait |
 
 ## Lot 1 — Présence
 
@@ -96,3 +96,8 @@
   public si le rapport en a un ; langue du créateur ; « envoyé à la demande de … » en pied.
 - Sans SMTP : réglage grisé, avec la raison.
 - **Tests** : échéance dans le fuseau, pas de double envoi, pièce jointe.
+- **Livré** : migration `0026_report_schedule.admin.sql` ; `shared_reports.send_due_reports` (job
+  `send_scheduled_reports` à 2, 17, 32 et 47 minutes de chaque heure) ; `send_mail` accepte des pièces jointes ;
+  dans l'app, « Envoi par email » dans le formulaire de partage et dans le menu d'un rapport partagé. Une période
+  n'est envoyée que si elle suit la dernière envoyée (`last_sent_period`), et une fréquence nouvellement réglée
+  compte la dernière période terminée comme envoyée.

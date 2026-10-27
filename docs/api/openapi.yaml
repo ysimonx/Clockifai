@@ -1078,11 +1078,14 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [reports]
+                required: [reports, mail]
                 properties:
                   reports:
                     type: array
                     items: { $ref: "#/components/schemas/SavedReport" }
+                  mail:
+                    type: boolean
+                    description: Un serveur d'envoi (SMTP) est configuré ; sans lui, aucun envoi planifié ne part.
         "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/ManagerRequired" }
@@ -1109,7 +1112,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/SavedReport" }
         "400":
-          description: "`workspace_id is required`, nom absent ou trop long, période, dates, filtres ou options invalides."
+          description: "`workspace_id is required`, nom absent ou trop long, période, dates, filtres, options, fréquence ou destinataires invalides."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
@@ -1308,6 +1311,18 @@ components:
         show_amounts: { type: boolean, description: "Montants affichés (défaut : oui)." }
         rounding: { type: boolean, description: "Arrondi du workspace appliqué à chaque entrée (défaut : non)." }
         public: { type: boolean, description: "Lien public ouvert (vrai) ou fermé (faux)." }
+        schedule:
+          type: [string, "null"]
+          enum: [weekly, monthly, null]
+          description: |
+            Envoi par email (plan 18, lot 4) : chaque semaine (la semaine passée, le premier jour de la semaine du
+            workspace) ou chaque mois (le mois passé, le 1er), à 8 h chez le créateur, PDF en pièce jointe. Le premier
+            envoi couvre la période en cours, une fois finie.
+        recipients:
+          type: array
+          maxItems: 20
+          items: { type: string, format: email }
+          description: Destinataires (membres ou externes), mis en minuscules et sans doublon.
     SavedReport:
       type: object
       required: [id, name, period, filters, detailed, show_amounts, rounding, public_path, created_at]
@@ -1325,6 +1340,11 @@ components:
           type: [string, "null"]
           description: "Chemin de la page publique (`/api/reports/public/<jeton>`), à compléter par l'adresse de l'instance ; nul sans lien."
         created_at: { type: string, format: date-time }
+        schedule: { type: [string, "null"], enum: [weekly, monthly, null] }
+        recipients:
+          type: array
+          items: { type: string, format: email }
+        last_sent_at: { type: [string, "null"], format: date-time }
     ClaudeMarketplace:
       type: object
       required: [name, owner, plugins]

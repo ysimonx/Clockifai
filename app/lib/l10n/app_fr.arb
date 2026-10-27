@@ -374,6 +374,25 @@
   "deleteSharedReport": "Supprimer le rapport partagé ?",
   "deleteSharedReportMessage": "Son lien ne fonctionnera plus.",
   "open": "Ouvrir",
+  "sharedSchedule": "Envoi par email",
+  "sharedScheduleNone": "Jamais",
+  "sharedScheduleWeekly": "Chaque semaine (la semaine passée)",
+  "sharedScheduleMonthly": "Chaque mois (le mois passé)",
+  "sharedScheduleHelp": "À 8 h le premier jour de la semaine ou du mois, avec le PDF en pièce jointe. Le premier envoi couvre la période en cours, une fois finie.",
+  "sharedNoMail": "Pas de serveur d'envoi d'emails sur cette installation.",
+  "sharedRecipients": "Destinataires",
+  "sharedRecipientsHint": "adresses séparées par des virgules",
+  "sharedWeeklyShort": "chaque semaine",
+  "sharedMonthlyShort": "chaque mois",
+  "sharedRecipientsCount": "{count, plural, =1{1 destinataire} other{{count} destinataires}}",
+  "@sharedRecipientsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharedEditSchedule": "Envoi par email…",
   "approvals": "Approbations",
   "approve": "Approuver",
   "approvedPeriodFor": "Période déjà approuvée pour {name}.",

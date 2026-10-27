@@ -3,11 +3,20 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
+import psycopg
 import pytest
+from flask import Flask
+from psycopg.rows import dict_row
 
-from .test_backend import SERVICES, _call, iso, rest, signup
+from app.services import shared_reports
+
+from .test_backend import ENV, SERVICES, _call, iso, rest, signup
+
+DSN = (f"postgresql://postgres.{ENV.get('POOLER_TENANT_ID', '')}:{ENV.get('POSTGRES_PASSWORD', '')}"
+       f"@localhost:{ENV.get('POSTGRES_PORT', '5432')}/postgres")
 
 pytestmark = pytest.mark.skipif(__import__("os").environ.get("INTEGRATION") != "1", reason="INTEGRATION=1 requis")
 
@@ -101,3 +110,47 @@ def test_a_link_dies_with_its_creator_rights(agency):
         assert api("GET", rep["public_path"], None)[0] == 404
     finally:
         rest("PATCH", f"workspace_members?workspace_id=eq.{agency['wid']}&user_id=eq.{uid}", boss_t, {"role": "manager"})
+
+
+def test_scheduled_email_goes_once_with_the_pdf(agency):
+    t, _ = agency["cheffe"]
+    name = f"Hebdo client {uuid.uuid4().hex[:6]}"
+    status, rep = api("POST", "/api/reports/saved", t, {
+        "workspace_id": agency["wid"], "name": name, "public": True, "schedule": "weekly",
+        "recipients": ["Compta@ACME.example", "direction@acme.example"]})
+    assert status == 201 and rep["schedule"] == "weekly", rep
+    assert rep["recipients"] == ["compta@acme.example", "direction@acme.example"]
+    bad, _ = api("PUT", f"/api/reports/saved/{rep['id']}", t, {"workspace_id": agency["wid"], "recipients": ["x"]})
+    assert bad == 400
+
+    # Lundi prochain, 9 h à Paris : la semaine en cours vient de finir, elle part ; la précédente comptait comme envoyée.
+    paris = ZoneInfo("Europe/Paris")
+    today = datetime.now(paris).date()
+    monday = today + timedelta(days=7 - today.weekday())
+    now = datetime.combine(monday, time(9), paris)
+    sent = []
+
+    def fake_send(to, subject, text, attachments):
+        if name in subject:
+            sent.append((to, subject, text, attachments))
+        return True
+
+    # WeasyPrint ne tourne que dans le conteneur : le PDF réel est vérifié par la route publique (?format=pdf).
+    def fake_pdf(html):
+        return b"%PDF " + html.encode()
+
+    def send_due(at):
+        shared_reports.send_due_reports(conn, at, "https://clockifai.example.fr", fake_send, pdf=fake_pdf)
+
+    with psycopg.connect(DSN, row_factory=dict_row) as conn, Flask(__name__).app_context():
+        send_due(now - timedelta(days=7))
+        assert sent == [], "pas la semaine d'avant"
+        send_due(now)
+        assert [m[0] for m in sent] == ["compta@acme.example", "direction@acme.example"]
+        _, _, text, [(filename, pdf, mimetype)] = sent[0]
+        assert mimetype == "application/pdf" and filename.endswith(".pdf") and name in pdf.decode()
+        assert "https://clockifai.example.fr/api/reports/public/" in text
+        send_due(now + timedelta(hours=1))
+        assert len(sent) == 2, "une seule fois"
+    assert api("DELETE", f"/api/reports/saved/{rep['id']}?workspace_id={agency['wid']}", t)[0] == 204
+

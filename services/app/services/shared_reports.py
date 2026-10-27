@@ -7,17 +7,27 @@ WeasyPrint, au PDF. Les descriptions n'y paraissent qu'avec l'option « détail 
 
 from __future__ import annotations
 
+import re
 import secrets
 import uuid
 from collections import defaultdict
-from datetime import date, datetime, timedelta, tzinfo
+from collections.abc import Callable
+from datetime import date, datetime, time, timedelta, tzinfo
 
+import psycopg
 from flask import render_template_string
 
+from ..auth import MANAGER_ROLES
 from .exporters import entry_amount
+from .profiles import zone
+from .report_rows import detailed_rows
 
 PERIODS = ("this_week", "last_week", "this_month", "last_month", "this_year", "custom")
 FILTER_KEYS = ("client_id", "project_id", "user_id", "billable", "member_kind")
+SCHEDULES = ("weekly", "monthly")
+MAX_RECIPIENTS = 20
+SEND_HOUR = 8
+_EMAIL = re.compile(r"^[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+$")
 
 
 def new_token() -> str:
@@ -68,6 +78,35 @@ def period_range(period: str, today: date, week_start: int, date_from: date | No
             return date_from or today, date_to or today
 
 
+def clean_recipients(raw) -> list[str] | None:
+    """Adresses distinctes (minuscules), au plus [MAX_RECIPIENTS] ; None si l'une est invalide."""
+    if raw is None:
+        return []
+    if not isinstance(raw, list) or len(raw) > MAX_RECIPIENTS:
+        return None
+    out: list[str] = []
+    for value in raw:
+        email = str(value).strip().lower()
+        if not _EMAIL.match(email):
+            return None
+        if email not in out:
+            out.append(email)
+    return out
+
+
+def scheduled_period(schedule: str, today: date, week_start: int) -> tuple[date, date]:
+    """Période d'un envoi : la dernière semaine ou le dernier mois terminés à [today]."""
+    return period_range("last_week" if schedule == "weekly" else "last_month", today, week_start)
+
+
+def is_due(schedule: str, now_local: datetime, week_start: int, last_sent: date | None) -> bool:
+    """Vrai si la dernière période terminée n'est pas encore partie et qu'il est au moins 8 h le premier jour de la
+    période suivante (un envoi manqué, serveur arrêté, part au passage suivant du job)."""
+    start, end = scheduled_period(schedule, now_local.date(), week_start)
+    opens = datetime.combine(end + timedelta(days=1), time(SEND_HOUR), now_local.tzinfo)
+    return (last_sent is None or last_sent < start) and now_local >= opens
+
+
 def round_seconds(seconds: int, minutes: int) -> int:
     """Arrondi au pas du workspace, à la demi-valeur supérieure (comme `roundSeconds` de l'app)."""
     if minutes <= 0:
@@ -90,6 +129,12 @@ _TEXTS = {
         "description": "Description", "pdf": "Télécharger le PDF", "empty": "Aucune entrée sur cette période.",
         "footer": "Rapport Clockifai en lecture seule, calculé le {at}.",
         "rounding": "Durées arrondies à {minutes} min.",
+        "mail_subject": "Clockifai · {name} · {period}",
+        "mail_intro": "Bonjour,\n\nVoici le rapport « {name} » de {workspace}, {period} :\n\n",
+        "mail_pdf": "Le détail est dans le PDF joint.",
+        "mail_link": "En ligne : {url}",
+        "mail_footer": "Envoyé par Clockifai à la demande de {creator}.",
+        "period_lower": "du {start} au {end}",
     },
     "en": {
         "period": "From {start} to {end}", "total": "Total time", "billable": "Billable time", "amount": "Amount",
@@ -98,6 +143,12 @@ _TEXTS = {
         "description": "Description", "pdf": "Download PDF", "empty": "No entries in this period.",
         "footer": "Read-only Clockifai report, computed on {at}.",
         "rounding": "Durations rounded to {minutes} min.",
+        "mail_subject": "Clockifai · {name} · {period}",
+        "mail_intro": "Hello,\n\nHere is the “{name}” report from {workspace}, {period}:\n\n",
+        "mail_pdf": "Details are in the attached PDF.",
+        "mail_link": "Online: {url}",
+        "mail_footer": "Sent by Clockifai on behalf of {creator}.",
+        "period_lower": "from {start} to {end}",
     },
 }
 
@@ -158,6 +209,90 @@ def render(report: dict, rows: list[dict], start: date, end: date, *, workspace:
         clock=lambda d: d.astimezone(tz).strftime("%H:%M"), amount_of=entry_amount,
         footer=t["footer"].format(at=f"{_day(local_now.date(), lang)} {local_now:%H:%M}"),
     )
+
+
+def compose_email(report: dict, rows: list[dict], start: date, end: date, *, workspace: str, currency: str, lang: str,
+                  creator: str, public_url: str | None) -> tuple[str, str]:
+    """Sujet et texte de l'email d'un rapport planifié : totaux, temps par projet, lien public s'il y en a un."""
+    lang = lang if lang in _TEXTS else "fr"
+    t = _TEXTS[lang]
+    period = t["period_lower"].format(start=_day(start, lang), end=_day(end, lang))
+    sep = " : " if lang == "fr" else ": "
+
+    def money(v: float) -> str:
+        return _money(v, currency, lang)
+
+    lines = [f"{t['total']}{sep}{_hm(sum(r['duration_seconds'] or 0 for r in rows))}",
+             f"{t['billable']}{sep}{_hm(sum(r['duration_seconds'] or 0 for r in rows if r['billable']))}"]
+    if report["show_amounts"]:
+        lines.append(f"{t['amount']}{sep}{money(sum(entry_amount(r) for r in rows))}")
+    projects = summarize(rows)
+    if projects:
+        lines += ["", f"{t['by_project']}{sep.rstrip()}"]
+        for p in projects:
+            amount = f" ({money(p['amount'])})" if report["show_amounts"] and p["amount"] else ""
+            lines.append(f"- {p['name'] or t['no_project']}{sep}{_hm(p['seconds'])}{amount}")
+    else:
+        lines.append(t["empty"])
+    text = (t["mail_intro"].format(name=report["name"], workspace=workspace, period=period) + "\n".join(lines)
+            + "\n\n" + t["mail_pdf"] + ("\n" + t["mail_link"].format(url=public_url) if public_url else "")
+            + "\n\n" + t["mail_footer"].format(creator=creator) + "\n")
+    return t["mail_subject"].format(name=report["name"], period=period), text
+
+
+Sender = Callable[[str, str, str, list[tuple[str, bytes, str]]], bool]
+
+
+def html_to_pdf(html: str) -> bytes:
+    from weasyprint import HTML  # import tardif : lib lourde
+
+    return HTML(string=html).write_pdf()
+
+
+def send_due_reports(conn: psycopg.Connection, now: datetime, app_url: str, send: Sender,
+                     pdf: Callable[[str], bytes] = html_to_pdf) -> int:
+    """Envoie les rapports planifiés dont la période vient de se terminer (créateur encore manager actif) et note la
+    période envoyée dès qu'un destinataire l'a reçue. Renvoie le nombre de rapports envoyés. [send] : `send_mail` ;
+    [pdf] : rendu du HTML en PDF."""
+
+    reports = conn.execute(
+        """
+        select r.*, w.name as workspace, w.currency, w.week_start, w.rounding_minutes, pr.timezone,
+               coalesce(pr.locale, 'fr') as locale, coalesce(nullif(m.display_name, ''), u.email) as creator
+          from clockifai_private.saved_reports r
+          join public.workspaces w on w.id = r.workspace_id and w.deleted_at is null
+          join public.workspace_members m on m.workspace_id = r.workspace_id and m.user_id = r.created_by
+               and m.status = 'active' and m.deleted_at is null and m.role = any(%s)
+          join auth.users u on u.id = r.created_by
+          left join public.profiles pr on pr.id = r.created_by
+         where r.schedule is not null and cardinality(r.recipients) > 0 and r.deleted_at is null
+        """,
+        (list(MANAGER_ROLES),),
+    ).fetchall()
+    sent = 0
+    for rep in reports:
+        tz = zone(rep["timezone"])
+        local = now.astimezone(tz)
+        if not is_due(rep["schedule"], local, rep["week_start"], rep["last_sent_period"]):
+            continue
+        start, end = scheduled_period(rep["schedule"], local.date(), rep["week_start"])
+        rows = detailed_rows(conn, str(rep["workspace_id"]), start, end, tz, dict(rep["filters"]))
+        if rep["rounding"]:
+            for r in rows:
+                r["duration_seconds"] = round_seconds(r["duration_seconds"] or 0, rep["rounding_minutes"])
+        common = {"workspace": rep["workspace"], "currency": rep["currency"], "lang": rep["locale"]}
+        document = pdf(render(rep, rows, start, end, tz=tz, rounding_minutes=rep["rounding_minutes"], now=now,
+                              pdf=True, **common))
+        public_url = f"{app_url.rstrip('/')}/api/reports/public/{rep['public_token']}" if rep["public_token"] else None
+        subject, text = compose_email(rep, rows, start, end, creator=rep["creator"], public_url=public_url, **common)
+        attachment = [(f"clockifai-{start.isoformat()}_{end.isoformat()}.pdf", document, "application/pdf")]
+        delivered = [send(to, subject, text, attachment) for to in rep["recipients"]]
+        if any(delivered):
+            conn.execute("update clockifai_private.saved_reports set last_sent_period = %s, last_sent_at = %s "
+                         "where id = %s", (start, now, rep["id"]))
+            conn.commit()
+            sent += 1
+    return sent
 
 
 _TEMPLATE = """<!doctype html>

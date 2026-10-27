@@ -1,12 +1,13 @@
 """Rapports enregistrés et lien public (plans/18-rapports-presence-alertes-partage.md, lot 3).
 
-GET    /api/reports/saved?workspace_id=      → rapports enregistrés du workspace (managers)
+GET    /api/reports/saved?workspace_id=      → rapports enregistrés du workspace (managers), `mail` : SMTP configuré
 POST   /api/reports/saved                    → enregistre un rapport (managers)
 PUT    /api/reports/saved/<id>               → le modifie ; `public` ouvre ou ferme le lien, `new_link` en change
 DELETE /api/reports/saved/<id>?workspace_id= → le supprime (et son lien)
 GET    /api/reports/public/<jeton>[?format=pdf] → page publique, sans compte
 
-Un lien ne vaut que tant que son créateur est manager actif du workspace : il lit alors ce que ce manager lit.
+Un lien ne vaut que tant que son créateur est manager actif du workspace : il lit alors ce que ce manager lit. Un
+rapport peut aussi partir par email chaque semaine ou chaque mois (lot 4, job `send_scheduled_reports`).
 """
 
 from __future__ import annotations
@@ -19,12 +20,14 @@ from flask import Blueprint, Response, abort, g, jsonify, request
 from ..auth import MANAGER_ROLES, require_user, require_workspace
 from ..db import connection
 from ..services import shared_reports as sr
-from ..services.profiles import zone
+from ..services.mailer import mail_configured
+from ..services.profiles import user_tz, zone
 from ..services.report_rows import detailed_rows
 
 bp = Blueprint("reports", __name__)
 
-_COLUMNS = "id, name, period, date_from, date_to, filters, detailed, show_amounts, rounding, public_token, created_at"
+_COLUMNS = ("id, name, period, date_from, date_to, filters, detailed, show_amounts, rounding, public_token, created_at, "
+            "schedule, recipients, last_sent_at")
 
 
 def _item(row: dict) -> dict:
@@ -37,13 +40,16 @@ def _item(row: dict) -> dict:
         # Chemin seulement : l'app le complète avec l'adresse de l'instance qu'elle connaît.
         "public_path": f"/api/reports/public/{row['public_token']}" if row["public_token"] else None,
         "created_at": row["created_at"].isoformat(),
+        # Envoi planifié (lot 4) : chaque semaine ou chaque mois, à ces adresses.
+        "schedule": row["schedule"], "recipients": row["recipients"],
+        "last_sent_at": row["last_sent_at"].isoformat() if row["last_sent_at"] else None,
     }
 
 
 def _fields(body: dict, current: dict | None = None) -> dict:
     """Champs modifiables validés ; ceux qui manquent gardent leur valeur ([current]) ou leur défaut."""
     cur = current or {"name": None, "period": "this_month", "date_from": None, "date_to": None, "filters": {},
-                      "detailed": False, "show_amounts": True, "rounding": False}
+                      "detailed": False, "show_amounts": True, "rounding": False, "schedule": None, "recipients": []}
     out = {}
     name = str(body.get("name", cur["name"]) or "").strip()
     if not 1 <= len(name) <= 120:
@@ -69,7 +75,23 @@ def _fields(body: dict, current: dict | None = None) -> dict:
         if not isinstance(value, bool):
             abort(400, f"{key} must be a boolean")
         out[key] = value
+    out["schedule"] = body.get("schedule", cur["schedule"])
+    if out["schedule"] not in (None, *sr.SCHEDULES):
+        abort(400, "schedule must be weekly, monthly or null")
+    recipients = sr.clean_recipients(body.get("recipients", cur["recipients"]))
+    if recipients is None:
+        abort(400, f"recipients must be valid email addresses ({sr.MAX_RECIPIENTS} at most)")
+    out["recipients"] = recipients
     return out
+
+
+def _last_complete(conn, schedule: str | None) -> date | None:
+    """Envoi réglé : la dernière période terminée compte comme envoyée, le premier email couvre la suivante."""
+    if schedule is None:
+        return None
+    week_start = conn.execute("select week_start from public.workspaces where id = %s", (g.workspace_id,)).fetchone()
+    today = datetime.now(user_tz(conn, g.user.id)).date()
+    return sr.scheduled_period(schedule, today, week_start["week_start"])[0]
 
 
 @bp.get("/saved")
@@ -82,7 +104,7 @@ def list_saved():
             "where workspace_id = %s and deleted_at is null order by name",
             (g.workspace_id,),
         ).fetchall()
-    return jsonify(reports=[_item(r) for r in rows])
+    return jsonify(reports=[_item(r) for r in rows], mail=mail_configured())
 
 
 @bp.post("/saved")
@@ -97,12 +119,13 @@ def create_saved():
             f"""
             insert into clockifai_private.saved_reports
               (workspace_id, created_by, name, period, date_from, date_to, filters, detailed, show_amounts, rounding,
-               public_token)
-            values (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s)
+               public_token, schedule, recipients, last_sent_period)
+            values (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s, %s, %s, %s)
             returning {_COLUMNS}
             """,
             (g.workspace_id, g.user.id, f["name"], f["period"], f["date_from"], f["date_to"], json.dumps(f["filters"]),
-             f["detailed"], f["show_amounts"], f["rounding"], token),
+             f["detailed"], f["show_amounts"], f["rounding"], token, f["schedule"], f["recipients"],
+             _last_complete(conn, f["schedule"])),
         ).fetchone()
         conn.commit()
     return jsonify(_item(row)), 201
@@ -115,7 +138,7 @@ def update_saved(report_id):
     body = request.get_json(silent=True) or {}
     with connection() as conn:
         cur = conn.execute(
-            f"select {_COLUMNS} from clockifai_private.saved_reports "
+            f"select {_COLUMNS}, last_sent_period from clockifai_private.saved_reports "
             "where id = %s and workspace_id = %s and deleted_at is null for update",
             (str(report_id), g.workspace_id),
         ).fetchone()
@@ -127,16 +150,19 @@ def update_saved(report_id):
             token = None
         elif (body.get("public") is True and token is None) or body.get("new_link") is True:
             token = sr.new_token()
+        # Une fréquence nouvelle repart de la dernière période terminée ; inchangée, elle garde son suivi.
+        last_sent = cur["last_sent_period"] if f["schedule"] == cur["schedule"] else _last_complete(conn, f["schedule"])
         row = conn.execute(
             f"""
             update clockifai_private.saved_reports
                set name = %s, period = %s, date_from = %s, date_to = %s, filters = %s::jsonb, detailed = %s,
-                   show_amounts = %s, rounding = %s, public_token = %s, updated_at = now()
+                   show_amounts = %s, rounding = %s, public_token = %s, schedule = %s, recipients = %s,
+                   last_sent_period = %s, updated_at = now()
              where id = %s
             returning {_COLUMNS}
             """,
             (f["name"], f["period"], f["date_from"], f["date_to"], json.dumps(f["filters"]), f["detailed"],
-             f["show_amounts"], f["rounding"], token, str(report_id)),
+             f["show_amounts"], f["rounding"], token, f["schedule"], f["recipients"], last_sent, str(report_id)),
         ).fetchone()
         conn.commit()
     return jsonify(_item(row))
@@ -191,10 +217,8 @@ def public_report(token: str):
                      tz=tz, rounding_minutes=rep["rounding_minutes"], now=now, pdf=pdf)
     headers = {"X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer"}
     if pdf:
-        from weasyprint import HTML  # import tardif : lib lourde
-
         filename = f"clockifai-{start.isoformat()}_{end.isoformat()}.pdf"
-        return Response(HTML(string=html).write_pdf(), mimetype="application/pdf",
+        return Response(sr.html_to_pdf(html), mimetype="application/pdf",
                         headers={**headers, "Content-Disposition": f'inline; filename="{filename}"'})
     # Page sans script ni ressource externe.
     headers["Content-Security-Policy"] = "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"

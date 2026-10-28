@@ -4812,6 +4812,24 @@ abstract class AppLocalizations {
   /// **'Comment utiliser Clockifai selon votre rôle, avec des vidéos de démonstration.'**
   String get userGuideHelp;
 
+  /// No description provided for @appVersion.
+  ///
+  /// In fr, this message translates to:
+  /// **'Version {version}'**
+  String appVersion(String version);
+
+  /// No description provided for @serverVersion.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveur : {version}'**
+  String serverVersion(String version);
+
+  /// No description provided for @serverVersionUnknown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Version du serveur inconnue (serveur injoignable)'**
+  String get serverVersionUnknown;
+
   /// No description provided for @users.
   ///
   /// In fr, this message translates to:

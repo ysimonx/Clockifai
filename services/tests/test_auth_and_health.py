@@ -1,10 +1,11 @@
 import datetime as dt
+from pathlib import Path
 
 import jwt
 import pytest
 
 from app import create_app
-from app.config import TestConfig
+from app.config import TestConfig, _pubspec_version
 
 
 @pytest.fixture
@@ -25,6 +26,19 @@ def test_health_without_database(client):
     rv = client.get("/api/health")
     assert rv.status_code == 200
     assert rv.get_json()["status"] == "ok"
+
+
+def test_health_gives_installed_version():
+    class Installed(TestConfig):
+        VERSION = "1.2.3"
+
+    with create_app(Installed).test_client() as c:
+        assert c.get("/api/health").get_json()["version"] == "1.2.3"
+
+
+def test_version_read_from_repository_outside_docker():
+    pubspec = (Path(__file__).resolve().parents[2] / "app" / "pubspec.yaml").read_text()
+    assert f"version: {_pubspec_version()}+" in pubspec
 
 
 def test_export_requires_token(client):

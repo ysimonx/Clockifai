@@ -69,6 +69,16 @@ class ServicesApi {
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
 
+  /// Version installée sur le serveur (`/api/health`, sans session) ; null s'il est injoignable ou ne la donne pas.
+  static Future<String?> serverVersion() async {
+    try {
+      final res = await http.get(_uri('/api/health')).timeout(const Duration(seconds: 5));
+      return (jsonDecode(res.body) as Map<String, dynamic>)['version'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
   static String _error(http.Response res) {
     try {
       return (jsonDecode(res.body) as Map<String, dynamic>)['error']?.toString() ?? 'HTTP ${res.statusCode}';

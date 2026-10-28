@@ -14,4 +14,5 @@ def health():
         except Exception:  # noqa: BLE001
             db_ok = False
     status = 200 if db_ok else 503
-    return jsonify(status="ok" if db_ok else "degraded", database=db_ok), status
+    return jsonify(status="ok" if db_ok else "degraded", database=db_ok,
+                   version=current_app.config["VERSION"] or None), status

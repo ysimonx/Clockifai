@@ -10,6 +10,11 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Ajouté
+
+- **Paramètres › Aide** : la version de l'application et celle du serveur, pour vérifier qu'une mise à jour est
+  passée ou qu'une application est à jour (28 octobre 2026).
+
 ## [0.2.7] — 2026-10-28
 
 ### Ajouté

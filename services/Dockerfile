@@ -28,5 +28,9 @@ COPY gunicorn.conf.py ./
 COPY --from=integrations claude-code ./integrations/claude-code
 ENV CLAUDE_PLUGIN_DIR=/srv/integrations/claude-code
 
+# Version installée (app/pubspec.yaml), passée par make : renvoyée par /api/health.
+ARG CLOCKIFAI_VERSION=
+ENV CLOCKIFAI_VERSION=$CLOCKIFAI_VERSION
+
 EXPOSE 5000
 CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:create_app()"]

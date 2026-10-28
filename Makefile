@@ -1,5 +1,7 @@
 # Clockifai — raccourcis. Backend 100 % Docker ; Flutter via fvm ; Python via uv.
 .DEFAULT_GOAL := help
+# Version installée (app/pubspec.yaml, sans le numéro de build), gravée dans l'image de Flask pour /api/health.
+export CLOCKIFAI_VERSION := $(shell sed -n 's/^version: *\([^+]*\).*/\1/p' app/pubspec.yaml)
 # deploy/docker-compose.override.yml (non versionné) : réglages propres au serveur,
 # ex. copie de docker-compose.edge.yml derrière un reverse proxy partagé.
 COMPOSE := docker compose -f deploy/docker-compose.yml $(if $(wildcard deploy/docker-compose.override.yml),-f deploy/docker-compose.override.yml) --env-file deploy/.env

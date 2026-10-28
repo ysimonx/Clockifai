@@ -10,6 +10,8 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.7] — 2026-10-28
+
 ### Ajouté
 
 - **Tickets des clients** : une tâche peut porter l'adresse d'un ticket Jira, Linear ou GitHub (« Ticket du client »)

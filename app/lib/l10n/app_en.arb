@@ -1353,6 +1353,23 @@
   "user": "User",
   "userGuide": "User guide",
   "userGuideHelp": "How to use Clockifai for your role, with demo videos (in French).",
+  "appVersion": "Version {version}",
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "serverVersion": "Server: {version}",
+  "@serverVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "serverVersionUnknown": "Server version unknown (server unreachable)",
   "users": "Users",
   "view": "View",
   "weekOf": "Week of {date}",

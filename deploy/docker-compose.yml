@@ -84,6 +84,8 @@ services:
       context: ../services
       additional_contexts:
         integrations: ../integrations   # plugin Claude Code servi par /api/claude
+      args:
+        CLOCKIFAI_VERSION: ${CLOCKIFAI_VERSION:-}   # version de app/pubspec.yaml, exportée par le Makefile
     restart: unless-stopped
     depends_on:
       migrate:

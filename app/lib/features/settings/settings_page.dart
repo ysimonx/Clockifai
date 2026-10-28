@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase, UserAttributes;
@@ -140,6 +141,7 @@ class SettingsPage extends StatelessWidget {
             trailing: const Icon(Icons.open_in_new),
             onTap: () => openGuide(context),
           ),
+          const _VersionTile(),
         ]),
         const SizedBox(height: 16),
         _Section(title: l.account, children: [
@@ -195,6 +197,48 @@ class _Section extends StatelessWidget {
         ),
         Card(child: Column(children: children)),
       ]);
+}
+
+/// Version de l'app et celle du serveur : une app des stores peut être en avance ou en retard sur l'instance.
+class _VersionTile extends StatefulWidget {
+  const _VersionTile();
+
+  @override
+  State<_VersionTile> createState() => _VersionTileState();
+}
+
+class _VersionTileState extends State<_VersionTile> {
+  late final Future<String?> _app = _appVersion();
+  late final Future<String?> _server = ServicesApi.serverVersion();
+
+  /// « 0.2.7 (431908) » ; le numéro de build n'est donné que par les builds des stores (sinon 1).
+  static Future<String?> _appVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      final build = info.buildNumber;
+      return build.isEmpty || build == '1' ? info.version : '${info.version} ($build)';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return FutureBuilder(
+      future: _app,
+      builder: (context, app) => FutureBuilder(
+        future: _server,
+        builder: (context, server) => ListTile(
+          leading: const Icon(Icons.info_outline),
+          title: Text(l.appVersion(app.data ?? '…')),
+          subtitle: server.connectionState != ConnectionState.done
+              ? null
+              : Text(server.data == null ? l.serverVersionUnknown : l.serverVersion(server.data!)),
+        ),
+      ),
+    );
+  }
 }
 
 class _LanguageTile extends StatelessWidget {

@@ -1,6 +1,7 @@
 """Configuration par variables d'environnement (voir deploy/.env.example)."""
 
 import os
+import re
 from pathlib import Path
 
 
@@ -8,9 +9,22 @@ def _bool(name: str, default: bool) -> bool:
     return os.environ.get(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
 
 
+def _pubspec_version() -> str:
+    """Version de l'app (`app/pubspec.yaml`, sans le numéro de build) quand le service tourne depuis le dépôt."""
+    try:
+        text = (Path(__file__).resolve().parents[2] / "app" / "pubspec.yaml").read_text()
+    except OSError:
+        return ""
+    m = re.search(r"^version:\s*([^+\s]+)", text, re.MULTILINE)
+    return m.group(1) if m else ""
+
+
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
     LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+    # Version installée, renvoyée par /api/health : gravée dans l'image par `make` (CLOCKIFAI_VERSION), sinon le dépôt
+    VERSION = os.environ.get("CLOCKIFAI_VERSION") or _pubspec_version()
 
     # Postgres (rôle postgres : contourne la RLS → contrôle d'accès explicite dans auth.py)
     DATABASE_URL = os.environ.get("DATABASE_URL", "")

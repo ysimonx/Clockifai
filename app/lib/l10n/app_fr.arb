@@ -1726,6 +1726,23 @@
   "user": "Utilisateur",
   "userGuide": "Guide d'utilisation",
   "userGuideHelp": "Comment utiliser Clockifai selon votre rôle, avec des vidéos de démonstration.",
+  "appVersion": "Version {version}",
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "serverVersion": "Serveur : {version}",
+  "@serverVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "serverVersionUnknown": "Version du serveur inconnue (serveur injoignable)",
   "users": "Utilisateurs",
   "view": "Consulter",
   "weekOf": "Semaine du {date}",

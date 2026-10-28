@@ -2892,6 +2892,20 @@ class AppLocalizationsFr extends AppLocalizations {
       'Comment utiliser Clockifai selon votre rôle, avec des vidéos de démonstration.';
 
   @override
+  String appVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String serverVersion(String version) {
+    return 'Serveur : $version';
+  }
+
+  @override
+  String get serverVersionUnknown =>
+      'Version du serveur inconnue (serveur injoignable)';
+
+  @override
   String get users => 'Utilisateurs';
 
   @override

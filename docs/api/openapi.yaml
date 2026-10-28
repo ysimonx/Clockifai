@@ -81,7 +81,9 @@ paths:
       tags: [santé]
       operationId: health
       summary: Sonde de vie (base comprise)
-      description: Exécute `select 1` si une base est configurée. Utilisée par le healthcheck Docker.
+      description: >
+        Exécute `select 1` si une base est configurée. Utilisée par le healthcheck Docker, et par l'app
+        (Paramètres › Aide) pour afficher la version installée sur le serveur.
       security: []
       responses:
         "200":
@@ -89,13 +91,13 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Health" }
-              example: { status: ok, database: true }
+              example: { status: ok, database: true, version: 0.2.7 }
         "503":
           description: Base injoignable.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Health" }
-              example: { status: degraded, database: false }
+              example: { status: degraded, database: false, version: 0.2.7 }
 
   /api/exports/report:
     get:
@@ -1390,6 +1392,11 @@ components:
       properties:
         status: { type: string, enum: [ok, degraded] }
         database: { type: boolean }
+        version:
+          type: [string, "null"]
+          description: >
+            Version installée (celle de `app/pubspec.yaml`, sans le numéro de build), gravée dans l'image par
+            `make` ; nulle si le service a été construit sans.
 
     InvitationRequest:
       type: object

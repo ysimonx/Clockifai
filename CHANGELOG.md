@@ -10,6 +10,8 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.9] — 2026-11-01
+
 ### Ajouté
 
 - **Tâches de Claude terminées toutes seules** : une tâche ou une sous-tâche créée par Claude, sans temps depuis

@@ -14,16 +14,22 @@ import '../today/day_plan.dart' show addDays, atMinute, dayKey, minuteOf;
 /// La semaine (plans/13-ux-moderne.md, lot 5) : une page, trois vues (grille, calendrier, liste), et ce qui la
 /// remplit vite : copie de la semaine précédente, remplissage par le planning, vérification avant soumission.
 
-/// Grille (feuille de temps), calendrier, ou liste des entrées de la semaine ; [week] suit d'une vue à l'autre.
+/// Grille (feuille de temps), calendrier, ou liste des entrées de la semaine ; [week] et la personne affichée
+/// ([user], null pour soi) suivent d'une vue à l'autre.
 class WeekViews extends StatelessWidget {
-  const WeekViews({super.key, required this.current, required this.week});
+  const WeekViews({super.key, required this.current, required this.week, this.user});
   final String current;
   final DateTime week;
+  final String? user;
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     final w = dayKey(week);
+    String link(String path, {bool withWeek = true}) => Uri(path: path, queryParameters: {
+          if (withWeek) 'week': w,
+          'user': ?user,
+        }).toString();
     return SegmentedButton<String>(
       showSelectedIcon: false,
       segments: [
@@ -33,10 +39,10 @@ class WeekViews extends StatelessWidget {
       ],
       selected: {current},
       onSelectionChanged: (v) => context.go(switch (v.single) {
-        'calendar' => '/calendar?week=$w',
+        'calendar' => link('/calendar'),
         // La liste complète (Suivi du temps) : regroupement, sélection multiple, glisser sur téléphone.
-        'list' => '/',
-        _ => '/timesheet?week=$w',
+        'list' => link('/', withWeek: false),
+        _ => link('/timesheet'),
       }),
     );
   }

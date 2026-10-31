@@ -21,11 +21,14 @@ import 'week_tools.dart';
 /// ou la liste des entrées de la semaine ([view] `list`). Une page, trois vues avec le calendrier (lot 5).
 /// Un chef d'équipe ou un manager choisit la personne affichée (bandeau « Collaborateur »).
 class TimesheetPage extends StatefulWidget {
-  const TimesheetPage({super.key, this.initialWeek, this.view = 'grid'});
+  const TimesheetPage({super.key, this.initialWeek, this.view = 'grid', this.initialUserId});
 
   /// Un jour de la semaine à ouvrir (lien depuis le calendrier) ; par défaut, cette semaine.
   final DateTime? initialWeek;
   final String view;
+
+  /// Personne affichée en arrivant d'une autre vue de la semaine ; par défaut, soi.
+  final String? initialUserId;
 
   @override
   State<TimesheetPage> createState() => _TimesheetPageState();
@@ -43,7 +46,7 @@ class _RowKey {
 
 class _TimesheetPageState extends State<TimesheetPage> {
   late DateTime _weekStart;
-  String? _userId; // personne affichée (null = soi)
+  late String? _userId = widget.initialUserId; // personne affichée (null = soi)
   final _extraRows = <_RowKey>{};
   bool _init = false;
 
@@ -117,7 +120,7 @@ class _TimesheetPageState extends State<TimesheetPage> {
             padding: const EdgeInsets.all(12),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                WeekViews(current: widget.view, week: _weekStart),
+                WeekViews(current: widget.view, week: _weekStart, user: mine ? null : userId),
                 if (editable && widget.view == 'grid') ...[
                   OutlinedButton.icon(
                     icon: const Icon(Icons.content_copy_outlined, size: 18),

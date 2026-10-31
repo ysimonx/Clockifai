@@ -44,7 +44,14 @@ GoRouter buildRouter(SessionController session) {
       ShellRoute(
         builder: (context, state, child) => AppShell(location: state.uri.path, child: child),
         routes: [
-          GoRoute(path: '/', pageBuilder: (_, _) => page(const TimeEntriesPage())),
+          // Personne affichée (?user=…) : un collaborateur ou son agent Claude, comme dans la grille et le calendrier.
+          GoRoute(
+            path: '/',
+            pageBuilder: (_, state) {
+              final user = state.uri.queryParameters['user'];
+              return page(TimeEntriesPage(key: ValueKey(user), initialUserId: user));
+            },
+          ),
           GoRoute(
             path: '/today',
             pageBuilder: (_, state) {
@@ -52,20 +59,23 @@ GoRouter buildRouter(SessionController session) {
               return page(TodayPage(key: ValueKey(day), initialDay: day));
             },
           ),
-          // La semaine : grille, liste (?view=list) ou calendrier, la même semaine (?week=2026-10-19).
+          // La semaine : grille, liste (?view=list) ou calendrier, la même semaine (?week=2026-10-19) et la même
+          // personne (?user=…).
           GoRoute(
             path: '/timesheet',
             pageBuilder: (_, state) {
               final week = DateTime.tryParse(state.uri.queryParameters['week'] ?? '');
               final view = state.uri.queryParameters['view'] == 'list' ? 'list' : 'grid';
-              return page(TimesheetPage(key: ValueKey('$view $week'), initialWeek: week, view: view));
+              final user = state.uri.queryParameters['user'];
+              return page(TimesheetPage(key: ValueKey('$view $week $user'), initialWeek: week, view: view, initialUserId: user));
             },
           ),
           GoRoute(
             path: '/calendar',
             pageBuilder: (_, state) {
               final week = DateTime.tryParse(state.uri.queryParameters['week'] ?? '');
-              return page(CalendarPage(key: ValueKey(week), initialWeek: week));
+              final user = state.uri.queryParameters['user'];
+              return page(CalendarPage(key: ValueKey('$week $user'), initialWeek: week, initialUserId: user));
             },
           ),
           GoRoute(path: '/reports', pageBuilder: (_, _) => page(const ReportsPage())),

@@ -75,16 +75,28 @@ def _lock_name(conn, project_id: str, name: str) -> None:
                  (project_id, name))
 
 
-def _task_named(conn, workspace_id: str, project_id: str, name: str, *, active_only: bool = True,
-                exclude: str | None = None, parent_id: str | None = None) -> str | None:
-    """Tâche de ce nom au premier niveau du projet, ou sous-tâche de ce nom sous [parent_id]."""
+def _task_named(conn, workspace_id: str, project_id: str, name: str, *, exclude: str | None = None,
+                parent_id: str | None = None) -> str | None:
+    """Tâche de ce nom au premier niveau du projet, ou sous-tâche de ce nom sous [parent_id] ; active de préférence,
+    sinon terminée : reprendre un sujet le rouvre (reopen_task) plutôt que de le doubler (plan 20)."""
     row = conn.execute(
         "select id from public.tasks where workspace_id = %s and project_id = %s and lower(name) = lower(%s) "
-        "and deleted_at is null and (not %s or status = 'active') and id is distinct from %s::uuid "
-        "and parent_id is not distinct from %s::uuid order by created_at limit 1",
-        (workspace_id, project_id, name, active_only, exclude, parent_id),
+        "and deleted_at is null and id is distinct from %s::uuid and parent_id is not distinct from %s::uuid "
+        "order by status = 'active' desc, created_at limit 1",
+        (workspace_id, project_id, name, exclude, parent_id),
     ).fetchone()
     return str(row["id"]) if row else None
+
+
+def reopen_task(conn, task_id: str | None) -> None:
+    """Claude reprend une tâche terminée, à la main ou après une semaine sans temps (plans/20-cloture-des-taches.md) :
+    elle se rouvre, avec sa tâche si c'est une sous-tâche. N'écrit rien quand tout est déjà ouvert."""
+    if task_id:
+        conn.execute(
+            "update public.tasks set status = 'active' where status = 'done' and deleted_at is null "
+            "and id in (select %s::uuid union select parent_id from public.tasks where id = %s::uuid)",
+            (task_id, task_id),
+        )
 
 
 def _create_task(conn, workspace_id: str, project_id: str, session_id: str, name: str,
@@ -144,13 +156,13 @@ def _rename(conn, task_id: str, name: str) -> None:
 def _dated(conn, workspace_id: str, project_id: str, name: str, started_at: datetime, prefs: TaskPrefs,
            exclude: str | None = None) -> str:
     """Nom libre dans le projet : « Export PDF », sinon « Export PDF (25 oct.) », puis « Export PDF (25 oct., 2) »…"""
-    if not _task_named(conn, workspace_id, project_id, name, active_only=False, exclude=exclude):
+    if not _task_named(conn, workspace_id, project_id, name, exclude=exclude):
         return name
     day = started_at.astimezone(prefs.tz)
     month = _MONTHS[prefs.locale][day.month - 1]
     label = f"{month} {day.day}" if prefs.locale == "en" else f"{day.day} {month}"
     candidate, n = f"{name} ({label})", 2
-    while _task_named(conn, workspace_id, project_id, candidate, active_only=False, exclude=exclude):
+    while _task_named(conn, workspace_id, project_id, candidate, exclude=exclude):
         candidate, n = f"{name} ({label}, {n})", n + 1
     return candidate
 
@@ -230,15 +242,16 @@ def step_task(conn, workspace_id: str, session_id: str, project_id: str | None, 
 
 
 def _ticket_row(conn, workspace_id: str, ticket: Ticket, project_id: str | None) -> dict | None:
-    """Tâche active de premier niveau du ticket (par sa clé, sinon par son URL), dans [project_id] ou dans tout
-    l'espace (projets actifs), la plus ancienne d'abord."""
+    """Tâche de premier niveau du ticket (par sa clé, sinon par son URL), dans [project_id] ou dans tout l'espace
+    (projets actifs) : active de préférence, sinon terminée (rouverte par reopen_task, plan 20), la plus ancienne
+    d'abord."""
     match = "lower(t.ticket_key) = lower(%s)" if ticket.key else "t.ticket_url = %s"
     return conn.execute(
         "select t.id, t.project_id, t.name, t.ticket_url, a.name as agent_name from public.tasks t "
         "join public.projects p on p.id = t.project_id and p.deleted_at is null and not p.archived "
         "left join clockifai_private.agent_tasks a on a.task_id = t.id "
-        f"where t.workspace_id = %s and t.parent_id is null and t.deleted_at is null and t.status = 'active' and {match} "
-        "and (%s::uuid is null or t.project_id = %s::uuid) order by t.created_at limit 1",
+        f"where t.workspace_id = %s and t.parent_id is null and t.deleted_at is null and {match} "
+        "and (%s::uuid is null or t.project_id = %s::uuid) order by t.status = 'active' desc, t.created_at limit 1",
         (workspace_id, ticket.key or ticket.url, project_id, project_id),
     ).fetchone()
 

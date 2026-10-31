@@ -125,18 +125,24 @@ class _ProjectTile extends StatelessWidget {
           ),
           Text(label, style: theme.textTheme.bodySmall),
         ]);
-    // Tâches de premier niveau, chacune suivie de ses sous-tâches (plans/16-sous-taches.md).
+    // Tâches de premier niveau, chacune suivie de ses sous-tâches (plans/16-sous-taches.md) ; les terminées sont
+    // repliées à la fin (plans/20-cloture-des-taches.md), une tâche terminée avec toutes ses sous-tâches.
     final tasks = catalog.tasks.where((t) => t.projectId == project.id && t.parentId == null).toList();
+    bool done(Task t) => t.status == 'done';
     List<Task> subtasks(Task t) => catalog.tasks.where((s) => s.parentId == t.id).toList();
+    final open = tasks.where((t) => !done(t)).toList();
+    final closed = tasks.where(done).toList();
+    // Sous-tâches terminées d'une tâche ouverte : repliées aussi, sous leur chemin « Tâche › Sous-tâche ».
+    final closedSubtasks = [for (final t in open) ...subtasks(t).where(done)];
 
-    Widget taskTile(Task t, {required bool sub}) => ListTile(
+    Widget taskTile(Task t, {required bool sub, String? title}) => ListTile(
           dense: true,
           contentPadding: EdgeInsets.only(left: sub ? 40 : 16, right: 8),
           leading: Icon(
               sub ? Icons.subdirectory_arrow_right : (t.status == 'done' ? Icons.check_circle : Icons.radio_button_unchecked),
               size: 18,
               color: sub ? theme.colorScheme.outline : null),
-          title: Text(t.name, style: t.status == 'done' ? TextStyle(decoration: TextDecoration.lineThrough, color: theme.colorScheme.outline) : null),
+          title: Text(title ?? t.name, style: t.status == 'done' ? TextStyle(decoration: TextDecoration.lineThrough, color: theme.colorScheme.outline) : null),
           subtitle: t.estimateSeconds == null || t.estimateSeconds! <= 0
               ? null
               : Text(l.estimateUsed(hours(taskUsed(t)), hours(t.estimateSeconds!)),
@@ -147,7 +153,7 @@ class _ProjectTile extends StatelessWidget {
           trailing: session.isManager
               ? Row(mainAxisSize: MainAxisSize.min, children: [
                   TicketLink(task: t),
-                  if (!sub)
+                  if (t.parentId == null)
                     IconButton(
                       tooltip: l.createSubtask,
                       icon: const Icon(Icons.subdirectory_arrow_right),
@@ -161,7 +167,7 @@ class _ProjectTile extends StatelessWidget {
                   IconButton(
                     tooltip: t.status == 'done' ? l.reopen : l.markDone,
                     icon: Icon(t.status == 'done' ? Icons.undo : Icons.done),
-                    onPressed: () => catalogRepo.updateTask(t.id, status: t.status == 'done' ? 'active' : 'done'),
+                    onPressed: () => done(t) ? catalogRepo.reopenTask(t.id) : catalogRepo.updateTask(t.id, status: 'done'),
                   ),
                   IconButton(
                     tooltip: l.editTask,
@@ -225,10 +231,26 @@ class _ProjectTile extends StatelessWidget {
         children: [
           if (tasks.isEmpty)
             ListTile(dense: true, title: Text(l.noTasks, style: TextStyle(color: theme.colorScheme.outline))),
-          for (final t in tasks) ...[
+          for (final t in open) ...[
             taskTile(t, sub: false),
-            for (final s in subtasks(t)) taskTile(s, sub: true),
+            for (final s in subtasks(t).where((s) => !done(s))) taskTile(s, sub: true),
           ],
+          if (closed.isNotEmpty || closedSubtasks.isNotEmpty)
+            ExpansionTile(
+              shape: const Border(),
+              dense: true,
+              tilePadding: const EdgeInsets.only(left: 16, right: 8),
+              leading: Icon(Icons.check_circle_outline, size: 18, color: theme.colorScheme.outline),
+              title: Text(l.doneTasks(closed.length + closedSubtasks.length),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline)),
+              children: [
+                for (final t in closed) ...[
+                  taskTile(t, sub: false),
+                  for (final s in subtasks(t)) taskTile(s, sub: true),
+                ],
+                for (final s in closedSubtasks) taskTile(s, sub: false, title: catalog.taskPath(s.id)),
+              ],
+            ),
         ],
       ),
     );
@@ -277,7 +299,9 @@ class _TaskDialogState extends State<_TaskDialog> {
     });
     if (_ticketError != null || _estimateError != null) return;
     // Un ticket, une tâche par projet : celle qui l'a déjà est signalée plutôt que doublée.
-    final owner = ticket == null ? null : context.read<CatalogController>().ticketTask(ticket, projectId: widget.project.id);
+    final owner = ticket == null
+        ? null
+        : context.read<CatalogController>().ticketTask(ticket, projectId: widget.project.id, withDone: true);
     if (owner != null && owner.id != t?.id) {
       setState(() => _ticketError = l.ticketTaskExists(owner.name));
       return;

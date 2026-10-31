@@ -3426,6 +3426,24 @@ abstract class AppLocalizations {
   /// **'Dernière synchronisation'**
   String get lastSync;
 
+  /// No description provided for @lastSyncHoursAgo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernière synchro il y a {hours} h'**
+  String lastSyncHoursAgo(int hours);
+
+  /// No description provided for @lastSyncMinutesAgo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernière synchro il y a {minutes} min'**
+  String lastSyncMinutesAgo(int minutes);
+
+  /// No description provided for @lastSyncOn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernière synchro le {date}'**
+  String lastSyncOn(String date);
+
   /// No description provided for @lastWeek.
   ///
   /// In fr, this message translates to:
@@ -3803,6 +3821,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucune tâche'**
   String get noTasks;
+
+  /// No description provided for @doneTasks.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminées ({count})'**
+  String doneTasks(int count);
 
   /// No description provided for @noTeammateSelected.
   ///

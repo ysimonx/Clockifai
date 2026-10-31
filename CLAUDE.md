@@ -66,6 +66,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - Dates sans heure (`period_start`, `start_date`, `date`…) : texte `yyyy-MM-dd` côté client (`dayKey()` / `parseDay()` dans `modules_repository.dart`).
 - Présence chantier (`features/presence/`, plan 13, lot 13) : la position ne quitte jamais le téléphone ; seul le
   journal d'heures `PresenceLog` (préférences locales, par utilisateur) alimente les propositions d'« Aujourd'hui ».
+- Sync figée (flux PowerSync sans délai de lecture, après une veille) : `SyncService.refreshIfStale` reconnecte une sync « connectée » sans point de contrôle depuis 10 min (chaque minute, et dès 2 min au retour au premier plan) ; le pied du menu affiche l'âge au-delà de 15 min (`staleSyncLabel`).
 - Le worker web PowerSync est **compilé depuis l'app** (`make app-web-assets`), pas téléchargé : le worker publié peut être en décalage de version avec `sqlite_async`.
 
 ### Base de données
@@ -87,6 +88,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - Liste blanche (D6) : jamais le prompt, `tool_input`, `tool_response` ni le texte de la transcription, sauf l'objectif, l'étape et le ticket du client (adresse ou clé, titre) passés à l'outil `set_current_task` (D18, plan 19). La transcription (et celles des sous-agents) est relue sur le poste au `Stop` pour l'usage IA (D17) : seuls partent des totaux `agent_usage` par tranche de 5 minutes, modèle, effort et vitesse. Ajouter un fichier au plugin, c'est aussi l'ajouter à `PLUGIN_FILES` (`routes/claude.py`).
 - `scripts/clockifai_mcp.py` : serveur MCP local (stdio, `.mcp.json`), même contrainte Python 3.9 ; il n'appelle pas le réseau, le hook relaie l'objectif et l'étape (`session_task` `{task_name, step_name}`) : l'objectif devient la tâche, l'étape une sous-tâche (plan 16).
 - Sous-tâches (`tasks.parent_id`, 0021, plan 16) : un seul niveau, même projet (trigger) ; côté app, `catalog.tasksOf` ne rend que le premier niveau, `subtasksOf`, `rootTask` et `taskPath` (« Tâche › Sous-tâche ») le reste.
+- Clôture (plan 20) : le job `close_idle_agent_tasks` termine chaque nuit les tâches de `agent_tasks` sans temps depuis 7 jours ; reprendre = rouvrir (`_task_named` et `_ticket_row` trouvent aussi les terminées, `reopen_task` dans `process_session` pour l'entrée en cours seulement ; côté app `reopenTask`, managers).
 
 ### Flutter
 - Organisation par fonctionnalité dans `lib/features/<feature>/` ; transverse dans `lib/core/`.

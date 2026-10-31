@@ -53,6 +53,8 @@ sequenceDiagram
 - À l'expiration du JWT, PowerSync demande de nouveaux identifiants (`invalidateCredentials` relance
   `refreshSession`).
 - La déconnexion efface la base locale : un autre compte peut se connecter sur le même appareil.
+- Une sync connectée sans point de contrôle depuis 10 minutes (2 minutes au retour au premier plan) est reconnectée
+  par `SyncService.refreshIfStale` : `connect()` remplace la connexion en cours.
 
 Sources : `app/lib/features/auth/login_page.dart`, `app/lib/core/session.dart`,
 `app/lib/data/powersync/sync_service.dart`, `app/lib/data/powersync/connector.dart`,

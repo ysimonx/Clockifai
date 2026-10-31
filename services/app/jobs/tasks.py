@@ -82,6 +82,29 @@ def close_idle_agent_entries() -> int:
     return closed
 
 
+def close_idle_agent_tasks(after_days: int = 7) -> int:
+    """Tâches et sous-tâches créées pour un agent Claude (agent_tasks) sans temps depuis N jours, sous-tâches comprises
+    et entrée en cours exceptée : terminées (plans/20-cloture-des-taches.md). Claude qui reprend le sujet les rouvre."""
+    if after_days <= 0:
+        return 0
+    count = execute(
+        """
+        update public.tasks t set status = 'done'
+         where t.status = 'active' and t.deleted_at is null
+           and t.created_at < now() - make_interval(days => %(d)s)
+           and exists (select 1 from clockifai_private.agent_tasks a where a.task_id = t.id)
+           and not exists (
+             select 1 from public.time_entries te join public.tasks s on s.id = te.task_id
+              where (s.id = t.id or s.parent_id = t.id) and te.deleted_at is null
+                and coalesce(te.end_at, now()) > now() - make_interval(days => %(d)s))
+        """,
+        {"d": after_days},
+    )
+    if count:
+        log.info("agents : %s tâche(s) terminée(s) après %s jours sans temps", count, after_days)
+    return count
+
+
 def purge_activity_events(older_than_days: int = 30) -> int:
     """Événements bruts des hooks et de l'extension : gardés 30 jours (plan 10, D6)."""
     count = execute(

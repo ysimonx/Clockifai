@@ -107,14 +107,18 @@ class CatalogController extends ChangeNotifier {
       taskId == null ? const [] : tasks.where((t) => t.parentId == taskId && t.status == 'active').toList();
 
   /// La tâche active d'un ticket (plans/19-tickets-clients.md), retrouvée par sa clé (sans tenir compte de la casse),
-  /// sinon par son URL ; dans [projectId] s'il est donné, sinon dans tout l'espace.
-  Task? ticketTask(TicketRef ticket, {String? projectId}) => tasks
-      .where((t) =>
+  /// sinon par son URL ; dans [projectId] s'il est donné, sinon dans tout l'espace. [withDone] : à défaut, sa tâche
+  /// terminée (plans/20-cloture-des-taches.md).
+  Task? ticketTask(TicketRef ticket, {String? projectId, bool withDone = false}) => byStatus(tasks.where((t) =>
           t.parentId == null &&
-          t.status == 'active' &&
+          (withDone || t.status == 'active') &&
           (projectId == null || t.projectId == projectId) &&
-          isTicket(ticket, key: t.ticketKey, url: t.ticketUrl))
+          isTicket(ticket, key: t.ticketKey, url: t.ticketUrl)))
       .firstOrNull;
+
+  /// Les tâches actives d'abord, puis les terminées, chacune dans l'ordre d'origine.
+  static List<Task> byStatus(Iterable<Task> tasks) =>
+      [...tasks.where((t) => t.status == 'active'), ...tasks.where((t) => t.status != 'active')];
 
   /// La tâche de premier niveau : la tâche elle-même, ou le parent d'une sous-tâche.
   Task? rootTask(String? id) {

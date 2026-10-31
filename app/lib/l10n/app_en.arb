@@ -1101,6 +1101,30 @@
   "lastMonth": "Last month",
   "lastSeen": "Last seen",
   "lastSync": "Last sync",
+  "lastSyncHoursAgo": "Last sync {hours} h ago",
+  "@lastSyncHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "lastSyncMinutesAgo": "Last sync {minutes} min ago",
+  "@lastSyncMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "lastSyncOn": "Last sync on {date}",
+  "@lastSyncOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "lastWeek": "Last week",
   "launchAtLogin": "Start at login",
   "launchAtLoginApproval": "Allow it in System Settings > General > Login Items.",
@@ -1164,6 +1188,14 @@
   "noTag": "No tag",
   "noTags": "No tags",
   "noTasks": "No tasks",
+  "doneTasks": "Completed ({count})",
+  "@doneTasks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noTeammateSelected": "Select at least one person.",
   "noWorkspace": "No workspace",
   "noWorkspaceMessage": "Your account has no active workspace. Ask an admin for an invitation.",

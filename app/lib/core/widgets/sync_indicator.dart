@@ -23,6 +23,18 @@ bool _isNetworkError(Object? e) {
 /// Hors ligne : flux de sync coupé, ou envoi impossible faute de réseau (le flux peut survivre un moment).
 bool _isOffline(SyncStatus? status) => !(status?.connected ?? false) || _isNetworkError(status?.anyError);
 
+/// « Dernière synchro il y a 2 h » quand la sync se dit connectée mais n'a rien reçu depuis plus longtemps que ce
+/// que laisse passer la reconnexion de [SyncService] : les données affichées sont sans doute figées. Nul sinon.
+String? staleSyncLabel(AppLocalizations l, String locale, SyncStatus? status, DateTime now) {
+  final last = status?.lastSyncedAt;
+  if (last == null || _isOffline(status)) return null;
+  final ago = now.difference(last);
+  if (ago < SyncService.staleAfter + const Duration(minutes: 5)) return null;
+  if (ago.inHours < 1) return l.lastSyncMinutesAgo(ago.inMinutes);
+  if (ago.inDays < 1) return l.lastSyncHoursAgo(ago.inHours);
+  return l.lastSyncOn(DateFormat.yMMMd(locale).add_Hm().format(last.toLocal()));
+}
+
 /// Icône d'état de la synchronisation (connecté, en cours, hors ligne) + détail au clic. Un badge compte les
 /// modifications qui attendent de partir (plans/13-ux-moderne.md, lot 9 : « hors ligne, rien n'est perdu »).
 ///
@@ -38,6 +50,7 @@ class SyncIndicator extends StatefulWidget {
 class _SyncIndicatorState extends State<SyncIndicator> {
   Timer? _poll;
   int _pending = 0;
+  int _minute = 0; // reconstruit chaque minute : l'âge de la dernière synchro avance sans changement d'état
 
   @override
   void initState() {
@@ -50,7 +63,13 @@ class _SyncIndicatorState extends State<SyncIndicator> {
   Future<void> _refresh() async {
     try {
       final n = (await syncService.powersync.getUploadQueueStats()).count;
-      if (mounted && n != _pending) setState(() => _pending = n);
+      final minute = DateTime.now().millisecondsSinceEpoch ~/ Duration.millisecondsPerMinute;
+      if (mounted && (n != _pending || minute != _minute)) {
+        setState(() {
+          _pending = n;
+          _minute = minute;
+        });
+      }
     } catch (_) {
       // base fermée (déconnexion) : le badge attend la prochaine lecture
     }
@@ -67,11 +86,14 @@ class _SyncIndicatorState extends State<SyncIndicator> {
     final l = context.l10n;
     final status = context.select<SessionController, SyncStatus?>((s) => s.syncStatus);
     final busy = (status?.uploading ?? false) || (status?.downloading ?? false);
+    final stale = staleSyncLabel(l, context.localeTag, status, DateTime.now());
     final (icon, color, label) = _isOffline(status)
         ? (Icons.cloud_off, Theme.of(context).colorScheme.error, l.offline)
         : busy
             ? (Icons.cloud_sync, Theme.of(context).colorScheme.primary, l.syncing)
-            : (Icons.cloud_done, AppColors.of(context).success, l.synced);
+            : stale != null
+                ? (Icons.cloud_queue, AppColors.of(context).warning, stale)
+                : (Icons.cloud_done, AppColors.of(context).success, l.synced);
     void details() => showDialog<void>(context: context, builder: (_) => const _SyncDetails());
     final text = _pending > 0 ? '$label · ${l.pendingCount(_pending)}' : label;
     if (widget.line) {
@@ -88,7 +110,7 @@ class _SyncIndicatorState extends State<SyncIndicator> {
               Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(_pending > 0 || _isOffline(status) || busy ? text : l.syncedWorksOffline,
+                child: Text(_pending > 0 || _isOffline(status) || busy || stale != null ? text : l.syncedWorksOffline,
                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
               ),
             ]),

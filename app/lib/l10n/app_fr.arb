@@ -1366,6 +1366,30 @@
   "lastMonth": "Mois dernier",
   "lastSeen": "Dernière activité",
   "lastSync": "Dernière synchronisation",
+  "lastSyncHoursAgo": "Dernière synchro il y a {hours} h",
+  "@lastSyncHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "lastSyncMinutesAgo": "Dernière synchro il y a {minutes} min",
+  "@lastSyncMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "lastSyncOn": "Dernière synchro le {date}",
+  "@lastSyncOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "lastWeek": "Semaine dernière",
   "launchAtLogin": "Démarrer à l'ouverture de session",
   "launchAtLoginApproval": "À autoriser dans Réglages Système > Général > Ouverture.",
@@ -1457,6 +1481,14 @@
   "noTag": "Sans tag",
   "noTags": "Aucun tag",
   "noTasks": "Aucune tâche",
+  "doneTasks": "Terminées ({count})",
+  "@doneTasks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noTeammateSelected": "Choisissez au moins une personne.",
   "noWorkspace": "Aucun workspace",
   "noWorkspaceMessage": "Votre compte n'appartient à aucun workspace actif. Demandez une invitation à un administrateur.",

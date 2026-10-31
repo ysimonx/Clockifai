@@ -46,6 +46,8 @@ def start_scheduler(app: Flask) -> BackgroundScheduler:
         coalesce=True,
     )
     sched.add_job(tasks.purge_activity_events, "cron", hour=4, minute=30, id="purge_activity_events", max_instances=1)
+    sched.add_job(tasks.close_idle_agent_tasks, "cron", hour=4, minute=0, id="close_idle_agent_tasks", max_instances=1,
+                  kwargs={"after_days": app.config["JOB_CLOSE_IDLE_TASKS_AFTER_DAYS"]})
 
     def in_app(job):
         @functools.wraps(job)  # garde le nom du job dans les journaux

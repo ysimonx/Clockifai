@@ -102,7 +102,7 @@ erDiagram
     uuid project_id FK
     uuid parent_id FK "sous-tâche (0021) : un niveau"
     text name
-    text status "active | done"
+    text status "active | done ; Claude : done après 7 jours sans temps (plan 20)"
     int estimate_seconds
     text ticket_url "ticket du client, Jira, Linear, GitHub (0027)"
     text ticket_key "clé du ticket, ENG-123 : retrouve la tâche"

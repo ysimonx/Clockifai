@@ -10,6 +10,27 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.9] — 2026-11-01
+
+### Ajouté
+
+- **Tâches de Claude terminées toutes seules** : une tâche ou une sous-tâche créée par Claude, sans temps depuis
+  7 jours, passe en terminée ; elle se rouvre dès que Claude reprend le même objectif, la même étape ou le même
+  ticket, sans doublon (31 octobre 2026).
+
+### Modifié
+
+- **Projets et clients** : les tâches terminées ne s'affichent plus au milieu des autres ; la ligne « Terminées »,
+  en bas de chaque projet, les déplie. Rouvrir une sous-tâche rouvre aussi sa tâche, et retaper le nom d'une tâche
+  terminée dans le sélecteur la rouvre au lieu d'en créer une seconde (managers) (31 octobre 2026).
+
+### Corrigé
+
+- **Synchronisation bloquée après une mise en veille** : l'application se reconnecte d'elle-même quand elle ne
+  reçoit plus rien, au lieu de montrer des données figées (une session de Claude « en cours » depuis 3 h, fermée
+  depuis longtemps). Si la synchronisation reste en retard, le pied du menu l'indique en orange : « Dernière
+  synchro il y a 2 h » (1er novembre 2026).
+
 ## [0.2.8] — 2026-10-31
 
 ### Ajouté

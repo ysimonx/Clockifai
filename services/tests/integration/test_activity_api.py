@@ -12,8 +12,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app.db import close_pool, init_pool
-from app.jobs.tasks import close_idle_agent_entries
+from app.db import close_pool, connection, init_pool
+from app.jobs.tasks import close_idle_agent_entries, close_idle_agent_tasks
 from app.services.agent_clock import IDLE_TIMEOUT
 
 from .test_backend import ENV, SERVICES, _call, iso, rest, signup
@@ -910,3 +910,76 @@ def test_a_client_ticket_is_the_task_and_claude_s_subjects_its_subtasks(team):
     assert status == 200 and header[5:8] == ["Tâche", "Sous-tâche", "Ticket"]
     row = next(line.split(";") for line in lines[1:] if "Validation des champs" in line)
     assert row[5:8] == ["ENG-501 · Formulaire de commande", "Validation des champs", url]
+
+
+def test_claude_tasks_idle_for_a_week_are_closed_then_reopened_when_resumed(team):
+    """Plan 20 : le job de nuit termine les tâches et sous-tâches de Claude sans temps depuis 7 jours, jamais celles
+    d'un humain ni celles qui ont du temps récent ; Claude qui reprend l'objectif, l'étape ou le ticket les rouvre,
+    sans doublon."""
+    owner_t, _ = team["people"]["owner"]
+    repo = {"remote_key": "github.com/ysimonx/cloture", "cwd": "/Users/y/dev/cloture"}
+    assert api("POST", "/api/activity/rules", team["token"],
+               {"remote_key": repo["remote_key"], "project_id": team["project"]})[0] == 201
+    url = "https://linear.app/acme/issue/ENG-777/cloture"
+
+    def at(minutes: float, kind: str, session: str, **payload) -> dict:
+        return _event(kind, _ago(minutes), session, **repo, **({"payload": payload} if payload else {}))
+
+    def send(*events) -> None:
+        assert api("POST", "/api/activity/events", team["token"], {"events": list(events)})[0] == 202
+
+    def entry_at(minutes: float) -> dict:
+        return next(e for e in _agent_entries(team["agent"]) if e["start_at"].startswith(iso(_ago(minutes))[:16]))
+
+    def task(tid: str) -> dict:
+        _, rows = rest("GET", f"tasks?id=eq.{tid}&select=id,parent_id,status", SERVICE)
+        return rows[0]
+
+    def named(name: str) -> list[dict]:
+        _, rows = rest("GET", f"tasks?project_id=eq.{team['project']}&deleted_at=is.null&select=id,name", SERVICE)
+        return [r for r in rows if r["name"].lower() == name.lower()]
+
+    s1, s2, s3 = (str(uuid.uuid4()) for _ in range(3))
+    send(at(640, "prompt", s1), at(639.9, "session_task", s1, task_name="Audit des tâches", step_name="Lecture"),
+         at(638, "agent_stop", s1))
+    sub = task(entry_at(640)["task_id"])
+    goal = task(sub["parent_id"])
+    send(at(630, "prompt", s2), at(629.9, "session_task", s2, task_name="Clôture", ticket=url, ticket_title="Clore"),
+         at(628, "agent_stop", s2))
+    ticket_sub = task(entry_at(630)["task_id"])
+    ticket = task(ticket_sub["parent_id"])
+    send(at(620, "prompt", s3), at(619.9, "session_task", s3, task_name="Sujet récent"), at(618, "agent_stop", s3))
+    recent = task(entry_at(620)["task_id"])
+    human = str(uuid.uuid4())
+    assert rest("POST", "tasks", owner_t, {"id": human, "workspace_id": team["wid"], "project_id": team["project"],
+                                            "name": "Rangement"})[0] == 201
+
+    # Une semaine plus tard : les deux premières sessions sont anciennes ; « Sujet récent » a encore du temps.
+    idle = [goal["id"], sub["id"], ticket["id"], ticket_sub["id"]]
+    init_pool(DSN)
+    try:
+        with connection() as conn:
+            conn.execute("select set_config('clockifai.bypass_guard', 'on', true)")
+            conn.execute("update public.tasks set created_at = created_at - interval '8 days' where id = any(%s::uuid[])",
+                         ([*idle, recent["id"], human],))
+            conn.execute("update public.time_entries set start_at = start_at - interval '8 days', "
+                         "end_at = end_at - interval '8 days' where id = any(%s::uuid[])",
+                         ([entry_at(640)["id"], entry_at(630)["id"]],))
+            conn.commit()
+        close_idle_agent_tasks(7)
+    finally:
+        close_pool()
+    assert [task(t)["status"] for t in idle] == ["done"] * 4
+    assert task(recent["id"])["status"] == "active", "du temps il y a moins d'une semaine"
+    assert task(human)["status"] == "active", "une tâche d'un humain ne se ferme jamais seule"
+
+    # Claude reprend l'objectif et l'étape, puis le ticket : les mêmes tâches, rouvertes.
+    s4, s5 = str(uuid.uuid4()), str(uuid.uuid4())
+    send(at(8, "prompt", s4), at(7.9, "session_task", s4, task_name="audit des tâches", step_name="lecture"),
+         at(7.5, "agent_stop", s4))
+    send(at(7.4, "prompt", s5), at(7.3, "session_task", s5, task_name="Clôture", ticket="eng-777"),
+         at(7.2, "agent_stop", s5))
+    assert [task(t)["status"] for t in idle] == ["active"] * 4
+    assert [t["id"] for t in named("Audit des tâches")] == [goal["id"]]
+    assert [t["id"] for t in named("Lecture")] == [sub["id"]]
+    assert [t["id"] for t in named("Clôture")] == [ticket_sub["id"]]

@@ -34,24 +34,37 @@ Future<String?> promptNewTask(BuildContext context, Project p, {String initial =
   return pickOrCreateTask(context, p, name, parent: parent);
 }
 
-/// La tâche du ticket [ticket] dans le projet [p] (plans/19-tickets-clients.md) : reprise si elle existe, sinon
-/// créée sous le nom « ENG-123 · Titre », le titre étant demandé (facultatif). Nul si l'utilisateur annule.
+/// La tâche du ticket [ticket] dans le projet [p] (plans/19-tickets-clients.md) : reprise si elle existe (rouverte
+/// par un manager si elle est terminée, plans/20-cloture-des-taches.md), sinon créée sous le nom « ENG-123 · Titre »,
+/// le titre étant demandé (facultatif). Nul si l'utilisateur annule.
 Future<String?> promptTicketTask(BuildContext context, Project p, TicketRef ticket) async {
-  final existing = context.read<CatalogController>().ticketTask(ticket, projectId: p.id);
-  if (existing != null) return existing.id;
+  final canReopen = context.read<SessionController>().isManager;
+  final existing = context.read<CatalogController>().ticketTask(ticket, projectId: p.id, withDone: canReopen);
+  if (existing != null) return _resumed(existing);
   final l = context.l10n;
   final title = await promptText(context, title: l.newTicketTask(ticket.label), label: l.ticketTitle);
   if (title == null || !context.mounted) return null;
   return catalogRepo.createTask(p.workspaceId, p.id, ticketTaskName(ticket, title), ticket: ticket);
 }
 
-/// La tâche [name] du projet [p] (ou la sous-tâche de [parent]), créée si elle n'existe pas encore.
+/// La tâche [name] du projet [p] (ou la sous-tâche de [parent]), créée si elle n'existe pas encore. Un manager
+/// reprend aussi une tâche terminée du même nom, qui se rouvre (plans/20-cloture-des-taches.md).
 Future<String> pickOrCreateTask(BuildContext context, Project p, String name, {Task? parent}) async {
   final catalog = context.read<CatalogController>();
-  final existing = (parent == null ? catalog.tasksOf(p.id) : catalog.subtasksOf(parent.id))
-      .where((t) => t.name.toLowerCase() == name.toLowerCase())
+  final canReopen = context.read<SessionController>().isManager;
+  final existing = CatalogController.byStatus(catalog.tasks.where((t) =>
+          t.projectId == p.id &&
+          t.parentId == parent?.id &&
+          (canReopen || t.status == 'active') &&
+          t.name.toLowerCase() == name.toLowerCase()))
       .firstOrNull;
-  return existing?.id ?? await catalogRepo.createTask(p.workspaceId, p.id, name, parentId: parent?.id);
+  return existing == null ? catalogRepo.createTask(p.workspaceId, p.id, name, parentId: parent?.id) : _resumed(existing);
+}
+
+/// L'id de la tâche reprise, rouverte si elle était terminée.
+Future<String> _resumed(Task t) async {
+  if (t.status == 'done') await catalogRepo.reopenTask(t.id);
+  return t.id;
 }
 
 class _ProjectPickerDialog extends StatefulWidget {

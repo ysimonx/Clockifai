@@ -102,7 +102,10 @@
         </ul>
         <p>En tête du menu, <span class="ui">Rechercher ou agir</span> ouvre les <a href="#clavier">commandes</a> ; en
           pied, l’état de la synchronisation : <span class="ui">Synchronisé · fonctionne hors ligne</span>,
-          <span class="ui">Synchronisation…</span> ou <span class="ui">Hors ligne</span>. Sur téléphone, le menu est en
+          <span class="ui">Synchronisation…</span> ou <span class="ui">Hors ligne</span>. En orange,
+          <span class="ui">Dernière synchro il y a 2 h</span> signale une synchronisation restée bloquée (après une mise
+          en veille, par exemple) : ce qui s’affiche date de ce moment-là. L’application se reconnecte d’elle-même ; si
+          l’indication reste, quittez-la puis relancez-la. Sur téléphone, le menu est en
           bas : <span class="ui">Aujourd’hui</span>, <span class="ui">Semaine</span>, le gros bouton
           <span class="ui">+</span>, <span class="ui">Équipe</span> et <span class="ui">Plus</span> pour le reste.</p>
         <p>Une entrée marquée « saisi par Karim Haddad » a été saisie pour vous par votre chef d’équipe (pointage
@@ -554,6 +557,10 @@
             <span class="ui">Pas de tâche</span> (le projet seulement). Si Claude précise le nom juste après l’avoir
             donné, la tâche est renommée au lieu d’en créer une autre. Sans projet, le nom sert de description en
             attendant ; une tâche que vous choisissez, ou que vous renommez, n’est jamais remplacée.</li>
+          <li>Inutile de terminer les tâches de Claude à la main : une tâche ou une sous-tâche qu’il a créée, sans temps
+            depuis 7 jours, passe d’elle-même en <span class="ui">Terminées</span> la nuit suivante. Dès que Claude
+            reprend le même objectif, la même étape ou le même ticket, elle se rouvre : jamais de doublon. Les tâches
+            créées par une personne ne se terminent jamais seules.</li>
           <li id="claude-tickets">Travail sur le <a href="manager.html#tickets">ticket d’un client</a> : donnez son
             adresse Jira, Linear ou GitHub (ou sa clé, « ENG-123 ») dans votre premier message. Le ticket devient la
             tâche (« ENG-123 · Formulaire de commande », le titre tiré de votre message ou du ticket), pour toute la

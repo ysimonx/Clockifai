@@ -129,6 +129,9 @@ Tâches planifiées de Flask (`services/app/jobs/`, un seul worker donc un seul 
   `workspace_members`, `workspaces` ;
 - `close_idle_agent_entries` chaque minute : recalcule les sessions Claude Code dont une entrée d'agent tourne
   sans activité depuis 10 minutes, ce qui la ferme à sa dernière activité ;
+- `close_idle_agent_tasks` chaque jour à 04:00 UTC : termine (`status = 'done'`) les tâches et sous-tâches créées
+  pour un agent (`clockifai_private.agent_tasks`) sans temps depuis `JOB_CLOSE_IDLE_TASKS_AFTER_DAYS` jours (7 ;
+  0 = jamais), sous-tâches comprises, entrée en cours exceptée ; Claude qui reprend le sujet les rouvre ;
 - `purge_activity_events` chaque jour à 04:30 UTC : supprime les événements bruts reçus il y a plus de 30 jours ;
 - `budget_alerts` chaque heure (à la 7e minute) : projets et tâches qui franchissent 80 puis 100 % de leur budget
   (heures, montant) ou de leur estimation ; chaque seuil est noté une fois dans `clockifai_private.budget_alerts`, et
@@ -161,6 +164,11 @@ flowchart LR
 4. Le changement validé part dans la réplication logique (publication `powersync`, rôle `powersync_role`
    `BYPASSRLS`) ; PowerSync recalcule les buckets et le redescend à tous les clients dont les Sync Streams
    couvrent la ligne. Une ligne soft-deleted sort des flux et disparaît des bases locales.
+5. Le flux de PowerSync n'a pas de délai de lecture : après une mise en veille, il peut rester ouvert sans plus rien
+   recevoir, et l'app montre des données figées. `SyncService` le reconnecte quand il se dit connecté sans avoir
+   terminé de point de contrôle depuis 10 minutes (vérifié chaque minute), ou depuis 2 minutes au retour de l'app au
+   premier plan. Une reconnexion coûte un point de contrôle, qui rafraîchit aussi `lastSyncedAt` ; au-delà de
+   15 minutes, le pied du menu affiche l'âge de la dernière synchro.
 
 Flask n'écrit pas par ce chemin : il se connecte directement à Postgres (rôle `postgres`, hors RLS). Sans JWT,
 `auth.uid()` est nul et les gardes des triggers laissent passer ; Flask fait donc ses propres contrôles

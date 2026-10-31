@@ -109,6 +109,15 @@ class CatalogRepository {
         ticketKey: ticket.present ? Value(ticket.value?.key) : const Value.absent(),
       ));
 
+  /// Rouvre une tâche terminée, avec sa tâche si c'est une sous-tâche : sinon elle resterait cachée sous une tâche
+  /// terminée (plans/20-cloture-des-taches.md). Managers seulement (`tasks_guard`).
+  Future<void> reopenTask(String id) async {
+    final t = await (db.select(db.tasks)..where((t) => t.id.equals(id))).getSingleOrNull();
+    if (t == null) return;
+    await (db.update(db.tasks)..where((r) => r.id.isIn([id, ?t.parentId]) & r.status.equals('done')))
+        .write(const TasksCompanion(status: Value('active')));
+  }
+
   /// Supprime la tâche et ses sous-tâches (même horodatage : le serveur les rend ensemble à la restauration) ;
   /// renvoie les lignes d'avant, pour [restoreTasks] (Annuler).
   Future<List<Task>> deleteTask(String id) => db.transaction(() async {

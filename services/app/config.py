@@ -52,6 +52,8 @@ class Config:
     JOBS_ENABLED = _bool("JOBS_ENABLED", True)
     JOB_AUTOSTOP_INTERVAL_MIN = int(os.environ.get("JOB_AUTOSTOP_INTERVAL_MIN", "5"))
     JOB_PURGE_DELETED_AFTER_DAYS = int(os.environ.get("JOB_PURGE_DELETED_AFTER_DAYS", "30"))
+    # Tâches de Claude sans temps depuis N jours : terminées (plan 20) ; 0 = jamais
+    JOB_CLOSE_IDLE_TASKS_AFTER_DAYS = int(os.environ.get("JOB_CLOSE_IDLE_TASKS_AFTER_DAYS", "7"))
 
     # Plugin Claude Code servi par /api/claude (copié dans l'image, sinon lu dans le dépôt)
     CLAUDE_PLUGIN_DIR = os.environ.get("CLAUDE_PLUGIN_DIR") or str(

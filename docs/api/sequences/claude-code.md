@@ -61,6 +61,7 @@ sequenceDiagram
     Note over P,PS: Inactivité
     F->>PG: close_idle_agent_entries (chaque minute)
     F->>PG: entrée fermée à sa dernière activité
+    F->>PG: close_idle_agent_tasks (chaque nuit) : tâches de Claude sans temps depuis 7 jours terminées
     end
 ```
 
@@ -73,7 +74,9 @@ sequenceDiagram
   session, sinon règle personnelle (`POST /api/activity/rules`), sinon projet du dépôt.
 - Tâche nommée par Claude (D18) : Claude appelle l'outil `set_current_task` du serveur MCP local du plugin ; le
   hook relaie `session_task` `{task_name}` ; le serveur reprend ou crée la tâche de ce nom dans le projet de
-  l'entrée, et coupe l'entrée quand le sujet change en cours de route.
+  l'entrée, et coupe l'entrée quand le sujet change en cours de route. Une tâche terminée (à la main, ou par
+  `close_idle_agent_tasks` après 7 jours sans temps) est reprise et rouverte, avec sa tâche pour une sous-tâche ;
+  seule l'entrée en cours rouvre, pas les entrées plus anciennes que le recalcul rejoue.
 - Un agent désactivé ou retiré par un admin : les événements sont gardés, aucune entrée n'est écrite.
 - Usage IA (D17) : au `Stop`, au `SubagentStop` et à la fin de la session, le script relit la transcription de la
   session et de ses sous-agents depuis la dernière position lue et n'envoie que des totaux par tranche de 5

@@ -2067,6 +2067,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lastSync => 'Last sync';
 
   @override
+  String lastSyncHoursAgo(int hours) {
+    return 'Last sync $hours h ago';
+  }
+
+  @override
+  String lastSyncMinutesAgo(int minutes) {
+    return 'Last sync $minutes min ago';
+  }
+
+  @override
+  String lastSyncOn(String date) {
+    return 'Last sync on $date';
+  }
+
+  @override
   String get lastWeek => 'Last week';
 
   @override
@@ -2276,6 +2291,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noTasks => 'No tasks';
+
+  @override
+  String doneTasks(int count) {
+    return 'Completed ($count)';
+  }
 
   @override
   String get noTeammateSelected => 'Select at least one person.';

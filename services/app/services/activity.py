@@ -16,8 +16,9 @@ from decimal import ROUND_HALF_UP, Decimal
 
 import psycopg
 
-from .agent_clock import Create, Event, Existing, Update, plan_session
+from .agent_clock import IDLE_TIMEOUT, Create, Event, Existing, Update, plan_session
 from .agent_tasks import (
+    reopen_task,
     root_task,
     session_subject,
     split_subject,
@@ -494,6 +495,10 @@ def process_session(conn: psycopg.Connection, workspace_id: str, pilot_id: str, 
             except UnknownProject:
                 project_id, task_id = None, None
                 billable, rate = entry_defaults(conn, workspace_id, agent_id, None)
+        # Claude travaille sur une tâche terminée (à la main, ou après une semaine sans temps) : elle se rouvre. Pas
+        # pour les entrées plus anciennes de la session, que le recalcul rejoue (plans/20-cloture-des-taches.md).
+        if iv.end is None or iv.end > now - IDLE_TIMEOUT:
+            reopen_task(conn, task_id)
 
         end = iv.end
         if cur is not None:

@@ -18,11 +18,11 @@ const ws = 'ws-1';
 
 /// Session minimale : seuls les droits lus par le sélecteur.
 class _Session extends ChangeNotifier implements SessionController {
-  _Session({required this.canCreateTasks});
+  _Session({required this.canCreateTasks, this.isManager = false});
   @override
   final bool canCreateTasks;
   @override
-  bool get isManager => false;
+  final bool isManager;
   @override
   String? get workspaceId => ws;
   @override
@@ -55,11 +55,12 @@ void main() {
   });
 
   /// Ouvre le sélecteur ; la valeur retournée est lue via [result] après fermeture.
-  Future<ProjectPick? Function()> open(WidgetTester tester, {bool canCreateTasks = true, String? projectId, String? taskId}) async {
+  Future<ProjectPick? Function()> open(WidgetTester tester,
+      {bool canCreateTasks = true, bool manager = false, String? projectId, String? taskId}) async {
     ProjectPick? picked;
     await tester.pumpWidget(MultiProvider(
       providers: [
-        ChangeNotifierProvider<SessionController>.value(value: _Session(canCreateTasks: canCreateTasks)),
+        ChangeNotifierProvider<SessionController>.value(value: _Session(canCreateTasks: canCreateTasks, isManager: manager)),
         ChangeNotifierProvider<CatalogController>.value(value: catalog),
       ],
       child: MaterialApp(
@@ -144,6 +145,22 @@ void main() {
 
     expect(catalog.tasksOf(chantier), hasLength(1));
     expect(result()?.taskId, pose);
+  });
+
+  testWidgets('bouton + : un manager reprend la tâche terminée du même nom, qui se rouvre', (tester) async {
+    await repo.updateTask(pose, status: 'done');
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    final result = await open(tester, manager: true);
+    await tester.tap(find.byTooltip('Créer une tâche').last); // Chantier
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.descendant(of: find.widgetWithText(AlertDialog, 'Nouvelle tâche dans Chantier'), matching: find.byType(TextField)),
+        'pose');
+    await tester.tap(find.text('Enregistrer'));
+    await settle(tester);
+
+    expect(result()?.taskId, pose);
+    expect(catalog.tasksOf(chantier).map((t) => t.id), [pose], reason: 'rouverte, sans doublon');
   });
 
   testWidgets('URL de ticket collée : retrouve sa tâche, sinon la crée avec son titre', (tester) async {

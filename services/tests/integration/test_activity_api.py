@@ -5,17 +5,24 @@ Plan : plans/10-suivi-claude-code.md (D2, D5, D7, D9, D10, D14, D16, D17)
 
 from __future__ import annotations
 
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from app.db import close_pool, init_pool
+from app.jobs.tasks import close_idle_agent_entries
+from app.services.agent_clock import IDLE_TIMEOUT
+
 from .test_backend import ENV, SERVICES, _call, iso, rest, signup
 
 pytestmark = pytest.mark.skipif(__import__("os").environ.get("INTEGRATION") != "1", reason="INTEGRATION=1 requis")
 
 SERVICE = ENV.get("SERVICE_ROLE_KEY", "")
+DSN = (f"postgresql://postgres.{ENV.get('POOLER_TENANT_ID', '')}:{ENV.get('POSTGRES_PASSWORD', '')}"
+       f"@localhost:{ENV.get('POSTGRES_PORT', '5432')}/postgres")
 
 
 def api(method: str, path: str, token: str, body=None):
@@ -589,6 +596,25 @@ def test_a_deactivated_agent_stops_at_its_last_activity(team):
     [stopped] = [e for e in _agent_entries(created["agent_id"]) if e["id"] == running["id"]]
     assert stopped["end_at"] is not None
     assert abs((datetime.fromisoformat(stopped["end_at"]) - _ago(4)).total_seconds()) < 5, "à sa dernière activité"
+
+
+def test_the_idle_job_closes_a_session_left_running(team):
+    """Sans nouvel événement, le job du scheduler (hors contexte Flask) ferme l'entrée à sa dernière activité (D7.4)."""
+    session = str(uuid.uuid4())
+    last = datetime.now(UTC).replace(microsecond=0) - IDLE_TIMEOUT + timedelta(seconds=10)
+    start = last - timedelta(minutes=1)
+    assert api("POST", "/api/activity/events", team["token"], {"events": [
+        _event("prompt", start, session), _event("agent_stop", last, session)]})[0] == 202
+    [running] = [e for e in _agent_entries(team["agent"]) if datetime.fromisoformat(e["start_at"]) == start]
+    assert running["end_at"] is None
+    time.sleep(max(0.0, (last + IDLE_TIMEOUT - datetime.now(UTC)).total_seconds()) + 2)
+    init_pool(DSN)
+    try:
+        assert close_idle_agent_entries() >= 1
+    finally:
+        close_pool()
+    [closed] = [e for e in _agent_entries(team["agent"]) if e["id"] == running["id"]]
+    assert closed["end_at"] is not None and datetime.fromisoformat(closed["end_at"]) == last
 
 
 def test_agent_billing_never(team):

@@ -87,7 +87,7 @@ void main() {
     }
   }
 
-  Future<void> open(WidgetTester tester, {Size size = const Size(1200, 900)}) async {
+  Future<void> open(WidgetTester tester, {Size size = const Size(1200, 900), String? user}) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -106,7 +106,7 @@ void main() {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: Scaffold(body: AppShortcuts(onKey: (_) => false, child: const TimeEntriesPage())),
+        home: Scaffold(body: AppShortcuts(onKey: (_) => false, child: TimeEntriesPage(initialUserId: user))),
       ),
     ));
     await settle(tester);
@@ -215,5 +215,43 @@ void main() {
     await open(tester);
     expect(find.byType(Dismissible), findsNothing);
     await close(tester);
+  });
+
+  group('personne affichée', () {
+    const agent = 'agent-1';
+
+    setUp(() async {
+      await db.into(db.workspaceMembers).insert(WorkspaceMembersCompanion.insert(
+          workspaceId: ws, userId: me, displayName: const Value('Yannick'), kind: const Value('human')));
+      await db.into(db.workspaceMembers).insert(WorkspaceMembersCompanion.insert(
+          workspaceId: ws, userId: agent, displayName: const Value('Claude - Yannick'), kind: const Value('agent'),
+          agentOwnerId: const Value(me)));
+      // Le pilote voit son agent (team_scope, recalculé par le serveur).
+      await db.into(db.teamScope).insert(TeamScopeCompanion.insert(workspaceId: ws, managerId: me, userId: agent));
+      await getIt<TimeEntryRepository>().createManual(
+          workspaceId: ws, userId: agent, start: at(14), end: at(15), draft: EntryDraft(description: 'Plan 19'));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+
+    testWidgets('le pilote choisit son agent Claude dans la liste et voit ses entrées', (tester) async {
+      await open(tester);
+      expect(find.text('Pose'), findsOneWidget);
+      expect(find.text('Plan 19'), findsNothing);
+      await tester.tap(find.byType(DropdownButton<String>));
+      await settle(tester);
+      await tester.tap(find.text('Claude - Yannick').last);
+      await settle(tester);
+      expect(find.text('Plan 19'), findsOneWidget);
+      expect(find.text('Pose'), findsNothing);
+      expect(find.text('Temps de Claude - Yannick : vous pouvez corriger ses entrées, pas en ajouter.'), findsOneWidget);
+      await close(tester);
+    });
+
+    testWidgets('la personne arrive d’une autre vue de la semaine (?user=)', (tester) async {
+      await open(tester, user: agent);
+      expect(find.text('Plan 19'), findsOneWidget);
+      expect(find.text('Pose'), findsNothing);
+      await close(tester);
+    });
   });
 }

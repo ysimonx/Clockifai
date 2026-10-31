@@ -17,6 +17,12 @@ la date d'arrivée de chaque évolution.
 - **Paramètres › Aide** : la version de l'application et celle du serveur, pour vérifier qu'une mise à jour est
   passée ou qu'une application est à jour (28 octobre 2026).
 
+### Modifié
+
+- **Semaine › Liste** : le sélecteur de personne y est aussi, comme dans la grille et le calendrier (votre agent
+  Claude, les personnes que vous encadrez) ; la personne choisie reste affichée d'une vue à l'autre
+  (31 octobre 2026).
+
 ## [0.2.7] — 2026-10-28
 
 ### Ajouté

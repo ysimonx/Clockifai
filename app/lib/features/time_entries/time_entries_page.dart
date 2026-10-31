@@ -28,9 +28,13 @@ import 'entry_selection.dart';
 import 'inline_edit.dart';
 
 /// Page d'accueil : entrées terminées de l'utilisateur, groupées par jour. Sélection multiple et barre d'actions,
-/// clavier J / K, X, E, D, ⌫, Échap (plans/13-ux-moderne.md, lot 1).
+/// clavier J / K, X, E, D, ⌫, Échap (plans/13-ux-moderne.md, lot 1). Un pilote y voit aussi son agent Claude, un
+/// chef d'équipe ou un manager ses collaborateurs ([TeammateBar]), comme dans la grille et le calendrier.
 class TimeEntriesPage extends StatefulWidget {
-  const TimeEntriesPage({super.key});
+  const TimeEntriesPage({super.key, this.initialUserId});
+
+  /// Personne affichée en arrivant d'une autre vue de la semaine ; par défaut, soi.
+  final String? initialUserId;
 
   @override
   State<TimeEntriesPage> createState() => _TimeEntriesPageState();
@@ -38,6 +42,7 @@ class TimeEntriesPage extends StatefulWidget {
 
 class _TimeEntriesPageState extends State<TimeEntriesPage> {
   int _weeks = 2;
+  late String? _userId = widget.initialUserId; // personne affichée (null = soi)
   // Chronomètres en cours (▶ devient ■) : flux gardé d'une reconstruction à l'autre, sans clignotement.
   Stream<List<TimeEntry>>? _running;
   String? _runningKey;
@@ -91,13 +96,26 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
   }
 
   /// « Semaine » et ses trois vues : cette liste en est la vue Liste (plans/14-coller-aux-maquettes.md).
-  Widget _weekTitle(BuildContext context, DateTime weekStart) => Padding(
+  Widget _weekTitle(BuildContext context, DateTime weekStart, String? user) => Padding(
         padding: const EdgeInsets.fromLTRB(4, 8, 4, 12),
         child: Wrap(spacing: 16, runSpacing: 8, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center, children: [
           Text(context.l10n.navWeek, style: Theme.of(context).textTheme.headlineSmall),
-          WeekViews(current: 'list', week: weekStart),
+          WeekViews(current: 'list', week: weekStart, user: user),
         ]),
       );
+
+  /// En-tête de la liste : titre, vues de la semaine, personne affichée, sessions de Claude en cours.
+  List<Widget> _header(BuildContext context, DateTime weekStart, String userId, bool mine) => [
+        _weekTitle(context, weekStart, mine ? null : userId),
+        TeammateBar(
+          userId: userId,
+          onChanged: (v) => setState(() {
+            _userId = v;
+            _selection.clear();
+          }),
+        ),
+        const AgentsWorkingBanner(),
+      ];
 
   Stream<List<TimeEntry>> _runningOf(String workspaceId, String? userId) {
     final key = '$workspaceId:$userId';
@@ -113,12 +131,14 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
     final l = context.l10n;
     final session = context.watch<SessionController>();
     final ws = session.workspace!;
+    final userId = TeammateBar.resolve(TeamRights.of(context), _userId);
+    final mine = userId == session.userId;
     final weekStart = startOfWeek(DateTime.now(), ws.weekStart);
     final from = addDays(weekStart, -7 * (_weeks - 1));
     final to = DateTime.now().add(const Duration(days: 2));
 
     return StreamBuilder<List<EntryRow>>(
-      stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: session.userId, from: from, to: to),
+      stream: entriesRepo.watchEntries(workspaceId: ws.id, userId: userId, from: from, to: to),
       builder: (context, snap) {
         final rows = snap.data ?? const <EntryRow>[];
         if (snap.connectionState == ConnectionState.waiting && rows.isEmpty) {
@@ -130,15 +150,20 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
               constraints: const BoxConstraints(maxWidth: 1100),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: Column(children: [_weekTitle(context, weekStart), const AgentsWorkingBanner()]),
+                child: Column(children: _header(context, weekStart, userId, mine)),
               ),
             ),
             Expanded(
               child: EmptyState(
                 icon: Icons.timer_outlined,
                 title: l.noEntriesYet,
-                message: l.noEntriesYetMessage,
-                action: FilledButton.tonal(onPressed: () => showEntryDialog(context), child: Text(l.addManualEntry)),
+                message: mine ? l.noEntriesYetMessage : null,
+                // Pas de saisie pour un agent : seul le serveur écrit ses entrées (plan 10, D15).
+                action: TeamRights.of(context).canCreateTimeFor(userId)
+                    ? FilledButton.tonal(
+                        onPressed: () => showEntryDialog(context, initialUserIds: {userId}),
+                        child: Text(l.addManualEntry))
+                    : null,
               ),
             ),
           ]);
@@ -175,7 +200,7 @@ class _TimeEntriesPageState extends State<TimeEntriesPage> {
                 else
                   for (final r in byDay[d]!) EntryLine(entryLineKey(r.entry.id), [r], selectable: editable(r)),
             ]);
-            final children = <Widget>[_weekTitle(context, weekStart), const AgentsWorkingBanner()];
+            final children = _header(context, weekStart, userId, mine);
             DateTime? currentWeek;
             for (final d in days) {
               final w = startOfWeek(d, ws.weekStart);

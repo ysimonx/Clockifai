@@ -19,10 +19,13 @@ import '../timesheet/week_tools.dart';
 /// positionnés sur la grille horaire ; un clic sur un créneau vide crée une entrée.
 /// Un chef d'équipe ou un manager choisit la personne affichée (bandeau « Collaborateur »).
 class CalendarPage extends StatefulWidget {
-  const CalendarPage({super.key, this.initialWeek});
+  const CalendarPage({super.key, this.initialWeek, this.initialUserId});
 
   /// Un jour à ouvrir (sélecteur de vue de la semaine) ; par défaut, aujourd'hui.
   final DateTime? initialWeek;
+
+  /// Personne affichée en arrivant d'une autre vue de la semaine ; par défaut, soi.
+  final String? initialUserId;
 
   @override
   State<CalendarPage> createState() => _CalendarPageState();
@@ -31,7 +34,7 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageState extends State<CalendarPage> {
   static const _hourHeight = 56.0;
   late DateTime _anchor = widget.initialWeek ?? DateTime.now();
-  String? _userId; // personne affichée (null = soi)
+  late String? _userId = widget.initialUserId; // personne affichée (null = soi)
   final _scroll = ScrollController(initialScrollOffset: 7 * _hourHeight);
 
   @override
@@ -75,7 +78,7 @@ class _CalendarPageState extends State<CalendarPage> {
           return Column(children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-              child: Align(alignment: Alignment.centerLeft, child: WeekViews(current: 'calendar', week: first)),
+              child: Align(alignment: Alignment.centerLeft, child: WeekViews(current: 'calendar', week: first, user: userId == session.userId ? null : userId)),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),

@@ -10,6 +10,8 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.8] — 2026-10-31
+
 ### Ajouté
 
 - **Paramètres › Aide** : la version de l'application et celle du serveur, pour vérifier qu'une mise à jour est

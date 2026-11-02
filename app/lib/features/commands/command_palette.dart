@@ -91,6 +91,7 @@ Future<List<PaletteCommand>> paletteCommands(BuildContext context) async {
     PaletteCommand(icon: Icons.brightness_auto_outlined, title: l.cmdThemeSystem, always: false, run: () => prefs.setThemeMode(ThemeMode.system)),
     PaletteCommand(icon: Icons.keyboard_outlined, title: l.shortcutsTitle, shortcut: '?', run: () => showShortcutsHelp(context)),
     PaletteCommand(icon: Icons.help_outline, title: l.userGuide, run: () => openGuide(context)),
+    PaletteCommand(icon: Icons.logout, title: l.signOut, always: false, run: () => confirmSignOut(context)),
   ];
 }
 

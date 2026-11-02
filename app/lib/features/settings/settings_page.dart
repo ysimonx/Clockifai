@@ -149,11 +149,7 @@ class SettingsPage extends StatelessWidget {
             leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
             title: Text(l.signOut),
             subtitle: Text(l.signOutHelp),
-            onTap: () async {
-              if (await confirm(context, title: l.signOut, message: l.signOutHelp, confirmLabel: l.signOut)) {
-                await session.signOut();
-              }
-            },
+            onTap: () => confirmSignOut(context),
           ),
         ]),
       ]),

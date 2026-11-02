@@ -280,23 +280,35 @@ class _AppShellState extends State<AppShell> {
   }
 }
 
-/// Changer d'espace : le nom de l'espace et une flèche.
+/// Changer d'espace : le nom de l'espace et une flèche ; le menu propose aussi de se déconnecter.
 class _WorkspaceSwitcher extends StatelessWidget {
   const _WorkspaceSwitcher({required this.session, this.compact = false});
   final SessionController session;
   final bool compact;
 
+  static const _signOut = '';
+
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final theme = Theme.of(context);
     final name = Text(session.workspace!.name,
         overflow: TextOverflow.ellipsis, style: compact ? theme.textTheme.titleMedium : theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500));
     return PopupMenuButton<String>(
-      tooltip: context.l10n.switchWorkspace,
-      onSelected: session.selectWorkspace,
+      tooltip: l.switchWorkspace,
+      onSelected: (id) => id == _signOut ? confirmSignOut(context) : session.selectWorkspace(id),
       itemBuilder: (_) => [
         for (final m in session.memberships)
           CheckedPopupMenuItem(value: m.workspace.id, checked: m.workspace.id == session.workspaceId, child: Text(m.workspace.name)),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: _signOut,
+          child: Row(children: [
+            Icon(Icons.logout, size: 20, color: theme.colorScheme.error),
+            const SizedBox(width: 12),
+            Text(l.signOut),
+          ]),
+        ),
       ],
       child: compact
           ? Row(mainAxisSize: MainAxisSize.min, children: [Flexible(child: name), const Icon(Icons.expand_more, size: 20)])

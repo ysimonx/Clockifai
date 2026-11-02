@@ -7,6 +7,7 @@ import '../../data/drift/database.dart';
 import '../catalog.dart';
 import '../format.dart';
 import '../l10n.dart';
+import '../session.dart';
 
 /// Icône de l'app (tool/app_icons.mjs) : en petit, dessin grossi et sans l'étincelle, qui n'y serait qu'un point.
 class AppLogo extends StatelessWidget {
@@ -206,6 +207,14 @@ Future<bool> confirm(BuildContext context,
     ),
   );
   return res ?? false;
+}
+
+/// Se déconnecter, après confirmation : les données locales de l'appareil sont effacées. Depuis Paramètres, le menu
+/// de l'espace et la palette ⌘K.
+Future<void> confirmSignOut(BuildContext context) async {
+  final l = context.l10n;
+  final session = context.read<SessionController>();
+  if (await confirm(context, title: l.signOut, message: l.signOutHelp, confirmLabel: l.signOut)) await session.signOut();
 }
 
 /// La dernière action encore annulable (son bandeau est affiché), pour ⌘Z.

@@ -17,10 +17,13 @@ la date d'arrivée de chaque évolution.
   téléphone. On la retrouve dans le menu latéral et sur la page de connexion ; « Clockifai Dev » porte un badge
   DEV pour ne plus la confondre avec l'app de production (2 novembre 2026).
 
+- **Se déconnecter** aussi depuis le menu du workspace, en haut du menu latéral, et depuis la palette ⌘K, en plus
+  de Paramètres (2 novembre 2026).
+
 ### Corrigé
 
-- **Version web** : les gestionnaires de mots de passe (Bitwarden, celui du navigateur) remplissent la page de
-  connexion. Cliquer d'abord dans le champ « E-mail » (2 novembre 2026).
+- **Version web** : les gestionnaires de mots de passe (Bitwarden, 1Password, celui du navigateur) remplissent la
+  page de connexion, dont l'email et le mot de passe sont devenus de vrais champs du navigateur (2 novembre 2026).
 
 ## [0.2.9] — 2026-11-01
 

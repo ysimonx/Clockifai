@@ -111,24 +111,35 @@ class _LoginPageState extends State<LoginPage> {
                 onSelectionChanged: (s) => setState(() => _signUp = s.first),
               ),
               const SizedBox(height: 16),
-              if (_signUp) ...[
-                TextField(controller: _name, decoration: InputDecoration(labelText: l.yourName), textInputAction: TextInputAction.next),
-                const SizedBox(height: 12),
-              ],
-              TextField(
-                controller: _email,
-                decoration: InputDecoration(labelText: l.email),
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [AutofillHints.email],
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _password,
-                decoration: InputDecoration(labelText: l.password),
-                obscureText: true,
-                autofillHints: [_signUp ? AutofillHints.newPassword : AutofillHints.password],
-                onSubmitted: (_) => _submit(),
+              // Un seul formulaire pour les gestionnaires de mots de passe : sur le web, Flutter ne met dans le DOM que
+              // le champ qui a le focus, sauf pour un groupe, rendu comme un vrai <form> avec tous ses champs.
+              AutofillGroup(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  if (_signUp) ...[
+                    TextField(
+                      controller: _name,
+                      decoration: InputDecoration(labelText: l.yourName),
+                      autofillHints: const [AutofillHints.name],
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  TextField(
+                    controller: _email,
+                    decoration: InputDecoration(labelText: l.email),
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _password,
+                    decoration: InputDecoration(labelText: l.password),
+                    obscureText: true,
+                    autofillHints: [_signUp ? AutofillHints.newPassword : AutofillHints.password],
+                    onSubmitted: (_) => _submit(),
+                  ),
+                ]),
               ),
               const SizedBox(height: 16),
               if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: TextStyle(color: theme.colorScheme.error))),

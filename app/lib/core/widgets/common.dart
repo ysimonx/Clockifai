@@ -8,6 +8,21 @@ import '../catalog.dart';
 import '../format.dart';
 import '../l10n.dart';
 
+/// Icône de l'app (tool/app_icons.mjs) : en petit, dessin grossi et sans l'étincelle, qui n'y serait qu'un point.
+class AppLogo extends StatelessWidget {
+  const AppLogo({super.key, this.size = 26});
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+        size < 40 ? 'assets/logo/logo_small.png' : 'assets/logo/logo.png',
+        width: size,
+        height: size,
+        filterQuality: FilterQuality.medium,
+        excludeFromSemantics: true,
+      );
+}
+
 /// Pastille de couleur (projet, tag).
 class ColorDot extends StatelessWidget {
   const ColorDot(this.hex, {super.key, this.size = 10});

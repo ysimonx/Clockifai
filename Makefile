@@ -99,6 +99,9 @@ app-web-assets: ## sqlite3.wasm + worker PowerSync compilé avec les dépendance
 app-gen: ## Régénère le code Drift / l10n
 	cd app && fvm dart run build_runner build
 
+app-icons: ## Icônes web, iOS, macOS et Android depuis app/tool/app_icons.mjs (Chromium de demo/)
+	node app/tool/app_icons.mjs
+
 app-web: ## Lance l'app web (Chrome) sur le backend local
 	cd app && fvm flutter run -d chrome --web-port 3000 $(DEFINES)
 

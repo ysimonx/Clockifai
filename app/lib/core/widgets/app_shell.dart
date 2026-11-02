@@ -344,12 +344,7 @@ class _Sidebar extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Row(children: [
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(8)),
-                  child: Icon(Icons.schedule, size: 17, color: theme.colorScheme.onPrimary),
-                ),
+                const AppLogo(),
                 const SizedBox(width: 10),
                 Text('Clockifai', style: theme.textTheme.titleMedium?.copyWith(fontSize: 17, letterSpacing: -0.2)),
               ]),

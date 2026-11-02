@@ -10,6 +10,13 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Modifié
+
+- **Nouvelle icône** sur le web, l'iPhone, le Mac et Android, à la place de celle de Flutter : un chronomètre dont
+  le temps écoulé est en bleu, avec une étincelle pour l'IA. Sur Android 13 et plus, elle suit le thème du
+  téléphone. On la retrouve dans le menu latéral et sur la page de connexion ; « Clockifai Dev » porte un badge
+  DEV pour ne plus la confondre avec l'app de production (2 novembre 2026).
+
 ## [0.2.9] — 2026-11-01
 
 ### Ajouté

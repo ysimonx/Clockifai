@@ -29,6 +29,7 @@ make test-integration     # tests contre la pile Docker locale (INTEGRATION=1)
 make app-config           # app/config/local.json depuis deploy/.env
 make app-get              # fvm flutter pub get + powersync:setup_web + build_runner
 make app-gen              # fvm dart run build_runner build (Drift, après modif des tables)
+make app-icons            # icônes web / iOS / macOS / Android, Dev et logo AppLogo, dessinés en SVG dans app/tool/app_icons.mjs
 make app-web              # fvm flutter run -d chrome --web-port 3000
 make app-macos            # « Clockifai Dev » (macOS, pile locale)
 make app-config-prod HOST=ysimonx@192.168.0.84 && make app-build-macos && make app-install-macos  # « Clockifai » (prod)
@@ -115,6 +116,8 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 ### iOS et Android (`plans/07-ios-android.md`)
 - Même séparation : Debug = « Clockifai Dev » (`….dev`), Release = « Clockifai ». iOS : `APP_DISPLAY_NAME` et identifiant
   par configuration dans `project.pbxproj` ; Android : `applicationIdSuffix` et `resValue app_name` dans `build.gradle.kts`.
+- Icônes : jamais retouchées à la main, `make app-icons` les rend toutes. Clockifai Dev a les siennes (badge DEV) :
+  `AppIconDev` (`ASSETCATALOG_COMPILER_APPICON_NAME` de la configuration Debug, iOS et macOS), `src/debug/res` sur Android.
 - Android joint la pile locale par `adb reverse` (8000 / 8080 / 5050) : même `config/local.json` partout.
 - Clé d'envoi Google Play hors dépôt (`~/.config/clockifai/android/`) ; numéro de build = minutes depuis le 2026-01-01.
 

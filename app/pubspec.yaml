@@ -54,6 +54,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  # Logo du menu latéral et de la connexion (AppLogo), rendu par tool/app_icons.mjs, variantes 2.0x et 3.0x.
+  assets:
+    - assets/logo/
   # Identité des maquettes (plans/14-coller-aux-maquettes.md) : Geist et Geist Mono, licence OFL (assets/fonts).
   fonts:
     - family: Geist

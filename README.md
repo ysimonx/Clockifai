@@ -126,6 +126,7 @@ session) et [plans/07-ios-android.md](plans/07-ios-android.md) (iOS, Android, Te
 | `make app-get` | Dépendances Flutter, assets web PowerSync, génération Drift |
 | `make app-gen` | Régénère le code Drift / l10n (après modification des tables) |
 | `make app-web-assets` | `sqlite3.wasm` + worker PowerSync compilé avec les dépendances de l'app |
+| `make app-icons` | Icônes web, iOS, macOS et Android (et celles de « Clockifai Dev »), logo de l'app, dessinés dans `app/tool/app_icons.mjs` (Chromium de `demo/`) |
 
 ### Application : développement (« Clockifai Dev », backend local)
 

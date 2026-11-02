@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config.dart';
 import '../../core/l10n.dart';
+import '../../core/widgets/common.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -91,8 +92,8 @@ class _LoginPageState extends State<LoginPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Icon(Icons.timer, size: 56, color: theme.colorScheme.primary),
-              const SizedBox(height: 8),
+              const Center(child: AppLogo(size: 64)),
+              const SizedBox(height: 12),
               Text('Clockifai', textAlign: TextAlign.center, style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
               Text(l.tagline, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline)),
               const SizedBox(height: 32),

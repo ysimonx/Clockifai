@@ -1,11 +1,11 @@
 {
-    "name": "clockifai",
-    "short_name": "clockifai",
+    "name": "Clockifai",
+    "short_name": "Clockifai",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F1217",
+    "theme_color": "#0F1217",
+    "description": "Suivi du temps libre et auto-hébergé.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

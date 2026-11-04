@@ -57,10 +57,11 @@ class ReportCalculator {
 
   int secondsOf(EntryRow r) => applyRounding ? roundSeconds(r.seconds, roundingMinutes) : r.seconds;
 
-  double amountOf(EntryRow r) {
+  /// [seconds] : le temps à facturer s'il diffère de la durée de l'entrée (`billedSeconds`).
+  double amountOf(EntryRow r, {int? seconds}) {
     final rate = catalog.entryRate(r.entry);
     if (!r.entry.billable || rate == null) return 0;
-    return secondsOf(r) / 3600 * rate / 100;
+    return (seconds ?? secondsOf(r)) / 3600 * rate / 100;
   }
 
   ({int total, int billable, double amount, int aiTokens, int? aiCostMicros}) totals(List<EntryRow> rows) {

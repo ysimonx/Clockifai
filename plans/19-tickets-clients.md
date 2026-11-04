@@ -1,6 +1,6 @@
 # Plan 19 — Tickets clients : Projet › Ticket › Sous-tâches
 
-> Statut : **fait** (27 octobre 2026 ; lots 1, 2 et 3 faits le 27 octobre, lot 2 essayé en production par Yannick). Demandé par Yannick : ses clients lui confient des tickets (Jira, Linear),
+> Statut : **fait** (4 novembre 2026 ; lots 1, 2 et 3 faits le 27 octobre, lot 2 essayé en production par Yannick ; lot 4 fait le 4 novembre). Demandé par Yannick : ses clients lui confient des tickets (Jira, Linear),
 > qu'il facture ; il ouvre en général une session Claude Code par ticket.
 
 ## Ce qui est demandé
@@ -68,11 +68,12 @@ Python (serveur), testée sur les mêmes cas.
 | 1 Ticket sur la tâche | Migration 0027 (`tasks.ticket_url`, `ticket_key`, index de recherche par clé), `schema.dart` et Drift ; analyse des URL (Dart) ; Projets : champ « Ticket » dans le dialogue de la tâche, clé et lien ouvrable sur la ligne ; sélecteur de tâche : coller une URL ou une clé retrouve la tâche du ticket ou propose de la créer ; lien du ticket dans le dialogue de l'entrée ; tests | fait (27 octobre 2026) |
 | 2 Claude et le ticket | Outil `set_current_task` (`ticket`, `ticket_title`) et sa consigne ; relais par le hook (`session_task` `{…, ticket, ticket_title}`, liste blanche) ; serveur : analyse (Python), ticket collant par session, clé de la branche, tâche par clé (projet du dépôt, sinon tâche existante de l'espace), sujet en sous-tâche, titre qui complète le nom ; projet « Facturé par ticket » (0028) et `ask_ticket` au démarrage, consigne du hook `SessionStart` (décision 8) ; tests unitaires, du plugin et d'intégration ; mise à jour du plugin sur chaque poste. Essai réel avec Claude Code : après le déploiement, sur un projet client | fait (27 octobre 2026) |
 | 3 Facturation et exports | Facture depuis le temps « par tâche » : une ligne par tâche, sous-tâches cumulées (pour toutes les tâches, comme les rapports), libellé « Projet — ENG-123 · Titre » et adresse du ticket en seconde ligne, cliquable dans le PDF ; exports CSV, Excel et PDF : colonne « Ticket » (adresse, sinon clé ; lien dans Excel et le PDF) ; rapport partagé : tâche liée au ticket ; Rapports groupés par tâche : « Ouvrir le ticket ». Au passage : export en erreur dès qu'une entrée d'agent avait un usage IA (somme numeric), corrigé | fait (27 octobre 2026) |
+| 4 Même tâche en parallèle | Règle de Yannick : « si un ticket est fait en 2 h par Claude, c'est 2 h de facturé », même si Claude a fait un second ticket pendant ces 2 h (4 h au total). L'unité est la tâche de premier niveau : le ticket, sinon la tâche, dont l'objectif nommé par Claude. Deux tâches en parallèle s'additionnent ; un même agent ne facture qu'une fois une tâche menée par deux sessions simultanées (`billedSeconds`, `core/billing_time.dart`, dans la facture et « À facturer »). Sans tâche, chaque session compte, faute de savoir si c'est le même travail. Les agents de deux pilotes, les humains, les rapports et les exports gardent le cumul. Limite acceptée : une entrée d'une autre période n'est pas lue, donc un chevauchement à cheval sur deux périodes facturées séparément reste compté deux fois | fait (4 novembre 2026) |
 
 ## Documentation (par lot)
 
 - `docs/architecture/donnees.md` : colonnes `tasks.ticket_url` et `ticket_key` (lot 1).
 - `docs/api/openapi.yaml` : charge utile de `session_task` (lot 2).
-- `plans/10-suivi-claude-code.md` : D18 complété par le ticket (lot 2).
+- `plans/10-suivi-claude-code.md` : D18 complété par le ticket (lot 2) ; D2 et D16, cumul facturé par tâche (lot 4).
 - Guide : Membre (tickets, Claude Code), Manager (factures et exports) ; `CHANGELOG.md` à chaque lot.
 - Vidéos : pas de tournage (choix de Yannick, 27 octobre 2026).

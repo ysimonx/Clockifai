@@ -152,8 +152,9 @@ niveau de l'équipe, les rapports les séparent par un filtre « Humains et agen
     pas compte.
   - Il faut des sessions distinctes : des sous-agents lancés en parallèle dans une même session ne font
     qu'une entrée.
-  - Trois clients différents paient chacun leur heure. Pour un même client, le cumul est facturé tel quel,
-    sauf réglage contraire (D16).
+  - Trois tâches différentes paient chacune leur heure, même pour un seul client : le cumul se facture par
+    ticket ou par tâche, sauf réglage contraire (D16). Deux sessions d'un même agent sur une même tâche ne
+    comptent qu'une fois à la facture (plan 19, lot 4) ; les rapports gardent le cumul.
 - **Écrites par le serveur seulement**, par une fonction SQL qui reprend les gardes (D7.8) : `user_id` =
   agent, `created_by` = pilote, `source = 'agent'`. Personne ne crée d'entrée d'agent depuis l'app (D15).
 - **Facturation réglable** (D16). Par défaut, facturable et taux comme pour un humain : selon le projet,
@@ -426,8 +427,8 @@ GitLab, Gitea/Forgejo…
     `rateFor`).
 - Comme pour les humains, le caractère facturable est un **instantané** : changer le réglage ne modifie pas
   les entrées passées, et le pilote peut toujours corriger une entrée à la main.
-- **Piste, hors v1** : facturer à un même client la durée calendaire de ses sessions parallèles plutôt que
-  leur cumul. Il faudrait répartir les heures au moment de la facture.
+- **Durée calendaire, écartée** (4 novembre 2026) : on ne ramène pas les sessions parallèles d'un même client
+  à leur durée calendaire. Deux tickets de 2 h menés ensemble font 4 h facturées (plan 19, lot 4).
 
 **D17. Usage IA : tokens, modèle et effort de chaque entrée d'agent** (lot 7, demandé le 24 octobre 2026).
 Le temps ne dit pas tout du travail de Claude : deux heures d'Opus en effort maximal ne coûtent pas deux heures de
@@ -997,8 +998,8 @@ Claude » (`demo/videos/6-claude-code.mjs`, 26 octobre 2026). Son historique et 
 - **Factures** : `createInvoiceFromTime` regroupe les lignes par (projet, taux). Les heures de Claude se
   mêlent donc à celles des humains au même taux. « Détailler par tâche » les sépare quand Claude a nommé ses
   tâches (plan 12). Un taux « IA » par projet, distinct du taux du projet, serait un ajout ultérieur.
-- **Sessions parallèles pour un même client** : le cumul est facturé (D2). Pour l'éviter : D16 (non
-  facturable), ou la piste de la durée calendaire.
+- **Sessions parallèles pour un même client** : le cumul est facturé par ticket ou par tâche (D2). Pour
+  l'éviter : D16 (non facturable).
 - **Approbations** : l'approbation de la période du pilote ne verrouille pas les entrées de son agent.
   Acceptable en v1 ; à revoir si l'on facture sur périodes approuvées.
 - **Fuseau du pilote** : copié dans le profil de l'agent à la création. Le fuseau n'est pas encore
@@ -1024,7 +1025,8 @@ Tranchées (octobre 2026) :
 2. Facturation : **réglable** (D16). Par défaut, les entrées d'agent sont facturables comme celles d'un
    humain, au taux du projet, sinon à celui de l'agent. Le workspace peut les rendre non facturables, et
    chaque projet peut faire exception.
-3. Tâches en parallèle : les temps des sessions simultanées **se cumulent** (D2), chacune sur sa tâche (D9).
+3. Tâches en parallèle : les temps des sessions simultanées **se cumulent** (D2), chacune sur sa tâche (D9) ;
+   à la facture, une même tâche ne compte qu'une fois pour un même agent (plan 19, lot 4).
 4. L'attente entre deux tours compte pour l'agent tant qu'elle reste sous `IDLE_TIMEOUT` (D7.2).
 5. Périmètre : Claude Code dans VSCode. Le plugin couvre aussi le terminal et l'app desktop sans effort de
    plus. Les sessions cloud ne sont pas suivies pour l'instant : le lot 6 reste une piste.

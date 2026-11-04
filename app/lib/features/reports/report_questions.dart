@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/billing_time.dart';
 import '../../core/catalog.dart';
 import '../../core/di.dart';
 import '../../core/format.dart';
@@ -63,15 +64,20 @@ class _ReadyToBillState extends State<ReadyToBill> {
           builder: (context, inv) {
             final invoiced = inv.data ?? const <String>{};
             final calc = ReportCalculator(catalog: catalog, roundingMinutes: ws.roundingMinutes, applyRounding: true);
+            final rows = snap.data ?? const <EntryRow>[];
+            final billed = billedSeconds([for (final r in rows) if (r.entry.billable) r.entry],
+                rootOf: (e) => catalog.rootTask(e.taskId)?.id, invoiced: invoiced, now: DateTime.now());
             final byClient = <String, ({int seconds, double amount, DateTime first})>{};
-            for (final r in snap.data ?? const <EntryRow>[]) {
+            for (final r in rows) {
               final client = catalog.clientOfProject(r.entry.projectId);
               if (!r.entry.billable || client == null || invoiced.contains(r.entry.id)) continue;
+              final seconds = roundSeconds(billed[r.entry.id]!, ws.roundingMinutes);
+              if (seconds == 0) continue;
               final prev = byClient[client.id];
               final start = r.entry.startAt.toLocal();
               byClient[client.id] = (
-                seconds: (prev?.seconds ?? 0) + calc.secondsOf(r),
-                amount: (prev?.amount ?? 0) + calc.amountOf(r),
+                seconds: (prev?.seconds ?? 0) + seconds,
+                amount: (prev?.amount ?? 0) + calc.amountOf(r, seconds: seconds),
                 first: prev == null || start.isBefore(prev.first) ? start : prev.first,
               );
             }

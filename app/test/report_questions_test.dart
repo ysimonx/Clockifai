@@ -143,5 +143,59 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await tester.pump(Duration.zero);
     });
+
+    testWidgets('À facturer : un ticket à deux sessions compte une fois, comme sur la facture', (tester) async {
+      tester.view.physicalSize = const Size(1400, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.runAsync(() async {
+        final project = await db.select(db.projects).getSingle();
+        final ticket = await CatalogRepository(db).createTask(ws, project.id, 'ENG-1');
+        final start = DateTime(weekStart.year, weekStart.month, weekStart.day - 7, 14).toUtc();
+        for (var i = 0; i < 2; i++) {
+          await db.into(db.timeEntries).insert(TimeEntriesCompanion.insert(
+                workspaceId: ws,
+                userId: 'claude',
+                projectId: Value(project.id),
+                taskId: Value(ticket),
+                startAt: start,
+                endAt: Value(start.add(const Duration(hours: 2))),
+                billable: const Value(true),
+                hourlyRateCents: const Value(6000),
+                source: const Value('agent'),
+              ));
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pumpWidget(MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SessionController>.value(value: _Session(workspace)),
+          ChangeNotifierProvider<CatalogController>.value(value: catalog),
+        ],
+        child: MaterialApp(
+          locale: const Locale('fr'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const Scaffold(body: ReadyToBill()),
+        ),
+      ));
+      await settle(tester);
+      // 5 h de temps humain, plus 2 h pour le ticket : pas 9 h.
+      expect(find.textContaining('7:00'), findsOneWidget);
+
+      await tester.tap(find.text('Facturer'));
+      await settle(tester);
+      final items = (await tester.runAsync(() => db.select(db.invoiceItems).get()))!;
+      expect(items.fold<double>(0, (s, i) => s + i.quantity), 7);
+      expect((await tester.runAsync(() => db.select(db.invoiceEntries).get()))!, hasLength(4), reason: 'toutes les entrées');
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(Duration.zero);
+    });
   });
 }

@@ -197,6 +197,80 @@ void main() {
     ]);
   });
 
+  group('facture : sessions de Claude en parallèle', () {
+    const agent = 'claude-1';
+    late String client, site, eng1, eng2;
+
+    setUp(() async {
+      client = await catalog.createClient(ws, name: 'ACME');
+      site = await catalog.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'Site', clientId: Value(client)));
+      eng1 = await catalog.createTask(ws, site, 'ENG-1', ticket: const TicketRef(key: 'ENG-1'));
+      eng2 = await catalog.createTask(ws, site, 'ENG-2', ticket: const TicketRef(key: 'ENG-2'));
+    });
+
+    Future<void> session(String? task, int from, int to) => db.into(db.timeEntries).insert(TimeEntriesCompanion.insert(
+          workspaceId: ws,
+          userId: agent,
+          projectId: Value(site),
+          taskId: Value(task),
+          startAt: DateTime.utc(2026, 10, 23, from),
+          endAt: Value(DateTime.utc(2026, 10, 23, to)),
+          billable: const Value(true),
+          hourlyRateCents: const Value(10000),
+          source: const Value('agent'),
+        ));
+
+    Future<String?> invoice({bool byTask = true, DateTime? to}) => modules.createInvoiceFromTime(
+          workspaceId: ws, userId: me, clientId: client,
+          from: DateTime.utc(2026, 10, 1), to: to ?? DateTime.utc(2026, 11, 1),
+          currency: 'EUR', taxPercent: 20, projectNames: {site: 'Site'}, byTask: byTask,
+          taskNames: {eng1: 'ENG-1', eng2: 'ENG-2'},
+        );
+
+    Future<List<(String, double)>> lines(String id) async =>
+        [for (final i in await modules.watchItems(id).first) (i.description, i.quantity)];
+
+    test('deux tickets simultanés : deux lignes de 2 h', () async {
+      await session(eng1, 9, 11);
+      await session(eng2, 9, 11);
+      expect(await lines((await invoice())!), [('Site — ENG-1', 2.0), ('Site — ENG-2', 2.0)]);
+    });
+
+    test('même ticket : une ligne de 2 h, les deux entrées facturées', () async {
+      await session(eng1, 9, 11);
+      await session(eng1, 9, 11);
+      expect(await lines((await invoice())!), [('Site — ENG-1', 2.0)]);
+      expect(await modules.invoicedEntryIds(ws), hasLength(2));
+    });
+
+    test('sans ticket ni tâche : le cumul reste sur la ligne du projet', () async {
+      await session(null, 9, 11);
+      await session(null, 9, 11);
+      expect(await lines((await invoice())!), [('Site', 4.0)]);
+    });
+
+    test('une seule ligne par projet : deux tickets s\'additionnent, un même ticket non', () async {
+      await session(eng1, 9, 11);
+      await session(eng2, 9, 11);
+      await session(eng2, 10, 11);
+      expect(await lines((await invoice(byTask: false))!), [('Site', 4.0)]);
+    });
+
+    test('facture suivante : le chevauchement n\'est pas refacturé', () async {
+      await session(eng1, 9, 11);
+      expect(await lines((await invoice())!), [('Site — ENG-1', 2.0)]);
+      await session(eng1, 10, 12);
+      expect(await lines((await invoice())!), [('Site — ENG-1', 1.0)]);
+    });
+
+    test('rien de neuf à facturer : pas de facture vide', () async {
+      await session(eng1, 9, 11);
+      expect(await invoice(), isNotNull);
+      await session(eng1, 9, 11);
+      expect(await invoice(), isNull);
+    });
+  });
+
   test('nouveau taux : seules les entrées non facturées et modifiables le prennent', () async {
     final client = await catalog.createClient(ws, name: 'ACME');
     final p = await catalog.createProject(ws, ProjectsCompanion.insert(workspaceId: ws, name: 'cvad', clientId: Value(client)));

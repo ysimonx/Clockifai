@@ -326,6 +326,12 @@ abstract class AppLocalizations {
   /// **'Touchez un créneau en pointillé pour le remplir, ou glissez sur la ligne « Vous ».'**
   String get journalHeroGapsText;
 
+  /// No description provided for @journalHeroGapsClaudeText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le temps de Claude compte déjà : il ne reste que les trous. Touchez un créneau en pointillé pour le remplir, ou glissez sur la ligne « Vous ».'**
+  String get journalHeroGapsClaudeText;
+
   /// No description provided for @journalHeroDone.
   ///
   /// In fr, this message translates to:
@@ -337,6 +343,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{total} saisies, rien à confirmer.'**
   String journalHeroDoneText(String total);
+
+  /// No description provided for @journalHeroDoneClaudeText.
+  ///
+  /// In fr, this message translates to:
+  /// **'{mine} saisies et {claude} avec Claude, rien à confirmer.'**
+  String journalHeroDoneClaudeText(String mine, String claude);
 
   /// No description provided for @journalHeroNothing.
   ///
@@ -386,12 +398,6 @@ abstract class AppLocalizations {
   /// **'Proposé par Clockifai'**
   String get journalProposed;
 
-  /// No description provided for @journalSourceClaude.
-  ///
-  /// In fr, this message translates to:
-  /// **'Pendant une session de Claude'**
-  String get journalSourceClaude;
-
   /// No description provided for @journalSourceHabit.
   ///
   /// In fr, this message translates to:
@@ -427,18 +433,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Pourquoi ce bloc'**
   String get journalWhy;
-
-  /// No description provided for @journalReasonClaudeSession.
-  ///
-  /// In fr, this message translates to:
-  /// **'Claude travaillait sur ce projet de {start} à {end}'**
-  String journalReasonClaudeSession(String start, String end);
-
-  /// No description provided for @journalReasonClaudePilot.
-  ///
-  /// In fr, this message translates to:
-  /// **'Le temps de suivre sa session et de relire son travail'**
-  String get journalReasonClaudePilot;
 
   /// No description provided for @journalReasonHabitWeekday.
   ///
@@ -518,6 +512,12 @@ abstract class AppLocalizations {
   /// **'Confirmé'**
   String get journalConfirmed;
 
+  /// No description provided for @journalCoveredByClaude.
+  ///
+  /// In fr, this message translates to:
+  /// **'Couvert par Claude'**
+  String get journalCoveredByClaude;
+
   /// No description provided for @journalToConfirm.
   ///
   /// In fr, this message translates to:
@@ -551,7 +551,7 @@ abstract class AppLocalizations {
   /// No description provided for @journalDayRing.
   ///
   /// In fr, this message translates to:
-  /// **'{day} : {percent} % saisi'**
+  /// **'{day} : journée remplie à {percent} %'**
   String journalDayRing(String day, int percent);
 
   /// No description provided for @journalBackToToday.
@@ -2345,6 +2345,12 @@ abstract class AppLocalizations {
     String start,
     String end,
   );
+
+  /// No description provided for @journalClaudeParallel.
+  ///
+  /// In fr, this message translates to:
+  /// **'jusqu’à {count} projets en parallèle'**
+  String journalClaudeParallel(int count);
 
   /// No description provided for @journalTraces.
   ///

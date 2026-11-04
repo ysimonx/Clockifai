@@ -1297,7 +1297,7 @@ components:
         name: { type: string, minLength: 1, maxLength: 120 }
         period:
           type: string
-          enum: [this_week, last_week, this_month, last_month, this_year, custom]
+          enum: [today, yesterday, this_week, last_week, this_month, last_month, this_year, custom]
           description: Relative (calculée à l'ouverture), ou `custom` avec `date_from` et `date_to`.
         date_from: { type: [string, "null"], format: date }
         date_to: { type: [string, "null"], format: date }

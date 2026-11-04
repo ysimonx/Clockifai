@@ -98,6 +98,7 @@ publiés et raccorde `clockifai-web` au reverse proxy commun `~/edge` (modèle `
 - Les droits affichés suivent `session.isManager` / `isAdmin`, mais la RLS reste la seule vraie barrière.
 - Agents Claude (`workspace_members.kind = 'agent'`, plan 10) : `catalog.humans` / `agents` pour toute liste de personnes ; créer du temps passe par `TeamRights.canCreateTimeFor` (jamais pour un agent, seul le serveur écrit ses entrées), modifier par `canEditTimeOf` (le pilote compris).
 - Libellés : ajouter les clés directement dans les deux ARB (`tool/gen_arb.py` est en retard et en supprimerait).
+- Journal du jour (`features/today/`, plan 13) : le temps de Claude (`DayPlan.agent`) compte déjà pour la journée ; `planDay` ne le recopie jamais en proposition, trous et propositions portent sur ce que ni la personne ni Claude n'ont couvert.
 - Coquille (`core/widgets/app_shell.dart`, plan 14) : menu de sept rubriques ; une rubrique à plusieurs pages (Équipe, Projets et clients) les montre en onglets ; « Semaine » regroupe `/timesheet`, `/calendar` et `/` (vues de `WeekViews`). Chronomètre : `TimerControl` (`features/timer/timer_control.dart`), monté une seule fois dans la coquille.
 - Connexion sur le web : email et mot de passe sont un vrai `<form>` HTML (`features/auth/web_login_form_web.dart`,
   `HtmlElementView`), sinon Bitwarden juge le mot de passe invisible (Flutter n'en met dans le DOM qu'un champ caché

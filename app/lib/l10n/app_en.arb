@@ -64,11 +64,23 @@
   },
   "journalHeroGaps": "Some slots are still empty",
   "journalHeroGapsText": "Tap a dashed slot to fill it, or drag across the “You” line.",
+  "journalHeroGapsClaudeText": "Claude’s time already counts: only the gaps are left. Tap a dashed slot to fill it, or drag across the “You” line.",
   "journalHeroDone": "Day complete",
   "journalHeroDoneText": "{total} logged, nothing to confirm.",
   "@journalHeroDoneText": {
     "placeholders": {
       "total": {
+        "type": "String"
+      }
+    }
+  },
+  "journalHeroDoneClaudeText": "{mine} logged and {claude} with Claude, nothing to confirm.",
+  "@journalHeroDoneClaudeText": {
+    "placeholders": {
+      "mine": {
+        "type": "String"
+      },
+      "claude": {
         "type": "String"
       }
     }
@@ -102,25 +114,12 @@
   },
   "journalHint": "Drag on empty space: create · drag an edge or the block: adjust · Enter: confirm · Backspace: dismiss · arrows: shift",
   "journalProposed": "Suggested by Clockifai",
-  "journalSourceClaude": "During a Claude session",
   "journalSourceHabit": "Habit",
   "journalSourcePlanning": "Schedule",
   "journalLogged": "Logged",
   "journalRunning": "Running",
   "journalNew": "New entry",
   "journalWhy": "Why this block",
-  "journalReasonClaudeSession": "Claude was working on this project from {start} to {end}",
-  "@journalReasonClaudeSession": {
-    "placeholders": {
-      "start": {
-        "type": "String"
-      },
-      "end": {
-        "type": "String"
-      }
-    }
-  },
-  "journalReasonClaudePilot": "Time spent following its session and reviewing its work",
   "journalReasonHabitWeekday": "Habit: {count} times in the last {of} weeks, same day, around {time}",
   "@journalReasonHabitWeekday": {
     "placeholders": {
@@ -184,6 +183,7 @@
   "journalIgnored": "Suggestion dismissed",
   "journalSummary": "Day summary",
   "journalConfirmed": "Confirmed",
+  "journalCoveredByClaude": "Covered by Claude",
   "journalToConfirm": "To confirm",
   "journalTarget": "of {duration}",
   "@journalTarget": {
@@ -216,7 +216,7 @@
     }
   },
   "journalDescriptionHint": "What did you do?",
-  "journalDayRing": "{day}: {percent}% logged",
+  "journalDayRing": "{day}: {percent}% of the day filled",
   "@journalDayRing": {
     "placeholders": {
       "day": {
@@ -838,6 +838,14 @@
       },
       "end": {
         "type": "String"
+      }
+    }
+  },
+  "journalClaudeParallel": "up to {count} projects in parallel",
+  "@journalClaudeParallel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   },

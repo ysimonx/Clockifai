@@ -55,6 +55,21 @@ def test_only_managers_save_reports(agency):
     assert status == 403
 
 
+def test_report_on_a_single_day(agency):
+    """Périodes « today » et « yesterday » : acceptées par la base et calculées à l'ouverture."""
+    t, _ = agency["cheffe"]
+    status, rep = api("POST", "/api/reports/saved", t, {
+        "workspace_id": agency["wid"], "name": "Hier", "period": "yesterday", "public": True})
+    assert status == 201, rep
+    status, page = api("GET", rep["public_path"], None)
+    assert status == 200 and "2:00" in page.decode()
+    status, rep = api("PUT", f"/api/reports/saved/{rep['id']}", t, {"workspace_id": agency["wid"], "period": "today"})
+    assert status == 200 and rep["period"] == "today", rep
+    status, page = api("GET", rep["public_path"], None)
+    assert status == 200 and "2:00" not in page.decode()
+    assert api("DELETE", f"/api/reports/saved/{rep['id']}?workspace_id={agency['wid']}", t)[0] == 204
+
+
 def test_public_link_lifecycle(agency):
     t, _ = agency["cheffe"]
     status, rep = api("POST", "/api/reports/saved", t, {

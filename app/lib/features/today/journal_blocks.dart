@@ -51,7 +51,6 @@ Color _projectColor(CatalogController catalog, String? projectId, ThemeData them
 /// D'où vient une proposition : « Habitude », « Agenda », « Chantier »…
 String _sourceLabel(AppLocalizations l, DraftSource? source) => switch (source) {
       DraftSource.presence => l.journalSourcePresence,
-      DraftSource.claude => l.journalSourceClaude,
       DraftSource.calendar => l.journalSourceCalendar,
       DraftSource.commits => l.journalSourceCommits,
       DraftSource.habit => l.journalSourceHabit,

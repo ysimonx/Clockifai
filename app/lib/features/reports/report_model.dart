@@ -5,7 +5,7 @@ import '../../core/widgets/teammates.dart' show memberName;
 
 enum GroupBy { project, task, client, user, tag, day, description }
 
-enum RangePreset { thisWeek, lastWeek, thisMonth, lastMonth, thisYear, custom }
+enum RangePreset { today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth, thisYear, custom }
 
 /// Filtre « Humains / Agents » des rapports (agents Claude, plans/10-suivi-claude-code.md §8).
 enum MemberKind {

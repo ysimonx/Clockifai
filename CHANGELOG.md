@@ -10,6 +10,8 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.11] — 2026-11-04
+
 ### Modifié
 
 - **Factures et sessions de Claude en parallèle** : deux sessions d'un même agent sur un même ticket ou une même

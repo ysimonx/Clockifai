@@ -10,6 +10,13 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Modifié
+
+- **Factures et sessions de Claude en parallèle** : deux sessions d'un même agent sur un même ticket ou une même
+  tâche ne sont plus facturées deux fois. Deux tickets ou deux tâches menés en parallèle continuent de s'additionner,
+  et le temps sans tâche compte pour chaque session. « À facturer » donne le même total ; les rapports et les exports
+  gardent le temps cumulé (4 novembre 2026).
+
 ## [0.2.10] — 2026-11-04
 
 ### Modifié

@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../core/billing_time.dart';
 import '../../core/format.dart' show addDays, dayKey, roundSeconds;
 import '../drift/database.dart';
 
@@ -290,9 +291,9 @@ class ModulesRepository {
 
   /// Crée une facture brouillon depuis le temps facturable d'un client sur une période :
   /// une ligne par (projet, taux), ou par (projet, tâche, taux) avec [byTask], quantités en heures. Une entrée
-  /// sans taux prend celui applicable aujourd'hui (`CatalogController.entryRate`). Chaque durée est arrondie au pas du
-  /// workspace ([roundingMinutes]), comme le bloc « À facturer » des rapports. Les entrées sont marquées facturées.
-  /// Le numéro définitif est attribué par le serveur à la synchronisation.
+  /// sans taux prend celui applicable aujourd'hui (`CatalogController.entryRate`). Chaque durée est celle de
+  /// [billedSeconds], arrondie au pas du workspace ([roundingMinutes]), comme le bloc « À facturer » des rapports. Les
+  /// entrées sont marquées facturées. Le numéro définitif est attribué par le serveur à la synchronisation.
   Future<String?> createInvoiceFromTime({
     required String workspaceId,
     required String userId,
@@ -341,6 +342,14 @@ class ModulesRepository {
       final task = byTask && taskNames.containsKey(root) ? root : null;
       groups.putIfAbsent((e.projectId, task, rateOf(e)), () => []).add(e);
     }
+    final billed = billedSeconds(entries, invoiced: already, now: DateTime.now(), rootOf: (e) {
+      final root = tasks[rootOf(e.taskId)];
+      return root == null || root.deletedAt != null ? null : root.id;
+    });
+    int secondsOf(List<TimeEntry> list) => list.fold(0, (s, e) => s + roundSeconds(billed[e.id]!, roundingMinutes));
+    // Une ligne couverte par une session parallèle disparaît ; ses entrées restent marquées facturées.
+    groups.removeWhere((_, list) => secondsOf(list) == 0);
+    if (groups.isEmpty) return null;
     // « Projet », ou « Projet — Tâche », suivi de l'adresse du ticket du client s'il y en a un.
     String label((String?, String?, int) key) {
       final project = projectNames[key.$1] ?? '';
@@ -376,9 +385,7 @@ class ModulesRepository {
       final keys = groups.keys.toList()..sort(compare);
       for (final key in keys) {
         final list = groups[key]!;
-        final seconds =
-            list.fold<int>(0, (s, e) => s + roundSeconds(e.endAt!.difference(e.startAt).inSeconds, roundingMinutes));
-        final hours = (seconds / 36).round() / 100; // 2 décimales
+        final hours = (secondsOf(list) / 36).round() / 100; // 2 décimales
         await db.into(db.invoiceItems).insert(InvoiceItemsCompanion.insert(
               workspaceId: workspaceId,
               invoiceId: invoiceId,

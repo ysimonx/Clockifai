@@ -10,6 +10,8 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.10] — 2026-11-04
+
 ### Modifié
 
 - **Nouvelle icône** sur le web, l'iPhone, le Mac et Android, à la place de celle de Flutter : un chronomètre dont

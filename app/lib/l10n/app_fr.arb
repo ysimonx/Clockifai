@@ -64,11 +64,23 @@
   },
   "journalHeroGaps": "Il reste des créneaux vides",
   "journalHeroGapsText": "Touchez un créneau en pointillé pour le remplir, ou glissez sur la ligne « Vous ».",
+  "journalHeroGapsClaudeText": "Le temps de Claude compte déjà : il ne reste que les trous. Touchez un créneau en pointillé pour le remplir, ou glissez sur la ligne « Vous ».",
   "journalHeroDone": "Journée complète",
   "journalHeroDoneText": "{total} saisies, rien à confirmer.",
   "@journalHeroDoneText": {
     "placeholders": {
       "total": {
+        "type": "String"
+      }
+    }
+  },
+  "journalHeroDoneClaudeText": "{mine} saisies et {claude} avec Claude, rien à confirmer.",
+  "@journalHeroDoneClaudeText": {
+    "placeholders": {
+      "mine": {
+        "type": "String"
+      },
+      "claude": {
         "type": "String"
       }
     }
@@ -102,25 +114,12 @@
   },
   "journalHint": "Glisser sur le vide : créer · tirer un bord ou le bloc : ajuster · Entrée : confirmer · Retour arrière : ignorer · flèches : décaler",
   "journalProposed": "Proposé par Clockifai",
-  "journalSourceClaude": "Pendant une session de Claude",
   "journalSourceHabit": "Habitude",
   "journalSourcePlanning": "Planning",
   "journalLogged": "Saisi",
   "journalRunning": "En cours",
   "journalNew": "Nouvelle entrée",
   "journalWhy": "Pourquoi ce bloc",
-  "journalReasonClaudeSession": "Claude travaillait sur ce projet de {start} à {end}",
-  "@journalReasonClaudeSession": {
-    "placeholders": {
-      "start": {
-        "type": "String"
-      },
-      "end": {
-        "type": "String"
-      }
-    }
-  },
-  "journalReasonClaudePilot": "Le temps de suivre sa session et de relire son travail",
   "journalReasonHabitWeekday": "Habitude : {count} fois sur les {of} dernières semaines, le même jour, vers {time}",
   "@journalReasonHabitWeekday": {
     "placeholders": {
@@ -184,6 +183,7 @@
   "journalIgnored": "Proposition ignorée",
   "journalSummary": "Bilan du jour",
   "journalConfirmed": "Confirmé",
+  "journalCoveredByClaude": "Couvert par Claude",
   "journalToConfirm": "À confirmer",
   "journalTarget": "sur {duration}",
   "@journalTarget": {
@@ -216,7 +216,7 @@
     }
   },
   "journalDescriptionHint": "Qu’avez-vous fait ?",
-  "journalDayRing": "{day} : {percent} % saisi",
+  "journalDayRing": "{day} : journée remplie à {percent} %",
   "@journalDayRing": {
     "placeholders": {
       "day": {
@@ -1019,6 +1019,14 @@
       },
       "end": {
         "type": "String"
+      }
+    }
+  },
+  "journalClaudeParallel": "jusqu’à {count} projets en parallèle",
+  "@journalClaudeParallel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   },

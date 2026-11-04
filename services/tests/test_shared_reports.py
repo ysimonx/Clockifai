@@ -12,6 +12,8 @@ from app.services import shared_reports as sr
 
 
 @pytest.mark.parametrize(("period", "week_start", "expected"), [
+    ("today", 1, (date(2026, 10, 27), date(2026, 10, 27))),
+    ("yesterday", 1, (date(2026, 10, 26), date(2026, 10, 26))),
     ("this_week", 1, (date(2026, 10, 26), date(2026, 11, 1))),
     ("this_week", 7, (date(2026, 10, 25), date(2026, 10, 31))),
     ("last_week", 1, (date(2026, 10, 19), date(2026, 10, 25))),

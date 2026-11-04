@@ -121,11 +121,17 @@
         <ul>
           <li>Les propositions viennent de ce que Clockifai sait déjà : vos <strong>habitudes</strong> (la même activité,
             à la même heure, la plupart des jours ou le même jour chaque semaine), votre <strong>planning</strong> (les
-            heures prévues sur un projet, moins ce qui est déjà saisi), si vous utilisez Claude Code, les
-            <strong>sessions de Claude</strong> (le temps passé à suivre son travail) et vos <strong>commits</strong>
-            (une série de commits dans un dépôt devient une séance de travail sur son projet), et, si vous l’avez relié,
+            heures prévues sur un projet, moins ce qui est déjà saisi), si vous utilisez Claude Code, vos
+            <strong>commits</strong> (une série de commits dans un dépôt devient une séance de travail sur son projet),
+            et, si vous l’avez relié,
             votre <strong>agenda</strong> (vos réunions, avec le projet deviné d’après leur titre). Rien n’est mesuré
             sur votre ordinateur : ni vos applications, ni vos fichiers.</li>
+          <li>Si vous pilotez Claude Code, son temps compte déjà pour la journée : il n’est pas recopié sur votre
+            ligne, et les créneaux à remplir comme les propositions ne portent que sur ce que ni vous ni Claude n’avez
+            couvert. Sous la ligne <span class="ui">Vous</span>, Claude a une ligne par projet : deux projets l’un au-dessus
+            de l’autre aux mêmes heures ont été menés en parallèle. Touchez une session pour la consulter ou la
+            corriger. Si vous voulez quand même noter votre propre temps sur cette plage, glissez sur la ligne
+            <span class="ui">Vous</span>.</li>
           <li>La ligne <span class="ui">Traces</span> montre les événements de votre agenda et vos commits de la journée,
             d’où viennent ces propositions. Pour relier votre agenda : <span class="ui">Paramètres</span> ›
             <span class="ui">Intégrations</span> › <span class="ui">Agenda</span>, puis collez son adresse iCal
@@ -143,8 +149,9 @@
           <li>À droite de la frise (en dessous sur téléphone), <span class="ui">À compléter</span> liste les
             propositions : <span class="ui">Ajouter</span> en enregistre une, <span class="ui">Tout confirmer</span>
             toutes d’un coup ; sans proposition, les créneaux vides à <span class="ui">Remplir</span>. Le
-            <span class="ui">Bilan du jour</span> compare votre temps à l’objectif, projet par projet, et à celui de
-            Claude.</li>
+            <span class="ui">Bilan du jour</span> compare à l’objectif votre temps, ajouté à ce qui est
+            <span class="ui">Couvert par Claude</span> en dehors de vos entrées, et détaille chaque projet, pour vous et
+            pour Claude.</li>
           <li>Journée encore vide ? <span class="ui">Comme vendredi ?</span> (ou <span class="ui">Comme hier ?</span>)
             montre votre dernière journée travaillée ; <span class="ui">Reprendre la journée</span> la recopie aux mêmes
             heures, avec Annuler dans le bandeau. <span class="ui">Selon le planning</span> confirme plutôt ce que
@@ -376,7 +383,8 @@
             cette semaine</span>, <span class="ui">Par client, ce mois-ci</span>, <span class="ui">Usage IA au coût</span>
             (si vous pilotez Claude Code). <span class="ui">Comparer à la période précédente</span> ajoute l’écart
             (« +12 % vs période précédente ») sur les totaux et la valeur d’avant sur chaque ligne.</li>
-          <li>Choisissez la période (<span class="ui">Cette semaine</span>, <span class="ui">Mois dernier</span>,
+          <li>Choisissez la période (<span class="ui">Aujourd’hui</span>, <span class="ui">Hier</span>,
+            <span class="ui">Cette semaine</span>, <span class="ui">Mois dernier</span>,
             <span class="ui">Période personnalisée</span>…) et filtrez par client, projet ou facturation.</li>
           <li><span class="ui">Résumé</span> regroupe le temps (<span class="ui">Grouper par</span> projet, tâche, client,
             tag, jour ou description) ; par tâche, une tâche compte aussi le temps de ses sous-tâches, qu’un clic

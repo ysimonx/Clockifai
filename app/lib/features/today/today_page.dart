@@ -103,9 +103,10 @@ class _TodayPageState extends State<TodayPage> {
     final next = addDays(_day, 1);
     _mineStream = entriesRepo.watchEntries(
         workspaceId: ws, userId: me, from: addDays(_day, -35), to: next, includeRunning: true);
+    // Sept jours : les anneaux de l'en-tête comptent aussi le temps de Claude.
     _agentStream = agentId == null
         ? Stream.value(const <EntryRow>[])
-        : entriesRepo.watchEntries(workspaceId: ws, userId: agentId, from: _day, to: next, includeRunning: true);
+        : entriesRepo.watchEntries(workspaceId: ws, userId: agentId, from: addDays(_day, -6), to: next, includeRunning: true);
     _planStream = modulesRepo.watchAssignments(ws, userId: me, from: _day, to: next);
   }
 
@@ -170,7 +171,7 @@ class _TodayPageState extends State<TodayPage> {
             me: me,
             ws: ws,
             rows: mineSnap.data ?? const [],
-            agentRows: agentSnap.data ?? const [],
+            agentWeek: agentSnap.data ?? const [],
             planning: planSnap.data ?? const [],
             loading: !mineSnap.hasData,
           ),
@@ -185,11 +186,12 @@ class _TodayPageState extends State<TodayPage> {
       required String me,
       required String ws,
       required List<EntryRow> rows,
-      required List<EntryRow> agentRows,
+      required List<EntryRow> agentWeek,
       required List<ScheduleAssignment> planning,
       required bool loading}) {
     final l = context.l10n;
     final now = widget.clock();
+    final agentRows = [for (final r in agentWeek) if (spanOf(r.entry, _day, now) != null) r];
     final session = context.read<SessionController>();
     final typical = TypicalDay.ofProfile(session.profile);
     final dayEnd = addDays(_day, 1);
@@ -242,7 +244,8 @@ class _TodayPageState extends State<TodayPage> {
         _Block(id: 'new', kind: _Kind.fresh, span: _fresh!, title: _freshTitle, projectId: _freshProject, taskId: _freshTask),
     ]..sort((a, b) => a.span.start.compareTo(b.span.start));
     final drafts = blocks.where((b) => b.kind == _Kind.draft).toList();
-    final gaps = subtract(plan.windows, [for (final b in blocks) b.span], min: 15);
+    // Le temps de Claude compte déjà : les trous sont ce que ni vous ni lui n'avez couvert.
+    final gaps = subtract(plan.windows, [for (final b in blocks) b.span, ...plan.agent], min: 15);
     final selected = blocks.where((b) => b.id == _sel).firstOrNull;
     if (selected?.id != _titleFor) {
       _titleFor = selected?.id;
@@ -250,6 +253,7 @@ class _TodayPageState extends State<TodayPage> {
     }
 
     final loggedMin = plan.loggedMinutes;
+    final claudeMin = plan.agentOnlyMinutes;
     final draftMin = drafts.fold(0, (a, b) => a + b.span.length);
     final claudeSpans = [for (final r in agentRows) if (spanOf(r.entry, _day, now) case final sp?) (r.entry, sp)];
 
@@ -366,15 +370,20 @@ class _TodayPageState extends State<TodayPage> {
       return KeyEventResult.ignored;
     }
 
-    // Journée vide : « Comme vendredi » recopie la dernière journée travaillée (lot 9).
-    final copyFrom = mineRows.isEmpty && !_day.isAfter(_midnight(now)) ? lastWorkedDay(history, _day) : null;
+    // Journée vide : « Comme vendredi » recopie la dernière journée travaillée (lot 9) ; pas par-dessus le temps de Claude.
+    final copyFrom = mineRows.isEmpty && claudeSpans.isEmpty && !_day.isAfter(_midnight(now)) ? lastWorkedDay(history, _day) : null;
     final copyRows = copyFrom == null
         ? const <TimeEntry>[]
         : ([for (final r in rows) if (_midnight(r.entry.startAt.toLocal()) == copyFrom && r.entry.endAt != null) r.entry]
           ..sort((a, b) => a.startAt.compareTo(b.startAt)));
     final planned = drafts.where((d) => d.draft?.source == DraftSource.planning).toList();
     final quick = _quickEntry(context,
-        catalog: catalog, rows: rows, proposed: [for (final b in blocks) if (b.kind != _Kind.logged) b.span], now: now, me: me, ws: ws);
+        catalog: catalog,
+        rows: rows,
+        proposed: [for (final b in blocks) if (b.kind != _Kind.logged) b.span, ...plan.agent],
+        now: now,
+        me: me,
+        ws: ws);
     Widget? start(bool phone) => copyFrom == null
         ? null
         : _startCard(context,
@@ -391,6 +400,7 @@ class _TodayPageState extends State<TodayPage> {
         drafts: drafts,
         gaps: gaps,
         loggedMin: loggedMin,
+        claudeMin: claudeMin,
         draftMin: draftMin,
         onConfirm: (b) => confirmDrafts([b]),
         onConfirmAll: () => confirmDrafts(drafts),
@@ -425,7 +435,8 @@ class _TodayPageState extends State<TodayPage> {
     final inspector = selected == null
         ? null
         : _inspector(context, catalog: catalog, b: selected, onConfirm: (b) => confirmDrafts([b]), onDismiss: dismiss, onSaveFresh: saveFresh);
-    final summary = _summary(context, day: _day, now: now, catalog: catalog, plan: plan, mine: mineRows, loggedMin: loggedMin, draftMin: draftMin, claude: claudeSpans);
+    final summary = _summary(context,
+        day: _day, now: now, catalog: catalog, plan: plan, mine: mineRows, loggedMin: loggedMin, claudeMin: claudeMin, draftMin: draftMin, claude: claudeSpans);
     const gap = SizedBox(height: 16);
 
     return LayoutBuilder(builder: (context, c) {
@@ -435,7 +446,7 @@ class _TodayPageState extends State<TodayPage> {
       if (wide) {
         // Ordinateur (maquette « Aujourd'hui ») : la frise à gauche, ce qui reste à faire et le bilan à droite.
         children = [
-          _header(context, rows: rows, target: plan.typical.target, now: now),
+          _header(context, rows: rows, agentRows: agentWeek, target: plan.typical.target, now: now),
           gap,
           quick,
           gap,
@@ -458,7 +469,7 @@ class _TodayPageState extends State<TodayPage> {
       } else if (phone) {
         // Téléphone (maquette « la journée en un geste ») : reprendre une journée d'un bouton, puis la liste du jour.
         children = [
-          _header(context, rows: rows, target: plan.typical.target, now: now, compact: true),
+          _header(context, rows: rows, agentRows: agentWeek, target: plan.typical.target, now: now, compact: true),
           gap,
           if (copyFrom != null) ...[start(true)!, gap],
           if (drafts.isNotEmpty) ...[toComplete, gap],
@@ -472,7 +483,7 @@ class _TodayPageState extends State<TodayPage> {
         ];
       } else {
         children = [
-          _header(context, rows: rows, target: plan.typical.target, now: now),
+          _header(context, rows: rows, agentRows: agentWeek, target: plan.typical.target, now: now),
           gap,
           if (copyFrom != null) ...[start(false)!, gap],
           quick,
@@ -687,18 +698,15 @@ class _TodayPageState extends State<TodayPage> {
   }
 
   // ------------------------------------------------------------------ en-tête : jour et semaine en anneaux
-  Widget _header(BuildContext context, {required List<EntryRow> rows, required int target, required DateTime now, bool compact = false}) {
+  Widget _header(BuildContext context,
+      {required List<EntryRow> rows, required List<EntryRow> agentRows, required int target, required DateTime now, bool compact = false}) {
     final l = context.l10n;
     final theme = Theme.of(context);
     final locale = context.localeTag;
     final today = _midnight(now);
     final days = [for (var i = 6; i >= 0; i--) addDays(_day, -i)];
-    int minutesOn(DateTime d) {
-      final end = addDays(d, 1);
-      return rows
-          .where((r) => !r.entry.startAt.toLocal().isBefore(d) && r.entry.startAt.toLocal().isBefore(end))
-          .fold(0, (a, r) => a + ((r.entry.endAt ?? now).difference(r.entry.startAt).inMinutes));
-    }
+    // Journée remplie : votre temps et celui de Claude, sans compter deux fois ce qui se chevauche.
+    int minutesOn(DateTime d) => coveredMinutes([for (final r in [...rows, ...agentRows]) ?spanOf(r.entry, d, now)]);
 
     final title = toBeginningOfSentenceCase(DateFormat.yMMMMEEEEd(locale).format(_day));
     return Wrap(
@@ -784,6 +792,7 @@ class _TodayPageState extends State<TodayPage> {
       required List<_Block> drafts,
       required List<Span> gaps,
       required int loggedMin,
+      required int claudeMin,
       required int draftMin,
       required Future<void> Function(_Block) onConfirm,
       required VoidCallback onConfirmAll,
@@ -808,7 +817,12 @@ class _TodayPageState extends State<TodayPage> {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(done ? l.journalHeroDone : l.journalHeroNothing, style: theme.textTheme.titleMedium),
-                Text(done ? l.journalHeroDoneText(formatHm(loggedMin * 60)) : l.journalHeroNothingText(formatHm(loggedMin * 60)),
+                Text(
+                    !done
+                        ? l.journalHeroNothingText(formatHm(loggedMin * 60))
+                        : claudeMin > 0
+                            ? l.journalHeroDoneClaudeText(formatHm(loggedMin * 60), formatHm(claudeMin * 60))
+                            : l.journalHeroDoneText(formatHm(loggedMin * 60)),
                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
               ]),
             ),
@@ -821,7 +835,7 @@ class _TodayPageState extends State<TodayPage> {
       lines = [
         Text(l.journalHeroPending, style: theme.textTheme.titleMedium),
         const SizedBox(height: 2),
-        Text(l.journalHeroPendingText(formatHm((loggedMin + draftMin) * 60), formatHm(draftMin * 60), drafts.length),
+        Text(l.journalHeroPendingText(formatHm((loggedMin + claudeMin + draftMin) * 60), formatHm(draftMin * 60), drafts.length),
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 8),
         for (final b in drafts) ...[
@@ -860,7 +874,8 @@ class _TodayPageState extends State<TodayPage> {
       lines = [
         Text(l.journalHeroGaps, style: theme.textTheme.titleMedium),
         const SizedBox(height: 2),
-        Text(l.journalHeroGapsText, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(claudeMin > 0 ? l.journalHeroGapsClaudeText : l.journalHeroGapsText,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 4),
         for (final g in gaps.take(5)) ...[
           const Divider(height: 17),
@@ -1004,11 +1019,12 @@ class _TodayPageState extends State<TodayPage> {
       required Future<void> Function(_Block, Span) commitSpan}) {
     final l = context.l10n;
     final theme = Theme.of(context);
-    const labelWidth = 84.0;
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         child: LayoutBuilder(builder: (context, c) {
+          // Plus large sur ordinateur : les lignes de Claude portent le nom du projet.
+          final labelWidth = c.maxWidth >= 640 ? 148.0 : 84.0;
           final width = c.maxWidth - labelWidth - 12;
           double x(int m) => (m - range.start) / range.length * width;
           int minuteAt(double dx) => ((range.start + dx / width * range.length) / 5).round() * 5;
@@ -1267,50 +1283,60 @@ class _TodayPageState extends State<TodayPage> {
             ],
           );
 
-          final claudeLane = lane(
-            height: 64,
-            children: [
-              for (final (e, sp) in claude)
-                Positioned(
-                  left: x(sp.start),
-                  width: math.max(6.0, x(sp.end) - x(sp.start)),
-                  top: 8,
-                  bottom: 8,
-                  child: Tooltip(
-                    message: 'Claude : ${e.description}, ${hm(sp.start)} – ${hm(sp.end)}',
-                    excludeFromSemantics: true,
-                    waitDuration: const Duration(milliseconds: 400),
-                    child: Semantics(
-                    button: true,
-                    label: 'Claude : ${e.description}, ${hm(sp.start)} – ${hm(sp.end)}',
-                    child: InkWell(
-                      onTap: () => showEntryDialog(context, entry: e),
-                      child: CustomPaint(
-                        painter: _BlockPainter(
-                          fill: theme.colorScheme.surface,
-                          border: _projectColor(catalog, e.projectId, theme).withValues(alpha: 0.6),
-                          hatch: _projectColor(catalog, e.projectId, theme).withValues(alpha: 0.22),
-                        ),
-                        child: x(sp.end) - x(sp.start) < 44
-                            ? const SizedBox.expand()
-                            : Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                child: ExcludeSemantics(
-                                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                    Text(e.description, maxLines: 1, overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
-                                    const Spacer(),
-                                    Text(formatHm(sp.length * 60), style: theme.textTheme.labelSmall),
-                                  ]),
-                                ),
+          // Claude : une ligne par projet, pour voir ce qu'il a mené en parallèle.
+          Widget claudeLane(List<(TimeEntry, Span)> sessions) => lane(
+                height: 40,
+                children: [
+                  for (final (e, sp) in sessions)
+                    Builder(builder: (context) {
+                      final w = math.max(6.0, x(sp.end) - x(sp.start));
+                      final color = _projectColor(catalog, e.projectId, theme);
+                      final title = e.description.isEmpty ? (catalog.project(e.projectId)?.name ?? l.noDescription) : e.description;
+                      final semantic = 'Claude : $title, ${hm(sp.start)} – ${hm(sp.end)}';
+                      return Positioned(
+                        left: x(sp.start),
+                        width: w,
+                        top: 5,
+                        bottom: 5,
+                        child: Tooltip(
+                          message: semantic,
+                          excludeFromSemantics: true,
+                          waitDuration: const Duration(milliseconds: 400),
+                          child: Semantics(
+                            button: true,
+                            label: semantic,
+                            child: InkWell(
+                              onTap: () => showEntryDialog(context, entry: e),
+                              child: CustomPaint(
+                                painter: _BlockPainter(
+                                    fill: theme.colorScheme.surface, border: color.withValues(alpha: 0.6), hatch: color.withValues(alpha: 0.22)),
+                                child: w < 44
+                                    ? const SizedBox.expand()
+                                    : Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                        child: ExcludeSemantics(
+                                          child: Row(children: [
+                                            Expanded(
+                                              child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                                  style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
+                                            ),
+                                            if (w >= 110) ...[
+                                              const SizedBox(width: 6),
+                                              Text(formatHm(sp.length * 60), style: _mono(context, muted: false)),
+                                            ],
+                                          ]),
+                                        ),
+                                      ),
                               ),
-                      ),
-                    ),
-                  ),
-                  ),
-                ),
-            ],
-          );
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                ],
+              );
+          final claudeLanes = agentLanes(claude);
+          final parallel = parallelProjects(claude);
 
           // Traces : événements de l'agenda (bord fin) et commits (points), d'où viennent certaines propositions.
           final tracesLane = lane(
@@ -1360,8 +1386,8 @@ class _TodayPageState extends State<TodayPage> {
             ],
           );
 
-          Widget row(Widget label, Widget content) => Padding(
-                padding: const EdgeInsets.only(top: 8),
+          Widget row(Widget label, Widget content, {double top = 8}) => Padding(
+                padding: EdgeInsets.only(top: top),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
                   SizedBox(width: labelWidth, child: label),
                   const SizedBox(width: 12),
@@ -1370,7 +1396,7 @@ class _TodayPageState extends State<TodayPage> {
               );
 
           return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [const SizedBox(width: labelWidth + 12), ruler]),
+            Row(children: [SizedBox(width: labelWidth + 12), ruler]),
             row(
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(l.journalYou, style: theme.textTheme.titleSmall),
@@ -1378,13 +1404,40 @@ class _TodayPageState extends State<TodayPage> {
               mineLane,
             ),
             if (claude.isNotEmpty)
-              row(
-                Row(children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(children: [
                   Icon(Icons.auto_awesome, size: 14, color: theme.colorScheme.tertiary),
                   const SizedBox(width: 4),
-                  Flexible(child: Text('Claude', overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall)),
+                  Text('Claude', style: theme.textTheme.titleSmall),
+                  if (parallel > 1) ...[
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(l.journalClaudeParallel(parallel), overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+                    ),
+                  ],
                 ]),
-                claudeLane,
+              ),
+            for (final (i, lane) in claudeLanes.indexed)
+              row(
+                // Deux sessions simultanées d'un même projet : le nom n'est écrit qu'une fois.
+                i > 0 && claudeLanes[i - 1].projectId == lane.projectId
+                    ? const SizedBox.shrink()
+                    : Tooltip(
+                        message: catalog.project(lane.projectId)?.name ?? l.noProject,
+                        child: Row(children: [
+                          const SizedBox(width: 4),
+                          ColorDot(catalog.project(lane.projectId)?.color ?? '#9AA3B2', size: 8),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(catalog.project(lane.projectId)?.name ?? l.noProject,
+                                maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.labelMedium),
+                          ),
+                        ]),
+                      ),
+                claudeLane(lane.sessions),
+                top: 4,
               ),
             if (events.isNotEmpty || commits.isNotEmpty)
               row(
@@ -1397,7 +1450,7 @@ class _TodayPageState extends State<TodayPage> {
               ),
             const SizedBox(height: 10),
             Padding(
-              padding: const EdgeInsets.only(left: labelWidth + 12),
+              padding: EdgeInsets.only(left: labelWidth + 12),
               child: Text(l.journalHint, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
             ),
           ]);
@@ -1432,8 +1485,6 @@ class _TodayPageState extends State<TodayPage> {
         switch (r.kind) {
           ReasonKind.presence => r.b < 0 ? l.journalReasonPresenceSince(hm(r.a)) : l.journalReasonPresence(hm(r.a), hm(r.b)),
           ReasonKind.presenceRounded => l.journalReasonPresenceRounded,
-          ReasonKind.claudeSession => l.journalReasonClaudeSession(hm(r.a), hm(r.b)),
-          ReasonKind.claudePilot => l.journalReasonClaudePilot,
           ReasonKind.calendar => l.journalReasonCalendar(hm(r.a), hm(r.b)),
           ReasonKind.commits => l.journalReasonCommits(r.count, r.text, hm(r.a), hm(r.b)),
           ReasonKind.habitWeekday => l.journalReasonHabitWeekday(r.count, r.of, hm(r.a)),

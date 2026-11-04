@@ -46,6 +46,8 @@ class _Session extends ChangeNotifier implements SessionController {
 void main() {
   test('période précédente et écart', () {
     final week = DateTimeRange(start: DateTime(2026, 10, 19), end: DateTime(2026, 10, 26));
+    final day = DateTimeRange(start: DateTime(2026, 11, 1), end: DateTime(2026, 11, 2));
+    expect(previousRange(day, RangePreset.today), DateTimeRange(start: DateTime(2026, 10, 31), end: DateTime(2026, 11, 1)));
     expect(previousRange(week, RangePreset.thisWeek), DateTimeRange(start: DateTime(2026, 10, 12), end: DateTime(2026, 10, 19)));
     final march = DateTimeRange(start: DateTime(2027, 3, 1), end: DateTime(2027, 4, 1));
     expect(previousRange(march, RangePreset.thisMonth), DateTimeRange(start: DateTime(2027, 2, 1), end: DateTime(2027, 3, 1)));

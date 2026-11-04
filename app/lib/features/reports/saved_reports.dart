@@ -17,7 +17,7 @@ import '../../core/widgets/common.dart';
 class ReportDraft {
   const ReportDraft({required this.period, this.from, this.to, this.filters = const {}, this.rounding = false});
 
-  /// `this_week`, `last_week`, `this_month`, `last_month`, `this_year` ou `custom` (avec [from] et [to], inclus).
+  /// `today`, `yesterday`, `this_week`, `last_week`, `this_month`, `last_month`, `this_year` ou `custom` (avec [from] et [to], inclus).
   final String period;
   final DateTime? from;
   final DateTime? to;
@@ -208,6 +208,8 @@ String periodLabel(BuildContext context, String period, DateTime? from, DateTime
   final l = context.l10n;
   final fmt = DateFormat.yMMMd(context.localeTag);
   return switch (period) {
+    'today' => l.today,
+    'yesterday' => l.yesterday,
     'this_week' => l.thisWeek,
     'last_week' => l.lastWeek,
     'this_month' => l.thisMonth,

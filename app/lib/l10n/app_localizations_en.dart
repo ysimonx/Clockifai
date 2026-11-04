@@ -142,11 +142,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap a dashed slot to fill it, or drag across the “You” line.';
 
   @override
+  String get journalHeroGapsClaudeText =>
+      'Claude’s time already counts: only the gaps are left. Tap a dashed slot to fill it, or drag across the “You” line.';
+
+  @override
   String get journalHeroDone => 'Day complete';
 
   @override
   String journalHeroDoneText(String total) {
     return '$total logged, nothing to confirm.';
+  }
+
+  @override
+  String journalHeroDoneClaudeText(String mine, String claude) {
+    return '$mine logged and $claude with Claude, nothing to confirm.';
   }
 
   @override
@@ -181,9 +190,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journalProposed => 'Suggested by Clockifai';
 
   @override
-  String get journalSourceClaude => 'During a Claude session';
-
-  @override
   String get journalSourceHabit => 'Habit';
 
   @override
@@ -200,15 +206,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get journalWhy => 'Why this block';
-
-  @override
-  String journalReasonClaudeSession(String start, String end) {
-    return 'Claude was working on this project from $start to $end';
-  }
-
-  @override
-  String get journalReasonClaudePilot =>
-      'Time spent following its session and reviewing its work';
 
   @override
   String journalReasonHabitWeekday(int count, int of, String time) {
@@ -268,6 +265,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journalConfirmed => 'Confirmed';
 
   @override
+  String get journalCoveredByClaude => 'Covered by Claude';
+
+  @override
   String get journalToConfirm => 'To confirm';
 
   @override
@@ -290,7 +290,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String journalDayRing(String day, int percent) {
-    return '$day: $percent% logged';
+    return '$day: $percent% of the day filled';
   }
 
   @override
@@ -1430,6 +1430,11 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 commit',
     );
     return '$_temp0 in $repository, from $start to $end';
+  }
+
+  @override
+  String journalClaudeParallel(int count) {
+    return 'up to $count projects in parallel';
   }
 
   @override

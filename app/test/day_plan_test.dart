@@ -52,33 +52,47 @@ void main() {
     expect(typicalDay(history().take(8).toList(), now), same(TypicalDay.fallback), reason: 'moins de trois jours');
   });
 
-  test('Claude d’abord, puis les habitudes, puis le planning, sur les créneaux libres jusqu’à maintenant', () {
+  test('le temps de Claude compte déjà : habitudes puis planning, sur les trous seulement', () {
     final plan = planDay(day: at(10, 26, 0), now: now, mine: mine, history: history(), agentEntries: claude, planning: planning);
     expect(plan.windows, [const Span(510, 750), const Span(810, 1022)]);
     expect(plan.loggedMinutes, 90 + 135 + 47);
     expect([for (final d in plan.drafts) (d.source, d.span)], [
       (DraftSource.habit, const Span(510, 540)),
-      (DraftSource.claude, const Span(635, 690)),
       (DraftSource.planning, const Span(690, 750)),
       (DraftSource.planning, const Span(810, 840)),
-    ]);
-    final fromClaude = plan.drafts[1];
-    expect((fromClaude.description, fromClaude.projectId, fromClaude.taskId), ('Rappels par SMS', 'p1', 't1'));
-    expect(fromClaude.reasons.first.kind, ReasonKind.claudeSession);
+    ], reason: 'pas de copie de la session de Claude (10:35 – 11:30), ni du point hebdo qui tombe dessus');
     expect(plan.drafts.first.reasons.single.kind, ReasonKind.habitDaily);
-    expect(plan.drafts[2].reasons.map((r) => r.kind), [ReasonKind.planned, ReasonKind.alreadyLogged]);
+    expect(plan.drafts[1].reasons.map((r) => r.kind), [ReasonKind.planned, ReasonKind.alreadyLogged]);
+    expect(plan.agent, [const Span(635, 690)]);
+    expect(plan.agentOnlyMinutes, 55);
     expect(plan.gaps, isEmpty, reason: 'il ne reste que 5 minutes entre 10:30 et 10:35');
   });
 
   test('une proposition ignorée laisse la place à la suivante', () {
-    final plan = planDay(day: at(10, 26, 0), now: now, mine: mine, history: history(), agentEntries: claude, planning: planning,
-        dismissed: {'claude:a1:635'});
+    final plan = planDay(day: at(10, 26, 0), now: now, mine: mine, history: history(), planning: planning);
     final hebdo = plan.drafts.firstWhere((d) => d.description == 'Point hebdo');
     expect((hebdo.source, hebdo.span, hebdo.reasons.single.kind), (DraftSource.habit, const Span(630, 690), ReasonKind.habitWeekday));
     expect(hebdo.reasons.single.count, 3);
-    expect(plan.drafts.any((d) => d.source == DraftSource.claude), isFalse);
-    expect(planDay(day: at(10, 26, 0), now: now, mine: mine, history: history(), dismissed: {hebdo.key}).drafts.map((d) => d.description),
-        isNot(contains('Point hebdo')), reason: 'clé stable : ignorée, elle ne revient pas');
+    final without = planDay(day: at(10, 26, 0), now: now, mine: mine, history: history(), planning: planning, dismissed: {hebdo.key});
+    expect(without.drafts.map((d) => d.description), isNot(contains('Point hebdo')), reason: 'clé stable : ignorée, elle ne revient pas');
+    expect(without.drafts.where((d) => d.source == DraftSource.planning).first.span, const Span(630, 750));
+  });
+
+  test('sessions de Claude : réunies sans double compte, une ligne par projet, projets en parallèle', () {
+    expect(merge(const [Span(600, 660), Span(540, 610), Span(700, 720), Span(660, 680)]), const [Span(540, 680), Span(700, 720)]);
+    expect(coveredMinutes(const [Span(600, 660), Span(630, 700)]), 100);
+    final sessions = [
+      (entry('a', at(10, 26, 9), at(10, 26, 10), project: 'p1', user: 'agent'), const Span(540, 600)),
+      (entry('b', at(10, 26, 9, 30), at(10, 26, 11), project: 'p2', user: 'agent'), const Span(570, 660)),
+      (entry('c', at(10, 26, 9, 45), at(10, 26, 10, 15), project: 'p1', user: 'agent'), const Span(585, 615)),
+      (entry('d', at(10, 26, 10, 30), at(10, 26, 11), project: 'p1', user: 'agent'), const Span(630, 660)),
+    ];
+    final lanes = agentLanes(sessions);
+    expect([for (final l in lanes) '${l.projectId}: ${[for (final s in l.sessions) s.$1.id].join(' ')}'], ['p1: a d', 'p1: c', 'p2: b'],
+        reason: 'deux sessions simultanées sur p1 : deux lignes, l’une sous l’autre');
+    expect(parallelProjects(sessions), 2);
+    expect(parallelProjects(sessions.take(1).toList()), 1);
+    expect(parallelProjects(const []), 0);
   });
 
   test('une habitude déjà saisie aujourd’hui n’est pas reproposée', () {
@@ -116,7 +130,7 @@ void main() {
     expect(plan.windows, [const Span(540, 720), const Span(780, 1022)]);
   });
 
-  test('agenda et commits : propositions sur les créneaux libres, après Claude, avant les habitudes', () {
+  test('agenda et commits : propositions sur les trous laissés par vous et Claude, avant les habitudes', () {
     DateTime utc(int h, [int m = 0]) => at(10, 26, h, m).toUtc();
     final plan = planDay(
       day: at(10, 26, 0),

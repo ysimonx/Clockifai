@@ -183,6 +183,47 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('Claude : une ligne par projet, son temps compte, seuls les trous restent à saisir', (tester) async {
+    const agent = 'claude-alex';
+    final site = catalog.projects.firstWhere((p) => p.name == 'Site').id;
+    final interne = catalog.projects.firstWhere((p) => p.name == 'Interne').id;
+    await tester.runAsync(() async {
+      await db.into(db.workspaceMembers).insert(member(agent, pilot: me));
+      Future<void> session(DateTime s, DateTime e, String desc, String project) => db.into(db.timeEntries).insert(TimeEntriesCompanion.insert(
+          workspaceId: ws, userId: agent, description: Value(desc), projectId: Value(project), startAt: s.toUtc(), endAt: Value(e.toUtc())));
+      await session(at(26, 10, 30), at(26, 12), 'Rappels par SMS', site);
+      await session(at(26, 11), at(26, 12, 30), 'Revue des droits', interne);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+    await open(tester);
+    expect(find.text('jusqu’à 2 projets en parallèle'), findsOneWidget);
+    final sms = tester.getTopLeft(find.byTooltip('Claude : Rappels par SMS, 10:30 – 12:00'));
+    final droits = tester.getTopLeft(find.byTooltip('Claude : Revue des droits, 11:00 – 12:30'));
+    expect(droits.dy, greaterThan(sms.dy), reason: 'deux projets : deux lignes, l’une sous l’autre');
+
+    expect(find.textContaining('Pendant une session de Claude'), findsNothing, reason: 'le temps de Claude n’est pas recopié');
+    expect(find.textContaining('2:00 à saisir'), findsNothing, reason: 'la fin de matinée est couverte par Claude');
+    expect(find.text('Couvert par Claude'), findsOneWidget);
+    expect(find.textContaining('4:00 reconstituées'), findsOneWidget, reason: '1:30 saisies, 2:00 de Claude, 0:30 proposées');
+    await close(tester);
+  });
+
+  testWidgets('journée sans entrée où Claude a travaillé : pas de « Comme vendredi » par-dessus son temps', (tester) async {
+    const agent = 'claude-alex';
+    final site = catalog.projects.firstWhere((p) => p.name == 'Site').id;
+    await tester.runAsync(() async {
+      await (db.delete(db.timeEntries)..where((t) => t.description.equals('Maquettes'))).go();
+      await db.into(db.workspaceMembers).insert(member(agent, pilot: me));
+      await db.into(db.timeEntries).insert(TimeEntriesCompanion.insert(
+          workspaceId: ws, userId: agent, description: const Value('Rappels'), projectId: Value(site), startAt: at(26, 10).toUtc(), endAt: Value(at(26, 11).toUtc())));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+    await open(tester);
+    expect(find.text('Comme vendredi ?'), findsNothing);
+    expect(find.byTooltip('Claude : Rappels, 10:00 – 11:00'), findsOneWidget);
+    await close(tester);
+  });
+
   testWidgets('une proposition ignorée ne revient pas', (tester) async {
     await open(tester);
     await tester.tap(find.text('Courriels').first);

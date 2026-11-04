@@ -144,11 +144,20 @@ class AppLocalizationsFr extends AppLocalizations {
       'Touchez un créneau en pointillé pour le remplir, ou glissez sur la ligne « Vous ».';
 
   @override
+  String get journalHeroGapsClaudeText =>
+      'Le temps de Claude compte déjà : il ne reste que les trous. Touchez un créneau en pointillé pour le remplir, ou glissez sur la ligne « Vous ».';
+
+  @override
   String get journalHeroDone => 'Journée complète';
 
   @override
   String journalHeroDoneText(String total) {
     return '$total saisies, rien à confirmer.';
+  }
+
+  @override
+  String journalHeroDoneClaudeText(String mine, String claude) {
+    return '$mine saisies et $claude avec Claude, rien à confirmer.';
   }
 
   @override
@@ -183,9 +192,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get journalProposed => 'Proposé par Clockifai';
 
   @override
-  String get journalSourceClaude => 'Pendant une session de Claude';
-
-  @override
   String get journalSourceHabit => 'Habitude';
 
   @override
@@ -202,15 +208,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get journalWhy => 'Pourquoi ce bloc';
-
-  @override
-  String journalReasonClaudeSession(String start, String end) {
-    return 'Claude travaillait sur ce projet de $start à $end';
-  }
-
-  @override
-  String get journalReasonClaudePilot =>
-      'Le temps de suivre sa session et de relire son travail';
 
   @override
   String journalReasonHabitWeekday(int count, int of, String time) {
@@ -270,6 +267,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get journalConfirmed => 'Confirmé';
 
   @override
+  String get journalCoveredByClaude => 'Couvert par Claude';
+
+  @override
   String get journalToConfirm => 'À confirmer';
 
   @override
@@ -292,7 +292,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String journalDayRing(String day, int percent) {
-    return '$day : $percent % saisi';
+    return '$day : journée remplie à $percent %';
   }
 
   @override
@@ -1445,6 +1445,11 @@ class AppLocalizationsFr extends AppLocalizations {
       one: '1 commit',
     );
     return '$_temp0 dans $repository, de $start à $end';
+  }
+
+  @override
+  String journalClaudeParallel(int count) {
+    return 'jusqu’à $count projets en parallèle';
   }
 
   @override

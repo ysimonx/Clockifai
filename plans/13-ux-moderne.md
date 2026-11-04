@@ -77,6 +77,12 @@ Ce que cela demande :
 
 ## Décisions
 
+- **4 novembre 2026** : retour de Yannick sur « Aujourd'hui » : recopier les sessions de Claude sur sa propre ligne
+  n'a pas de sens, seuls les trous sont à saisir. Le temps de Claude compte donc déjà : `planDay` ne propose plus de
+  brouillon « Claude » (la source `DraftSource.claude` disparaît, ce qui revient sur la première version du lot 11), le
+  retire des créneaux libres et le rend dans `DayPlan.agent` ; trous, bilan (« Couvert par Claude ») et anneaux en
+  tiennent compte. Chacun garde la main : glisser sur « Vous » note son temps de pilotage. La frise montre une ligne
+  par projet pour Claude, deux sessions simultanées d'un projet sur deux lignes.
 - **26 octobre 2026** : on commence par le journal automatique (lot 11), dans une version réduite qui n'utilise
   que ce que Clockifai sait déjà : historique des entrées (habitudes, journée type), planning, sessions de Claude.
 - **26 octobre 2026** : pas de mesure de l'activité personnelle sur le poste (temps actif dans VSCode, plan 10,

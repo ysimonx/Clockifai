@@ -77,6 +77,10 @@ class _ReportsPageState extends State<ReportsPage> {
     final now = DateTime.now();
     final ws = startOfWeek(now, weekStart);
     switch (_preset) {
+      case RangePreset.today:
+        return DateTimeRange(start: startOfDay(now), end: addDays(startOfDay(now), 1));
+      case RangePreset.yesterday:
+        return DateTimeRange(start: addDays(startOfDay(now), -1), end: startOfDay(now));
       case RangePreset.thisWeek:
         return DateTimeRange(start: ws, end: addDays(ws, 7));
       case RangePreset.lastWeek:
@@ -96,6 +100,8 @@ class _ReportsPageState extends State<ReportsPage> {
   String _presetLabel(RangePreset p) {
     final l = context.l10n;
     return switch (p) {
+      RangePreset.today => l.today,
+      RangePreset.yesterday => l.yesterday,
       RangePreset.thisWeek => l.thisWeek,
       RangePreset.lastWeek => l.lastWeek,
       RangePreset.thisMonth => l.thisMonth,
@@ -462,6 +468,8 @@ class _ReportsPageState extends State<ReportsPage> {
 
   ReportDraft _draft(DateTimeRange range) => ReportDraft(
         period: switch (_preset) {
+          RangePreset.today => 'today',
+          RangePreset.yesterday => 'yesterday',
           RangePreset.thisWeek => 'this_week',
           RangePreset.lastWeek => 'last_week',
           RangePreset.thisMonth => 'this_month',

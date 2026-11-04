@@ -22,7 +22,7 @@ from .exporters import entry_amount
 from .profiles import zone
 from .report_rows import detailed_rows
 
-PERIODS = ("this_week", "last_week", "this_month", "last_month", "this_year", "custom")
+PERIODS = ("today", "yesterday", "this_week", "last_week", "this_month", "last_month", "this_year", "custom")
 FILTER_KEYS = ("client_id", "project_id", "user_id", "billable", "member_kind")
 SCHEDULES = ("weekly", "monthly")
 MAX_RECIPIENTS = 20
@@ -64,6 +64,10 @@ def period_range(period: str, today: date, week_start: int, date_from: date | No
     monday = today - timedelta(days=(today.isoweekday() - week_start) % 7)
     month = today.replace(day=1)
     match period:
+        case "today":
+            return today, today
+        case "yesterday":
+            return today - timedelta(days=1), today - timedelta(days=1)
         case "this_week":
             return monday, monday + timedelta(days=6)
         case "last_week":

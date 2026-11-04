@@ -20,6 +20,13 @@ la date d'arrivée de chaque évolution.
 - **Se déconnecter** aussi depuis le menu du workspace, en haut du menu latéral, et depuis la palette ⌘K, en plus
   de Paramètres (2 novembre 2026).
 
+- **Aujourd'hui, avec Claude** : son temps compte déjà pour la journée. Clockifai ne propose plus de le recopier
+  sur votre ligne : les créneaux à remplir et les propositions ne portent que sur ce que ni vous ni Claude n'avez
+  couvert, et le bilan comme les anneaux des sept derniers jours en tiennent compte. La frise montre une ligne par
+  projet pour Claude, ce qui fait voir les projets menés en parallèle (4 novembre 2026).
+
+- **Rapports** : deux nouvelles périodes, Aujourd'hui et Hier, aussi pour les rapports partagés (4 novembre 2026).
+
 ### Corrigé
 
 - **Version web** : les gestionnaires de mots de passe (Bitwarden, 1Password, celui du navigateur) remplissent la

@@ -44,7 +44,7 @@ int? parseHm(String? s) {
 
 String hm(int m) => '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
 
-enum DraftSource { presence, claude, calendar, commits, habit, planning }
+enum DraftSource { presence, calendar, commits, habit, planning }
 
 /// Un événement de l'agenda de la personne (heure et titre seulement), lu par le serveur (plan 13, lot 4).
 class CalendarEvent {
@@ -71,10 +71,6 @@ enum ReasonKind {
   presence,
   /// Heures calées sur la journée type (règle de l'entreprise).
   presenceRounded,
-  /// Claude travaillait sur ce projet : [a] début, [b] fin.
-  claudeSession,
-  /// Le temps de piloter la session : la suivre, la relire.
-  claudePilot,
   /// Habitude sur un même jour de la semaine : [count] fois sur les [of] derniers, vers [a].
   habitWeekday,
   /// Habitude quotidienne : [count] jours sur les [of] derniers jours travaillés, vers [a].
@@ -155,7 +151,8 @@ class TypicalDay {
 }
 
 class DayPlan {
-  const DayPlan({required this.typical, required this.windows, required this.busy, required this.drafts, required this.gaps});
+  const DayPlan(
+      {required this.typical, required this.windows, required this.busy, required this.drafts, required this.gaps, this.agent = const []});
   final TypicalDay typical;
 
   /// Plages de travail du jour (coupées à maintenant pour aujourd'hui).
@@ -168,7 +165,13 @@ class DayPlan {
   /// Créneaux encore vides après les propositions.
   final List<Span> gaps;
 
+  /// Sessions de Claude du pilote, réunies : ce temps compte déjà pour la journée.
+  final List<Span> agent;
+
   int get loggedMinutes => busy.fold(0, (a, s) => a + s.length);
+
+  /// Temps de Claude en dehors du temps saisi.
+  int get agentOnlyMinutes => coveredMinutes(subtract(agent, busy));
 }
 
 const _minDraft = 10;
@@ -249,6 +252,48 @@ TypicalDay typicalDay(List<TimeEntry> history, DateTime now) {
   return TypicalDay(start: _snap(_median(starts)), lunch: lunch, end: _snap(_median(ends)), target: target, fromHistory: true);
 }
 
+/// [spans] réunies : triées, celles qui se touchent ou se chevauchent fondues en une.
+List<Span> merge(Iterable<Span> spans) {
+  final out = <Span>[];
+  for (final s in [...spans]..sort((a, b) => a.start.compareTo(b.start))) {
+    if (out.isNotEmpty && s.start <= out.last.end) {
+      if (s.end > out.last.end) out.last = Span(out.last.start, s.end);
+    } else {
+      out.add(s);
+    }
+  }
+  return out;
+}
+
+/// Durée couverte par [spans], en minutes, sans compter deux fois ce qui se chevauche.
+int coveredMinutes(Iterable<Span> spans) => merge(spans).fold(0, (a, s) => a + s.length);
+
+/// Lignes de la frise pour les sessions de Claude : une par projet, dans l'ordre de leur première session, pour voir
+/// les projets menés en parallèle ; deux sessions simultanées d'un même projet prennent deux lignes.
+List<({String? projectId, List<(TimeEntry, Span)> sessions})> agentLanes(List<(TimeEntry, Span)> sessions) {
+  final byProject = <String?, List<List<(TimeEntry, Span)>>>{};
+  for (final s in [...sessions]..sort((a, b) => a.$2.start.compareTo(b.$2.start))) {
+    final rows = byProject.putIfAbsent(s.$1.projectId, () => []);
+    final row = rows.where((r) => r.last.$2.end <= s.$2.start).firstOrNull;
+    if (row == null) {
+      rows.add([s]);
+    } else {
+      row.add(s);
+    }
+  }
+  return [for (final e in byProject.entries) for (final r in e.value) (projectId: e.key, sessions: r)];
+}
+
+/// Le plus grand nombre de projets sur lesquels Claude travaillait en même temps.
+int parallelProjects(List<(TimeEntry, Span)> sessions) {
+  var most = 0;
+  for (final (_, at) in sessions) {
+    final projects = {for (final (e, sp) in sessions) if (sp.start <= at.start && at.start < sp.end) e.projectId};
+    if (projects.length > most) most = projects.length;
+  }
+  return most;
+}
+
 /// Retire [taken] des plages [free] ; ne garde que les morceaux d'au moins [min] minutes.
 List<Span> subtract(List<Span> free, List<Span> taken, {int min = 1}) {
   var out = [...free];
@@ -280,9 +325,10 @@ String _fnv(String text) {
 }
 
 /// Calcule la journée [day] : propositions tirées de la présence sur un chantier ([presence], détectée par le
-/// téléphone), des sessions de Claude ([agentEntries], celles des agents du pilote), de l'agenda, des commits, des
-/// habitudes ([history] : ses entrées des semaines précédentes) et du [planning], dans cet ordre de priorité, sur
-/// les créneaux que [mine] (ses entrées du jour) laisse vides. [dismissed] : clés ignorées.
+/// téléphone), de l'agenda, des commits, des habitudes ([history] : ses entrées des semaines précédentes) et du
+/// [planning], dans cet ordre de priorité, sur les créneaux que [mine] (ses entrées du jour) et les sessions de
+/// Claude ([agentEntries], celles des agents du pilote) laissent vides : le temps de Claude compte déjà, il n'est
+/// pas recopié. [dismissed] : clés ignorées.
 DayPlan planDay({
   required DateTime day,
   required DateTime now,
@@ -350,24 +396,9 @@ DayPlan planDay({
     }
   }
 
-  // 1. Claude travaillait : le pilote suivait la session (prompts, relecture).
-  for (final a in [...agentEntries]..sort((x, y) => x.startAt.compareTo(y.startAt))) {
-    final sp = spanOf(a, d0, now);
-    if (sp == null) continue;
-    for (final f in [...free]) {
-      final piece = f.intersect(sp);
-      if (piece == null || piece.length < _minDraft) continue;
-      place(Draft(
-        key: 'claude:${a.id}:${piece.start}',
-        source: DraftSource.claude,
-        span: piece,
-        description: a.description,
-        projectId: a.projectId,
-        taskId: a.taskId,
-        reasons: [DraftReason(ReasonKind.claudeSession, a: sp.start, b: sp.end), const DraftReason(ReasonKind.claudePilot)],
-      ));
-    }
-  }
+  // 1. Claude travaillait : ce temps compte déjà, il ne reste à remplir que les trous.
+  final agent = merge([for (final a in agentEntries) ?spanOf(a, d0, now)]);
+  free = subtract(free, agent, min: _minDraft);
 
   // 2. Agenda : réunions et rendez-vous, sur les créneaux de travail encore libres ; projet deviné d'après le titre.
   for (final ev in calendar) {
@@ -511,5 +542,6 @@ DayPlan planDay({
     busy: busy,
     drafts: drafts,
     gaps: subtract(free, const [], min: _minGap),
+    agent: agent,
   );
 }

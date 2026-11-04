@@ -22,12 +22,15 @@ Widget _summary(BuildContext context,
     required DayPlan plan,
     required List<EntryRow> mine,
     required int loggedMin,
+    required int claudeMin,
     required int draftMin,
     required List<(TimeEntry, Span)> claude}) {
   final l = context.l10n;
   final theme = Theme.of(context);
   final target = plan.typical.target;
-  final claudeMin = claude.fold(0, (a, c) => a + c.$2.length);
+  final total = loggedMin + claudeMin + draftMin;
+  Widget bar(int minutes, Color color) =>
+      FractionallySizedBox(widthFactor: target == 0 ? 0 : (minutes / target).clamp(0.0, 1.0), child: Container(color: color));
   Widget line(String label, String value) => Padding(
         padding: const EdgeInsets.only(top: 6),
         child: Row(children: [
@@ -42,34 +45,35 @@ Widget _summary(BuildContext context,
         Text(l.journalSummary.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline, letterSpacing: 0.6)),
         const SizedBox(height: 6),
         Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-          Text(formatHm((loggedMin + draftMin) * 60),
+          Text(formatHm(total * 60),
               style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w600, fontFamily: monoFont, fontFeatures: const [FontFeature.tabularFigures()])),
           const SizedBox(width: 8),
           Text(l.journalTarget(formatHm(target * 60)), style: theme.textTheme.bodyMedium),
         ]),
         const SizedBox(height: 10),
         Semantics(
-          label: '${l.journalConfirmed} ${formatHm(loggedMin * 60)}, ${l.journalToConfirm} ${formatHm(draftMin * 60)}',
+          label: [
+            '${l.journalConfirmed} ${formatHm(loggedMin * 60)}',
+            if (claudeMin > 0) '${l.journalCoveredByClaude} ${formatHm(claudeMin * 60)}',
+            '${l.journalToConfirm} ${formatHm(draftMin * 60)}',
+          ].join(', '),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(999),
             child: SizedBox(
               height: 10,
               child: Stack(children: [
                 Container(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
-                FractionallySizedBox(
-                    widthFactor: target == 0 ? 0 : ((loggedMin + draftMin) / target).clamp(0.0, 1.0),
-                    child: Container(color: theme.colorScheme.tertiary.withValues(alpha: 0.45))),
-                FractionallySizedBox(
-                    widthFactor: target == 0 ? 0 : (loggedMin / target).clamp(0.0, 1.0),
-                    child: Container(color: theme.colorScheme.onSurface)),
+                bar(total, theme.colorScheme.tertiary.withValues(alpha: 0.35)),
+                bar(loggedMin + claudeMin, theme.colorScheme.tertiary),
+                bar(loggedMin, theme.colorScheme.onSurface),
               ]),
             ),
           ),
         ),
         const SizedBox(height: 6),
         line(l.journalConfirmed, formatHm(loggedMin * 60)),
+        if (claude.isNotEmpty) line(l.journalCoveredByClaude, formatHm(claudeMin * 60)),
         line(l.journalToConfirm, formatHm(draftMin * 60)),
-        if (claude.isNotEmpty) line('Claude', formatHm(claudeMin * 60)),
         ..._perProject(context, day, now, mine, claude),
         const SizedBox(height: 10),
         Text(

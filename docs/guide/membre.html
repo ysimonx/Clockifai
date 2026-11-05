@@ -510,19 +510,17 @@
         </figure>
         <ol class="steps">
           <li><span class="ui">Paramètres</span> &gt; <span class="ui">Intégrations</span> &gt;
-            <span class="ui">Claude Code</span> &gt; <span class="ui">Connecter un poste</span>, puis nommez
-            l’ordinateur.</li>
-          <li>Dans un terminal, <code>claude --version</code> doit afficher un numéro de version. Sinon, installez
-            Claude Code en ligne de commande avec la commande affichée (sur Mac et Linux,
-            <code>curl -fsSL https://claude.ai/install.sh | bash</code>), puis ouvrez un nouveau terminal. L’extension
-            VSCode embarque sa propre copie de Claude Code, que le terminal ne voit pas : elle ne suffit pas ici.</li>
-          <li>Dans un terminal, lancez les deux commandes affichées : elles installent le plugin Clockifai. Le panneau
-            Claude Code de VSCode ne sait pas installer de plugin : passez par un terminal.</li>
-          <li>Collez la commande suivante dans le terminal <strong>sans appuyer sur Entrée</strong>, touchez
-            <span class="ui">Copier le jeton</span>, puis appuyez sur Entrée : la commande lit le jeton dans le
-            presse-papiers et l’enregistre dans le plugin. Dans l’autre ordre, copier la commande remplacerait le
-            jeton. Le jeton n’est affiché qu’une fois ; s’il se perd, connectez le poste à nouveau.</li>
-          <li>Ouvrez une nouvelle conversation Claude Code.</li>
+            <span class="ui">Claude Code</span> &gt; <span class="ui">Connecter un poste</span>.</li>
+          <li>Installez le plugin Clockifai, une fois par ordinateur. Dans VSCode, touchez
+            <span class="ui">Ouvrir dans VSCode</span> et choisissez <span class="ui">Install for you</span>. Pour la
+            ligne de commande et l’app de bureau, lancez la commande affichée dans un terminal (Claude Code 2.1.292 ou
+            plus). Si <code>claude</code> est introuvable, installez-le d’abord avec la seconde commande affichée, puis
+            ouvrez un nouveau terminal : l’extension VSCode embarque sa propre copie, que le terminal ne voit pas.</li>
+          <li>Ouvrez une nouvelle conversation Claude Code et envoyez un message : Claude vous donne le lien qui connecte
+            ce poste, valable 10 minutes. Passé ce délai, une nouvelle conversation en donne un autre.</li>
+          <li>Ouvrez ce lien, connectez-vous à Clockifai si besoin, puis touchez <span class="ui">Connecter</span>. Ne le
+            faites que si vous venez de lancer Claude Code sur cet ordinateur. Le temps de Claude compte depuis le début
+            de la session, et l’écran Claude Code de Clockifai confirme le poste dès son premier événement.</li>
         </ol>
         <p>Il faut aussi Python 3 (sur Mac, les outils de développement : <code>xcode-select --install</code>).</p>
         <ul>
@@ -583,10 +581,8 @@
             projet choisi, <span class="ui">Nouvelle tâche</span> la crée et la sélectionne. Si la session reprend plus
             tard, même le lendemain, son temps continue dans cette tâche, tant que la branche git ne change pas.</li>
           <li><span class="ui">Postes connectés</span> indique le dernier événement reçu de chaque ordinateur ;
-            <span class="ui">Révoquer</span> le déconnecte. Le jeton ne se réaffiche jamais : pour en redonner un à un
-            poste (jeton perdu, ordinateur réinstallé), touchez <span class="ui">Reconnecter</span> sur sa ligne, qui
-            remplace l’ancien jeton et affiche de nouveau les étapes. <span class="ui">Afficher les commandes
-            d’installation</span> rappelle les commandes sans créer de jeton. Un administrateur voit les postes de tous les membres et
+            <span class="ui">Révoquer</span> le déconnecte : sa prochaine session redonne un lien. Un ordinateur
+            réinstallé se connecte de la même façon, et remplace l’ancien poste s’il garde son nom. Un administrateur voit les postes de tous les membres et
             peut révoquer leurs jetons. Une fois le premier poste connecté, <span class="ui">Voir sa fiche dans
             l’équipe</span> ouvre la fiche de votre agent dans <span class="ui">Équipe</span> : ses sessions en cours
             et son total de la semaine.</li>

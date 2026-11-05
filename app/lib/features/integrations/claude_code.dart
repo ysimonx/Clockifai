@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:async';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/catalog.dart';
 import '../../core/di.dart';
@@ -14,11 +15,11 @@ import '../../core/l10n.dart';
 import '../../core/services_api.dart';
 import '../../core/session.dart';
 import '../../core/widgets/common.dart';
-import '../../core/widgets/pickers.dart';
 import '../../core/widgets/teammates.dart';
 import '../../data/drift/database.dart';
 
-/// Commandes de connexion d'un poste au plugin Claude Code (plans/10-suivi-claude-code.md, §6.1).
+/// Installation du plugin Claude Code sur un poste (plans/21-installation-simple-du-plugin.md). Le poste se connecte
+/// ensuite seul : sa première session donne un lien, ouvert dans l'app (`ConnectComputerPage`).
 ///
 /// Claude Code n'accepte une marketplace servie par URL qu'en https : une instance en http (pile locale) passe par la
 /// marketplace `clockifai-dev`, dossier `integrations/` du dépôt.
@@ -36,23 +37,30 @@ class ClaudeCodeSetup {
   String get installCli => platform == TargetPlatform.windows
       ? 'irm https://claude.ai/install.ps1 | iex'
       : 'curl -fsSL https://claude.ai/install.sh | bash';
-  String get plugin => local ? 'clockifai@clockifai-dev' : 'clockifai@clockifai';
 
-  String get install => [
-        'claude plugin marketplace add ${local ? '<dépôt Clockifai>/integrations' : '$base/api/claude/marketplace.json'}',
-        'claude plugin install $plugin${local ? ' --config url=$base' : ''}',
-      ].join('\n');
+  String get marketplace => local ? '<dépôt Clockifai>/integrations' : '$base/api/claude/marketplace.json';
 
-  /// Le jeton passe par le presse-papiers : ni dans l'historique du shell, ni dans la liste des processus.
-  String get configure => '${switch (platform) {
-        TargetPlatform.windows => 'Get-Clipboard',
-        TargetPlatform.linux => 'wl-paste',
-        _ => 'pbpaste',
-      }} | claude plugin configure $plugin --values-stdin';
+  /// `--marketplace` ajoute la marketplace si elle manque (Claude Code 2.1.292 ou plus).
+  String get install => 'claude plugin install clockifai --marketplace $marketplace';
 
-  /// Ce que « Copier le jeton » met dans le presse-papiers : l'objet JSON attendu par `--values-stdin`. L'adresse
-  /// en fait partie : Claude Code ne compte pas la valeur par défaut du plugin comme réglée (« url … not set »).
-  String clipboardValue(String token) => jsonEncode({'url': base, 'token': token});
+  /// Lien d'installation de l'extension VSCode, sans terminal ni commande `claude` : ordinateurs seulement, et il
+  /// refuse une marketplace en http ou un chemin local (plans/21-installation-simple-du-plugin.md).
+  String? get vscodeLink => local || !const {TargetPlatform.macOS, TargetPlatform.windows, TargetPlatform.linux}.contains(platform)
+      ? null
+      : Uri(
+          scheme: 'vscode',
+          host: 'anthropic.claude-code',
+          path: '/install-plugin',
+          queryParameters: {'plugin': 'clockifai', 'marketplace': marketplace},
+        ).toString();
+}
+
+/// Le poste qui vient de se connecter : un jeton absent de [known] dont un premier événement est arrivé.
+String? newComputer(List<Map<String, dynamic>> tokens, Set<String> known) {
+  for (final t in tokens) {
+    if (!known.contains(t['id']) && t['last_used_at'] != null) return t['name'] as String;
+  }
+  return null;
 }
 
 String lastEventLabel(AppLocalizations l, String locale, DateTime? at, DateTime now) {
@@ -98,14 +106,32 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
   List<Map<String, dynamic>>? _tokens;
   bool _agentActive = true;
   String? _error;
-  ({String name, String token})? _created;
-  /// Les étapes sans jeton (« Afficher les commandes d'installation ») : un jeton ne s'affiche qu'à sa création.
-  bool _showCommands = false;
+  bool _showSteps = false;
+  /// Jetons connus quand les étapes s'affichent : la fenêtre relit la liste jusqu'à voir un nouveau poste.
+  Set<String>? _known;
+  Timer? _watch;
+  String? _connected;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _watch?.cancel();
+    super.dispose();
+  }
+
+  void _connect() {
+    setState(() {
+      _showSteps = true;
+      _known = {for (final t in _tokens ?? const <Map<String, dynamic>>[]) t['id'] as String};
+      _connected = null;
+    });
+    _watch?.cancel();
+    _watch = Timer.periodic(const Duration(seconds: 5), (_) => _load());
   }
 
   Future<void> _load() async {
@@ -118,44 +144,15 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
         setState(() {
           _tokens = (res['tokens'] as List).cast<Map<String, dynamic>>();
           _agentActive = today['agent_id'] != null;
+          _error = null;
+          final known = _known;
+          _connected ??= known == null ? null : newComputer(_tokens!, known);
+          if (_connected != null) _watch?.cancel();
         });
       }
     } catch (_) {
       if (mounted) setState(() => _error = context.l10n.onlineOnly);
     }
-  }
-
-  Future<void> _connect() async {
-    final l = context.l10n;
-    final name = await promptText(context, title: l.connectComputer, label: l.computerName);
-    if (name == null || name.trim().isEmpty || !mounted) return;
-    try {
-      final res = await ServicesApi.post('/api/tokens', {'workspace_id': widget.workspaceId, 'name': name.trim()});
-      if (!mounted) return;
-      setState(() => _created = (name: res['name'] as String, token: res['token'] as String));
-      await _load();
-    } catch (_) {
-      if (mounted) showSnack(context, l.onlineOnly);
-    }
-  }
-
-  /// Nouveau jeton sous le même nom, puis révocation de l'ancien : le jeton d'un poste ne se réaffiche jamais (le
-  /// serveur n'en garde que l'empreinte). Si la révocation échoue, l'ancien reste listé, à révoquer à la main.
-  Future<void> _reconnect(Map<String, dynamic> t) async {
-    final l = context.l10n;
-    final name = t['name'] as String;
-    if (!await confirm(context, title: l.reconnectComputer, message: l.reconnectComputerMessage(name), confirmLabel: l.reconnect)) return;
-    try {
-      final res = await ServicesApi.post('/api/tokens', {'workspace_id': widget.workspaceId, 'name': name});
-      if (mounted) setState(() => _created = (name: res['name'] as String, token: res['token'] as String));
-    } catch (_) {
-      if (mounted) showSnack(context, l.onlineOnly);
-      return;
-    }
-    try {
-      await ServicesApi.delete('/api/tokens/${t['id']}', {'workspace_id': widget.workspaceId});
-    } catch (_) {}
-    await _load();
   }
 
   Future<void> _revoke(Map<String, dynamic> t) async {
@@ -191,12 +188,6 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
                   label: Text(l.agentCardLink),
                   onPressed: () => Navigator.pop(context, Uri(path: '/team', queryParameters: {'member': agent.userId}).toString()),
                 ),
-              if (_created == null)
-                TextButton.icon(
-                  icon: const Icon(Icons.terminal, size: 18),
-                  label: Text(_showCommands ? l.hideInstallCommands : l.showInstallCommands),
-                  onPressed: () => setState(() => _showCommands = !_showCommands),
-                ),
             ]),
             // Réglage personnel (profiles.claude_tasks, plan 10, D18) : appliqué par le serveur au calcul des sessions.
             Padding(
@@ -215,10 +206,22 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
               onChanged: (v) => workspaceRepo.updateProfile(session.userId!, ProfilesCompanion(claudeTasks: Value(v))),
             ),
             const SizedBox(height: 12),
-            if (_created != null)
-              _Steps(name: _created!.name, token: _created!.token)
-            else if (_showCommands)
+            if (_connected != null)
+              Card(
+                color: theme.colorScheme.primaryContainer,
+                child: ListTile(leading: const Icon(Icons.check_circle), title: Text(l.claudeCodeConnected(_connected!))),
+              )
+            else if (_showSteps) ...[
               const _Steps(),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(children: [
+                  const SizedBox.square(dimension: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                  const SizedBox(width: 8),
+                  Text(l.claudeCodeWaiting, style: theme.textTheme.bodySmall),
+                ]),
+              ),
+            ],
             if (!_agentActive && (_tokens?.any((t) => t['user_id'] == session.userId) ?? false))
               Card(
                 color: theme.colorScheme.errorContainer,
@@ -245,9 +248,6 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
                 title: Text(t['user_id'] == session.userId ? t['name'] as String : '${t['name']} · ${t['user_name'] ?? ''}'),
                 subtitle: Text(lastEventLabel(l, context.localeTag, DateTime.tryParse(t['last_used_at'] as String? ?? ''), now)),
                 trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                  // Un jeton ne se crée que pour soi : un admin révoque ceux des autres, sans les reconnecter.
-                  if (t['user_id'] == session.userId)
-                    IconButton(tooltip: l.reconnect, icon: const Icon(Icons.sync), onPressed: () => _reconnect(t)),
                   IconButton(tooltip: l.revoke, icon: const Icon(Icons.delete_outline), onPressed: () => _revoke(t)),
                 ]),
               ),
@@ -262,51 +262,41 @@ class _ClaudeCodeDialogState extends State<ClaudeCodeDialog> {
   }
 }
 
-/// Les étapes de connexion, affichées une seule fois avec le jeton qui vient d'être créé. Sans jeton, les
-/// commandes seules : l'étape du jeton renvoie à « Reconnecter ».
+/// Les étapes de connexion : installer le plugin, puis la première session donne le lien.
 class _Steps extends StatelessWidget {
-  const _Steps({this.name, this.token});
-  final String? name;
-  final String? token;
+  const _Steps();
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     final theme = Theme.of(context);
     final setup = ClaudeCodeSetup(ServicesApi.baseUrl, platform: defaultTargetPlatform);
+    final vscode = setup.vscodeLink;
     return Card(
       color: theme.colorScheme.primaryContainer,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(token == null ? l.installCommandsTitle : l.apiTokenCreated(name!), style: theme.textTheme.titleSmall),
-          const SizedBox(height: 12),
-          Text(l.claudeCodeStepCli),
-          _CommandBox(setup.installCli),
-          const SizedBox(height: 12),
           Text(l.claudeCodeStepInstall),
+          if (vscode != null) ...[
+            const SizedBox(height: 6),
+            FilledButton.tonalIcon(
+              icon: const Icon(Icons.open_in_new),
+              label: Text(l.openInVscode),
+              // _self : une adresse vscode:// ouvre l'éditeur, un nouvel onglet resterait vide.
+              onPressed: () => launchUrl(Uri.parse(vscode), mode: LaunchMode.externalApplication, webOnlyWindowName: '_self'),
+            ),
+            const SizedBox(height: 8),
+            Text(l.claudeCodeOrTerminal),
+          ],
           _CommandBox(setup.install),
           if (setup.local) Text(l.claudeCodeLocalInstance, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 12),
-          if (token == null)
-            Text(l.claudeCodeStepTokenReconnect)
-          else ...[
-            // La commande d'abord : la copier remplace le presse-papiers, que pbpaste ne lit qu'au lancement.
-            Text(l.claudeCodeStepToken),
-            _CommandBox(setup.configure),
-            Text(l.claudeCodeStepTokenThen),
-            const SizedBox(height: 4),
-            FilledButton.tonalIcon(
-              icon: const Icon(Icons.key),
-              label: Text(l.copyToken),
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: setup.clipboardValue(token!)));
-                if (context.mounted) showSnack(context, l.copied);
-              },
-            ),
-          ],
+          Text(l.claudeCodeStepCli, style: theme.textTheme.bodySmall),
+          _CommandBox(setup.installCli),
           const SizedBox(height: 12),
           Text(l.claudeCodeStepStart),
+          const SizedBox(height: 8),
+          Text(l.claudeCodeStepLink),
           const SizedBox(height: 8),
           Text(l.claudeCodeRequirements, style: theme.textTheme.bodySmall),
         ]),

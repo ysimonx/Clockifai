@@ -663,6 +663,9 @@ envoie ce qu'on écrit.
 
 ### 6.1 Plugin Claude Code — `integrations/claude-code/`
 
+> L'installation et la connexion d'un poste décrites ici sont remplacées par le
+> [plan 21](21-installation-simple-du-plugin.md) : plus de `userConfig`, connexion par lien.
+
 **Connexion d'un poste**, une fois par poste :
 1. Dans l'app, Réglages › Intégrations › « Connecter Claude Code ». On nomme le poste ; l'app affiche le
    jeton `clk_…` une seule fois, avec deux commandes à lancer **dans un terminal** (`/plugin` n'existe pas

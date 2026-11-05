@@ -49,3 +49,4 @@ livrés : on les cite par leur nom de fichier.
 | [18-rapports-presence-alertes-partage.md](18-rapports-presence-alertes-partage.md) | Rapports : présence et heures sup, alertes de budget, lien public, envoi planifié par email | fait | 15 |
 | [19-tickets-clients.md](19-tickets-clients.md) | Tickets clients : Projet › Ticket (URL Jira, Linear) › Sous-tâches ; Claude range sa session dans le ticket ; facture par ticket | fait | 10, 16 |
 | [20-cloture-des-taches.md](20-cloture-des-taches.md) | Tâches de Claude terminées après 7 jours sans temps, rouvertes à la reprise ; tâches terminées repliées dans Projets et clients | fait | 10, 16 |
+| [21-installation-simple-du-plugin.md](21-installation-simple-du-plugin.md) | Plugin Claude Code : une commande ou un bouton, connexion par lien, sans jeton à copier | fait | 10 |

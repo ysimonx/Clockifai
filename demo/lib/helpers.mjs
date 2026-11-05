@@ -349,8 +349,17 @@ export function helpers(page, failures, clock = null) {
   };
   const login = async (email) => {
     await semantics();
-    await typeInto('Email', email);
-    await typeInto('Mot de passe', PASSWORD);
+    // Sur le web, un vrai formulaire HTML (web_login_form_web.dart), que l'arbre d'accessibilité recouvre : un clic
+    // à la souris n'y arrive pas, et il reprend le premier focus donné au champ, d'où le second.
+    for (const [label, text] of [['Email', email], ['Mot de passe', PASSWORD]]) {
+      const input = page.locator(`form.clockifai-login input[aria-label="${label}"]`);
+      await hover(input);
+      await input.focus();
+      await wait(500);
+      await input.focus();
+      await timed(`frappe « ${label} »`, text.length * 45 + 400, () => page.keyboard.type(text, { delay: 45 }));
+      await wait(300);
+    }
     await clickLast(/^Connexion$/, 6500);
     await semantics();
   };

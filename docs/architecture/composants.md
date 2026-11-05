@@ -191,8 +191,10 @@ calcul des durées, numérotation) s'appliquent quand même.
   le couple (appareil, membre) 5 minutes.
 - **Studio** : basic auth (`DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD`), par Kong en local, par Caddy en prod,
   où il n'est en plus accessible que depuis le réseau local (`STUDIO_ALLOWED_IPS`).
-- **Jeton personnel** : `Authorization: Bearer clk_…`, créé par un membre pour un poste (`POST /api/tokens`),
-  utilisé par les hooks Claude Code, l'extension VSCode et le MCP. Seul son SHA-256 est stocké
+- **Jeton personnel** : `Authorization: Bearer clk_…`, créé pour un poste quand son hook le retire après validation
+  d'un lien par un membre (`/api/claude/link`, routes sans compte pour le poste) ou par `POST /api/tokens`, et
+  utilisé par les hooks Claude Code, l'extension VSCode et le MCP. Le poste le garde dans le dossier de données du
+  plugin (droits `0600`). Seul son SHA-256 est stocké
   (`clockifai_private.api_tokens`) ; il porte un workspace, et il est refusé s'il est révoqué ou si son
   propriétaire n'est plus membre actif. Les routes `/api/activity/*` acceptent aussi le JWT de l'app.
 - **Service** : Flask appelle l'API admin GoTrue avec la clé `service_role` (invitations, comptes des agents

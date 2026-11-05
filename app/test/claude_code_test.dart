@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:clockifai/features/integrations/claude_code.dart';
 import 'package:clockifai/l10n/app_localizations.dart';
 import 'package:flutter/widgets.dart';
@@ -10,29 +8,39 @@ void main() {
   test('instance en https : marketplace servie par l\'instance', () {
     final s = ClaudeCodeSetup('https://clockifai.kysoe.com/');
     expect(s.local, isFalse);
-    expect(s.install, 'claude plugin marketplace add https://clockifai.kysoe.com/api/claude/marketplace.json\n'
-        'claude plugin install clockifai@clockifai');
-    expect(s.configure, 'pbpaste | claude plugin configure clockifai@clockifai --values-stdin');
+    expect(s.install, 'claude plugin install clockifai --marketplace https://clockifai.kysoe.com/api/claude/marketplace.json');
   });
 
-  test('pile locale en http : marketplace du dépôt, adresse donnée à l\'installation', () {
+  test('pile locale en http : marketplace du dépôt', () {
     final s = ClaudeCodeSetup('http://localhost:5050', platform: TargetPlatform.linux);
     expect(s.local, isTrue);
-    expect(s.install, 'claude plugin marketplace add <dépôt Clockifai>/integrations\n'
-        'claude plugin install clockifai@clockifai-dev --config url=http://localhost:5050');
-    expect(s.configure, 'wl-paste | claude plugin configure clockifai@clockifai-dev --values-stdin');
-    expect(ClaudeCodeSetup('https://x', platform: TargetPlatform.windows).configure, startsWith('Get-Clipboard | '));
+    expect(s.install, 'claude plugin install clockifai --marketplace <dépôt Clockifai>/integrations');
+  });
+
+  test('lien VSCode : ordinateur et instance en https seulement', () {
+    final uri = Uri.parse(ClaudeCodeSetup('https://clockifai.kysoe.com').vscodeLink!);
+    expect('${uri.scheme}://${uri.host}${uri.path}', 'vscode://anthropic.claude-code/install-plugin');
+    expect(uri.queryParameters, {'plugin': 'clockifai', 'marketplace': 'https://clockifai.kysoe.com/api/claude/marketplace.json'});
+    expect(ClaudeCodeSetup('http://localhost:5050').vscodeLink, isNull);
+    expect(ClaudeCodeSetup('https://x', platform: TargetPlatform.iOS).vscodeLink, isNull);
+    expect(ClaudeCodeSetup('https://x', platform: TargetPlatform.windows).vscodeLink, isNotNull);
+  });
+
+  test('un poste connecté : nouveau jeton et premier événement reçu', () {
+    final tokens = [
+      {'id': 'a', 'name': 'Mac mini', 'last_used_at': '2026-11-05T10:00:00Z'},
+      {'id': 'b', 'name': 'MacBook Air', 'last_used_at': null},
+    ];
+    expect(newComputer(tokens, {'a'}), isNull);
+    expect(newComputer(tokens, {'a', 'b'}), isNull);
+    tokens[1]['last_used_at'] = '2026-11-05T10:01:00Z';
+    expect(newComputer(tokens, {'a'}), 'MacBook Air');
   });
 
   test('installation de la commande claude selon le système', () {
     expect(ClaudeCodeSetup('https://x').installCli, 'curl -fsSL https://claude.ai/install.sh | bash');
     expect(ClaudeCodeSetup('https://x', platform: TargetPlatform.linux).installCli, 'curl -fsSL https://claude.ai/install.sh | bash');
     expect(ClaudeCodeSetup('https://x', platform: TargetPlatform.windows).installCli, 'irm https://claude.ai/install.ps1 | iex');
-  });
-
-  test('le presse-papiers reçoit l\'adresse et le jeton, attendus par --values-stdin', () {
-    expect(jsonDecode(ClaudeCodeSetup('https://clockifai.kysoe.com/').clipboardValue('clk_0123')),
-        {'url': 'https://clockifai.kysoe.com', 'token': 'clk_0123'});
   });
 
   test('dernier événement reçu', () async {

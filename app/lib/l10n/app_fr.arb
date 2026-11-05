@@ -300,14 +300,6 @@
   "alwaysAttachRepoHelp": "Les prochaines sessions de Claude dans ce dépôt iront dans ce projet, sans tâche, et ses entrées sans projet de la semaine aussi.",
   "amount": "Montant",
   "annualAllowance": "Droit annuel",
-  "apiTokenCreated": "Jeton créé pour « {name} ». Il ne sera plus affiché : suivez ces étapes maintenant.",
-  "@apiTokenCreated": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "apply": "Appliquer",
   "applyRateApply": "Appliquer",
   "applyRateBody": "{count, plural, =1{1 entrée non facturée a gardé un autre taux.} other{{count} entrées non facturées ont gardé un autre taux.}} Le nouveau taux vaut pour les nouvelles entrées ; l'appliquer aussi à celles-ci ?",
@@ -547,12 +539,35 @@
   },
   "claudeCodeLocalInstance": "Instance locale : Claude Code n'accepte une marketplace qu'en https, celle-ci est donc le dossier integrations/ de votre copie du dépôt.",
   "claudeCodeRequirements": "Il faut aussi python3 (sur Mac, les outils de développement : xcode-select --install).",
-  "claudeCodeStepCli": "1. Dans un terminal, claude --version doit afficher un numéro de version. Sinon, installez Claude Code en ligne de commande (l'extension VSCode embarque sa propre copie, absente du terminal), puis ouvrez un nouveau terminal :",
-  "claudeCodeStepInstall": "2. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :",
-  "claudeCodeStepStart": "4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt. Claude nomme la tâche de chaque sujet : à la première demande, autorisez l'outil Clockifai.",
-  "claudeCodeStepToken": "3. Collez cette commande dans le terminal, sans appuyer sur Entrée :",
-  "claudeCodeStepTokenReconnect": "3. Le jeton ne s'affiche qu'à la connexion d'un poste : s'il manque sur ce poste, touchez Reconnecter sur sa ligne, dans la liste ci-dessous.",
-  "claudeCodeStepTokenThen": "Touchez Copier le jeton, puis appuyez sur Entrée dans le terminal : la commande lit le jeton dans le presse-papiers. Dans l'autre ordre, copier la commande remplacerait le jeton.",
+  "claudeCodeStepCli": "Si la commande claude est introuvable, installez-la d'abord (l'extension VSCode embarque sa propre copie, absente du terminal), puis ouvrez un nouveau terminal :",
+  "claudeCodeStepInstall": "1. Installez le plugin Clockifai, une fois par ordinateur :",
+  "openInVscode": "Ouvrir dans VSCode",
+  "claudeCodeOrTerminal": "Ou dans un terminal, pour la ligne de commande et l'app de bureau :",
+  "claudeCodeWaiting": "En attente de ce poste…",
+  "claudeCodeConnected": "« {name} » est connecté : le temps de Claude y est enregistré.",
+  "@claudeCodeConnected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "claudeCodeStepStart": "2. Ouvrez une nouvelle conversation Claude Code et envoyez un message : Claude vous donne le lien qui connecte ce poste.",
+  "claudeCodeStepLink": "3. Ouvrez ce lien et touchez Connecter : le temps de Claude compte depuis le début de la session. Claude nomme la tâche de chaque sujet : à la première demande, autorisez l'outil Clockifai.",
+  "connectTitle": "Connecter ce poste à Clockifai ?",
+  "connectHelp": "Le temps des sessions de Claude Code sur cet ordinateur sera enregistré au nom de votre agent.",
+  "connectWarning": "Ne continuez que si vous venez de lancer Claude Code sur cet ordinateur.",
+  "connectAction": "Connecter",
+  "connectGone": "Ce lien a expiré ou a déjà servi. Ouvrez une nouvelle conversation Claude Code pour en obtenir un autre.",
+  "openClockifai": "Ouvrir Clockifai",
+  "connectDone": "« {name} » est connecté. Vous pouvez retourner dans Claude Code.",
+  "@connectDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "claudeTasks": "Tâches de Claude",
   "claudeTasksHelp": "Claude nomme l'objectif de son travail (une tâche, par exemple le plan en cours) et chaque étape (une sous-tâche) : le temps de vos sessions y est rangé, dans le projet du dépôt. Un nom plus précis renomme au lieu d'en créer un autre ; une tâche que vous choisissez reste.",
   "claudeTasksOff": "Pas de tâche : le projet seulement",
@@ -573,7 +588,6 @@
   "continueEntry": "Continuer",
   "copied": "Copié.",
   "copy": "Copier",
-  "copyToken": "Copier le jeton",
   "costRate": "Coût (par heure)",
   "createAccount": "Créer mon compte",
   "createEntries": "Créer les entrées",
@@ -1254,7 +1268,6 @@
   "groups": "Groupes",
   "halfDay": "Demi-journée",
   "help": "Aide",
-  "hideInstallCommands": "Masquer les commandes d'installation",
   "hideSimilarEntries": "Masquer le détail",
   "history": "Historique",
   "holidays": "Jours fériés",
@@ -1264,7 +1277,6 @@
   "hoursRequested": "Nombre d'heures",
   "humans": "Humains",
   "humansAndAgents": "Humains et agents",
-  "installCommandsTitle": "Commandes d'installation d'un poste",
   "integrations": "Intégrations",
   "invalidDuration": "Durée invalide (exemples : 1:30, 1,5, 90m).",
   "invalidHours": "Nombre d'heures invalide (entre 0 et 24).",
@@ -1574,16 +1586,6 @@
       }
     }
   },
-  "reconnect": "Reconnecter",
-  "reconnectComputer": "Reconnecter ce poste ?",
-  "reconnectComputerMessage": "Un nouveau jeton remplace celui de « {name} », qui cesse de fonctionner. Suivez ensuite les étapes affichées, sur ce poste.",
-  "@reconnectComputerMessage": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "reject": "Refuser",
   "remaining": "restants",
   "remove": "Retirer",
@@ -1673,7 +1675,6 @@
   "setPasswordHelp": "Utile après une invitation ou un lien magique",
   "settings": "Paramètres",
   "showArchived": "Archivés",
-  "showInstallCommands": "Afficher les commandes d'installation",
   "showSimilarEntries": "Afficher les {count} entrées",
   "@showSimilarEntries": {
     "placeholders": {

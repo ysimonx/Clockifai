@@ -387,11 +387,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get annualAllowance => 'Annual allowance';
 
   @override
-  String apiTokenCreated(String name) {
-    return 'Token created for “$name”. It won\'t be shown again: follow these steps now.';
-  }
-
-  @override
   String get apply => 'Apply';
 
   @override
@@ -728,27 +723,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get claudeCodeStepCli =>
-      '1. In a terminal, claude --version should print a version number. Otherwise, install the Claude Code command line (the VSCode extension ships its own copy, which the terminal can\'t see), then open a new terminal:';
+      'If the claude command is not found, install it first (the VSCode extension bundles its own copy, which the terminal cannot see), then open a new terminal:';
 
   @override
   String get claudeCodeStepInstall =>
-      '2. In a terminal (the Claude Code panel in VSCode has no /plugin):';
+      '1. Install the Clockifai plugin, once per computer:';
+
+  @override
+  String get openInVscode => 'Open in VSCode';
+
+  @override
+  String get claudeCodeOrTerminal =>
+      'Or in a terminal, for the command line and the desktop app:';
+
+  @override
+  String get claudeCodeWaiting => 'Waiting for this computer…';
+
+  @override
+  String claudeCodeConnected(String name) {
+    return '“$name” is connected: Claude\'s time is being recorded.';
+  }
 
   @override
   String get claudeCodeStepStart =>
-      '4. Open a new Claude Code conversation: Claude\'s timer starts at the first prompt. Claude names the task of each subject: allow the Clockifai tool when asked the first time.';
+      '2. Open a new Claude Code conversation and send a message: Claude gives you the link that connects this computer.';
 
   @override
-  String get claudeCodeStepToken =>
-      '3. Paste this command into the terminal, without pressing Enter:';
+  String get claudeCodeStepLink =>
+      '3. Open this link and tap Connect: Claude\'s time counts from the start of the session. Claude names the task of each topic: when first asked, allow the Clockifai tool.';
 
   @override
-  String get claudeCodeStepTokenReconnect =>
-      '3. The token is only shown when a computer is connected: if this computer lacks it, tap Reconnect on its row in the list below.';
+  String get connectTitle => 'Connect this computer to Clockifai?';
 
   @override
-  String get claudeCodeStepTokenThen =>
-      'Tap Copy token, then press Enter in the terminal: the command reads the token from the clipboard. In the other order, copying the command would replace the token.';
+  String get connectHelp =>
+      'The time of Claude Code sessions on this computer will be recorded under your agent.';
+
+  @override
+  String get connectWarning =>
+      'Only continue if you just started Claude Code on this computer.';
+
+  @override
+  String get connectAction => 'Connect';
+
+  @override
+  String get connectGone =>
+      'This link has expired or was already used. Open a new Claude Code conversation to get another one.';
+
+  @override
+  String get openClockifai => 'Open Clockifai';
+
+  @override
+  String connectDone(String name) {
+    return '“$name” is connected. You can go back to Claude Code.';
+  }
 
   @override
   String get claudeTasks => 'Claude\'s tasks';
@@ -810,9 +838,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get copy => 'Copy';
-
-  @override
-  String get copyToken => 'Copy token';
 
   @override
   String get costRate => 'Cost rate (per hour)';
@@ -1858,9 +1883,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get help => 'Help';
 
   @override
-  String get hideInstallCommands => 'Hide the setup commands';
-
-  @override
   String get hideSimilarEntries => 'Hide details';
 
   @override
@@ -1886,9 +1908,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get humansAndAgents => 'Humans and agents';
-
-  @override
-  String get installCommandsTitle => 'Setup commands for a computer';
 
   @override
   String get integrations => 'Integrations';
@@ -2465,17 +2484,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get reconnect => 'Reconnect';
-
-  @override
-  String get reconnectComputer => 'Reconnect this computer?';
-
-  @override
-  String reconnectComputerMessage(String name) {
-    return 'A new token replaces the one of “$name”, which stops working. Then follow the steps shown, on that computer.';
-  }
-
-  @override
   String get reject => 'Reject';
 
   @override
@@ -2654,9 +2662,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get showArchived => 'Archived';
-
-  @override
-  String get showInstallCommands => 'Show the setup commands';
 
   @override
   String showSimilarEntries(int count) {

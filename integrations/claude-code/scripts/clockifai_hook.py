@@ -7,11 +7,13 @@ et le ticket du client que Claude passe à l'outil `set_current_task` du plugin 
 sur le poste pour y repérer un `git commit` (D13), jamais envoyée. La transcription est lue sur le poste pour en tirer l'usage de
 l'API (D17) : seuls partent des totaux par modèle, effort et vitesse, jamais le texte des messages.
 
-N'écrit sur stdout (que Claude Code ajoute au contexte) qu'au démarrage d'une session d'un projet facturé par ticket,
-quand le serveur le demande : la consigne de demander le ticket (plans/19-tickets-clients.md), un texte fixe du plugin
-où seul le nom du projet vient du serveur. Sort toujours avec le code 0.
-Réglages : CLAUDE_PLUGIN_OPTION_URL et CLAUDE_PLUGIN_OPTION_TOKEN (userConfig du plugin). Sans adresse réglée,
-celle que l'instance a posée par défaut dans plugin.json : Claude Code ne transmet pas une valeur par défaut.
+N'écrit sur stdout (que Claude Code ajoute au contexte) qu'au démarrage d'une session : sur un projet facturé par
+ticket, quand le serveur le demande, la consigne de demander le ticket (plans/19-tickets-clients.md), un texte fixe du
+plugin où seul le nom du projet vient du serveur ; sur un poste pas encore connecté, le lien qui le connecte
+(plans/21-installation-simple-du-plugin.md), dans un texte fixe lui aussi. Sort toujours avec le code 0.
+Adresse : celle que l'instance écrit dans plugin.json (metadata.url). Jeton : le fichier `token` du dossier du plugin,
+retiré une fois le lien validé. CLAUDE_PLUGIN_OPTION_* (postes réglés avant le plan 21) et CLOCKIFAI_URL,
+CLOCKIFAI_TOKEN restent lus.
 Python 3.9 et bibliothèque standard seulement : c'est le python3 livré avec macOS.
 """
 
@@ -21,6 +23,7 @@ import hashlib
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 import time
@@ -28,6 +31,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -44,6 +48,8 @@ CLAIM_SLACK = 5                  # secondes : horloge du commit arrondie, début
 COMMITS_MAX = 20
 SPOOL_MAX = 5000                 # lignes
 SPOOL_MAX_AGE = 6.5 * 86400      # le serveur refuse au-delà de 7 jours
+SPOOL_WAITING_MAX = 5_000_000    # octets de file locale pour un poste pas encore connecté
+LINK_REUSE = 120                 # secondes : un lien sur le point d'expirer est remplacé
 BATCH = 200
 COMMIT_NS = uuid.NAMESPACE_URL   # id d'un commit : uuid5(NAMESPACE_URL, "clockifai:commit:<remote_key>:<sha>")
 USAGE_SLOT = 300                 # usage IA cumulé par tranche de 5 minutes de la transcription (D17)
@@ -63,6 +69,15 @@ ASK_TICKET = (
     "demande-le-lui en une phrase avant de commencer ; s'il n'y en a pas, continue sans. Passe le ticket à l'outil "
     "set_current_task (`ticket`, et `ticket_title`, un titre court tiré de son message ou du ticket)."
 )
+
+# Poste pas encore connecté : le lien va à l'utilisateur, et à Claude qui le lui donne si ce message ne s'affiche pas.
+CONNECT_MESSAGE = "Clockifai : ouvrez ce lien pour connecter ce poste (valable 10 minutes) : {link}"
+CONNECT_CONTEXT = (
+    "Clockifai n'est pas encore connecté sur ce poste : le temps de cette session n'y sera enregistré qu'une fois le "
+    "lien validé. Au début de ta prochaine réponse, donne ce lien à l'utilisateur en une phrase, puis réponds "
+    "normalement : {link} (valable 10 minutes)."
+)
+LINK_URL = re.compile(r"""^https?://[^\s<>"'`]{1,300}$""")
 
 KINDS = {"SessionStart": "session_start", "UserPromptSubmit": "prompt", "PostToolUse": "agent_tool",
          "Stop": "agent_stop", "SubagentStop": "agent_stop", "Notification": "agent_wait",
@@ -93,14 +108,13 @@ def log_error(message: str) -> None:
 
 
 def default_url() -> str | None:
-    """Adresse par défaut du plugin, que l'instance qui le distribue écrit dans plugin.json. Claude Code la montre
-    « not set » et ne la passe pas au hook tant qu'elle n'est pas réglée (vérifié avec la v2.1.309)."""
+    """Adresse de l'instance, qu'elle écrit dans le plugin.json qu'elle distribue."""
     root = os.environ.get("CLAUDE_PLUGIN_ROOT")
     base = Path(root) if root else Path(__file__).resolve().parent.parent
     try:
         manifest = json.loads((base / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
-        return manifest["userConfig"]["url"].get("default") or None
-    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return manifest["metadata"]["url"] or None
+    except (OSError, ValueError, KeyError, TypeError):
         return None
 
 
@@ -509,6 +523,8 @@ def post(url: str, token: str, events: list[dict], answer: dict | None = None) -
     except urllib.error.HTTPError as e:
         hint = " : vérifier l'adresse (https://…, sans /api)" if e.code < 400 or e.code in (404, 405) else ""
         log_error(f"HTTP {e.code} sur {len(events)} événement(s){hint}")
+        if e.code == 401:
+            refuse_token(token)
         # Une adresse erronée se corrige : les événements attendent dans la file locale. Un refus est définitif.
         return None if e.code in (400, 401, 403, 413, 422) else False
     except (urllib.error.URLError, OSError, ValueError) as e:
@@ -577,32 +593,176 @@ def deliver(url: str, token: str, events: list[dict], now: float, answer: dict |
             return
 
 
+# ---------------------------------------------------------------- connexion du poste (plan 21)
+def data_dir() -> Path:
+    """Dossier du plugin : il suit ses mises à jour et disparaît à sa désinstallation."""
+    return Path(os.environ.get("CLAUDE_PLUGIN_DATA") or cache_dir())
+
+
+def write_private(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f"{path.name}.{os.getpid()}")
+    with os.fdopen(os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w", encoding="utf-8") as f:
+        f.write(text)
+    os.replace(temporary, path)
+
+
+def read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8").strip()
+    except (OSError, ValueError):
+        return ""
+
+
+def fingerprint(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def current_token() -> str | None:
+    """Le jeton du fichier d'abord : il remplace celui d'un poste réglé avant le plan 21, s'il a été refusé."""
+    refused = read_text(data_dir() / "refused")
+    candidates = (read_text(data_dir() / "token"), os.environ.get("CLAUDE_PLUGIN_OPTION_TOKEN"),
+                  os.environ.get("CLOCKIFAI_TOKEN"))
+    return next((t for t in candidates if t and fingerprint(t) != refused), None)
+
+
+def refuse_token(token: str) -> None:
+    """Poste révoqué : la session suivante redonne un lien."""
+    try:
+        write_private(data_dir() / "refused", fingerprint(token))
+        if read_text(data_dir() / "token") == token:
+            (data_dir() / "token").unlink()
+    except OSError as e:
+        log_error(f"jeton refusé : {type(e).__name__}")
+
+
+def machine_name() -> str:
+    """Nom proposé pour le poste : sur Mac, celui des Réglages plutôt que le nom réseau."""
+    try:
+        name = subprocess.run(["scutil", "--get", "ComputerName"], check=False, capture_output=True, text=True,
+                              timeout=1).stdout
+    except (OSError, subprocess.SubprocessError):
+        name = ""
+    return name.strip() or socket.gethostname().split(".")[0]
+
+
+def call(url: str, path: str, body: dict) -> tuple[int, dict]:
+    """POST sans jeton, puisque le poste n'en a pas encore. Statut 0 : injoignable."""
+    request = urllib.request.Request(
+        url.rstrip("/") + path, data=json.dumps(body).encode(), method="POST",
+        headers={"Content-Type": "application/json", "User-Agent": "clockifai-claude-code"})
+    try:
+        with _OPENER.open(request, timeout=HTTP_TIMEOUT) as response:
+            answer = json.loads(response.read(10_000))
+            return response.status, answer if isinstance(answer, dict) else {}
+    except urllib.error.HTTPError as e:
+        return e.code, {}
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        log_error(f"lien : {type(e).__name__}")
+        return 0, {}
+
+
+def read_link() -> dict | None:
+    try:
+        link = json.loads(read_text(data_dir() / "link.json") or "null")
+    except ValueError:
+        return None
+    return link if isinstance(link, dict) else None
+
+
+def drop_link() -> None:
+    try:
+        (data_dir() / "link.json").unlink()
+    except OSError:
+        pass
+
+
+def fetch_token(url: str) -> str | None:
+    """Retire le jeton si le lien a été validé. Un lien expiré, ou retiré par un hook voisin, s'oublie."""
+    link = read_link()
+    if link is None:
+        return None
+    status, answer = call(url, "/api/claude/link/poll", {"poll": link.get("poll")})
+    token = answer.get("token")
+    if status == 200 and isinstance(token, str) and token.startswith("clk_"):
+        write_private(data_dir() / "token", token + "\n")
+        drop_link()
+        return token
+    if status in (400, 404):
+        drop_link()
+    return None
+
+
+@contextmanager
+def locked(path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a") as f:
+        if fcntl:
+            fcntl.flock(f, fcntl.LOCK_EX)
+        yield
+
+
+def connection_link(url: str, now: float) -> str | None:
+    """Le lien en cours ou un nouveau. Le verrou donne le même lien aux sessions qui démarrent ensemble : VSCode en
+    rouvre plusieurs à la fois."""
+    with locked(data_dir() / "link.lock"):
+        link = read_link()
+        if link and isinstance(link.get("expires_at"), (int, float)) and link["expires_at"] - now > LINK_REUSE:
+            return link.get("url")
+        status, answer = call(url, "/api/claude/link", {"machine": machine_name()})
+        address, poll, expires_in = answer.get("url"), answer.get("poll"), answer.get("expires_in")
+        valid = isinstance(address, str) and LINK_URL.match(address) and isinstance(poll, str)
+        if status != 201 or not valid or not isinstance(expires_in, (int, float)):
+            log_error(f"lien : réponse {status}")
+            return None
+        write_private(data_dir() / "link.json", json.dumps({"url": address, "poll": poll, "expires_at": now + expires_in}))
+        return address
+
+
+def say(output: dict) -> None:
+    """Seule écriture sur stdout : \\u… dans le JSON, sûr quelle que soit la locale."""
+    sys.stdout.buffer.write((json.dumps(output) + "\n").encode("ascii"))
+    sys.stdout.buffer.flush()
+
+
+def wait_for_connection(url: str, data: dict, now: float, starting: bool) -> None:
+    """Poste sans jeton : les événements attendent le jeton dans la file, pour compter la session depuis son début."""
+    path = _spool_path()
+    events = collect(data, now)
+    if not path.exists() or path.stat().st_size < SPOOL_WAITING_MAX:
+        spool(events)
+    link = connection_link(url, now) if starting else None
+    if link:
+        say({"systemMessage": CONNECT_MESSAGE.format(link=link),
+             "hookSpecificOutput": {"hookEventName": "SessionStart",
+                                    "additionalContext": CONNECT_CONTEXT.format(link=link)}})
+
+
 def main() -> None:
     try:
         data = json.loads(sys.stdin.buffer.read())  # octets : un prompt accentué ne dépend pas de la locale
     except ValueError:
         return
     url = os.environ.get("CLAUDE_PLUGIN_OPTION_URL") or os.environ.get("CLOCKIFAI_URL") or default_url()
-    token = os.environ.get("CLAUDE_PLUGIN_OPTION_TOKEN") or os.environ.get("CLOCKIFAI_TOKEN")
     if not isinstance(data, dict):
         return
-    if not url or not token:
-        # Sinon le poste n'envoie rien sans laisser de trace : `claude plugin configure clockifai@…` le corrige.
-        log_error("réglage manquant : " + ", ".join(n for n, v in (("url", url), ("token", token)) if not v))
+    if not url:
+        log_error("adresse de l'instance manquante")
         return
     now = time.time()
     starting = data.get("hook_event_name") == "SessionStart" and data.get("source") != "compact"
+    token = current_token() or fetch_token(url)
+    if not token:
+        wait_for_connection(url, data, now, starting)
+        return
     answer: dict | None = {} if starting else None
     deliver(url, token, collect(data, now), now, answer)
     asked = answer.get("ask_ticket") if answer else None
     project = asked.get(data.get("session_id")) if isinstance(asked, dict) else None
     if isinstance(project, str) and project.strip():
-        # Seule écriture sur stdout : la consigne fixe du plugin, avec le nom du projet (une ligne, bornée).
+        # La consigne fixe du plugin, avec le nom du projet (une ligne, bornée).
         name = " ".join(project.split())[:PROJECT_NAME_MAX].replace("»", "")
-        context = {"hookSpecificOutput": {"hookEventName": "SessionStart",
-                                          "additionalContext": ASK_TICKET.format(project=name)}}
-        sys.stdout.buffer.write((json.dumps(context) + "\n").encode("ascii"))  # \u… : sûr quelle que soit la locale
-        sys.stdout.buffer.flush()
+        say({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": ASK_TICKET.format(project=name)}})
 
 
 if __name__ == "__main__":

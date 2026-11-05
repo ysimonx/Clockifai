@@ -7,6 +7,7 @@ import 'features/approvals/approvals_page.dart';
 import 'features/auth/login_page.dart';
 import 'features/calendar/calendar_page.dart';
 import 'features/clients/clients_page.dart';
+import 'features/integrations/connect_page.dart';
 import 'features/invoices/invoices_page.dart';
 import 'features/kiosk/kiosk_page.dart';
 import 'features/projects/projects_page.dart';
@@ -32,13 +33,22 @@ GoRouter buildRouter(SessionController session) {
       final atLogin = state.matchedLocation == '/login';
       // Le mode kiosque fonctionne sans compte utilisateur (jeton d'appareil).
       if (state.matchedLocation == '/kiosk') return null;
-      if (!session.isSignedIn) return atLogin ? null : '/login';
-      if (atLogin || state.matchedLocation == '/auth/callback') return '/today';
+      // Le lien d'un poste (plans/21-installation-simple-du-plugin.md) reprend après la connexion.
+      final link = state.matchedLocation.startsWith('/connect/') ? state.matchedLocation : null;
+      if (!session.isSignedIn) {
+        if (atLogin) return null;
+        return link == null ? '/login' : Uri(path: '/login', queryParameters: {'next': link}).toString();
+      }
+      if (atLogin || state.matchedLocation == '/auth/callback') {
+        final next = state.uri.queryParameters['next'];
+        return next != null && next.startsWith('/connect/') ? next : '/today';
+      }
       return null;
     },
     routes: [
       GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
       GoRoute(path: '/kiosk', builder: (_, _) => const KioskPage()),
+      GoRoute(path: '/connect/:code', builder: (_, state) => ConnectComputerPage(code: state.pathParameters['code']!)),
       // Retour des liens magiques / confirmations (web) : supabase_flutter lit le code dans l'URL.
       GoRoute(path: '/auth/callback', builder: (_, _) => const Scaffold(body: Center(child: CircularProgressIndicator()))),
       ShellRoute(

@@ -388,11 +388,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get annualAllowance => 'Droit annuel';
 
   @override
-  String apiTokenCreated(String name) {
-    return 'Jeton créé pour « $name ». Il ne sera plus affiché : suivez ces étapes maintenant.';
-  }
-
-  @override
   String get apply => 'Appliquer';
 
   @override
@@ -733,27 +728,60 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get claudeCodeStepCli =>
-      '1. Dans un terminal, claude --version doit afficher un numéro de version. Sinon, installez Claude Code en ligne de commande (l\'extension VSCode embarque sa propre copie, absente du terminal), puis ouvrez un nouveau terminal :';
+      'Si la commande claude est introuvable, installez-la d\'abord (l\'extension VSCode embarque sa propre copie, absente du terminal), puis ouvrez un nouveau terminal :';
 
   @override
   String get claudeCodeStepInstall =>
-      '2. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :';
+      '1. Installez le plugin Clockifai, une fois par ordinateur :';
+
+  @override
+  String get openInVscode => 'Ouvrir dans VSCode';
+
+  @override
+  String get claudeCodeOrTerminal =>
+      'Ou dans un terminal, pour la ligne de commande et l\'app de bureau :';
+
+  @override
+  String get claudeCodeWaiting => 'En attente de ce poste…';
+
+  @override
+  String claudeCodeConnected(String name) {
+    return '« $name » est connecté : le temps de Claude y est enregistré.';
+  }
 
   @override
   String get claudeCodeStepStart =>
-      '4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt. Claude nomme la tâche de chaque sujet : à la première demande, autorisez l\'outil Clockifai.';
+      '2. Ouvrez une nouvelle conversation Claude Code et envoyez un message : Claude vous donne le lien qui connecte ce poste.';
 
   @override
-  String get claudeCodeStepToken =>
-      '3. Collez cette commande dans le terminal, sans appuyer sur Entrée :';
+  String get claudeCodeStepLink =>
+      '3. Ouvrez ce lien et touchez Connecter : le temps de Claude compte depuis le début de la session. Claude nomme la tâche de chaque sujet : à la première demande, autorisez l\'outil Clockifai.';
 
   @override
-  String get claudeCodeStepTokenReconnect =>
-      '3. Le jeton ne s\'affiche qu\'à la connexion d\'un poste : s\'il manque sur ce poste, touchez Reconnecter sur sa ligne, dans la liste ci-dessous.';
+  String get connectTitle => 'Connecter ce poste à Clockifai ?';
 
   @override
-  String get claudeCodeStepTokenThen =>
-      'Touchez Copier le jeton, puis appuyez sur Entrée dans le terminal : la commande lit le jeton dans le presse-papiers. Dans l\'autre ordre, copier la commande remplacerait le jeton.';
+  String get connectHelp =>
+      'Le temps des sessions de Claude Code sur cet ordinateur sera enregistré au nom de votre agent.';
+
+  @override
+  String get connectWarning =>
+      'Ne continuez que si vous venez de lancer Claude Code sur cet ordinateur.';
+
+  @override
+  String get connectAction => 'Connecter';
+
+  @override
+  String get connectGone =>
+      'Ce lien a expiré ou a déjà servi. Ouvrez une nouvelle conversation Claude Code pour en obtenir un autre.';
+
+  @override
+  String get openClockifai => 'Ouvrir Clockifai';
+
+  @override
+  String connectDone(String name) {
+    return '« $name » est connecté. Vous pouvez retourner dans Claude Code.';
+  }
 
   @override
   String get claudeTasks => 'Tâches de Claude';
@@ -816,9 +844,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get copy => 'Copier';
-
-  @override
-  String get copyToken => 'Copier le jeton';
 
   @override
   String get costRate => 'Coût (par heure)';
@@ -1875,9 +1900,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get help => 'Aide';
 
   @override
-  String get hideInstallCommands => 'Masquer les commandes d\'installation';
-
-  @override
   String get hideSimilarEntries => 'Masquer le détail';
 
   @override
@@ -1903,9 +1925,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get humansAndAgents => 'Humains et agents';
-
-  @override
-  String get installCommandsTitle => 'Commandes d\'installation d\'un poste';
 
   @override
   String get integrations => 'Intégrations';
@@ -2484,17 +2503,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get reconnect => 'Reconnecter';
-
-  @override
-  String get reconnectComputer => 'Reconnecter ce poste ?';
-
-  @override
-  String reconnectComputerMessage(String name) {
-    return 'Un nouveau jeton remplace celui de « $name », qui cesse de fonctionner. Suivez ensuite les étapes affichées, sur ce poste.';
-  }
-
-  @override
   String get reject => 'Refuser';
 
   @override
@@ -2675,9 +2683,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get showArchived => 'Archivés';
-
-  @override
-  String get showInstallCommands => 'Afficher les commandes d\'installation';
 
   @override
   String showSimilarEntries(int count) {

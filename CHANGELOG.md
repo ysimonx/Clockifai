@@ -10,6 +10,16 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+### Modifié
+
+- **Connecter Claude Code devient simple** : plus de jeton à copier. Dans VSCode, un bouton lance l'installation du
+  plugin, sans terminal ; ailleurs, une seule commande suffit. La première conversation donne ensuite un lien :
+  on l'ouvre, on touche « Connecter », et l'écran Claude Code confirme le poste dès son premier événement. Le temps
+  de Claude compte depuis le début de la session. « Reconnecter » disparaît : un poste révoqué redonne un lien, et un
+  ordinateur réinstallé remplace son ancien poste. Après mise à jour du plugin
+  (`claude plugin update clockifai@clockifai`), un poste déjà connecté peut avoir à cliquer une fois sur ce lien
+  (5 novembre 2026).
+
 ## [0.2.11] — 2026-11-04
 
 ### Modifié

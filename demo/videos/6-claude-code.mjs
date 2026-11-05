@@ -1,9 +1,9 @@
 // Vidéo 6 : Alex, développeur indépendant, et son agent « Claude · Alex Girard » — le temps de Claude Code.
 // L'app est celle d'une vraie instance (https://clockifai.example.fr, lib/public-instance.mjs) ; l'historique de
 // Claude vient de demo/claude-history.mjs, et la session en direct est envoyée pendant le tournage avec le jeton
-// que la scène « connexion » vient de créer, comme le ferait le plugin.
+// que la scène « installation » retire de son lien, comme le ferait le plugin.
 import { helpers, record } from '../lib/helpers.mjs';
-import { claudeSession, postEvents, usagePayload } from '../lib/claude.mjs';
+import { claudeSession, fetchToken, postEvents, requestLink, usagePayload } from '../lib/claude.mjs';
 import { PUBLIC_APP, PUBLIC_URL, routePublic, startPublicApp } from '../lib/public-instance.mjs';
 
 export const warmup = ['alex@demo.clockifai.fr'];
@@ -41,29 +41,31 @@ export async function run(browser, failures) {
         await h.caption(C('Claude Code'), 'Paramètres › Intégrations › Claude Code',
           'Le temps de chaque session devient celui de son agent « Claude · Alex Girard », membre de l’équipe. Son Mac mini est déjà connecté.', ROLE, 6000);
         await h.clickLast(/^Connecter un poste$/, 1200);
-        await h.typeInto('Nom du poste', 'MacBook Air');
-        await h.clickLast(/^Enregistrer$/, 2000);
-        await h.reveal(/Dans un terminal \(le panneau/, 330, { x: 720 });
-        await h.caption(C('Claude Code'), 'Les commandes à lancer dans un terminal',
-          'Installer le plugin Clockifai depuis l’instance, puis lui donner le jeton de ce poste. Le jeton ne s’affiche qu’une fois.', ROLE, 6500);
-        await h.reveal(/^Copier le jeton$/, 520, { x: 720 });
-        await h.click(/^Copier le jeton$/, 1200);
-        token = JSON.parse(await page.evaluate(() => navigator.clipboard.readText())).token;
-        if (!token?.startsWith('clk_')) throw new Error('jeton absent du presse-papiers');
-        await h.caption(C('Claude Code'), 'Copier le jeton',
-          'Il part dans le presse-papiers, que la commande 3 lit dans le terminal : il n’apparaît ni à l’écran ni dans l’historique.', ROLE, 5000);
+        await h.reveal(/^Ouvrir dans VSCode$/, 420, { x: 720 });
+        await h.caption(C('Claude Code'), 'Installer le plugin, une fois par ordinateur',
+          'Un bouton lance l’installation dans VSCode ; sinon, une seule commande dans un terminal. Rien à régler, aucun jeton à copier.', ROLE, 6500);
         await h.clickLast(/^Fermer$/, 1000);
       });
 
       await h.scene('installation', async () => {
+        const link = await requestLink('MacBook Air');
         await h.code('Terminal', 'sur le MacBook Air, une seule fois', [
-          'claude --version                     # Claude Code est bien installé',
-          `claude plugin marketplace add ${PUBLIC_URL}/api/claude/marketplace.json`,
-          'claude plugin install clockifai@clockifai',
-          'pbpaste | claude plugin configure clockifai@clockifai --values-stdin',
-          '                                     # Entrée après « Copier le jeton »',
-        ], 11000);
+          `claude plugin install clockifai --marketplace ${PUBLIC_URL}/api/claude/marketplace.json`,
+          '',
+          'claude',
+          '> Bonjour',
+          '',
+          'Pour connecter ce poste à Clockifai, ouvrez ce lien (valable 10 minutes) :',
+          `${PUBLIC_URL}/connect/…`,
+        ], 9000);
         await h.hideCode();
+        await page.goto(`${PUBLIC_APP}${new URL(link.url).pathname}`);
+        await h.find(/^Connecter ce poste à Clockifai/, { timeout: 30000 });
+        await h.caption(C('Le lien'), 'Connecter ce poste',
+          'Le lien ouvre Clockifai : Alex confirme le nom du poste et c’est fini. Le jeton reste sur l’ordinateur, et le temps de Claude compte depuis le début de la session.', ROLE, 7000);
+        await h.click(/^Connecter$/, 1500);
+        token = await fetchToken(link.poll);
+        await h.click(/^Ouvrir Clockifai$/, 2000);
       });
 
       await h.scene('session', async () => {
@@ -132,8 +134,9 @@ export async function run(browser, failures) {
         await h.reveal(/^Détaillé$/, 230);
         await h.caption(C('Rapports'), 'Jour par jour',
           'Les heures d’Alex et celles de Claude ; chaque session décrite par son sujet et rangée dans sa tâche, avec ses tokens et son coût.', ROLE, 7000);
-        await h.reveal(/^Optimisation des images/, 420);
-        await h.click(/^Optimisation des images/, 2000);
+        // Sur la ligne d'une entrée de Claude, l'étiquette commence par l'infobulle de l'usage IA.
+        await h.reveal(/(^|\n)Optimisation des images/, 420);
+        await h.click(/(^|\n)Optimisation des images/, 2000);
         await h.caption(C('Rapports'), 'Corriger le temps de son agent',
           'Projet, tâche, description, horaires, ou supprimer l’entrée. Pas d’ajout à la main : seul Claude Code enregistre ce temps, et une correction n’est jamais écrasée.', ROLE, 7000);
         await h.hover(/^Usage IA/);

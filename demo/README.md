@@ -50,8 +50,9 @@ L'historique de Claude (vidéo 6) passe par le vrai chemin : `claude-history.mjs
 d'Alex (`POST /api/tokens`, qui crée son agent) puis poste les événements de ses sessions des derniers jours
 ouvrés (`POST /api/activity/events`, `lib/claude.mjs`), usage IA compris (`agent_usage` par tranche de 5 minutes,
 Opus 5.5 et un sous-agent Haiku) ; le serveur en tire les entrées, tâches, descriptions et coûts estimés. Le Flask
-local doit tourner. Pendant le tournage, la vidéo poste de même une session en direct,
-avec le jeton qu'elle vient de copier à l'écran (presse-papiers lu par Playwright).
+local doit tourner. Pendant le tournage, la vidéo poste de même une session en direct, avec le jeton que le lien
+de connexion vient de lui donner : elle fait ce que ferait le hook du plugin (`POST /api/claude/link`, validation à
+l'écran, `POST /api/claude/link/poll`).
 
 La vidéo 6 montre l'écran Claude Code d'une vraie instance : sur la pile locale, en http, il afficherait les
 commandes de développement (marketplace `clockifai-dev`). `lib/public-instance.mjs` compile donc un second

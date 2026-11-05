@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import psycopg
 
+from ..auth import hash_token, new_api_token
 from .gotrue import gotrue_admin
 
 AGENT_EMAIL_DOMAIN = "agents.clockifai.invalid"  # .invalid : domaine réservé, jamais d'email reçu
@@ -55,6 +56,18 @@ def ensure_agent(conn: psycopg.Connection, workspace_id: str, pilot_id: str) -> 
         (workspace_id, agent_id, pilot_id, name),
     )
     return agent_id
+
+
+def issue_token(conn: psycopg.Connection, workspace_id: str, pilot_id: str, name: str) -> dict:
+    """Jeton personnel d'un poste, et l'agent du pilote s'il manque (plan 10, D5 et D14). Le jeton en clair n'existe
+    qu'ici : l'instance n'en garde que l'empreinte. À appeler dans une transaction."""
+    token = new_api_token()
+    row = conn.execute(
+        "insert into clockifai_private.api_tokens (workspace_id, user_id, name, token_hash) "
+        "values (%s, %s, %s, %s) returning id",
+        (workspace_id, pilot_id, name, hash_token(token)),
+    ).fetchone()
+    return {"id": str(row["id"]), "name": name, "token": token, "agent_id": ensure_agent(conn, workspace_id, pilot_id)}
 
 
 def active_agent(conn: psycopg.Connection, workspace_id: str, pilot_id: str) -> str | None:

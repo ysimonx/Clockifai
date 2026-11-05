@@ -1017,8 +1017,9 @@ paths:
       operationId: claudePluginArchive
       summary: Archive du plugin clockifai
       description: |
-        Zip reproductible de `integrations/claude-code/` (manifeste, hooks, script), l'adresse de l'instance
-        posée comme valeur par défaut de `userConfig.url`.
+        Zip reproductible de `integrations/claude-code/` (manifeste, hooks, scripts), l'adresse de l'instance
+        posée dans `metadata.url` du manifeste. Le plugin n'a pas de `userConfig` : un réglage ouvrirait un
+        formulaire à l'installation dans VSCode.
       security: []
       responses:
         "200":
@@ -1033,6 +1034,147 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "404":
           description: Fichiers du plugin absents de l'image.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/claude/link:
+    post:
+      tags: [plugin Claude Code]
+      operationId: claudeLinkCreate
+      summary: Demander le lien qui connecte un poste
+      description: |
+        Appelée par le hook d'un poste sans jeton, au début d'une session. Sans compte : le lien ne sert à rien
+        tant qu'un membre ne l'a pas validé. Valable `expires_in` secondes (10 minutes). Les liens expirés sont
+        supprimés à chaque création. L'instance n'en stocke que des empreintes SHA-256.
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                machine: { type: string, maxLength: 80, description: "Nom proposé pour le poste." }
+      responses:
+        "201":
+          description: Lien à donner à l'utilisateur, et secret à garder sur le poste.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, poll, expires_in]
+                properties:
+                  url: { type: string, format: uri, description: "`APP_PUBLIC_URL`/connect/<code>" }
+                  poll: { type: string, description: "Secret du hook pour `POST /api/claude/link/poll`." }
+                  expires_in: { type: integer }
+        "429":
+          description: "Trop de liens en attente, 500 au plus (`too many pending links`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/claude/link/poll:
+    post:
+      tags: [plugin Claude Code]
+      operationId: claudeLinkPoll
+      summary: Retirer le jeton d'un lien validé
+      description: |
+        Une seule remise. Le jeton personnel naît ici, sous le nom choisi à la validation ; un poste du même
+        utilisateur, du même workspace et du même nom est révoqué : il est remplacé. Crée l'agent du pilote s'il
+        manque, comme `POST /api/tokens`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [poll]
+              properties:
+                poll: { type: string }
+      responses:
+        "200":
+          description: Lien pas encore validé (`pending`), ou jeton remis (`approved`).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, enum: [pending, approved] }
+                  token: { type: string, description: "`clk_…`, avec `approved` seulement." }
+        "400":
+          description: "`poll` absent (`poll is required`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404":
+          description: "Lien inconnu, expiré ou déjà retiré (`link expired or already used`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/claude/link/{code}:
+    get:
+      tags: [plugin Claude Code]
+      operationId: claudeLinkInfo
+      summary: Lire un lien avant de le valider
+      description: Le nom de la machine, montré sur la page `/connect/<code>` de l'app.
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Lien en attente de validation.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [machine]
+                properties:
+                  machine: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: "Lien inconnu, expiré ou déjà validé (`link expired or already used`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/claude/link/{code}/approve:
+    post:
+      tags: [plugin Claude Code]
+      operationId: claudeLinkApprove
+      summary: Valider un lien
+      description: |
+        Rattache le poste à l'utilisateur et au workspace, tout rôle de membre confondu. Sans `name`, le nom de la
+        machine, sinon « Poste ». Le hook a ensuite un jour pour retirer son jeton.
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspace_id]
+              properties:
+                workspace_id: { type: string, format: uuid }
+                name: { type: string, maxLength: 80 }
+      responses:
+        "200":
+          description: Lien validé.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [approved, name]
+                properties:
+                  approved: { type: boolean, const: true }
+                  name: { type: string }
+        "400": { $ref: "#/components/responses/WorkspaceIdRequired" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/MemberRequired" }
+        "404":
+          description: "Lien inconnu, expiré ou déjà validé (`link expired or already used`)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
@@ -1235,7 +1377,7 @@ components:
       type: http
       scheme: bearer
       description: |
-        `Authorization: Bearer clk_…` : jeton personnel d'un poste (`POST /api/tokens`). Il porte son workspace ;
+        `Authorization: Bearer clk_…` : jeton personnel d'un poste (`POST /api/claude/link/poll` ou `POST /api/tokens`). Il porte son workspace ;
         refusé s'il est révoqué ou si son propriétaire n'est plus membre actif du workspace.
     kioskToken:
       type: apiKey

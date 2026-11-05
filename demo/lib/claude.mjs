@@ -43,6 +43,24 @@ export function pastSession({ repo, start, minutes, task, commits = [] }) {
   return events;
 }
 
+/** Ce que fait le hook d'un poste sans jeton : demander un lien, puis le retirer une fois le lien validé. */
+export async function requestLink(machine) {
+  const res = await fetch(`${SERVICES}/api/claude/link`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ machine }),
+  });
+  if (res.status !== 201) throw new Error(`lien refusé : ${res.status}`);
+  return res.json();
+}
+
+export async function fetchToken(poll) {
+  const res = await fetch(`${SERVICES}/api/claude/link/poll`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ poll }),
+  });
+  const body = await res.json();
+  if (!body.token?.startsWith('clk_')) throw new Error(`pas de jeton : ${res.status} ${JSON.stringify(body)}`);
+  return body.token;
+}
+
 export async function postEvents(token, events) {
   const res = await fetch(`${SERVICES}/api/activity/events`, {
     method: 'POST',

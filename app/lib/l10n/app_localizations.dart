@@ -691,12 +691,6 @@ abstract class AppLocalizations {
   /// **'Droit annuel'**
   String get annualAllowance;
 
-  /// No description provided for @apiTokenCreated.
-  ///
-  /// In fr, this message translates to:
-  /// **'Jeton créé pour « {name} ». Il ne sera plus affiché : suivez ces étapes maintenant.'**
-  String apiTokenCreated(String name);
-
   /// No description provided for @apply.
   ///
   /// In fr, this message translates to:
@@ -1258,38 +1252,92 @@ abstract class AppLocalizations {
   /// No description provided for @claudeCodeStepCli.
   ///
   /// In fr, this message translates to:
-  /// **'1. Dans un terminal, claude --version doit afficher un numéro de version. Sinon, installez Claude Code en ligne de commande (l\'extension VSCode embarque sa propre copie, absente du terminal), puis ouvrez un nouveau terminal :'**
+  /// **'Si la commande claude est introuvable, installez-la d\'abord (l\'extension VSCode embarque sa propre copie, absente du terminal), puis ouvrez un nouveau terminal :'**
   String get claudeCodeStepCli;
 
   /// No description provided for @claudeCodeStepInstall.
   ///
   /// In fr, this message translates to:
-  /// **'2. Dans un terminal (le panneau Claude Code de VSCode ne propose pas /plugin) :'**
+  /// **'1. Installez le plugin Clockifai, une fois par ordinateur :'**
   String get claudeCodeStepInstall;
+
+  /// No description provided for @openInVscode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir dans VSCode'**
+  String get openInVscode;
+
+  /// No description provided for @claudeCodeOrTerminal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ou dans un terminal, pour la ligne de commande et l\'app de bureau :'**
+  String get claudeCodeOrTerminal;
+
+  /// No description provided for @claudeCodeWaiting.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente de ce poste…'**
+  String get claudeCodeWaiting;
+
+  /// No description provided for @claudeCodeConnected.
+  ///
+  /// In fr, this message translates to:
+  /// **'« {name} » est connecté : le temps de Claude y est enregistré.'**
+  String claudeCodeConnected(String name);
 
   /// No description provided for @claudeCodeStepStart.
   ///
   /// In fr, this message translates to:
-  /// **'4. Ouvrez une nouvelle conversation Claude Code : le chronomètre de Claude démarre au premier prompt. Claude nomme la tâche de chaque sujet : à la première demande, autorisez l\'outil Clockifai.'**
+  /// **'2. Ouvrez une nouvelle conversation Claude Code et envoyez un message : Claude vous donne le lien qui connecte ce poste.'**
   String get claudeCodeStepStart;
 
-  /// No description provided for @claudeCodeStepToken.
+  /// No description provided for @claudeCodeStepLink.
   ///
   /// In fr, this message translates to:
-  /// **'3. Collez cette commande dans le terminal, sans appuyer sur Entrée :'**
-  String get claudeCodeStepToken;
+  /// **'3. Ouvrez ce lien et touchez Connecter : le temps de Claude compte depuis le début de la session. Claude nomme la tâche de chaque sujet : à la première demande, autorisez l\'outil Clockifai.'**
+  String get claudeCodeStepLink;
 
-  /// No description provided for @claudeCodeStepTokenReconnect.
+  /// No description provided for @connectTitle.
   ///
   /// In fr, this message translates to:
-  /// **'3. Le jeton ne s\'affiche qu\'à la connexion d\'un poste : s\'il manque sur ce poste, touchez Reconnecter sur sa ligne, dans la liste ci-dessous.'**
-  String get claudeCodeStepTokenReconnect;
+  /// **'Connecter ce poste à Clockifai ?'**
+  String get connectTitle;
 
-  /// No description provided for @claudeCodeStepTokenThen.
+  /// No description provided for @connectHelp.
   ///
   /// In fr, this message translates to:
-  /// **'Touchez Copier le jeton, puis appuyez sur Entrée dans le terminal : la commande lit le jeton dans le presse-papiers. Dans l\'autre ordre, copier la commande remplacerait le jeton.'**
-  String get claudeCodeStepTokenThen;
+  /// **'Le temps des sessions de Claude Code sur cet ordinateur sera enregistré au nom de votre agent.'**
+  String get connectHelp;
+
+  /// No description provided for @connectWarning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ne continuez que si vous venez de lancer Claude Code sur cet ordinateur.'**
+  String get connectWarning;
+
+  /// No description provided for @connectAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecter'**
+  String get connectAction;
+
+  /// No description provided for @connectGone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce lien a expiré ou a déjà servi. Ouvrez une nouvelle conversation Claude Code pour en obtenir un autre.'**
+  String get connectGone;
+
+  /// No description provided for @openClockifai.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir Clockifai'**
+  String get openClockifai;
+
+  /// No description provided for @connectDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'« {name} » est connecté. Vous pouvez retourner dans Claude Code.'**
+  String connectDone(String name);
 
   /// No description provided for @claudeTasks.
   ///
@@ -1410,12 +1458,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Copier'**
   String get copy;
-
-  /// No description provided for @copyToken.
-  ///
-  /// In fr, this message translates to:
-  /// **'Copier le jeton'**
-  String get copyToken;
 
   /// No description provided for @costRate.
   ///
@@ -3048,12 +3090,6 @@ abstract class AppLocalizations {
   /// **'Aide'**
   String get help;
 
-  /// No description provided for @hideInstallCommands.
-  ///
-  /// In fr, this message translates to:
-  /// **'Masquer les commandes d\'installation'**
-  String get hideInstallCommands;
-
   /// No description provided for @hideSimilarEntries.
   ///
   /// In fr, this message translates to:
@@ -3107,12 +3143,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Humains et agents'**
   String get humansAndAgents;
-
-  /// No description provided for @installCommandsTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Commandes d\'installation d\'un poste'**
-  String get installCommandsTitle;
 
   /// No description provided for @integrations.
   ///
@@ -4086,24 +4116,6 @@ abstract class AppLocalizations {
   /// **'Temps de {name} : consultation seulement.'**
   String readOnlyTimeOf(String name);
 
-  /// No description provided for @reconnect.
-  ///
-  /// In fr, this message translates to:
-  /// **'Reconnecter'**
-  String get reconnect;
-
-  /// No description provided for @reconnectComputer.
-  ///
-  /// In fr, this message translates to:
-  /// **'Reconnecter ce poste ?'**
-  String get reconnectComputer;
-
-  /// No description provided for @reconnectComputerMessage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Un nouveau jeton remplace celui de « {name} », qui cesse de fonctionner. Suivez ensuite les étapes affichées, sur ce poste.'**
-  String reconnectComputerMessage(String name);
-
   /// No description provided for @reject.
   ///
   /// In fr, this message translates to:
@@ -4409,12 +4421,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Archivés'**
   String get showArchived;
-
-  /// No description provided for @showInstallCommands.
-  ///
-  /// In fr, this message translates to:
-  /// **'Afficher les commandes d\'installation'**
-  String get showInstallCommands;
 
   /// No description provided for @showSimilarEntries.
   ///

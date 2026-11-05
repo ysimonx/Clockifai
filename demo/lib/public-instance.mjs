@@ -39,7 +39,7 @@ export async function startPublicApp() {
   return srv;
 }
 
-/** Contexte du navigateur : requêtes vers PUBLIC_URL passées au Flask local, presse-papiers lisible (le jeton). */
+/** Contexte du navigateur : requêtes vers PUBLIC_URL passées au Flask local, presse-papiers autorisé. */
 export async function routePublic(ctx) {
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: PUBLIC_APP });
   await ctx.route(`${PUBLIC_URL}/**`, async (route) => {

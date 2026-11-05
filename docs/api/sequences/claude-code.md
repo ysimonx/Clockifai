@@ -2,7 +2,8 @@
 
 Le temps de Claude est celui d'un membre « agent », un par pilote (« Claude · Yannick »). Les hooks Claude Code
 du poste envoient les événements de chaque session ; Flask en recalcule les entrées de l'agent. Plan :
-[10-suivi-claude-code.md](../../../plans/10-suivi-claude-code.md).
+[10-suivi-claude-code.md](../../../plans/10-suivi-claude-code.md) ; connexion d'un poste :
+[21-installation-simple-du-plugin.md](../../../plans/21-installation-simple-du-plugin.md).
 
 ```mermaid
 sequenceDiagram
@@ -17,9 +18,19 @@ sequenceDiagram
 
     rect rgba(127, 127, 127, 0.1)
     Note over P,PS: Connexion d'un poste, une fois
-    P->>App: Réglages › Intégrations › « Connecter Claude Code »
-    App->>F: POST /api/tokens {workspace_id, name} (JWT)
-    F->>PG: api_tokens (SHA-256 du jeton)
+    P->>F: claude plugin install clockifai --marketplace https://…/api/claude/marketplace.json, ou bouton « Ouvrir dans VSCode »
+    F-->>P: marketplace, puis zip du plugin (adresse de l'instance dans metadata.url)
+    P->>CC: nouvelle conversation
+    CC->>F: SessionStart, sans jeton : POST /api/claude/link {machine}
+    F->>PG: device_links (SHA-256 de code et de poll, 10 minutes)
+    F-->>CC: {url, poll, expires_in}
+    CC->>CC: lien ajouté au contexte ; événements gardés dans la file locale
+    CC-->>P: Claude donne le lien
+    P->>App: ouvre /connect/<code>, touche « Connecter »
+    App->>F: GET /api/claude/link/<code>, puis POST …/approve {workspace_id, name} (JWT)
+    F->>PG: device_links : utilisateur, workspace, nom ; un jour pour retirer le jeton
+    CC->>F: événement suivant : POST /api/claude/link/poll {poll}
+    F->>PG: device_links supprimé, poste de même nom révoqué, api_tokens (SHA-256 du jeton)
     F->>PG: verrou consultatif par pilote, compte agent existant ?
     opt premier jeton du pilote
         F->>GT: POST admin/users (kind agent, banni, sans mot de passe)
@@ -27,10 +38,8 @@ sequenceDiagram
     end
     F->>PG: workspace_members (kind agent, agent_owner_id = pilote)
     PG->>PG: team_scope : (pilote, agent), (chef du pilote, agent)
-    F-->>App: {token clk_…, agent_id} (affiché une fois)
-    P->>F: claude plugin marketplace add https://…/api/claude/marketplace.json
-    F-->>P: marketplace, puis zip du plugin (adresse de l'instance par défaut)
-    P->>CC: claude plugin install clockifai@clockifai, jeton saisi (magasin sécurisé)
+    F-->>CC: {status: approved, token clk_…} (remis une seule fois)
+    CC->>CC: jeton dans ${CLAUDE_PLUGIN_DATA}/token (0600), file locale envoyée
     end
 
     rect rgba(127, 127, 127, 0.1)

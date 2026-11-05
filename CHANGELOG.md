@@ -10,6 +10,8 @@ la date d'arrivée de chaque évolution.
 
 ## [Non publié]
 
+## [0.2.12] — 2026-11-05
+
 ### Modifié
 
 - **Connecter Claude Code devient simple** : plus de jeton à copier. Dans VSCode, un bouton lance l'installation du

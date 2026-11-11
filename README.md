@@ -226,6 +226,10 @@ sauvegardes **et restauration**, surveillance : [docs/exploitation.md](docs/expl
 | [docs/](docs/) | Documentation : guide utilisateur (HTML), exploitation, architecture, API ; notes de version dans [CHANGELOG.md](CHANGELOG.md) |
 | [plans/](plans/) | Plans validés : projet (avec état d'avancement et liste des plans), Fidwork (en attente), saisie pour autrui, tickets, chronomètres simultanés, hébergement, macOS, iOS et Android, regroupement des entrées, forges git, suivi de Claude Code |
 
+## Auteur
+
+Yannick Simon, ingénieur Arts et Métiers, CTO à temps partiel et développeur de solutions industrielles 4.0 avec IA, dans la région Aix-Marseille et à distance : [yannicksimon.fr](https://yannicksimon.fr/). Le projet en vidéo, comme cas d'usage : [Clockifai](https://yannicksimon.fr/cas-d-usage/clockifai/).
+
 ## Licence
 
-À définir.
+MIT : voir [LICENSE](LICENSE).
